@@ -1,0 +1,61 @@
+import 'dart:convert';
+import 'dart:developer';
+import 'package:http/http.dart' as http;
+
+class ApiService {
+  static const String _baseUrl = 'https://staging.junubullion.com/api';
+
+  /// Fetches home screen data from the API.
+  static Future<Map<String, dynamic>> fetchHomeData({
+    String currency = "USD",
+    String unit = "gram",
+  }) async {
+    final Uri url = Uri.parse(
+      '$_baseUrl/home',
+    ).replace(queryParameters: {'currency': currency, 'unit': unit});
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          // 'Authorization': 'Bearer YOUR_TOKEN_HERE',
+        },
+      );
+
+      log('ApiService: Fetching home data from ${response.body}');
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception(
+          'Failed to load data (Status Code: ${response.statusCode})',
+        );
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> fetchSpotPrice({
+    required String currency,
+    required String unit,
+  }) async {
+    final Uri url = Uri.parse(
+      '$_baseUrl/home',
+    ).replace(queryParameters: {'currency': currency, 'unit': unit});
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      return data['data']['spot_prices'];
+    } else {
+      throw Exception('Failed to fetch spot price');
+    }
+  }
+}

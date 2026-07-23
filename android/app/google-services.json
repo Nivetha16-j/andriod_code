@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "179274729688",
+    "project_id": "junubullion-c6f93",
+    "storage_bucket": "junubullion-c6f93.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:179274729688:android:1ab2f8fc24ff3abea8efad",
+        "android_client_info": {
+          "package_name": "com.example.junubullion"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5aIcQN0iYg284yHgYcqe0cQDJ8Y-st4M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
