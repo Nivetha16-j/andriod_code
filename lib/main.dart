@@ -1,12 +1,24 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
+import 'package:provider/provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CurrencyProvider()),
+        ChangeNotifierProvider(create: (_) => HomeProvider()),
+      ],
+
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

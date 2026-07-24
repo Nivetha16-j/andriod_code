@@ -162,7 +162,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           "address": countryController.text,
           "password": passwordController.text,
           "password_confirmation": confirmPasswordController.text,
-          // Omit OTP or pass empty/dummy to test duplicate validation without committing register
         }),
       );
 
@@ -170,31 +169,47 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       final Map<String, dynamic> responseData = jsonDecode(response.body);
 
-      // 2. Check if the response contains the 'errors' map with email/phone duplicates
-      bool userExists = false;
-
+      // Check if email or phone already exists
       if (responseData.containsKey('errors') && responseData['errors'] is Map) {
         final errors = responseData['errors'] as Map<String, dynamic>;
 
-        // Check if email or phone_number has errors
-        final emailHasError =
-            errors.containsKey('email') && (errors['email'] as List).isNotEmpty;
-        final phoneHasError =
+        final bool emailExists =
+            errors.containsKey('email') &&
+            errors['email'] is List &&
+            (errors['email'] as List).isNotEmpty;
+
+        final bool phoneExists =
             errors.containsKey('phone_number') &&
+            errors['phone_number'] is List &&
             (errors['phone_number'] as List).isNotEmpty;
 
-        if (emailHasError || phoneHasError) {
-          userExists = true;
-        }
-      }
-
-      // 3. If user already exists, show Toast and stop execution
-      if (userExists) {
         if (mounted) {
           setState(() => _isLoading = false);
-          _showToast("User already exists, Try login", isError: true);
+
+          if (emailExists && phoneExists) {
+            _showToast(
+              "Email and Phone number already exist. Try login.",
+              isError: true,
+            );
+            return;
+          }
+
+          if (emailExists) {
+            _showToast(
+              "Email already exists. Try login with the same email.",
+              isError: true,
+            );
+            return;
+          }
+
+          if (phoneExists) {
+            _showToast(
+              "Phone number already exists. Try login with the same Phone number.",
+              isError: true,
+            );
+            return;
+          }
         }
-        return; // Do not proceed to Firebase OTP
       }
 
       // 4. If user does NOT exist, send OTP via Firebase

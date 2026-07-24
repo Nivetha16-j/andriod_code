@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 
 class OTPScreen extends StatefulWidget {
@@ -16,6 +17,8 @@ class OTPScreen extends StatefulWidget {
   final String? lname;
   final String? password;
   final String? passwordConfirmation;
+  final bool isLogin;
+  final Map<String, dynamic>? loginUser;
 
   const OTPScreen({
     super.key,
@@ -27,6 +30,9 @@ class OTPScreen extends StatefulWidget {
     this.lname,
     this.password,
     this.passwordConfirmation,
+
+    this.isLogin = false,
+    this.loginUser,
   });
 
   @override
@@ -60,96 +66,94 @@ class _OTPScreenState extends State<OTPScreen> {
     });
 
     try {
-      final String verificationId = widget.verificationId.toString();
-
-      if (verificationId == null || verificationId.isEmpty) {
-        throw Exception("Verification ID is missing. Please resend OTP.");
-      }
-
-      log("Verifying OTP credential.");
-
-      // 1. Authenticate with Firebase
-      PhoneAuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: verificationId,
+      final credential = PhoneAuthProvider.credential(
+        verificationId: widget.verificationId,
         smsCode: _enteredOtp,
       );
+
+      log("Credddddd $_enteredOtp....${widget.verificationId}");
 
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
 
-      // 2. Fetch JWT Token
       String? firebaseToken = await userCredential.user?.getIdToken();
 
       if (firebaseToken == null) {
-        throw Exception("Failed to retrieve Firebase Token.");
+        throw Exception("Unable to get Firebase token");
       }
 
-      log("Firebase ID token obtained.");
+      /// ============================
+      /// LOGIN FLOW
+      /// ============================
+      if (widget.isLogin) {
+        log("IsLoginnnnnn ${widget.isLogin}");
+        // await SessionManager.saveLogin(widget.loginUser!);
+        if (widget.loginUser != null) {
+          await SessionManager.saveLogin(widget.loginUser!);
+        }
 
-      // 3. Concatenate First Name and Last Name
-      final String firstName = widget.fname?.toString() ?? "";
-      final String lastName = widget.lname?.toString() ?? "";
-      final String fullName = "$firstName $lastName".trim();
+        if (mounted) {
+          _showToast("Login Successful");
 
-      // 4. Construct Registration Payload
-      final Map<String, dynamic> insertPayload = {
+          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        }
+
+        return;
+      }
+
+      /// ============================
+      /// REGISTRATION FLOW
+      /// ============================
+
+      final fullName = "${widget.fname ?? ""} ${widget.lname ?? ""}".trim();
+
+      final payload = {
         "name": fullName,
         "email": widget.email ?? "",
         "phone_number": widget.phoneNumber,
         "password": widget.password ?? "",
-        "password_confirmation": widget.passwordConfirmation,
+        "password_confirmation": widget.passwordConfirmation ?? "",
         "country_id": widget.countryId,
         "address": "",
         "firebase_token": firebaseToken,
       };
 
-      log("Submitting verified registration request.");
-
-      // 5. Submit to Backend API
       final response = await http.post(
-        Uri.parse("https://staging.junubullion.com/api/verify-otp"),
+        Uri.parse("https://staging.junubullion.com/api/verify-register-otp"),
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          "Accept": "application/json",
         },
-        body: jsonEncode(insertPayload),
+        body: jsonEncode(payload),
       );
 
-      log("Insert User Response Code: ${response.statusCode}");
+      final responseData = jsonDecode(response.body);
 
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      if (response.statusCode == 200 && responseData["status"] == true) {
+        await SessionManager.saveLogin(responseData["data"]);
 
-      final bool isSuccess =
-          response.statusCode == 200 ||
-          response.statusCode == 201 ||
-          responseData['status'] == true ||
-          responseData['status'] == 'true';
-
-      if (isSuccess) {
         if (mounted) {
-          _showToast("Registration successful!");
-          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+          _showToast("Registration Successful");
+
+          Navigator.pushNamedAndRemoveUntil(context, "/home", (route) => false);
         }
       } else {
-        final message =
-            responseData['message'] ?? "Backend registration failed.";
-        if (mounted) {
-          _showToast(message.toString(), isError: true);
-        }
+        _showToast(
+          responseData["message"] ?? "Registration failed",
+          isError: true,
+        );
       }
     } on FirebaseAuthException catch (e) {
-      log("Firebase Auth Exception: ${e.message}");
-      if (mounted) {
-        _showToast(e.message ?? "Invalid OTP code", isError: true);
-      }
+      _showToast(e.message ?? "Invalid OTP", isError: true);
     } catch (e) {
-      log("Error during registration insertion: $e");
-      if (mounted) {
-        _showToast("An error occurred during verification.", isError: true);
-      }
+      log("eeeeeeeeeeee ${e.toString()}");
+
+      _showToast("Something went wrong", isError: true);
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

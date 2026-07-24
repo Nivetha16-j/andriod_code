@@ -4,4 +4,5 @@ class AppColors {
   AppColors._();
 
   static const Color primaryRed = Color.fromRGBO(136, 27, 27, 1);
+  static const Color outofstock = Color(0xFFBD8280);
 }

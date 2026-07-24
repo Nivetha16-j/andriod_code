@@ -1,6 +1,9 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/services/session_manager.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -37,17 +40,30 @@ class _SplashScreenState extends State<SplashScreen>
     // Start animation
     _controller.forward();
 
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.login);
-      }
-    });
+    checkLogin();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> checkLogin() async {
+    // Keep splash screen visible for 3 seconds
+    await Future.delayed(const Duration(seconds: 3));
+
+    bool loggedIn = await SessionManager.isLoggedIn();
+
+    log("lllooooo $loggedIn)");
+
+    if (!mounted) return;
+
+    if (loggedIn) {
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } else {
+      Navigator.pushReplacementNamed(context, AppRoutes.login);
+    }
   }
 
   @override

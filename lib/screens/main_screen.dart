@@ -1,8 +1,10 @@
 import 'dart:async';
-import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/currency_provider.dart';
+import 'package:provider/provider.dart';
+
+import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/screens/home/homescreen.dart';
-import 'package:junubullion/services/home_services.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:junubullion/widgets/product/custom_productlist.dart';
@@ -17,13 +19,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  Map<String, dynamic>? _homeData;
-  bool _isLoading = true;
-  String? _errorMessage;
-
   Timer? _livePriceTimer;
-
-  bool _isFetching = false;
 
   final ScrollController _homeScrollController = ScrollController();
   final ScrollController _productListScrollController = ScrollController();
@@ -32,10 +28,16 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
 
-    print("MainScreen initState");
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currencyProvider = context.read<CurrencyProvider>();
 
-    _initialLoad();
-    _startLivePriceTimer();
+      context.read<HomeProvider>().fetchHomeData(
+        currency: currencyProvider.selectedCurrency,
+        unit: currencyProvider.selectedUnit,
+      );
+
+      _startLivePriceTimer();
+    });
   }
 
   @override
@@ -46,61 +48,22 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
-  // First load shows full-screen spinner
-  Future<void> _initialLoad() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-    await _loadHomeData();
-  }
-
-  // Quiet background fetch (does not set _isLoading = true)
-  Future<void> _loadHomeData() async {
-    if (_isFetching) return;
-
-    _isFetching = true;
-
-    try {
-      final data = await ApiService.fetchHomeData();
-      log("Timeeeeeeeeeee: ${DateTime.now()}");
-      if (mounted) {
-        setState(() {
-          _homeData = data;
-          _isLoading = false;
-          _errorMessage = null;
-        });
-      }
-    } catch (e) {
-      if (mounted && _homeData == null) {
-        setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
-          _isLoading = false;
-        });
-      }
-    } finally {
-      _isFetching = false;
-    }
-  }
-
-  // 1-second timer for live prices
   void _startLivePriceTimer() {
-    _livePriceTimer?.cancel();
-
     _livePriceTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      log("Timer fired: ${DateTime.now()}");
+      final currencyProvider = context.read<CurrencyProvider>();
 
-      if (_currentIndex == 0) {
-        _loadHomeData();
-      }
+      context.read<HomeProvider>().fetchHomeData(
+        currency: currencyProvider.selectedCurrency,
+        unit: currencyProvider.selectedUnit,
+      );
     });
   }
 
   void _switchToTab(int index) {
     if (index == 0 && _homeScrollController.hasClients) {
-      _homeScrollController.jumpTo(0.0);
+      _homeScrollController.jumpTo(0);
     } else if (index == 3 && _productListScrollController.hasClients) {
-      _productListScrollController.jumpTo(0.0);
+      _productListScrollController.jumpTo(0);
     }
 
     setState(() {
@@ -110,25 +73,34 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
+    final homeProvider = context.watch<HomeProvider>();
+
+    if (homeProvider.isLoading && homeProvider.homeData == null) {
+      return Scaffold(
         appBar: CustomAppBar(),
-        body: Center(child: CircularProgressIndicator()),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (_errorMessage != null) {
+    if (homeProvider.errorMessage != null && homeProvider.homeData == null) {
       return Scaffold(
-        appBar: const CustomAppBar(),
+        appBar: CustomAppBar(),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(_errorMessage!, textAlign: TextAlign.center),
-              const SizedBox(height: 12),
+              Text(homeProvider.errorMessage!),
+              const SizedBox(height: 15),
               ElevatedButton(
-                onPressed: _initialLoad,
-                child: const Text('Retry'),
+                onPressed: () {
+                  final currencyProvider = context.read<CurrencyProvider>();
+
+                  context.read<HomeProvider>().fetchHomeData(
+                    currency: currencyProvider.selectedCurrency,
+                    unit: currencyProvider.selectedUnit,
+                  );
+                },
+                child: const Text("Retry"),
               ),
             ],
           ),
@@ -137,22 +109,27 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     final exclusiveProducts =
-        _homeData?['data']?['exclusive_products'] as List<dynamic>?;
+        homeProvider.homeData?['data']?['exclusive_products'] as List<dynamic>?;
 
-    final List<Widget> pages = [
+    final pages = [
       HomeScreen(
-        homeData: _homeData,
         onViewMoreTap: () => _switchToTab(3),
-        onRefresh: _loadHomeData,
+        onRefresh: () {
+          final currencyProvider = context.read<CurrencyProvider>();
+
+          return context.read<HomeProvider>().fetchHomeData(
+            currency: currencyProvider.selectedCurrency,
+            unit: currencyProvider.selectedUnit,
+          );
+        },
         scrollController: _homeScrollController,
       ),
       const Center(child: Text("Search / Category")),
       const Center(child: Text("Cart Screen")),
       ProductListScreen(
-        initialProducts: exclusiveProducts,
         isEmbedded: true,
         scrollController: _productListScrollController,
-        onRefresh: _loadHomeData,
+        onRefresh: () => context.read<HomeProvider>().fetchHomeData(),
       ),
       const Center(child: Text("Profile Screen")),
     ];
@@ -160,7 +137,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       resizeToAvoidBottomInset: false,
-      appBar: const CustomAppBar(),
+      appBar: CustomAppBar(),
       body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,

@@ -1,8 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 
 class ProductListScreen extends StatefulWidget {
-  final List<dynamic>? initialProducts;
   final String title;
   final bool isEmbedded;
   final ScrollController scrollController;
@@ -10,7 +14,6 @@ class ProductListScreen extends StatefulWidget {
 
   const ProductListScreen({
     super.key,
-    this.initialProducts,
     this.title = 'Our Products',
     this.isEmbedded = false,
     required this.scrollController,
@@ -35,21 +38,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
     'Silver Bar',
   ];
 
-  late List<dynamic> _displayedProducts;
-
-  @override
-  void initState() {
-    super.initState();
-    _displayedProducts = widget.initialProducts ?? [];
-  }
-
   // Gets the filtered list based on category
-  List<dynamic> get _filteredProducts {
-    if (_selectedCategoryIndex == 0) return _displayedProducts;
+  List<dynamic> _filteredProducts(List<dynamic> products) {
+    if (_selectedCategoryIndex == 0) return products;
 
     final selectedCategory = _categories[_selectedCategoryIndex].toLowerCase();
 
-    return _displayedProducts.where((product) {
+    return products.where((product) {
       final String name = (product['name'] ?? '').toString().toLowerCase();
       final String subcategory = (product['subcategory'] ?? '')
           .toString()
@@ -61,14 +56,20 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 2. Fetch all matching products
-    final allFilteredProducts = _filteredProducts;
+    final currencyProvider = context.watch<CurrencyProvider>();
 
-    // 3. Take only up to '_displayCount' items
+    final homeProvider = context.watch<HomeProvider>();
+
+    final displayedProducts =
+        homeProvider.homeData?['data']?['exclusive_products']
+            as List<dynamic>? ??
+        [];
+
+    final allFilteredProducts = _filteredProducts(displayedProducts);
+
     final productsToDisplay = allFilteredProducts.take(_displayCount).toList();
 
-    // 4. Check if there are more products available to show
-    final bool hasMoreProducts = _displayCount < allFilteredProducts.length;
+    final hasMoreProducts = _displayCount < allFilteredProducts.length;
 
     final Widget content = RefreshIndicator(
       onRefresh: widget.onRefresh ?? () async {},
@@ -156,7 +157,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     itemBuilder: (context, index) {
                       final product =
                           productsToDisplay[index] as Map<String, dynamic>;
-                      return _ProductGridCard(product: product);
+                      return _ProductGridCard(
+                        product: product,
+                        currencyProvider: currencyProvider,
+                      );
                     },
                   ),
 
@@ -216,18 +220,29 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
 class _ProductGridCard extends StatelessWidget {
   final Map<String, dynamic> product;
+  final currencyProvider;
 
-  const _ProductGridCard({required this.product});
+  const _ProductGridCard({
+    required this.product,
+    required this.currencyProvider,
+  });
 
   @override
   Widget build(BuildContext context) {
     final String name = product['name']?.toString() ?? 'Product Name';
 
-    final String rawPrice = product['regular_price']?.toString() ?? '0.00';
-    final double priceVal = double.tryParse(rawPrice) ?? 0.0;
-    final String priceText = priceVal > 0
-        ? '\$${priceVal.toStringAsFixed(2)}'
-        : '\$4,128.31';
+    log("lllllllllllllll : ${product['live_price']}");
+    log(product.toString());
+    log("Currency: ${product['currency']}");
+    log("Live Price: ${product['live_price']}");
+
+    // final String rawPrice = product['live_price']?.toString() ?? '0.00';
+    // final double priceVal = double.tryParse(rawPrice) ?? 0.0;
+    // final String priceText = priceVal > 0
+    //     ? '${currencyProvider.selectedCurrency} ${priceVal.toStringAsFixed(2)}'
+    //     : '${currencyProvider.selectedCurrency} 4,128.31';
+
+    final String priceText = product['live_price']?.toString() ?? '--';
 
     final String? imagePath = product['image_path']?.toString();
     final String fullImageUrl = (imagePath != null && imagePath.isNotEmpty)
@@ -305,13 +320,13 @@ class _ProductGridCard extends StatelessWidget {
           const SizedBox(height: 8.0),
           SizedBox(
             width: double.infinity,
-            height: 34.0,
+            height: 36.0,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: isInStock
                     ? AppColors.primaryRed
-                    : const Color.fromRGBO(218, 218, 218, 1),
-                foregroundColor: isInStock ? Colors.white : Colors.black54,
+                    : const Color.fromARGB(255, 216, 150, 148),
+                foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20.0),
@@ -321,10 +336,10 @@ class _ProductGridCard extends StatelessWidget {
               onPressed: isInStock ? () {} : null,
               child: Text(
                 isInStock ? 'Add to Cart' : 'Out of Stock',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12.0,
                   fontWeight: FontWeight.w700,
-                  color: isInStock ? Colors.white : Colors.black54,
+                  color: Colors.white,
                 ),
               ),
             ),

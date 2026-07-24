@@ -1,5 +1,13 @@
+import 'dart:convert';
+import 'dart:developer';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
+import 'package:junubullion/routes/app_routes.dart';
+import 'package:junubullion/screens/auth/otpscreen.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_button.dart';
 import 'package:junubullion/widgets/custom_textfield.dart';
@@ -13,14 +21,107 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
-  final passwordController = TextEditingController();
 
-  bool obscurePassword = true;
-  bool rememberMe = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  bool _isLoading = false;
+
+  void _showToast(String message, {bool isError = false}) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: isError ? AppColors.primaryRed : Colors.green,
+      textColor: Colors.white,
+    );
+  }
+
+  Future<void> loginUser() async {
+    log("////////");
+    if (emailController.text.trim().isEmpty) {
+      _showToast("Please enter Email or Phone Number", isError: true);
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    log("nooooooooo ${emailController.text.trim()}");
+
+    try {
+      final response = await http.post(
+        Uri.parse("https://staging.junubullion.com/api/login"),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: jsonEncode({"phone_number": emailController.text.trim()}),
+      );
+
+      log("response.bodyyyy ${response.body}");
+
+      final responseData = jsonDecode(response.body);
+
+      if (responseData["status"] == true) {
+        _showToast("OTP Sent to this number");
+
+        await sendOtp(emailController.text.trim());
+      } else {
+        _showToast(
+          responseData["message"] ??
+              "This number is not registered. Try register",
+          isError: true,
+        );
+      }
+    } catch (e) {
+      log("errorrrrrrrr ${e.toString()}");
+
+      _showToast("Something went wrong", isError: true);
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> sendOtp(String phoneNumber) async {
+    log("ppppppppppp $phoneNumber.......");
+    await _auth.verifyPhoneNumber(
+      phoneNumber: phoneNumber,
+
+      verificationCompleted: (PhoneAuthCredential credential) async {},
+
+      verificationFailed: (FirebaseAuthException e) {
+        _showToast(e.message ?? "OTP Failed", isError: true);
+      },
+
+      codeSent: (String verificationId, int? resendToken) {
+        _showToast("OTP Sent to this number");
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OTPScreen(
+              phoneNumber: phoneNumber,
+              verificationId: verificationId,
+              isLogin: true,
+              // loginUser: user,
+            ),
+          ),
+        );
+      },
+
+      codeAutoRetrievalTimeout: (String verificationId) {},
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromRGBO(250, 250, 248, 1),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -49,64 +150,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 15),
 
-                // CustomTextField(
-                //   label: "Password",
-                //   hintText: "Enter Password",
-                //   controller: passwordController,
-                //   keyboardType: TextInputType.visiblePassword,
-                //   obscureText: obscurePassword,
-                //   suffixIcon: IconButton(
-                //     icon: Icon(
-                //       obscurePassword ? Icons.visibility_off : Icons.visibility,
-                //     ),
-                //     onPressed: () {
-                //       setState(() {
-                //         obscurePassword = !obscurePassword;
-                //       });
-                //     },
-                //   ),
-                // ),
-
-                // const SizedBox(height: 15),
-
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //   children: [
-                //     Row(
-                //       children: [
-                //         Checkbox(
-                //           value: rememberMe,
-                //           onChanged: (value) {
-                //             setState(() {
-                //               rememberMe = value!;
-                //             });
-                //           },
-                //         ),
-                //         Text(
-                //           "Remember Me",
-                //           style: TextStyle(
-                //             fontSize: 20,
-                //             fontWeight: FontWeight.w600,
-                //             color: Color.fromRGBO(119, 122, 124, 1),
-                //           ),
-                //         ),
-                //       ],
-                //     ),
-                //     TextButton(
-                //       onPressed: () {
-                //         // Handle forgot password logic here
-                //       },
-                //       child: const Text(
-                //         "Forgot Password?",
-                //         style: TextStyle(
-                //           fontSize: 20,
-                //           fontWeight: FontWeight.w600,
-                //           color: Color.fromRGBO(133, 34, 33, 1),
-                //         ),
-                //       ),
-                //     ),
-                //   ],
-                // ),
                 CustomButton(
                   label: "Login",
                   height: 70,
@@ -115,7 +158,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   borderRadius: 50,
                   padding: const EdgeInsets.all(25),
                   onPressed: () {
-                    // Login logic
+                    log("messageeeeeee");
+                    if (!_isLoading) {
+                      log("message...........");
+                      loginUser();
+                    }
                   },
                 ),
                 Center(
@@ -135,12 +182,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           text: 'Register',
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-                              // Navigator.pushNamed(context, AppRoutes.register);
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                '/home',
-                                (route) => false,
-                              );
+                              Navigator.pushNamed(context, AppRoutes.register);
+                              // Navigator.pushNamedAndRemoveUntil(
+                              //   context,
+                              //   '/home',
+                              //   (route) => false,
+                              // );
                             },
 
                           style: const TextStyle(

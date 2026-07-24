@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/widgets/home/custom_banner.dart';
 import 'package:junubullion/widgets/home/custom_brands.dart';
 import 'package:junubullion/widgets/home/custom_exclusivecollections.dart';
@@ -8,16 +9,16 @@ import 'package:junubullion/widgets/home/custom_statscard.dart';
 import 'package:junubullion/widgets/home/custom_testimonials.dart';
 import 'package:junubullion/widgets/home/custom_trendingproducts.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 
 class HomeScreen extends StatefulWidget {
-  final Map<String, dynamic>? homeData;
   final VoidCallback onViewMoreTap;
   final Future<void> Function() onRefresh;
   final ScrollController scrollController;
 
   const HomeScreen({
     super.key,
-    required this.homeData,
     required this.onViewMoreTap,
     required this.onRefresh,
     required this.scrollController,
@@ -28,12 +29,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String selectedCurrency = "USD";
-  String selectedUnit = "Gram";
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final currencyProvider = context.read<CurrencyProvider>();
+
+      await context.read<HomeProvider>().fetchHomeData(
+        currency: currencyProvider.selectedCurrency,
+        unit: currencyProvider.selectedUnit,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final bannerData = widget.homeData?['data']?['banner'];
+    final homeProvider = context.watch<HomeProvider>();
+
+    final currencyProvider = context.watch<CurrencyProvider>();
+    final bannerData = homeProvider.homeData?['data']?['banner'];
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
@@ -49,16 +64,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // Pass the API spot_prices object here
             LiveSpotPriceCard(
-              spotPricesData: widget.homeData?['data']?['spot_prices'],
+              spotPricesData: homeProvider.homeData?['data']?['spot_prices'],
+              selectedCurrency: currencyProvider.selectedCurrency,
+              selectedUnit: currencyProvider.selectedUnit,
+              onSelectionChanged: (currency, unit) async {
+                // Update selected currency & unit
+                context.read<CurrencyProvider>().update(currency, unit);
 
-              selectedCurrency: selectedCurrency,
-              selectedUnit: selectedUnit,
-
-              onSelectionChanged: (currency, unit) {
-                setState(() {
-                  selectedCurrency = currency;
-                  selectedUnit = unit;
-                });
+                // Fetch fresh data from backend
+                await context.read<HomeProvider>().fetchHomeData(
+                  currency: currency,
+                  unit: unit,
+                );
               },
             ),
             const SizedBox(height: 30),
@@ -92,12 +109,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
             TrendingProductsSection(
               products:
-                  widget.homeData?['data']?['trending_products']
+                  homeProvider.homeData?['data']?['trending_products']
                       as List<dynamic>?,
               onSeeAllTap:
                   widget.onViewMoreTap, // Navigates to 4th tab (Product List)
-              currency: selectedCurrency,
-              unit: selectedUnit,
+              currency: currencyProvider.selectedCurrency,
+              unit: currencyProvider.selectedUnit,
             ),
             const SizedBox(height: 30),
 
@@ -106,12 +123,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
             ExclusiveCollectionsSection(
               products:
-                  widget.homeData?['data']?['exclusive_products']
+                  homeProvider.homeData?['data']?['exclusive_products']
                       as List<dynamic>?,
               onViewMoreTap:
                   widget.onViewMoreTap, // Navigates to 4th tab (Product List)
-              currency: selectedCurrency,
-              unit: selectedUnit,
+              currency: currencyProvider.selectedCurrency,
+              unit: currencyProvider.selectedUnit,
             ),
             const SizedBox(height: 30),
 
@@ -119,7 +136,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 30),
 
             TestimonialsSection(
-              testimonialsData: widget.homeData?['data']?['testimonials'] ?? [],
+              testimonialsData:
+                  homeProvider.homeData?['data']?['testimonials'] ?? [],
               onViewMorePressed: () {},
             ),
             const SizedBox(height: 30),

@@ -1,19 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/routes/app_routes.dart';
+import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:marquee/marquee.dart';
+import 'package:provider/provider.dart';
+import 'package:junubullion/providers/home_provider.dart';
 
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const CustomAppBar({Key? key}) : super(key: const Key('custom_appbar'));
+class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
+  const CustomAppBar({Key? key}) : super(key: key);
 
-  @override
-  Size get preferredSize => const Size.fromHeight(100.0);
-
-  // Styling Constants
   static const Color accentGold = Color(0xFFD49E00);
   static const Color textGold = Color(0xFFE5B537);
 
   @override
+  State<CustomAppBar> createState() => _CustomAppBarState();
+
+  @override
+  Size get preferredSize => const Size.fromHeight(100.0);
+}
+
+class _CustomAppBarState extends State<CustomAppBar> {
+  @override
   Widget build(BuildContext context) {
+    final homeProvider = context.watch<HomeProvider>();
+
+    final ticker =
+        homeProvider.homeData?['data']?['spot_prices']?['ticker'] ??
+        "Loading...";
+
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.primaryRed,
@@ -28,10 +42,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             // --- TOP TICKER BAR ---
             SizedBox(
-              height: 20, // Give the ticker a fixed height
+              height: 20,
               child: Marquee(
-                text:
-                    'Gold \$2,042.50   |   Silver \$23.12   |   Platinum \$915.00   |   Palladium \$1,028.40   |   ',
+                text: ticker,
                 style: const TextStyle(
                   color: CustomAppBar.textGold,
                   fontSize: 11.5,
@@ -39,9 +52,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 scrollAxis: Axis.horizontal,
                 crossAxisAlignment: CrossAxisAlignment.center,
-                blankSpace: 20.0,
-                velocity: 30.0, // Adjust scrolling speed
-                pauseAfterRound: const Duration(seconds: 0),
+                blankSpace: 40,
+                velocity: 30,
+                pauseAfterRound: Duration.zero,
               ),
             ),
 
@@ -64,7 +77,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     padding: EdgeInsets.zero,
                     icon: const Icon(
                       Icons.shopping_cart_outlined,
-                      color: textGold,
+                      color: CustomAppBar.textGold,
                       size: 22,
                     ),
                     onPressed: () {},
@@ -76,7 +89,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     constraints: const BoxConstraints(),
                     padding: EdgeInsets.zero,
                     icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-                    onPressed: () {},
+                    onPressed: () async {
+                      await SessionManager.logout();
+
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        AppRoutes.login,
+                        (route) => false,
+                      );
+                    },
                   ),
                 ],
               ),
