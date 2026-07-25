@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,7 @@ Future<void> main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => CurrencyProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
+        ChangeNotifierProvider(create: (_) => ExclusiveProductProvider()),
       ],
 
       child: const MyApp(),

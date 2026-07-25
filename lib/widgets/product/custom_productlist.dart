@@ -1,7 +1,10 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
+import 'package:junubullion/routes/app_routes.dart';
+import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
@@ -38,6 +41,25 @@ class _ProductListScreenState extends State<ProductListScreen> {
     'Silver Bar',
   ];
 
+  final List<String> _endpoints = [
+    "exclusive-products",
+    "gold-coins",
+    "gold-bars",
+    "silver-coins",
+    "silver-bars",
+  ];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ExclusiveProductProvider>().fetchProducts(
+        endpoint: _endpoints[0],
+      );
+    });
+  }
+
   // Gets the filtered list based on category
   List<dynamic> _filteredProducts(List<dynamic> products) {
     if (_selectedCategoryIndex == 0) return products;
@@ -58,12 +80,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
   Widget build(BuildContext context) {
     final currencyProvider = context.watch<CurrencyProvider>();
 
-    final homeProvider = context.watch<HomeProvider>();
+    final productProvider = context.watch<ExclusiveProductProvider>();
 
-    final displayedProducts =
-        homeProvider.homeData?['data']?['exclusive_products']
-            as List<dynamic>? ??
-        [];
+    if (productProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final displayedProducts = productProvider.products;
 
     final allFilteredProducts = _filteredProducts(displayedProducts);
 
@@ -118,12 +141,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       borderRadius: BorderRadius.circular(20.0),
                       side: BorderSide.none,
                     ),
-                    onSelected: (selected) {
+                    onSelected: (selected) async {
                       setState(() {
                         _selectedCategoryIndex = index;
-                        // 5. Reset count to 6 whenever user changes the category filter
                         _displayCount = 6;
                       });
+
+                      await context
+                          .read<ExclusiveProductProvider>()
+                          .fetchProducts(endpoint: _endpoints[index]);
                     },
                   );
                 },
@@ -236,12 +262,6 @@ class _ProductGridCard extends StatelessWidget {
     log("Currency: ${product['currency']}");
     log("Live Price: ${product['live_price']}");
 
-    // final String rawPrice = product['live_price']?.toString() ?? '0.00';
-    // final double priceVal = double.tryParse(rawPrice) ?? 0.0;
-    // final String priceText = priceVal > 0
-    //     ? '${currencyProvider.selectedCurrency} ${priceVal.toStringAsFixed(2)}'
-    //     : '${currencyProvider.selectedCurrency} 4,128.31';
-
     final String priceText = product['live_price']?.toString() ?? '--';
 
     final String? imagePath = product['image_path']?.toString();
@@ -251,100 +271,119 @@ class _ProductGridCard extends StatelessWidget {
 
     final bool isInStock = product['stock_status'] == 'in_stock';
 
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF7F7),
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      padding: const EdgeInsets.all(12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 8.0),
-              child: fullImageUrl.isNotEmpty
-                  ? Image.network(
-                      fullImageUrl,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.broken_image,
+    return InkWell(
+      onTap: () {
+        log("Product tapped");
+
+        try {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ProductDetailsScreen(product: product),
+            ),
+          );
+        } catch (e, s) {
+          log("Navigation Error: $e.......$s");
+          log(s.toString());
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF7F7),
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8.0),
+                child: fullImageUrl.isNotEmpty
+                    ? Image.network(
+                        fullImageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              Icons.broken_image,
+                              size: 40,
+                              color: Colors.grey,
+                            ),
+                      )
+                    : const Icon(
+                        Icons.image_not_supported,
                         size: 40,
                         color: Colors.grey,
                       ),
-                    )
-                  : const Icon(
-                      Icons.image_not_supported,
-                      size: 40,
-                      color: Colors.grey,
-                    ),
-            ),
-          ),
-          Text(
-            name,
-            maxLines: 2,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 13.0,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 6.0),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              isInStock ? 'In Stock' : 'Out of Stock',
-              style: TextStyle(
-                fontSize: 12.0,
-                fontWeight: FontWeight.w600,
-                color: isInStock ? const Color(0xFF2E7D32) : Colors.red,
               ),
             ),
-          ),
-          const SizedBox(height: 4.0),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              priceText,
+            Text(
+              name,
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 15.0,
-                fontWeight: FontWeight.w900,
-                color: Colors.black,
+                fontSize: 13.0,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+                height: 1.2,
               ),
             ),
-          ),
-          const SizedBox(height: 8.0),
-          SizedBox(
-            width: double.infinity,
-            height: 36.0,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isInStock
-                    ? AppColors.primaryRed
-                    : const Color.fromARGB(255, 216, 150, 148),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                padding: EdgeInsets.zero,
-              ),
-              onPressed: isInStock ? () {} : null,
+            const SizedBox(height: 6.0),
+            Align(
+              alignment: Alignment.centerLeft,
               child: Text(
-                isInStock ? 'Add to Cart' : 'Out of Stock',
-                style: const TextStyle(
+                isInStock ? 'In Stock' : 'Out of Stock',
+                style: TextStyle(
                   fontSize: 12.0,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  color: isInStock
+                      ? const Color(0xFF2E7D32)
+                      : AppColors.primaryRed,
                 ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4.0),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                priceText,
+                style: const TextStyle(
+                  fontSize: 15.0,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8.0),
+            SizedBox(
+              width: double.infinity,
+              height: 36.0,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryRed,
+                  disabledBackgroundColor: AppColors.outofstock,
+                  disabledForegroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+                onPressed: isInStock ? () {} : null,
+                child: Text(
+                  isInStock ? 'Add to Cart' : 'Out of Stock',
+                  style: const TextStyle(
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

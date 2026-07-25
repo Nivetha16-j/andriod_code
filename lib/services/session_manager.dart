@@ -1,27 +1,38 @@
 import 'dart:convert';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionManager {
   static const String isLoggedInKey = "isLoggedIn";
   static const String userKey = "user";
+  static const String tokenKey = "token";
 
-  /// Save login state
-  static Future<void> saveLogin(Map<String, dynamic> userData) async {
+  /// Registration (existing)
+  static Future<void> saveRegistrationLogin(
+    Map<String, dynamic> userData,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setBool(isLoggedInKey, true);
     await prefs.setString(userKey, jsonEncode(userData));
   }
 
-  /// Check login
-  static Future<bool> isLoggedIn() async {
+  /// Login
+  static Future<void> saveLogin({
+    required Map<String, dynamic> user,
+    required String token,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
 
-    return prefs.getBool(isLoggedInKey) ?? false;
+    await prefs.setBool(isLoggedInKey, true);
+    await prefs.setString(userKey, jsonEncode(user));
+    await prefs.setString(tokenKey, token);
   }
 
-  /// Get user
+  static Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(tokenKey);
+  }
+
   static Future<Map<String, dynamic>?> getUser() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -32,11 +43,13 @@ class SessionManager {
     return jsonDecode(user);
   }
 
-  /// Logout
+  static Future<bool> isLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(isLoggedInKey) ?? false;
+  }
+
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-
-    await prefs.remove(isLoggedInKey);
-    await prefs.remove(userKey);
+    await prefs.clear();
   }
 }

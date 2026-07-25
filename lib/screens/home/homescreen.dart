@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/widgets/home/custom_banner.dart';
 import 'package:junubullion/widgets/home/custom_brands.dart';
 import 'package:junubullion/widgets/home/custom_exclusivecollections.dart';
 import 'package:junubullion/widgets/home/custom_featuregrid.dart';
+import 'package:junubullion/widgets/home/custom_investnowbutton.dart';
 import 'package:junubullion/widgets/home/custom_livespot.dart';
 import 'package:junubullion/widgets/home/custom_statscard.dart';
 import 'package:junubullion/widgets/home/custom_testimonials.dart';
@@ -46,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final homeProvider = context.watch<HomeProvider>();
+    final exclusiveProductProvider = context.watch<ExclusiveProductProvider>();
 
     final currencyProvider = context.watch<CurrencyProvider>();
     final bannerData = homeProvider.homeData?['data']?['banner'];
@@ -60,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             BannerSlider(bannerData: bannerData),
-            const SizedBox(height: 30),
+            const SizedBox(height: 5),
 
             // Pass the API spot_prices object here
             LiveSpotPriceCard(
@@ -78,34 +81,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 5),
 
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                child: Image.asset("assets/jsc.png", fit: BoxFit.cover),
-              ),
-            ),
-            const SizedBox(height: 30),
+            InvestBanner(imagePath: "assets/jsc.png", onTap: () {}),
+            const SizedBox(height: 5),
 
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                child: Image.asset("assets/gsp.png", fit: BoxFit.cover),
-              ),
-            ),
-            const SizedBox(height: 30),
+            InvestBanner(imagePath: "assets/gsp.png", onTap: () {}),
+            const SizedBox(height: 5),
 
             FeaturesGridSection(),
-            const SizedBox(height: 30),
+            const SizedBox(height: 5),
 
             TrendingProductsSection(
               products:
@@ -116,31 +101,28 @@ class _HomeScreenState extends State<HomeScreen> {
               currency: currencyProvider.selectedCurrency,
               unit: currencyProvider.selectedUnit,
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 5),
 
             StatsCardSection(),
-            const SizedBox(height: 30),
+            const SizedBox(height: 5),
 
             ExclusiveCollectionsSection(
-              products:
-                  homeProvider.homeData?['data']?['exclusive_products']
-                      as List<dynamic>?,
-              onViewMoreTap:
-                  widget.onViewMoreTap, // Navigates to 4th tab (Product List)
+              products: exclusiveProductProvider.products,
+              onViewMoreTap: widget.onViewMoreTap,
               currency: currencyProvider.selectedCurrency,
               unit: currencyProvider.selectedUnit,
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 5),
 
             BrandsWeCarrySection(),
-            const SizedBox(height: 30),
+            const SizedBox(height: 5),
 
             TestimonialsSection(
               testimonialsData:
                   homeProvider.homeData?['data']?['testimonials'] ?? [],
               onViewMorePressed: () {},
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 5),
           ],
         ),
       ),

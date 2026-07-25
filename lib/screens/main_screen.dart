@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'package:junubullion/providers/home_provider.dart';
@@ -10,23 +11,28 @@ import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:junubullion/widgets/product/custom_productlist.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int initialIndex;
+
+  const MainScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  // int _currentIndex = 0;
 
   Timer? _livePriceTimer;
 
   final ScrollController _homeScrollController = ScrollController();
   final ScrollController _productListScrollController = ScrollController();
 
+  late int _currentIndex;
+
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final currencyProvider = context.read<CurrencyProvider>();
@@ -35,6 +41,8 @@ class _MainScreenState extends State<MainScreen> {
         currency: currencyProvider.selectedCurrency,
         unit: currencyProvider.selectedUnit,
       );
+
+      context.read<ExclusiveProductProvider>().fetchProducts();
 
       _startLivePriceTimer();
     });

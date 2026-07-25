@@ -19,6 +19,7 @@ class OTPScreen extends StatefulWidget {
   final String? passwordConfirmation;
   final bool isLogin;
   final Map<String, dynamic>? loginUser;
+  final String? loginToken;
 
   const OTPScreen({
     super.key,
@@ -33,6 +34,7 @@ class OTPScreen extends StatefulWidget {
 
     this.isLogin = false,
     this.loginUser,
+    this.loginToken,
   });
 
   @override
@@ -88,8 +90,19 @@ class _OTPScreenState extends State<OTPScreen> {
       if (widget.isLogin) {
         log("IsLoginnnnnn ${widget.isLogin}");
         // await SessionManager.saveLogin(widget.loginUser!);
-        if (widget.loginUser != null) {
-          await SessionManager.saveLogin(widget.loginUser!);
+        if (widget.loginUser != null && widget.loginToken != null) {
+          await SessionManager.saveLogin(
+            user: widget.loginUser!,
+            token: widget.loginToken!,
+          );
+
+          final loggedIn = await SessionManager.isLoggedIn();
+          final user = await SessionManager.getUser();
+          final token = await SessionManager.getToken();
+
+          log("isLoggedIn = $loggedIn");
+          log("user = $user");
+          log("token = $token");
         }
 
         if (mounted) {
@@ -130,7 +143,7 @@ class _OTPScreenState extends State<OTPScreen> {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200 && responseData["status"] == true) {
-        await SessionManager.saveLogin(responseData["data"]);
+        await SessionManager.saveRegistrationLogin(responseData["data"]);
 
         if (mounted) {
           _showToast("Registration Successful");

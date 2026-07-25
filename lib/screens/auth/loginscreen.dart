@@ -66,7 +66,11 @@ class _LoginScreenState extends State<LoginScreen> {
       if (responseData["status"] == true) {
         _showToast("OTP Sent to this number");
 
-        await sendOtp(emailController.text.trim());
+        await sendOtp(
+          phoneNumber: emailController.text.trim(),
+          user: responseData["data"],
+          token: responseData["token"],
+        );
       } else {
         _showToast(
           responseData["message"] ??
@@ -87,7 +91,11 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> sendOtp(String phoneNumber) async {
+  Future<void> sendOtp({
+    required String phoneNumber,
+    required Map<String, dynamic> user,
+    required String token,
+  }) async {
     log("ppppppppppp $phoneNumber.......");
     await _auth.verifyPhoneNumber(
       phoneNumber: phoneNumber,
@@ -108,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
               phoneNumber: phoneNumber,
               verificationId: verificationId,
               isLogin: true,
-              // loginUser: user,
+              loginUser: user,
             ),
           ),
         );
@@ -116,6 +124,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
       codeAutoRetrievalTimeout: (String verificationId) {},
     );
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
   }
 
   @override

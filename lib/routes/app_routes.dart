@@ -5,6 +5,7 @@ import 'package:junubullion/screens/auth/registrationscreen.dart';
 import 'package:junubullion/screens/auth/splashscreen.dart';
 import 'package:junubullion/screens/home/homescreen.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/product/product_details.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -12,6 +13,7 @@ class AppRoutes {
   static const register = '/register';
   static const String otp = '/otp';
   static const String home = '/home';
+  static const String productDetails = "/productDetails";
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -37,6 +39,13 @@ class AppRoutes {
 
       case home:
         return MaterialPageRoute(builder: (_) => const MainScreen());
+
+      case productDetails:
+        final product = settings.arguments as Map<String, dynamic>;
+
+        return MaterialPageRoute(
+          builder: (_) => ProductDetailsScreen(product: product),
+        );
 
       default:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
