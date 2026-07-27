@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
+import 'package:junubullion/providers/product_detail_provider.dart';
+import 'package:junubullion/providers/review_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +18,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => CurrencyProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => ExclusiveProductProvider()),
+        ChangeNotifierProvider(create: (_) => ProductDetailsProvider()),
+        ChangeNotifierProvider(create: (_) => ReviewProvider()),
       ],
 
       child: const MyApp(),

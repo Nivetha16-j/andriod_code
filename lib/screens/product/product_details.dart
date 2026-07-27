@@ -1,17 +1,22 @@
 import 'dart:developer';
 import 'package:html/parser.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
+import 'package:junubullion/providers/product_detail_provider.dart';
+import 'package:junubullion/providers/review_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/services/home_services.dart';
+import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
-  final Map<String, dynamic> product;
+  final int productId;
 
-  const ProductDetailsScreen({super.key, required this.product});
+  const ProductDetailsScreen({super.key, required this.productId});
 
   @override
   State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
@@ -24,23 +29,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int _currentIndex = 3;
   late final ScrollController _scrollController;
 
-  String getEndpoint() {
-    final metal = widget.product['metal_type'].toString().toLowerCase();
-
-    final sub = widget.product['subcategory_id'];
-
-    if (metal == "gold") {
-      if (sub == 1) {
-        return "gold-coins";
-      }
-      return "gold-bars";
-    } else {
-      if (sub == 3) {
-        return "silver-coins";
-      }
-      return "silver-bars";
-    }
-  }
+  int selectedRating = 0;
+  final TextEditingController reviewController = TextEditingController();
 
   void _slideNext() {
     if (!_scrollController.hasClients) return;
@@ -68,16 +58,71 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
+  Future<void> submitReview() async {
+    if (selectedRating == 0) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please select a rating")));
+      return;
+    }
+
+    if (reviewController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please enter your review")));
+      return;
+    }
+
+    final token = await SessionManager.getToken();
+
+    if (token == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please login first")));
+      return;
+    }
+
+    final reviewProvider = context.read<ReviewProvider>();
+    final productProvider = context.read<ProductDetailsProvider>();
+
+    final response = await reviewProvider.submitReview(
+      token: token,
+      productId: widget.productId,
+      rating: selectedRating,
+      description: reviewController.text.trim(),
+    );
+
+    log("resssssssssss $response..........//..........}");
+
+    if (response["success"] == true) {
+      reviewController.clear();
+
+      setState(() {
+        selectedRating = 0;
+      });
+
+      // Refresh product details (includes reviews)
+      await productProvider.fetchProductDetails(widget.productId);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(response["message"])));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response["message"] ?? "Something went wrong")),
+      );
+    }
+  }
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    log("productttttt ${widget.product}");
     _scrollController = ScrollController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ExclusiveProductProvider>().fetchProducts(
-        endpoint: getEndpoint(),
+      context.read<ProductDetailsProvider>().fetchProductDetails(
+        widget.productId,
       );
     });
   }
@@ -92,18 +137,29 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   @override
   void dispose() {
+    reviewController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final product = widget.product;
-    final relatedProvider = Provider.of<ExclusiveProductProvider>(context);
+    final provider = context.watch<ProductDetailsProvider>();
+    final reviewProvider = context.watch<ReviewProvider>();
 
-    final relatedProducts = relatedProvider.products
-        .where((e) => e['id'] != widget.product['id']) // remove current product
-        .toList();
+    if (provider.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (provider.product == null) {
+      return const Scaffold(body: Center(child: Text("Product not found")));
+    }
+
+    final product = provider.product!;
+    final reviews = provider.reviews!;
+    final subcategories = provider.subcategories!;
+
+    final relatedProducts = provider.relatedProducts;
 
     final List<dynamic> images = product['images'] ?? [];
 
@@ -135,8 +191,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     final String shortDescription =
         parse(shortDescriptionHtml).documentElement?.text ?? '';
 
-    final int categoryId = widget.product['category_id'];
-    final int subCategoryId = widget.product['subcategory_id'];
+    final String brand = (product['brand'] ?? '')
+        .toString()
+        .replaceAll('\r\n', '\n')
+        .trim();
+
+    debugPrint("reviewsssssss ${reviews}");
+
+    final String categoryName = product['category']?['name']?.toString() ?? '';
+
+    final String subCategoryNames = subcategories
+        .map((e) => e['name'].toString())
+        .join(', ');
+
+    final String categories = [
+      categoryName,
+      if (subCategoryNames.isNotEmpty) subCategoryNames,
+    ].join(', ');
 
     return Scaffold(
       backgroundColor: Color(0xffFAFAF8),
@@ -305,15 +376,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               const SizedBox(height: 20),
 
               RichText(
-                text: const TextSpan(
-                  style: TextStyle(color: Colors.black, fontSize: 15),
+                text: TextSpan(
+                  style: const TextStyle(color: Colors.black, fontSize: 15),
                   children: [
-                    TextSpan(
+                    const TextSpan(
                       text: "Categories: ",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-
-                    TextSpan(text: "Gold, Gold Bars, Gold Coins"),
+                    TextSpan(text: categories),
                   ],
                 ),
               ),
@@ -356,23 +426,202 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         ),
                       )
                     else if (selectedTab == 1)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Text(
-                            "No reviews available.",
-                            style: TextStyle(color: Colors.grey, fontSize: 15),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          /// Existing Reviews
+                          const Text(
+                            "Reviews",
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
+
+                          const SizedBox(height: 15),
+
+                          if (reviews.isEmpty)
+                            const Text(
+                              "No reviews available for this product.",
+                              style: TextStyle(color: Colors.grey),
+                            )
+                          else
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: reviews.length,
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 30),
+                              itemBuilder: (context, index) {
+                                final review = reviews[index];
+                                final customer = review["customer"] ?? {};
+                                final DateTime createdAt = DateTime.parse(
+                                  review["created_at"],
+                                );
+                                final formattedDate = DateFormat(
+                                  'dd MMM yyyy • hh:mm a',
+                                ).format(createdAt.toLocal());
+
+                                return Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 30,
+                                      child: Icon(Icons.person),
+                                    ),
+                                    SizedBox(width: 10),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          // mainAxisAlignment:
+                                          //     MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              customer["name"] ?? "Anonymous",
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            SizedBox(width: 5),
+                                            Text(
+                                              formattedDate,
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        const SizedBox(height: 6),
+
+                                        Row(
+                                          children: List.generate(
+                                            5,
+                                            (star) => Icon(
+                                              Icons.star,
+                                              size: 18,
+                                              color:
+                                                  star < (review["rating"] ?? 0)
+                                                  ? Colors.amber
+                                                  : Colors.grey.shade300,
+                                            ),
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 8),
+
+                                        Text(
+                                          review["description"] ?? "",
+                                          style: const TextStyle(fontSize: 15),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+
+                          const SizedBox(height: 20),
+
+                          /// Add Review
+                          const Text(
+                            "Add a review",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          Row(
+                            children: [
+                              const Text(
+                                "Your rating ",
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              const Text(
+                                "*",
+                                style: TextStyle(color: Colors.red),
+                              ),
+                              const SizedBox(width: 10),
+
+                              Row(
+                                children: List.generate(
+                                  5,
+                                  (index) => IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () {
+                                      setState(() {
+                                        selectedRating = index + 1;
+                                      });
+                                    },
+                                    icon: Icon(
+                                      Icons.star,
+                                      color: index < selectedRating
+                                          ? Colors.amber
+                                          : Colors.grey.shade400,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          const Text(
+                            "Your review *",
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          TextField(
+                            controller: reviewController,
+                            maxLines: 5,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          SizedBox(
+                            width: 100,
+                            height: 42,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xffD7A420),
+                                foregroundColor: Colors.black,
+                              ),
+                              onPressed: reviewProvider.isLoading
+                                  ? null
+                                  : submitReview,
+                              child: reviewProvider.isLoading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.black,
+                                      ),
+                                    )
+                                  : const Text("Submit"),
+                            ),
+                          ),
+                        ],
                       )
                     else
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 20),
-                          child: Text(
-                            "No brand information available.",
-                            style: TextStyle(color: Colors.grey, fontSize: 15),
-                          ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 10),
+                        child: Text(
+                          brand,
+                          style: TextStyle(color: Colors.grey, fontSize: 15),
                         ),
                       ),
                   ],
@@ -474,8 +723,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  ProductDetailsScreen(product: product),
+                              builder: (_) => ProductDetailsScreen(
+                                productId: product["id"],
+                              ),
                             ),
                           );
                         },

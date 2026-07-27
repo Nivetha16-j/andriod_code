@@ -58,4 +58,33 @@ class ApiService {
       throw Exception('Failed to fetch spot price');
     }
   }
+
+  static Future<Map<String, dynamic>> fetchProductDetails(int id) async {
+    final response = await http.get(Uri.parse("$_baseUrl/product-details/$id"));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception("Failed to fetch product details");
+  }
+
+  static Future<Map<String, dynamic>> addReview({
+    required String token,
+    required int productId,
+    required int rating,
+    required String description,
+  }) async {
+    final response = await http.post(
+      Uri.parse("$_baseUrl/reviews"),
+      headers: {"Accept": "application/json", "Authorization": "Bearer $token"},
+      body: {
+        "product_id": productId.toString(),
+        "rating": rating.toString(),
+        "description": description,
+      },
+    );
+
+    return jsonDecode(response.body);
+  }
 }

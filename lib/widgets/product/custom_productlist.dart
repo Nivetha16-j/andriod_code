@@ -274,12 +274,13 @@ class _ProductGridCard extends StatelessWidget {
     return InkWell(
       onTap: () {
         log("Product tapped");
+        log("Proooo $product");
 
         try {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ProductDetailsScreen(product: product),
+              builder: (_) => ProductDetailsScreen(productId: product["id"]),
             ),
           );
         } catch (e, s) {
@@ -321,7 +322,7 @@ class _ProductGridCard extends StatelessWidget {
             Text(
               name,
               maxLines: 2,
-              textAlign: TextAlign.center,
+              // textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 13.0,

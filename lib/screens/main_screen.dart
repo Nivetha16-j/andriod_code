@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
+import 'package:junubullion/screens/profile/profile.dart';
 import 'package:provider/provider.dart';
 
 import 'package:junubullion/providers/home_provider.dart';
@@ -139,7 +140,7 @@ class _MainScreenState extends State<MainScreen> {
         scrollController: _productListScrollController,
         onRefresh: () => context.read<HomeProvider>().fetchHomeData(),
       ),
-      const Center(child: Text("Profile Screen")),
+      const ProfileScreen(),
     ];
 
     return Scaffold(

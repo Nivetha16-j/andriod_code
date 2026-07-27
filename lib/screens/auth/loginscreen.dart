@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        body: jsonEncode({"phone_number": emailController.text.trim()}),
+        body: jsonEncode({"login": emailController.text.trim()}),
       );
 
       log("response.bodyyyy ${response.body}");
@@ -64,19 +64,36 @@ class _LoginScreenState extends State<LoginScreen> {
       final responseData = jsonDecode(response.body);
 
       if (responseData["status"] == true) {
-        _showToast("OTP Sent to this number");
+        final type = responseData["type"];
 
-        await sendOtp(
-          phoneNumber: emailController.text.trim(),
-          user: responseData["data"],
-          token: responseData["token"],
-        );
-      } else {
-        _showToast(
-          responseData["message"] ??
-              "This number is not registered. Try register",
-          isError: true,
-        );
+        if (type == "email") {
+          Fluttertoast.showToast(
+            msg:
+                "OTP has been sent to your registered email. Please check your inbox.",
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+          );
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => OTPScreen(
+                phoneNumber: "",
+                verificationId: "",
+                email: emailController.text.trim(),
+                isLogin: true,
+                loginUser: responseData["data"],
+                loginToken: responseData["token"],
+              ),
+            ),
+          );
+        } else {
+          await sendOtp(
+            phoneNumber: emailController.text.trim(),
+            user: responseData["data"],
+            token: responseData["token"],
+          );
+        }
       }
     } catch (e) {
       log("errorrrrrrrr ${e.toString()}");
@@ -117,6 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
               verificationId: verificationId,
               isLogin: true,
               loginUser: user,
+              loginToken: token,
             ),
           ),
         );

@@ -68,12 +68,50 @@ class _OTPScreenState extends State<OTPScreen> {
     });
 
     try {
+      // ==========================
+      // EMAIL LOGIN
+      // ==========================
+      if (widget.isLogin && widget.email != null && widget.email!.isNotEmpty) {
+        final response = await http.post(
+          Uri.parse("https://staging.junubullion.com/api/verify-login-otp"),
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: jsonEncode({"email": widget.email, "otp": _enteredOtp}),
+        );
+
+        final responseData = jsonDecode(response.body);
+
+        if (responseData["status"] == true) {
+          await SessionManager.saveLogin(
+            user: responseData["data"],
+            token: responseData["token"],
+          );
+
+          _showToast("Login Successful");
+
+          if (mounted) {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              "/home",
+              (route) => false,
+            );
+          }
+        } else {
+          _showToast(responseData["message"] ?? "Invalid OTP", isError: true);
+        }
+
+        return;
+      }
+
+      // ==========================
+      // PHONE LOGIN / REGISTRATION
+      // ==========================
       final credential = PhoneAuthProvider.credential(
         verificationId: widget.verificationId,
         smsCode: _enteredOtp,
       );
-
-      log("Credddddd $_enteredOtp....${widget.verificationId}");
 
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
@@ -87,8 +125,11 @@ class _OTPScreenState extends State<OTPScreen> {
       /// ============================
       /// LOGIN FLOW
       /// ============================
+      log("isloggggg ${widget.isLogin}");
       if (widget.isLogin) {
-        log("IsLoginnnnnn ${widget.isLogin}");
+        log(
+          "IsLoginnnnnn ${widget.isLogin}........${widget.loginToken}......${widget.loginUser}",
+        );
         // await SessionManager.saveLogin(widget.loginUser!);
         if (widget.loginUser != null && widget.loginToken != null) {
           await SessionManager.saveLogin(
@@ -142,8 +183,13 @@ class _OTPScreenState extends State<OTPScreen> {
 
       final responseData = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && responseData["status"] == true) {
-        await SessionManager.saveRegistrationLogin(responseData["data"]);
+      log("Reeeeeee ${responseData}");
+
+      if (responseData["status"] == true) {
+        await SessionManager.saveLogin(
+          user: responseData["data"],
+          token: responseData["token"],
+        );
 
         if (mounted) {
           _showToast("Registration Successful");
@@ -183,7 +229,9 @@ class _OTPScreenState extends State<OTPScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String displayPhoneNumber = (widget.phoneNumber).toString();
+    final bool isEmailOtp = widget.email != null && widget.email!.isNotEmpty;
+
+    final String displayValue = isEmailOtp ? widget.email! : widget.phoneNumber;
 
     return Scaffold(
       body: SafeArea(
@@ -205,7 +253,9 @@ class _OTPScreenState extends State<OTPScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "Enter the verification code we just sent to your number ${_maskPhoneNumber(displayPhoneNumber)}.",
+                    isEmailOtp
+                        ? "Enter the verification code we sent to your registered email $displayValue."
+                        : "Enter the verification code we just sent to your number ${_maskPhoneNumber(displayValue)}.",
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,

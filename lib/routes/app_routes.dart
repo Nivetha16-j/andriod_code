@@ -44,7 +44,7 @@ class AppRoutes {
         final product = settings.arguments as Map<String, dynamic>;
 
         return MaterialPageRoute(
-          builder: (_) => ProductDetailsScreen(product: product),
+          builder: (_) => ProductDetailsScreen(productId: product['id']),
         );
 
       default:
