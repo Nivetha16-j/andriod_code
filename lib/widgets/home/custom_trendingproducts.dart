@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/home_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:provider/provider.dart';
 
 class TrendingProductsSection extends StatefulWidget {
   final List<dynamic>? products;
@@ -249,104 +253,177 @@ class _ProductCard extends StatelessWidget {
     // 4. Extract Stock Status
     final bool isInStock = product['stock_status'] == 'in_stock';
 
-    return Container(
-      width: 170.0,
-      margin: const EdgeInsets.only(right: 14.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // Image Container with Border & Rounded Corners
-          Container(
-            height: 170.0,
-            width: 170.0,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.0),
-              border: Border.all(color: AppColors.primaryRed, width: 1.2),
+    final int quantity = int.tryParse(product["quantity"].toString()) ?? 0;
+
+    final bool canPurchase =
+        quantity > 0 && product["stock_status"] == "in_stock";
+
+    return InkWell(
+      onTap: () {
+        log("Product tapped");
+        log("Proooo $product");
+
+        try {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ProductDetailsScreen(productId: product["id"]),
             ),
-            padding: const EdgeInsets.all(12.0),
-            child: fullImageUrl.isNotEmpty
-                ? Image.network(
-                    fullImageUrl,
-                    fit: BoxFit.fill,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.broken_image,
+          );
+        } catch (e, s) {
+          log("Navigation Error: $e.......$s");
+          log(s.toString());
+        }
+      },
+      child: Container(
+        width: 170.0,
+        margin: const EdgeInsets.only(right: 14.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Image Container with Border & Rounded Corners
+            Container(
+              height: 170.0,
+              width: 170.0,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16.0),
+                border: Border.all(color: AppColors.primaryRed, width: 1.2),
+              ),
+              padding: const EdgeInsets.all(12.0),
+              child: fullImageUrl.isNotEmpty
+                  ? Image.network(
+                      fullImageUrl,
+                      fit: BoxFit.fill,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.broken_image,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.image_not_supported,
                       size: 40,
                       color: Colors.grey,
                     ),
-                  )
-                : const Icon(
-                    Icons.image_not_supported,
-                    size: 40,
-                    color: Colors.grey,
-                  ),
-          ),
-
-          const SizedBox(height: 8.0),
-
-          // Title
-          SizedBox(
-            height: 34.0,
-            child: Text(
-              name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 13.0,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-                height: 1.2,
-              ),
             ),
-          ),
 
-          const SizedBox(height: 6.0),
+            const SizedBox(height: 8.0),
 
-          // Display Live Price
-          Text(
-            priceText,
-            style: const TextStyle(
-              fontSize: 18.0,
-              fontWeight: FontWeight.w900,
-              color: Colors.black,
-            ),
-          ),
-
-          const SizedBox(height: 6.0),
-
-          // Add to Cart / Out of Stock Button
-          SizedBox(
-            width: double.infinity,
-            height: 36.0,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isInStock
-                    ? AppColors.primaryRed
-                    : const Color.fromRGBO(218, 218, 218, 1),
-                foregroundColor: isInStock ? Colors.white : Colors.black54,
-                elevation: isInStock ? 2 : 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.0),
-                ),
-                padding: EdgeInsets.zero,
-              ),
-              onPressed: isInStock
-                  ? () {
-                      // Add to cart logic
-                    }
-                  : null,
+            // Title
+            SizedBox(
+              height: 34.0,
               child: Text(
-                isInStock ? 'Add to cart' : 'Out of stock',
-                style: TextStyle(
-                  fontSize: 12.0,
-                  fontWeight: FontWeight.w700,
-                  color: isInStock ? Colors.white : Colors.black54,
+                name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  height: 1.2,
                 ),
               ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 6.0),
+
+            // Display Live Price
+            Text(
+              priceText,
+              style: const TextStyle(
+                fontSize: 18.0,
+                fontWeight: FontWeight.w900,
+                color: Colors.black,
+              ),
+            ),
+
+            const SizedBox(height: 6.0),
+
+            // Add to Cart / Out of Stock Button
+            SizedBox(
+              width: double.infinity,
+              height: 36.0,
+              child: Consumer<CartProvider>(
+                builder: (context, cartProvider, child) {
+                  final isInCart = cartProvider.isProductInCart(product["id"]);
+
+                  return ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: canPurchase
+                          ? AppColors.primaryRed
+                          : const Color.fromRGBO(218, 218, 218, 1),
+                      foregroundColor: canPurchase
+                          ? Colors.white
+                          : Colors.black54,
+                      elevation: canPurchase ? 2 : 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    onPressed: canPurchase
+                        ? cartProvider.isAdding(product["id"])
+                              ? null
+                              : () async {
+                                  if (isInCart) {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const MainScreen(initialIndex: 2),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  bool success = await cartProvider.addToCart(
+                                    productId: product["id"],
+                                    quantity: 1,
+                                  );
+
+                                  log("Issssssssadded $success");
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        success
+                                            ? "Added to Cart"
+                                            : "Failed to add product",
+                                      ),
+                                    ),
+                                  );
+                                }
+                        : null,
+                    child: cartProvider.isAdding(product["id"])
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            !canPurchase
+                                ? "Out of stock"
+                                : isInCart
+                                ? "GO TO CART"
+                                : "ADD TO CART",
+                            style: TextStyle(
+                              fontSize: 12.0,
+                              fontWeight: FontWeight.w700,
+                              color: canPurchase
+                                  ? Colors.white
+                                  : Colors.black54,
+                            ),
+                          ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

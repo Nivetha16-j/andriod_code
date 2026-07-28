@@ -1,9 +1,9 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
-import 'package:junubullion/providers/home_provider.dart';
-import 'package:junubullion/routes/app_routes.dart';
+import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +29,8 @@ class ProductListScreen extends StatefulWidget {
 
 class _ProductListScreenState extends State<ProductListScreen> {
   int _selectedCategoryIndex = 0;
+  String? _lastCurrency;
+  String? _lastUnit;
 
   // 1. Variable to control how many items are shown
   int _displayCount = 6;
@@ -51,13 +53,31 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currencyProvider = context.watch<CurrencyProvider>();
+
+    if (_lastCurrency == currencyProvider.selectedCurrency &&
+        _lastUnit == currencyProvider.selectedUnit) {
+      return;
+    }
+
+    _lastCurrency = currencyProvider.selectedCurrency;
+    _lastUnit = currencyProvider.selectedUnit;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ExclusiveProductProvider>().fetchProducts(
-        endpoint: _endpoints[0],
-      );
+      if (mounted) _fetchProducts();
     });
+  }
+
+  Future<void> _fetchProducts() {
+    final currencyProvider = context.read<CurrencyProvider>();
+    return context.read<ExclusiveProductProvider>().fetchProducts(
+      endpoint: _endpoints[_selectedCategoryIndex],
+    );
   }
 
   // Gets the filtered list based on category
@@ -91,6 +111,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
     final allFilteredProducts = _filteredProducts(displayedProducts);
 
     final productsToDisplay = allFilteredProducts.take(_displayCount).toList();
+
+    log("productsToDisplay $productsToDisplay");
 
     final hasMoreProducts = _displayCount < allFilteredProducts.length;
 
@@ -147,9 +169,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         _displayCount = 6;
                       });
 
-                      await context
-                          .read<ExclusiveProductProvider>()
-                          .fetchProducts(endpoint: _endpoints[index]);
+                      await _fetchProducts();
                     },
                   );
                 },
@@ -271,6 +291,11 @@ class _ProductGridCard extends StatelessWidget {
 
     final bool isInStock = product['stock_status'] == 'in_stock';
 
+    final int quantity = int.tryParse(product["quantity"].toString()) ?? 0;
+
+    final bool canPurchase =
+        quantity > 0 && product["stock_status"] == "in_stock";
+
     return InkWell(
       onTap: () {
         log("Product tapped");
@@ -335,7 +360,7 @@ class _ProductGridCard extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                isInStock ? 'In Stock' : 'Out of Stock',
+                canPurchase ? 'In Stock' : 'Out of Stock',
                 style: TextStyle(
                   fontSize: 12.0,
                   fontWeight: FontWeight.w600,
@@ -361,26 +386,77 @@ class _ProductGridCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               height: 36.0,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryRed,
-                  disabledBackgroundColor: AppColors.outofstock,
-                  disabledForegroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  padding: EdgeInsets.zero,
-                ),
-                onPressed: isInStock ? () {} : null,
-                child: Text(
-                  isInStock ? 'Add to Cart' : 'Out of Stock',
-                  style: const TextStyle(
-                    fontSize: 12.0,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
+              child: Consumer<CartProvider>(
+                builder: (context, cartProvider, child) {
+                  final isInCart = cartProvider.isProductInCart(product["id"]);
+
+                  return ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isInStock
+                          ? AppColors.primaryRed
+                          : const Color.fromRGBO(218, 218, 218, 1),
+                      foregroundColor: isInStock
+                          ? Colors.white
+                          : Colors.black54,
+                      elevation: isInStock ? 2 : 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    onPressed: canPurchase
+                        ? cartProvider.isAdding(product["id"])
+                              ? null
+                              : () async {
+                                  if (isInCart) {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const MainScreen(initialIndex: 2),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  bool success = await cartProvider.addToCart(
+                                    productId: product["id"],
+                                    quantity: 1,
+                                  );
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        success
+                                            ? "Added to Cart"
+                                            : "Failed to add product",
+                                      ),
+                                    ),
+                                  );
+                                }
+                        : null,
+                    child: cartProvider.isAdding(product["id"])
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            !canPurchase
+                                ? "Out of stock"
+                                : isInCart
+                                ? "GO TO CART"
+                                : "ADD TO CART",
+                            style: TextStyle(
+                              fontSize: 12.0,
+                              fontWeight: FontWeight.w700,
+                              color: isInStock ? Colors.white : Colors.black54,
+                            ),
+                          ),
+                  );
+                },
               ),
             ),
           ],

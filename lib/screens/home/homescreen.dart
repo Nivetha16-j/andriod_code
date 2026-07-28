@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/widgets/home/custom_banner.dart';
@@ -42,6 +43,10 @@ class _HomeScreenState extends State<HomeScreen> {
         currency: currencyProvider.selectedCurrency,
         unit: currencyProvider.selectedUnit,
       );
+    });
+
+    Future.microtask(() {
+      context.read<CartProvider>().fetchCart();
     });
   }
 

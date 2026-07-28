@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
+import 'package:junubullion/widgets/profile/quickaction.dart';
+import 'package:junubullion/widgets/profile/recentorders.dart';
+import 'package:junubullion/widgets/profile/wallet.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -30,8 +33,8 @@ class _DashboardState extends State<Dashboard> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.only(
-                      left: 5,
-                      right: 5,
+                      left: 10,
+                      right: 10,
                       top: 10,
                       bottom: 10,
                     ),
@@ -84,17 +87,17 @@ class _DashboardState extends State<Dashboard> {
                         const SizedBox(height: 10),
 
                         Row(
-                          children: const [
+                          children: [
                             Expanded(
                               child: _InfoButton(
-                                icon: Icons.pie_chart_outline,
+                                image: "assets/order_count.png",
                                 title: "4 Orders",
                               ),
                             ),
                             SizedBox(width: 5),
                             Expanded(
                               child: _InfoButton(
-                                icon: Icons.badge_outlined,
+                                image: "assets/kyc.png",
                                 title: "KYC Required",
                               ),
                             ),
@@ -106,6 +109,13 @@ class _DashboardState extends State<Dashboard> {
                   SizedBox(height: 18),
                   KycVerificationCard(),
                   SizedBox(height: 18),
+                  WalletSection(),
+                  SizedBox(height: 18),
+                  QuickActionsSection(),
+                  SizedBox(height: 18),
+                  RecentOrdersSection(),
+                  SizedBox(height: 18),
+
                   // Wallet
                   // Shop
                   // Quick Actions
@@ -121,10 +131,10 @@ class _DashboardState extends State<Dashboard> {
 }
 
 class _InfoButton extends StatelessWidget {
-  final IconData icon;
+  final String image;
   final String title;
 
-  const _InfoButton({required this.icon, required this.title});
+  const _InfoButton({required this.image, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -136,10 +146,10 @@ class _InfoButton extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(.35)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Icon(icon, color: Colors.white, size: 15),
-          const SizedBox(width: 5),
+          Image.asset(image, height: 20, width: 20, color: Colors.white),
+          // const SizedBox(width: 5),
           Text(
             title,
             style: const TextStyle(

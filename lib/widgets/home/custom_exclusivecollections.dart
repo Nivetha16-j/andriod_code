@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/home_services.dart';
 
 class ExclusiveCollectionsSection extends StatefulWidget {
@@ -168,77 +170,95 @@ class _ExclusiveProductCard extends StatelessWidget {
         ? '${ExclusiveCollectionsSection.imageBaseUrl}$imagePath'
         : '';
 
-    return Container(
-      padding: const EdgeInsets.all(12.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10.0,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Product Image Container
-          Expanded(
-            child: Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: fullImageUrl.isNotEmpty
-                    ? Image.network(
-                        fullImageUrl,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                              Icons.broken_image,
-                              size: 40,
-                              color: Colors.grey,
-                            ),
-                      )
-                    : const Icon(
-                        Icons.image_not_supported,
-                        size: 40,
-                        color: Colors.grey,
-                      ),
+    return InkWell(
+      onTap: () {
+        log("Product tapped");
+        log("Proooo $product");
+
+        try {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ProductDetailsScreen(productId: product["id"]),
+            ),
+          );
+        } catch (e, s) {
+          log("Navigation Error: $e.......$s");
+          log(s.toString());
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10.0,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Image Container
+            Expanded(
+              child: Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: fullImageUrl.isNotEmpty
+                      ? Image.network(
+                          fullImageUrl,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                                Icons.broken_image,
+                                size: 40,
+                                color: Colors.grey,
+                              ),
+                        )
+                      : const Icon(
+                          Icons.image_not_supported,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 10.0),
+            const SizedBox(height: 10.0),
 
-          // Title (Fixed height for 2 lines so price alignment is uniform across grid)
-          SizedBox(
-            height: 36.0,
-            child: Text(
-              name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            // Title (Fixed height for 2 lines so price alignment is uniform across grid)
+            SizedBox(
+              height: 36.0,
+              child: Text(
+                name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13.0,
+                  fontWeight: FontWeight.w600,
+                  color: ExclusiveCollectionsSection.primaryDarkRed,
+                  height: 1.2,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 6.0),
+
+            // Price Tag
+            Text(
+              priceText,
               style: const TextStyle(
-                fontSize: 13.0,
-                fontWeight: FontWeight.w600,
-                color: ExclusiveCollectionsSection.primaryDarkRed,
-                height: 1.2,
+                fontSize: 20.0,
+                fontWeight: FontWeight.w900,
+                color: Colors.black,
               ),
             ),
-          ),
-
-          const SizedBox(height: 6.0),
-
-          // Price Tag
-          Text(
-            priceText,
-            style: const TextStyle(
-              fontSize: 20.0,
-              fontWeight: FontWeight.w900,
-              color: Colors.black,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

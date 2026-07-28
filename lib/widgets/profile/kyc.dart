@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/theme/app_colors.dart';
 
 class KycVerificationCard extends StatelessWidget {
   const KycVerificationCard({super.key});
@@ -32,10 +33,10 @@ class KycVerificationCard extends StatelessWidget {
                 colors: [Color(0xffD8A007), Color(0xffF6B53E)],
               ),
             ),
-            child: const Icon(
-              Icons.warning_amber_rounded,
-              color: Colors.white,
-              size: 28,
+            child: Image.asset(
+              "assets/kyc_validation.png",
+              height: 20,
+              width: 20,
             ),
           ),
 
@@ -69,22 +70,50 @@ class KycVerificationCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             height: 52,
-            child: ElevatedButton.icon(
+            child: ElevatedButton(
               onPressed: () {},
-              icon: const Icon(Icons.cloud_upload_outlined),
-              label: const Text(
-                "Complete KYC Now",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xffA91F1F),
+                backgroundColor: AppColors.primaryRed,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(20),
                 ),
               ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    "assets/cloud.png",
+                    height: 15,
+                    width: 15,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Complete KYC Now",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
             ),
+
+            // ElevatedButton.icon(
+            //   onPressed: () {},
+            //   icon: ,
+            //   label: const Text(
+            //     "Complete KYC Now",
+            //     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            //   ),
+            //   style: ElevatedButton.styleFrom(
+            //     backgroundColor: const Color(0xffA91F1F),
+            //     foregroundColor: Colors.white,
+            //     elevation: 0,
+            //     shape: RoundedRectangleBorder(
+            //       borderRadius: BorderRadius.circular(14),
+            //     ),
+            //   ),
+            // ),
           ),
         ],
       ),

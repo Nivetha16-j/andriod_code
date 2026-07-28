@@ -2,11 +2,11 @@ import 'dart:developer';
 import 'package:html/parser.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:junubullion/providers/exclusive_product_provider.dart';
+import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/product_detail_provider.dart';
 import 'package:junubullion/providers/review_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
-import 'package:junubullion/services/home_services.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
@@ -28,6 +28,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int selectedTab = 0;
   int _currentIndex = 3;
   late final ScrollController _scrollController;
+  String? _lastCurrency;
+  String? _lastUnit;
 
   int selectedRating = 0;
   final TextEditingController reviewController = TextEditingController();
@@ -83,8 +85,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
 
     final reviewProvider = context.read<ReviewProvider>();
-    final productProvider = context.read<ProductDetailsProvider>();
-
     final response = await reviewProvider.submitReview(
       token: token,
       productId: widget.productId,
@@ -102,7 +102,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       });
 
       // Refresh product details (includes reviews)
-      await productProvider.fetchProductDetails(widget.productId);
+      await _fetchProductDetails();
 
       ScaffoldMessenger.of(
         context,
@@ -119,13 +119,37 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     // TODO: implement initState
     super.initState();
     _scrollController = ScrollController();
+  }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currencyProvider = context.watch<CurrencyProvider>();
+
+    if (_lastCurrency == currencyProvider.selectedCurrency &&
+        _lastUnit == currencyProvider.selectedUnit) {
+      return;
+    }
+
+    _lastCurrency = currencyProvider.selectedCurrency;
+    _lastUnit = currencyProvider.selectedUnit;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProductDetailsProvider>().fetchProductDetails(
-        widget.productId,
-      );
+      if (mounted) _fetchProductDetails();
     });
   }
+
+  Future<void> _fetchProductDetails() {
+    final currencyProvider = context.read<CurrencyProvider>();
+    return context.read<ProductDetailsProvider>().fetchProductDetails(
+      widget.productId,
+    );
+  }
+
+  String _apiUnit(String unit) => switch (unit.toLowerCase()) {
+    'gram' => 'gram',
+    'ounce' => 'toz',
+    _ => 'kg',
+  };
 
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
@@ -156,6 +180,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
 
     final product = provider.product!;
+    log("pppppppppppppppppppp $product");
     final reviews = provider.reviews!;
     final subcategories = provider.subcategories!;
 
@@ -170,6 +195,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     final String price = product['live_price']?.toString() ?? '--';
 
     final bool isInStock = product['stock_status'] == 'in_stock';
+
+    final int availableQty = int.tryParse(product["quantity"].toString()) ?? 0;
+
+    final bool canPurchase = isInStock && availableQty > 0;
 
     final String imageUrl =
         "https://staging.junubullion.com/storage/${product['image_path']}";
@@ -302,9 +331,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               const SizedBox(height: 4),
 
               Text(
-                isInStock ? "In Stock" : "Out of Stock",
+                canPurchase ? "In Stock" : "Out of Stock",
                 style: TextStyle(
-                  color: isInStock ? Colors.green : Colors.red,
+                  color: canPurchase ? Colors.green : Colors.red,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -331,9 +360,37 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           IconButton(
-                            onPressed: () {
-                              if (quantity > 1) {
-                                setState(() => quantity--);
+                            onPressed: () async {
+                              final cart = context.read<CartProvider>();
+
+                              if (cart.isProductInCart(product["id"])) {
+                                final cartItem = cart.cartItems.firstWhere(
+                                  (e) => e["product_id"] == product["id"],
+                                );
+
+                                if (cartItem["quantity"] >= availableQty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Only $availableQty item${availableQty == 1 ? '' : 's'} available",
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                await cart.updateCartQuantity(
+                                  productId: product["id"],
+                                  quantity: cartItem["quantity"] + 1,
+                                );
+
+                                setState(() {
+                                  quantity = cartItem["quantity"] + 1;
+                                });
+                              } else {
+                                setState(() {
+                                  quantity++;
+                                });
                               }
                             },
                             icon: const Icon(Icons.remove),
@@ -343,10 +400,52 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           IconButton(
-                            onPressed: () {
-                              setState(() => quantity++);
-                            },
                             icon: const Icon(Icons.add),
+                            onPressed: () async {
+                              final cart = context.read<CartProvider>();
+
+                              if (cart.isProductInCart(product["id"])) {
+                                final cartItem = cart.cartItems.firstWhere(
+                                  (e) => e["product_id"] == product["id"],
+                                );
+
+                                // ADD THIS CHECK HERE
+                                if (cartItem["quantity"] >= availableQty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Only $availableQty item(s) available",
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                await cart.updateCartQuantity(
+                                  productId: product["id"],
+                                  quantity: cartItem["quantity"] + 1,
+                                );
+
+                                setState(() {
+                                  quantity = cartItem["quantity"] + 1;
+                                });
+                              } else {
+                                if (quantity >= availableQty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        "Only $availableQty item(s) available",
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                setState(() {
+                                  quantity++;
+                                });
+                              }
+                            },
                           ),
                         ],
                       ),
@@ -356,18 +455,95 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   Expanded(
                     child: SizedBox(
                       height: 48,
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff8D2423),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: const Text(
-                          "ADD TO CART",
-                          style: TextStyle(color: Colors.white),
-                        ),
+                      child: Consumer<CartProvider>(
+                        builder: (context, cartProvider, child) {
+                          final isInCart = cartProvider.isProductInCart(
+                            product["id"],
+                          );
+
+                          return ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: canPurchase
+                                  ? AppColors.primaryRed
+                                  : const Color.fromRGBO(218, 218, 218, 1),
+                              foregroundColor: canPurchase
+                                  ? Colors.white
+                                  : Colors.black54,
+                              elevation: canPurchase ? 2 : 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20.0),
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
+                            onPressed: canPurchase
+                                ? cartProvider.isAdding(product["id"])
+                                      ? null
+                                      : () async {
+                                          // Check latest available quantity
+                                          if (availableQty <= 0) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  "Product is out of stock",
+                                                ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          if (isInCart) {
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    const MainScreen(
+                                                      initialIndex: 2,
+                                                    ),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          bool success = await cartProvider
+                                              .addToCart(
+                                                productId: product["id"],
+                                                quantity: 1,
+                                              );
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                success
+                                                    ? "Added to Cart"
+                                                    : "Failed to add product",
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                : null,
+                            child: cartProvider.isAdding(product["id"])
+                                ? const SizedBox(
+                                    height: 18,
+                                    width: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    !canPurchase
+                                        ? "Out of stock"
+                                        : isInCart
+                                        ? "GO TO CART"
+                                        : "ADD TO CART",
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -708,6 +884,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     final String stockStatus =
                         product['stock_status']?.toString() ?? 'out_of_stock';
 
+                    final int availableQty =
+                        int.tryParse(product["quantity"].toString()) ?? 0;
+
+                    final bool canPurchase =
+                        stockStatus == "in_stock" && availableQty > 0;
+
                     return Container(
                       width: 170,
                       margin: const EdgeInsets.only(right: 14),
@@ -748,11 +930,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                stockStatus == "in_stock"
-                                    ? "In Stock"
-                                    : "Out of Stock",
+                                canPurchase ? "In Stock" : "Out of Stock",
                                 style: TextStyle(
-                                  color: product['stock_status'] == "in_stock"
+                                  color: canPurchase
                                       ? Colors.green
                                       : Colors.red,
                                   fontWeight: FontWeight.w600,
@@ -769,21 +949,91 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               const SizedBox(height: 8),
                               SizedBox(
                                 width: double.infinity,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primaryRed,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                  ),
-                                  onPressed: () {},
-                                  child: const Text(
-                                    "Add to cart",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
+                                child: Consumer<CartProvider>(
+                                  builder: (context, cartProvider, child) {
+                                    final isInCart = cartProvider
+                                        .isProductInCart(product["id"]);
+
+                                    return ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: canPurchase
+                                            ? AppColors.primaryRed
+                                            : const Color.fromRGBO(
+                                                218,
+                                                218,
+                                                218,
+                                                1,
+                                              ),
+                                        foregroundColor: canPurchase
+                                            ? Colors.white
+                                            : Colors.black54,
+                                        elevation: canPurchase ? 2 : 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            20.0,
+                                          ),
+                                        ),
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                      onPressed: !canPurchase
+                                          ? null
+                                          : cartProvider.isAdding(product["id"])
+                                          ? null
+                                          : () async {
+                                              if (isInCart) {
+                                                log("Cart screen");
+                                                Navigator.pushReplacement(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        const MainScreen(
+                                                          initialIndex: 2,
+                                                        ),
+                                                  ),
+                                                );
+                                                return;
+                                              }
+
+                                              bool success = await cartProvider
+                                                  .addToCart(
+                                                    productId: product["id"],
+                                                    quantity: 1,
+                                                  );
+
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    success
+                                                        ? "Added to Cart"
+                                                        : "Failed to add product",
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                      child:
+                                          cartProvider.isAdding(product["id"])
+                                          ? const SizedBox(
+                                              height: 18,
+                                              width: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : Text(
+                                              !canPurchase
+                                                  ? "Out of stock"
+                                                  : isInCart
+                                                  ? "GO TO CART"
+                                                  : "ADD TO CART",
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                    );
+                                  },
                                 ),
                               ),
                             ],

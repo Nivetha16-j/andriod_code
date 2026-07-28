@@ -50,12 +50,13 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> checkLogin() async {
-    // Keep splash screen visible for 3 seconds
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(milliseconds: 1200));
 
     bool loggedIn = await SessionManager.isLoggedIn();
 
-    log("lllooooo $loggedIn)");
+    final token = await SessionManager.getToken();
+
+    log("lllooooo $loggedIn)..............$token");
 
     if (!mounted) return;
 

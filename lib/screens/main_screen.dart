@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
+import 'package:junubullion/screens/cart/cartscreen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
 import 'package:provider/provider.dart';
 
@@ -44,6 +46,7 @@ class _MainScreenState extends State<MainScreen> {
       );
 
       context.read<ExclusiveProductProvider>().fetchProducts();
+      context.read<CartProvider>().fetchCart();
 
       _startLivePriceTimer();
     });
@@ -134,7 +137,7 @@ class _MainScreenState extends State<MainScreen> {
         scrollController: _homeScrollController,
       ),
       const Center(child: Text("Search / Category")),
-      const Center(child: Text("Cart Screen")),
+      const CartScreen(),
       ProductListScreen(
         isEmbedded: true,
         scrollController: _productListScrollController,
