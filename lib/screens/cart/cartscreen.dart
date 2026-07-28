@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/cart/custom_cartitem.dart';
 import 'package:junubullion/widgets/cart/custom_summary.dart';
 import 'package:provider/provider.dart';
@@ -25,36 +26,6 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF7F7F7),
-
-      // appBar: AppBar(
-      //   backgroundColor: Colors.white,
-      //   elevation: 0,
-      //   centerTitle: true,
-      //   title: const Text(
-      //     "Cart",
-      //     style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
-      //   ),
-      // ),
-
-      // bottomNavigationBar: SafeArea(
-      //   minimum: const EdgeInsets.all(20),
-      //   child: SizedBox(
-      //     height: 55,
-      //     child: ElevatedButton(
-      //       style: ElevatedButton.styleFrom(
-      //         backgroundColor: const Color(0xff991B1E),
-      //         shape: RoundedRectangleBorder(
-      //           borderRadius: BorderRadius.circular(30),
-      //         ),
-      //       ),
-      //       onPressed: () {},
-      //       child: const Text(
-      //         "Check Out",
-      //         style: TextStyle(fontSize: 20, color: Colors.white),
-      //       ),
-      //     ),
-      //   ),
-      // ),
       body: Consumer<CartProvider>(
         builder: (context, provider, child) {
           if (provider.cartItems.isEmpty) {
@@ -66,7 +37,7 @@ class _CartScreenState extends State<CartScreen> {
             children: [
               const Text(
                 "Your cart",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 15),
 
@@ -83,14 +54,92 @@ class _CartScreenState extends State<CartScreen> {
 
               const Text(
                 "Cart Summary",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 20),
+              Container(
+                height: 50,
+                padding: EdgeInsets.only(left: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  // borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: "Enter coupon code",
+                          hintStyle: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
+                          ),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
 
-              const SummaryWidget(),
+                    SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Apply coupon
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryRed,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(0),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                        ),
+                        child: const Text(
+                          "Apply",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
 
-              const SizedBox(height: 80),
+              SummaryWidget(subtotal: provider.subtotal),
+
+              const SizedBox(height: 30),
+
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SizedBox(
+                  height: 60,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // Apply coupon
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryRed,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      // padding: const EdgeInsets.symmetric(horizontal: 18),
+                    ),
+                    child: const Text(
+                      "CheckOut",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           );
         },

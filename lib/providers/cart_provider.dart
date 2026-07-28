@@ -125,4 +125,26 @@ class CartProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  double get subtotal {
+    double total = 0;
+
+    for (var item in cartItems) {
+      double price =
+          double.tryParse(
+            (item["effective_unit_price"] ??
+                    item["unit_price"] ??
+                    item["price"] ??
+                    0)
+                .toString(),
+          ) ??
+          0;
+
+      int quantity = int.tryParse(item["quantity"].toString()) ?? 0;
+
+      total += price * quantity;
+    }
+
+    return total;
+  }
 }

@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
 
 class SummaryWidget extends StatelessWidget {
-  const SummaryWidget({super.key});
+  final double subtotal;
+
+  const SummaryWidget({super.key, required this.subtotal});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _row("Subtotal Product", "\$211.66"),
+        _row("Subtotal Product", "\$${subtotal.toStringAsFixed(2)}"),
 
-        SizedBox(height: 15),
+        const SizedBox(height: 15),
 
         _row("Transaction fee", "+ \$0.00"),
 
-        Divider(height: 35),
+        const Divider(height: 35),
 
-        _row("Order Total", "\$220.13", valueColor: Colors.red, bold: true),
+        _row(
+          "Order Total",
+          "\$${subtotal.toStringAsFixed(2)}",
+          valueColor: Colors.red,
+          bold: true,
+        ),
       ],
     );
   }
@@ -32,7 +39,7 @@ class SummaryWidget extends StatelessWidget {
         Text(
           title,
           style: TextStyle(
-            fontSize: bold ? 22 : 18,
+            fontSize: bold ? 15 : 14,
             fontWeight: bold ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -40,7 +47,7 @@ class SummaryWidget extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontSize: bold ? 22 : 18,
+            fontSize: bold ? 15 : 14,
             fontWeight: bold ? FontWeight.bold : FontWeight.w600,
             color: valueColor,
           ),

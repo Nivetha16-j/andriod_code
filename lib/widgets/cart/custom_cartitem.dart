@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 
 class CartItemCard extends StatelessWidget {
@@ -48,20 +51,20 @@ class CartItemCard extends StatelessWidget {
                   item["name"] ?? "",
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
                 ),
 
                 const SizedBox(height: 5),
 
                 Text(
                   "Free 2 - 4 days shipping",
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(fontSize: 12),
                 ),
                 const SizedBox(height: 5),
-                Text(
-                  "7 days return",
-                  style: const TextStyle(color: Colors.grey),
-                ),
+                Text("7 days return", style: const TextStyle(fontSize: 12)),
 
                 const SizedBox(height: 5),
 
@@ -71,7 +74,7 @@ class CartItemCard extends StatelessWidget {
                       "",
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -81,11 +84,15 @@ class CartItemCard extends StatelessWidget {
           Column(
             children: [
               IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.primaryRed,
+                ),
                 onPressed: () async {
                   final shouldDelete = await showDialog<bool>(
                     context: context,
                     builder: (_) => AlertDialog(
+                      backgroundColor: const Color(0xffF7F7F7),
                       title: const Text("Remove Item"),
                       content: const Text(
                         "Are you sure you want to remove this product from your cart?",
@@ -97,9 +104,9 @@ class CartItemCard extends StatelessWidget {
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
-                          child: const Text(
+                          child: Text(
                             "Remove",
-                            style: TextStyle(color: Colors.red),
+                            style: TextStyle(color: AppColors.primaryRed),
                           ),
                         ),
                       ],
@@ -156,7 +163,27 @@ class CartItemCard extends StatelessWidget {
                       onPressed: () async {
                         final provider = context.read<CartProvider>();
 
+                        log("proooooooo $provider");
+
                         int qty = item["quantity"];
+
+                        log("quannnnnnnnn $qty.......$item");
+
+                        int availableQty =
+                            int.tryParse(item["quantity"].toString()) ?? 0;
+
+                        log("availlllllll $availableQty");
+
+                        if (qty >= availableQty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Maximum available quantity reached",
+                              ),
+                            ),
+                          );
+                          return;
+                        }
 
                         await provider.updateCartQuantity(
                           productId: item["product_id"],
