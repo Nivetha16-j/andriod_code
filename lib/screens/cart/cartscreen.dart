@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/cart/custom_cartitem.dart';
 import 'package:junubullion/widgets/cart/custom_summary.dart';
@@ -13,12 +16,60 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  String? _lastCurrency;
+  String? _lastUnit;
+
+  // @override
+  // void initState() {
+  //   // TODO: implement initState
+  //   super.initState();
+  //   Future.microtask(() {
+  //     // context.read<CartProvider>().fetchCart();
+  //     final currency = context.read<CurrencyProvider>();
+  //     final cartProvider = context.read<CartProvider>();
+
+  //     cartProvider.updateSelection(
+  //       currency: currency.selectedCurrency,
+  //       unit: currency.selectedUnit,
+  //     );
+
+  //     log(
+  //       "ppppppppppppppp// ${currency.selectedCurrency}......${currency.selectedUnit}",
+  //     );
+
+  //     cartProvider.fetchCart();
+  //   });
+  // }
+
   @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    Future.microtask(() {
-      context.read<CartProvider>().fetchCart();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final currency = context.watch<CurrencyProvider>();
+
+    if (_lastCurrency == currency.selectedCurrency &&
+        _lastUnit == currency.selectedUnit) {
+      return;
+    }
+
+    _lastCurrency = currency.selectedCurrency;
+    _lastUnit = currency.selectedUnit;
+
+    log(
+      "cartProvider ${currency.selectedCurrency}.....${currency.selectedUnit}",
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final cartProvider = context.read<CartProvider>();
+
+      cartProvider.updateSelection(
+        currency: currency.selectedCurrency,
+        unit: currency.selectedUnit,
+      );
+
+      cartProvider.fetchCart();
     });
   }
 

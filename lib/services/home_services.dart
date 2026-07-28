@@ -59,14 +59,39 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> fetchProductDetails(int id) async {
-    final response = await http.get(Uri.parse("$_baseUrl/product-details/$id"));
+  // static Future<Map<String, dynamic>> fetchProductDetails(int id) async {
+  //   final response = await http.get(Uri.parse("$_baseUrl/product-details/$id"));
+
+  //   if (response.statusCode == 200) {
+  //     return jsonDecode(response.body);
+  //   }
+
+  //   throw Exception("Failed to fetch product details");
+  // }
+
+  static Future<Map<String, dynamic>> fetchProductDetails({
+    required int id,
+    required String currency,
+    required String unit,
+  }) async {
+    final uri = Uri.parse("$_baseUrl/product-details/$id").replace(
+      queryParameters: {
+        "currency": currency,
+        "unit": unit.toLowerCase() == "ounce"
+            ? "toz"
+            : unit.toLowerCase() == "kilogram"
+            ? "kg"
+            : "gram",
+      },
+    );
+
+    final response = await http.get(uri);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
 
-    throw Exception("Failed to fetch product details");
+    throw Exception("Failed");
   }
 
   static Future<Map<String, dynamic>> addReview({

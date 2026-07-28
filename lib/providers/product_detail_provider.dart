@@ -9,29 +9,88 @@ class ProductDetailsProvider extends ChangeNotifier {
   List<dynamic> reviews = [];
   List<dynamic> subcategories = [];
 
-  Future<void> fetchProductDetails(int id) async {
-    isLoading = true;
-    notifyListeners();
+  // Future<void> fetchProductDetails(int id) async {
+  //   isLoading = true;
+  //   notifyListeners();
+
+  //   try {
+  //     final response = await ApiService.fetchProductDetails(id);
+
+  //     debugPrint(
+  //       "Ppppppppppppp ${response["data"]['subcategories']}........${response["data"]["product"]['category']['name']}",
+  //     );
+
+  //     product = response["data"]["product"];
+
+  //     relatedProducts = response["data"]["related_products"] ?? [];
+
+  //     reviews = response["data"]["reviews"] ?? [];
+
+  //     subcategories = response["data"]["subcategories"] ?? [];
+  //   } catch (e) {
+  //     debugPrint(e.toString());
+  //   }
+
+  //   isLoading = false;
+  //   notifyListeners();
+  // }
+
+  // Future<void> fetchProductDetails(
+  //   int id, {
+  //   required String currency,
+  //   required String unit,
+  // }) async {
+  //   isLoading = true;
+  //   notifyListeners();
+
+  //   try {
+  //     final response = await ApiService.fetchProductDetails(
+  //       id: id,
+  //       currency: currency,
+  //       unit: unit,
+  //     );
+
+  //     product = response["data"]["product"];
+  //     relatedProducts = response["data"]["related_products"] ?? [];
+  //     reviews = response["data"]["reviews"] ?? [];
+  //     subcategories = response["data"]["subcategories"] ?? [];
+  //   } finally {
+  //     isLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
+
+  Future<void> fetchProductDetails(
+    int id, {
+    required String currency,
+    required String unit,
+    bool showLoader = true,
+  }) async {
+    if (showLoader) {
+      isLoading = true;
+      notifyListeners();
+    }
 
     try {
-      final response = await ApiService.fetchProductDetails(id);
-
-      debugPrint(
-        "Ppppppppppppp ${response["data"]['subcategories']}........${response["data"]["product"]['category']['name']}",
+      final response = await ApiService.fetchProductDetails(
+        id: id,
+        currency: currency,
+        unit: unit,
       );
 
       product = response["data"]["product"];
-
       relatedProducts = response["data"]["related_products"] ?? [];
-
       reviews = response["data"]["reviews"] ?? [];
-
       subcategories = response["data"]["subcategories"] ?? [];
     } catch (e) {
       debugPrint(e.toString());
+    } finally {
+      if (showLoader) {
+        isLoading = false;
+        notifyListeners();
+      } else {
+        notifyListeners();
+      }
     }
-
-    isLoading = false;
-    notifyListeners();
   }
 }

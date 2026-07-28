@@ -73,10 +73,20 @@ class _ProductListScreenState extends State<ProductListScreen> {
     });
   }
 
+  // Future<void> _fetchProducts() {
+  //   final currencyProvider = context.read<CurrencyProvider>();
+  //   return context.read<ExclusiveProductProvider>().fetchProducts(
+  //     endpoint: _endpoints[_selectedCategoryIndex],
+  //   );
+  // }
+
   Future<void> _fetchProducts() {
-    final currencyProvider = context.read<CurrencyProvider>();
+    final currency = context.read<CurrencyProvider>();
+
     return context.read<ExclusiveProductProvider>().fetchProducts(
       endpoint: _endpoints[_selectedCategoryIndex],
+      currency: currency.selectedCurrency,
+      unit: currency.selectedUnit,
     );
   }
 

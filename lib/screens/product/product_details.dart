@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:html/parser.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   late final ScrollController _scrollController;
   String? _lastCurrency;
   String? _lastUnit;
+  Timer? _timer;
 
   int selectedRating = 0;
   final TextEditingController reviewController = TextEditingController();
@@ -116,9 +118,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+
     _scrollController = ScrollController();
+
+    // Initial fetch with loader
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _fetchProductDetails(showLoader: true);
+      }
+    });
+
+    // Live refresh without loader
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        _fetchProductDetails(showLoader: false);
+      }
+    });
   }
 
   @override
@@ -134,14 +150,37 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     _lastCurrency = currencyProvider.selectedCurrency;
     _lastUnit = currencyProvider.selectedUnit;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _fetchProductDetails();
+      if (mounted) {
+        _fetchProductDetails(showLoader: false);
+      }
     });
   }
 
-  Future<void> _fetchProductDetails() {
-    final currencyProvider = context.read<CurrencyProvider>();
+  // Future<void> _fetchProductDetails() {
+  //   final currencyProvider = context.read<CurrencyProvider>();
+  //   return context.read<ProductDetailsProvider>().fetchProductDetails(
+  //     widget.productId,
+  //   );
+  // }
+
+  // Future<void> _fetchProductDetails() {
+  //   final currency = context.read<CurrencyProvider>();
+
+  //   return context.read<ProductDetailsProvider>().fetchProductDetails(
+  //     widget.productId,
+  //     currency: currency.selectedCurrency,
+  //     unit: currency.selectedUnit,
+  //   );
+  // }
+
+  Future<void> _fetchProductDetails({bool showLoader = false}) {
+    final currency = context.read<CurrencyProvider>();
+
     return context.read<ProductDetailsProvider>().fetchProductDetails(
       widget.productId,
+      currency: currency.selectedCurrency,
+      unit: currency.selectedUnit,
+      showLoader: showLoader,
     );
   }
 
@@ -163,6 +202,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   void dispose() {
     reviewController.dispose();
     _scrollController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 

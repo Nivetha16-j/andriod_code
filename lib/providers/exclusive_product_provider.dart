@@ -10,16 +10,45 @@ class ExclusiveProductProvider extends ChangeNotifier {
 
   String _currentEndpoint = "exclusive-products";
 
-  Future<void> fetchProducts({String endpoint = "exclusive-products"}) async {
+  String get currentEndpoint => _currentEndpoint;
+
+  // Future<void> fetchProducts({String endpoint = "exclusive-products"}) async {
+  //   _currentEndpoint = endpoint;
+
+  //   isLoading = true;
+  //   notifyListeners();
+
+  //   try {
+  //     products = await _service.getProducts(endpoint);
+  //   } finally {
+  //     isLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
+
+  Future<void> fetchProducts({
+    String endpoint = "exclusive-products",
+    required String currency,
+    required String unit,
+    bool showLoader = true,
+  }) async {
     _currentEndpoint = endpoint;
 
-    isLoading = true;
-    notifyListeners();
+    if (showLoader) {
+      isLoading = true;
+      notifyListeners();
+    }
 
     try {
-      products = await _service.getProducts(endpoint);
+      products = await _service.getProducts(
+        endpoint: endpoint,
+        currency: currency,
+        unit: unit,
+      );
     } finally {
-      isLoading = false;
+      if (showLoader) {
+        isLoading = false;
+      }
       notifyListeners();
     }
   }

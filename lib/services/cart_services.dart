@@ -6,15 +6,40 @@ import 'package:junubullion/services/session_manager.dart';
 class CartService {
   static const String _baseUrl = "https://staging.junubullion.com/api";
 
-  static Future<Map<String, dynamic>> fetchCart() async {
+  // static Future<Map<String, dynamic>> fetchCart() async {
+  //   final token = await SessionManager.getToken();
+
+  //   final response = await http.get(
+  //     Uri.parse("$_baseUrl/cart"),
+  //     headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
+  //   );
+
+  //   log("responnnn ${response.statusCode}.......${response.contentLength}....");
+
+  //   return jsonDecode(response.body);
+  // }
+
+  static Future<Map<String, dynamic>> fetchCart({
+    required String currency,
+    required String unit,
+  }) async {
     final token = await SessionManager.getToken();
 
-    final response = await http.get(
-      Uri.parse("$_baseUrl/cart"),
-      headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
+    final uri = Uri.parse("$_baseUrl/cart").replace(
+      queryParameters: {
+        "currency": currency,
+        "unit": unit.toLowerCase() == "ounce"
+            ? "toz"
+            : unit.toLowerCase() == "kilogram"
+            ? "kg"
+            : "gram",
+      },
     );
 
-    log("responnnn ${response.statusCode}.......${response.contentLength}....");
+    final response = await http.get(
+      uri,
+      headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
+    );
 
     return jsonDecode(response.body);
   }

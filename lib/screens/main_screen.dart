@@ -45,8 +45,25 @@ class _MainScreenState extends State<MainScreen> {
         unit: currencyProvider.selectedUnit,
       );
 
-      context.read<ExclusiveProductProvider>().fetchProducts();
-      context.read<CartProvider>().fetchCart();
+      // context.read<ExclusiveProductProvider>().fetchProducts();
+      // context.read<CartProvider>().fetchCart();
+      // final currencyProvider = context.read<CurrencyProvider>();
+
+      context.read<ExclusiveProductProvider>().fetchProducts(
+        currency: currencyProvider.selectedCurrency,
+        unit: currencyProvider.selectedUnit,
+      );
+
+      // final currency = context.read<CurrencyProvider>();
+
+      final cartProvider = context.read<CartProvider>();
+
+      cartProvider.updateSelection(
+        currency: currencyProvider.selectedCurrency,
+        unit: currencyProvider.selectedUnit,
+      );
+
+      cartProvider.fetchCart();
 
       _startLivePriceTimer();
     });
@@ -61,13 +78,27 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _startLivePriceTimer() {
-    _livePriceTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      final currencyProvider = context.read<CurrencyProvider>();
+    _livePriceTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      final currency = context.read<CurrencyProvider>();
 
-      context.read<HomeProvider>().fetchHomeData(
-        currency: currencyProvider.selectedCurrency,
-        unit: currencyProvider.selectedUnit,
+      await context.read<HomeProvider>().fetchHomeData(
+        currency: currency.selectedCurrency,
+        unit: currency.selectedUnit,
       );
+
+      await context.read<ExclusiveProductProvider>().fetchProducts(
+        endpoint: context.read<ExclusiveProductProvider>().currentEndpoint,
+        currency: currency.selectedCurrency,
+        unit: currency.selectedUnit,
+        showLoader: false, // <-- no loading indicator
+      );
+
+      final cart = context.read<CartProvider>();
+      cart.updateSelection(
+        currency: currency.selectedCurrency,
+        unit: currency.selectedUnit,
+      );
+      await cart.fetchCart();
     });
   }
 
