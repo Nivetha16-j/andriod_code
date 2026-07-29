@@ -251,12 +251,11 @@ class _ProductCard extends StatelessWidget {
               : '');
 
     // 4. Extract Stock Status
-    final bool isInStock = product['stock_status'] == 'in_stock';
+    // final bool isInStock = product['stock_status'] == 'in_stock';
 
-    final int quantity = int.tryParse(product["quantity"].toString()) ?? 0;
+    // final int quantity = int.tryParse(product["quantity"].toString()) ?? 0;
 
-    final bool canPurchase =
-        quantity > 0 && product["stock_status"] == "in_stock";
+    final bool canPurchase = product["stock_status"] == "in_stock";
 
     return InkWell(
       onTap: () {
@@ -344,57 +343,115 @@ class _ProductCard extends StatelessWidget {
             // Add to Cart / Out of Stock Button
             SizedBox(
               width: double.infinity,
-              height: 36.0,
+              height: 36,
               child: Consumer<CartProvider>(
                 builder: (context, cartProvider, child) {
                   final isInCart = cartProvider.isProductInCart(product["id"]);
 
+                  final cartItem = isInCart
+                      ? cartProvider.cartItems.firstWhere(
+                          (e) => e["product_id"] == product["id"],
+                        )
+                      : null;
+
+                  final int cartQuantity = cartItem?["quantity"] ?? 0;
+
+                  if (!canPurchase) {
+                    return ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromRGBO(218, 218, 218, 1),
+                        foregroundColor: Colors.black54,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Text("Out of stock"),
+                    );
+                  }
+
+                  if (isInCart) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryRed,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          InkWell(
+                            onTap: () async {
+                              if (cartQuantity == 1) {
+                                await cartProvider.removeFromCart(
+                                  product["id"],
+                                );
+                              } else {
+                                await cartProvider.updateCartQuantity(
+                                  productId: product["id"],
+                                  quantity: cartQuantity - 1,
+                                );
+                              }
+                            },
+                            child: const Icon(
+                              Icons.remove,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+
+                          Text(
+                            "$cartQuantity",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+
+                          InkWell(
+                            onTap: () async {
+                              await cartProvider.updateCartQuantity(
+                                productId: product["id"],
+                                quantity: cartQuantity + 1,
+                              );
+                            },
+                            child: const Icon(
+                              Icons.add,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
                   return ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: canPurchase
-                          ? AppColors.primaryRed
-                          : const Color.fromRGBO(218, 218, 218, 1),
-                      foregroundColor: canPurchase
-                          ? Colors.white
-                          : Colors.black54,
-                      elevation: canPurchase ? 2 : 0,
+                      backgroundColor: AppColors.primaryRed,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20.0),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      padding: EdgeInsets.zero,
                     ),
-                    onPressed: canPurchase
-                        ? cartProvider.isAdding(product["id"])
-                              ? null
-                              : () async {
-                                  if (isInCart) {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const MainScreen(initialIndex: 2),
-                                      ),
-                                    );
-                                    return;
-                                  }
-                                  bool success = await cartProvider.addToCart(
-                                    productId: product["id"],
-                                    quantity: 1,
-                                  );
+                    onPressed: cartProvider.isAdding(product["id"])
+                        ? null
+                        : () async {
+                            bool success = await cartProvider.addToCart(
+                              productId: product["id"],
+                              quantity: 1,
+                            );
 
-                                  log("Issssssssadded $success");
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        success
-                                            ? "Added to Cart"
-                                            : "Failed to add product",
-                                      ),
-                                    ),
-                                  );
-                                }
-                        : null,
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  success
+                                      ? "Added to Cart"
+                                      : "Failed to add product",
+                                ),
+                              ),
+                            );
+                          },
                     child: cartProvider.isAdding(product["id"])
                         ? const SizedBox(
                             height: 18,
@@ -404,19 +461,9 @@ class _ProductCard extends StatelessWidget {
                               color: Colors.white,
                             ),
                           )
-                        : Text(
-                            !canPurchase
-                                ? "Out of stock"
-                                : isInCart
-                                ? "GO TO CART"
-                                : "ADD TO CART",
-                            style: TextStyle(
-                              fontSize: 12.0,
-                              fontWeight: FontWeight.w700,
-                              color: canPurchase
-                                  ? Colors.white
-                                  : Colors.black54,
-                            ),
+                        : const Text(
+                            "ADD TO CART",
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                   );
                 },

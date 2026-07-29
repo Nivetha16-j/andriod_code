@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
+import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:marquee/marquee.dart';
@@ -72,15 +74,60 @@ class _CustomAppBarState extends State<CustomAppBar> {
                   const Spacer(),
 
                   // Cart Icon
-                  IconButton(
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(
-                      Icons.shopping_cart_outlined,
-                      color: CustomAppBar.textGold,
-                      size: 22,
-                    ),
-                    onPressed: () {},
+                  Consumer<CartProvider>(
+                    builder: (context, cartProvider, child) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MainScreen(initialIndex: 2),
+                            ),
+                            (route) => false,
+                          );
+                        },
+                        child: SizedBox(
+                          width: 25,
+                          height: 25,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Positioned.fill(
+                                child: Image.asset(
+                                  "assets/shopping-cart.png",
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+
+                              if (cartProvider.cartCount > 0)
+                                Positioned(
+                                  right: -8,
+                                  top: -4,
+                                  child: Container(
+                                    height: 18,
+                                    width: 18,
+                                    alignment: Alignment.center,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      cartProvider.cartCount > 99
+                                          ? "99+"
+                                          : cartProvider.cartCount.toString(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(width: 12),
 

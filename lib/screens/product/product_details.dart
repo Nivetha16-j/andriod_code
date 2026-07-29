@@ -123,9 +123,25 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     _scrollController = ScrollController();
 
     // Initial fetch with loader
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (mounted) {
+    //     _fetchProductDetails(showLoader: true);
+    //   }
+    // });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _fetchProductDetails(showLoader: true);
+      final cart = context.read<CartProvider>();
+
+      if (cart.isProductInCart(widget.productId)) {
+        final cartItem = cart.cartItems.firstWhere(
+          (e) => e["product_id"] == widget.productId,
+        );
+
+        setState(() {
+          quantity = cartItem["quantity"] ?? 1;
+        });
+      } else {
+        quantity = 1;
       }
     });
 
@@ -235,10 +251,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     final String price = product['live_price']?.toString() ?? '--';
 
     final bool isInStock = product['stock_status'] == 'in_stock';
-
-    final int availableQty = int.tryParse(product["quantity"].toString()) ?? 0;
-
-    final bool canPurchase = isInStock && availableQty > 0;
+    final bool canPurchase = isInStock;
 
     final String imageUrl =
         "https://staging.junubullion.com/storage/${product['image_path']}";
@@ -387,121 +400,74 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 20),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xfff1f1f1),
-                        borderRadius: BorderRadius.circular(30),
+              Consumer<CartProvider>(
+                builder: (context, cartProvider, child) {
+                  final isInCart = cartProvider.isProductInCart(product["id"]);
+
+                  // final cartQuantity = isInCart
+                  //     ? cartProvider.cartItems.firstWhere(
+                  //             (e) => e["product_id"] == product["id"],
+                  //           )["quantity"] ??
+                  //           1
+                  //     : 1;
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: const Color(0xfff1f1f1),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove),
+                                onPressed: () async {
+                                  if (quantity <= 1) return;
+
+                                  setState(() => quantity--);
+
+                                  if (isInCart) {
+                                    await cartProvider.updateCartQuantity(
+                                      productId: product["id"],
+                                      quantity: quantity,
+                                    );
+                                  }
+                                },
+                              ),
+                              Text(
+                                quantity.toString(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add),
+                                onPressed: () async {
+                                  setState(() => quantity++);
+
+                                  if (isInCart) {
+                                    await cartProvider.updateCartQuantity(
+                                      productId: product["id"],
+                                      quantity: quantity,
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          IconButton(
-                            onPressed: () async {
-                              final cart = context.read<CartProvider>();
 
-                              if (cart.isProductInCart(product["id"])) {
-                                final cartItem = cart.cartItems.firstWhere(
-                                  (e) => e["product_id"] == product["id"],
-                                );
+                      const SizedBox(width: 12),
 
-                                if (cartItem["quantity"] >= availableQty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Only $availableQty item${availableQty == 1 ? '' : 's'} available",
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                await cart.updateCartQuantity(
-                                  productId: product["id"],
-                                  quantity: cartItem["quantity"] + 1,
-                                );
-
-                                setState(() {
-                                  quantity = cartItem["quantity"] + 1;
-                                });
-                              } else {
-                                setState(() {
-                                  quantity++;
-                                });
-                              }
-                            },
-                            icon: const Icon(Icons.remove),
-                          ),
-                          Text(
-                            quantity.toString(),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add),
-                            onPressed: () async {
-                              final cart = context.read<CartProvider>();
-
-                              if (cart.isProductInCart(product["id"])) {
-                                final cartItem = cart.cartItems.firstWhere(
-                                  (e) => e["product_id"] == product["id"],
-                                );
-
-                                // ADD THIS CHECK HERE
-                                if (cartItem["quantity"] >= availableQty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Only $availableQty item(s) available",
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                await cart.updateCartQuantity(
-                                  productId: product["id"],
-                                  quantity: cartItem["quantity"] + 1,
-                                );
-
-                                setState(() {
-                                  quantity = cartItem["quantity"] + 1;
-                                });
-                              } else {
-                                if (quantity >= availableQty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Only $availableQty item(s) available",
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                setState(() {
-                                  quantity++;
-                                });
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: Consumer<CartProvider>(
-                        builder: (context, cartProvider, child) {
-                          final isInCart = cartProvider.isProductInCart(
-                            product["id"],
-                          );
-
-                          return ElevatedButton(
+                      Expanded(
+                        child: SizedBox(
+                          height: 48,
+                          child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: canPurchase
                                   ? AppColors.primaryRed
@@ -511,60 +477,41 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   : Colors.black54,
                               elevation: canPurchase ? 2 : 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20.0),
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                              padding: EdgeInsets.zero,
                             ),
-                            onPressed: canPurchase
-                                ? cartProvider.isAdding(product["id"])
-                                      ? null
-                                      : () async {
-                                          // Check latest available quantity
-                                          if (availableQty <= 0) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  "Product is out of stock",
-                                                ),
-                                              ),
-                                            );
-                                            return;
-                                          }
+                            onPressed: !canPurchase
+                                ? null
+                                : cartProvider.isAdding(product["id"])
+                                ? null
+                                : () async {
+                                    if (isInCart) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const MainScreen(initialIndex: 2),
+                                        ),
+                                      );
+                                      return;
+                                    }
 
-                                          if (isInCart) {
-                                            Navigator.pushReplacement(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const MainScreen(
-                                                      initialIndex: 2,
-                                                    ),
-                                              ),
-                                            );
-                                            return;
-                                          }
+                                    final success = await cartProvider
+                                        .addToCart(
+                                          productId: product["id"],
+                                          quantity: quantity,
+                                        );
 
-                                          bool success = await cartProvider
-                                              .addToCart(
-                                                productId: product["id"],
-                                                quantity: 1,
-                                              );
-
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                success
-                                                    ? "Added to Cart"
-                                                    : "Failed to add product",
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                : null,
+                                    if (success) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text("Added to Cart"),
+                                        ),
+                                      );
+                                    }
+                                  },
                             child: cartProvider.isAdding(product["id"])
                                 ? const SizedBox(
                                     height: 18,
@@ -576,18 +523,21 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   )
                                 : Text(
                                     !canPurchase
-                                        ? "Out of stock"
+                                        ? "OUT OF STOCK"
                                         : isInCart
                                         ? "GO TO CART"
                                         : "ADD TO CART",
-                                    style: TextStyle(color: Colors.white),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 20),
 
@@ -924,11 +874,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     final String stockStatus =
                         product['stock_status']?.toString() ?? 'out_of_stock';
 
-                    final int availableQty =
-                        int.tryParse(product["quantity"].toString()) ?? 0;
-
-                    final bool canPurchase =
-                        stockStatus == "in_stock" && availableQty > 0;
+                    final bool canPurchase = stockStatus == "in_stock";
 
                     return Container(
                       width: 170,

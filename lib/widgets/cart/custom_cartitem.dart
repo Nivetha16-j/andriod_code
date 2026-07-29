@@ -12,6 +12,8 @@ class CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool canPurchase = item["stock_status"] == "in_stock";
+
     return Container(
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.only(bottom: 15),
@@ -69,8 +71,8 @@ class CartItemCard extends StatelessWidget {
                 const SizedBox(height: 5),
 
                 Text(
-                  item["formatted_effective_unit_price"] ??
-                      item["formatted_unit_price"] ??
+                  item["formatted_unit_price"] ??
+                      item["formatted_effective_unit_price"] ??
                       "",
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
@@ -137,20 +139,24 @@ class CartItemCard extends StatelessWidget {
                 child: Row(
                   children: [
                     IconButton(
-                      onPressed: () async {
-                        final provider = context.read<CartProvider>();
+                      onPressed: canPurchase
+                          ? () async {
+                              final provider = context.read<CartProvider>();
 
-                        int qty = item["quantity"];
+                              final qty = item["quantity"];
 
-                        if (qty == 1) {
-                          await provider.removeFromCart(item["product_id"]);
-                        } else {
-                          await provider.updateCartQuantity(
-                            productId: item["product_id"],
-                            quantity: qty - 1,
-                          );
-                        }
-                      },
+                              if (qty == 1) {
+                                await provider.removeFromCart(
+                                  item["product_id"],
+                                );
+                              } else {
+                                await provider.updateCartQuantity(
+                                  productId: item["product_id"],
+                                  quantity: qty - 1,
+                                );
+                              }
+                            }
+                          : null,
                       icon: const Icon(Icons.remove),
                     ),
 
@@ -160,36 +166,18 @@ class CartItemCard extends StatelessWidget {
                     ),
 
                     IconButton(
-                      onPressed: () async {
-                        final provider = context.read<CartProvider>();
+                      onPressed: canPurchase
+                          ? () async {
+                              final provider = context.read<CartProvider>();
 
-                        log("proooooooo $provider");
+                              final qty = item["quantity"];
 
-                        int qty = item["quantity"];
-
-                        log("quannnnnnnnn $qty.......$item");
-
-                        int availableQty =
-                            int.tryParse(item["quantity"].toString()) ?? 0;
-
-                        log("availlllllll $availableQty");
-
-                        if (qty >= availableQty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Maximum available quantity reached",
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-
-                        await provider.updateCartQuantity(
-                          productId: item["product_id"],
-                          quantity: qty + 1,
-                        );
-                      },
+                              await provider.updateCartQuantity(
+                                productId: item["product_id"],
+                                quantity: qty + 1,
+                              );
+                            }
+                          : null,
                       icon: const Icon(Icons.add),
                     ),
                   ],

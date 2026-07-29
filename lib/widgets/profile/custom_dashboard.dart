@@ -21,9 +21,9 @@ class _DashboardState extends State<Dashboard> {
         padding: const EdgeInsets.all(8),
         child: Container(
           width: double.infinity,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.primaryRed),
-          ),
+          // decoration: BoxDecoration(
+          //   border: Border.all(color: AppColors.primaryRed),
+          // ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: SingleChildScrollView(

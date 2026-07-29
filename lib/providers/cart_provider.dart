@@ -152,6 +152,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:junubullion/services/cart_services.dart';
 import 'package:junubullion/services/session_manager.dart';
 
@@ -160,6 +161,21 @@ class CartProvider extends ChangeNotifier {
 
   bool isLoading = false;
   final Set<int> addingProducts = {};
+
+  int get cartCount => cartItems.length;
+
+  //   int get cartCount {
+  //   return cartItems.fold<int>(
+  //     0,
+  //     (sum, item) => sum + ((item["quantity"] ?? 0) as int),
+  //   );
+  // }
+
+  String subTotal = "";
+  String formattedSubtotal = "";
+  String formattedOrderTotal = "";
+  String formattedTransactionFee = "";
+  String formattedCourierFee = "";
 
   // Store latest selected currency & unit
   String _currency = "USD";
@@ -187,6 +203,19 @@ class CartProvider extends ChangeNotifier {
 
       if (response["status"] == true) {
         cartItems = response["data"]["summary"]["items"] ?? [];
+
+        final summary = response["data"]["summary"];
+
+        final symbol = summary["symbol"];
+
+        formattedSubtotal =
+            "$symbol${NumberFormat('#,##0.00').format(summary["subtotal"])}";
+
+        formattedOrderTotal =
+            "$symbol${NumberFormat('#,##0.00').format(summary["total"])}";
+        formattedTransactionFee =
+            "$symbol${NumberFormat('#,##0.00').format(summary["transaction_fee"])}";
+        formattedCourierFee = summary["courier"]?["formatted_amount"] ?? "";
       }
     } catch (e) {
       debugPrint("Fetch Cart Error: $e");

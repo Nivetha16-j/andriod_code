@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:provider/provider.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
@@ -51,10 +53,49 @@ class CustomBottomNavigationBar extends StatelessWidget {
               ),
 
               // Index 2: Cart
-              _NavItem(
-                icon: Image.asset('assets/Cart.png', height: 24),
-                isSelected: currentIndex == 2,
-                onTap: () => onTap(2),
+              // Index 2: Cart
+              Consumer<CartProvider>(
+                builder: (context, cartProvider, child) {
+                  final count = cartProvider.cartItems.length;
+
+                  return _NavItem(
+                    isSelected: currentIndex == 2,
+                    onTap: () => onTap(2),
+                    icon: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Image.asset('assets/Cart.png', height: 24),
+
+                        if (count > 0)
+                          Positioned(
+                            right: -8,
+                            top: -8,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
+                              ),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  count > 99 ? "99+" : count.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
               ),
 
               // Index 3: Products / View More (4th Icon)

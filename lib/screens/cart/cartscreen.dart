@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/screens/checkout/checkout.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/cart/custom_cartitem.dart';
 import 'package:junubullion/widgets/cart/custom_summary.dart';
@@ -160,7 +161,12 @@ class _CartScreenState extends State<CartScreen> {
               ),
               const SizedBox(height: 20),
 
-              SummaryWidget(subtotal: provider.subtotal),
+              SummaryWidget(
+                subtotal: provider.formattedSubtotal,
+                courier_fee: provider.formattedCourierFee,
+                transaction_fee: provider.formattedTransactionFee,
+                total: provider.formattedOrderTotal,
+              ),
 
               const SizedBox(height: 30),
 
@@ -171,7 +177,12 @@ class _CartScreenState extends State<CartScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Apply coupon
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const CheckoutScreen(),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryRed,
