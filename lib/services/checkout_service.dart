@@ -9,6 +9,7 @@ class CheckoutService {
   static Future<Map<String, dynamic>> placeOrder({
     required String shippingAddress,
     required String deliveryOption,
+    String? digitalType,
     required String courierService,
     required bool terms,
     required String paymentType,
@@ -16,15 +17,24 @@ class CheckoutService {
     try {
       final token = await SessionManager.getToken();
 
-      log(
-        "Request => "
-        "${token}"
-        "shippingAddress: $shippingAddress, "
-        "deliveryOption: $deliveryOption, "
-        "courierService: $courierService, "
-        "terms: $terms, "
-        "paymentType: $paymentType",
-      );
+      // Build payload
+      final Map<String, dynamic> payload = {
+        "shipping_address": shippingAddress,
+        "delivery_option": deliveryOption.toLowerCase(),
+        "courier_service": courierService.toLowerCase(),
+        "terms": terms,
+        "payment_type": paymentType,
+      };
+
+      // Add digital_type only for Digital delivery
+      if (deliveryOption.toLowerCase() == "digital" &&
+          digitalType != null &&
+          digitalType.isNotEmpty) {
+        payload["digital_type"] = digitalType.toLowerCase();
+      }
+
+      log("Request => Token: $token");
+      log("Payload => ${jsonEncode(payload)}");
 
       final response = await http
           .post(
@@ -34,13 +44,7 @@ class CheckoutService {
               "Content-Type": "application/json",
               "Authorization": "Bearer $token",
             },
-            body: jsonEncode({
-              "shipping_address": shippingAddress,
-              "delivery_option": deliveryOption.toLowerCase(),
-              "courier_service": courierService.toLowerCase(),
-              "terms": terms,
-              "payment_type": paymentType,
-            }),
+            body: jsonEncode(payload),
           )
           .timeout(const Duration(seconds: 30));
 

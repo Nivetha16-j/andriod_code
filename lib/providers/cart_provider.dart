@@ -163,6 +163,7 @@ class CartProvider extends ChangeNotifier {
   final Set<int> addingProducts = {};
 
   int get cartCount => cartItems.length;
+  String selectedDeliveryMethod = "Standard";
 
   //   int get cartCount {
   //   return cartItems.fold<int>(
@@ -315,5 +316,16 @@ class CartProvider extends ChangeNotifier {
     }
 
     return total;
+  }
+
+  void clearCart() {
+    cartItems.clear();
+    // subtotal = 0;
+    notifyListeners();
+  }
+
+  void setDeliveryMethod(String method) {
+    selectedDeliveryMethod = method;
+    notifyListeners();
   }
 }

@@ -42,7 +42,11 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String date = DateFormat("MMMM dd, yyyy").format(DateTime.now());
+    String date = widget.order['created_at'] != null
+        ? DateFormat(
+            "MMMM dd, yyyy",
+          ).format(DateTime.parse(widget.order['created_at']))
+        : "";
     final cartProvider = context.watch<CartProvider>();
     final total = cartProvider.formattedOrderTotal;
 
@@ -54,18 +58,20 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const SizedBox(height: 24),
               Center(
                 child: const Text(
-                  "Thank you. Your order has been received",
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  "Thank you. Your order has been received.",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ),
 
               const SizedBox(height: 24),
 
               orderDetailsCard(
+                order_no: widget.order['order_number'],
                 date: date,
-                email: email,
+                email: widget.order['customer_email'],
                 total: total,
                 paymentMethod: "Direct bank transfer",
               ),
@@ -82,6 +88,7 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
 }
 
 Widget orderDetailsCard({
+  required String order_no,
   required String date,
   required String email,
   required String total,
@@ -98,6 +105,20 @@ Widget orderDetailsCard({
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        RichText(
+          text: TextSpan(
+            style: const TextStyle(fontSize: 14, color: Colors.black),
+            children: [
+              const TextSpan(
+                text: "Order number : ",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              TextSpan(text: order_no),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 18),
         RichText(
           text: TextSpan(
             style: const TextStyle(fontSize: 14, color: Colors.black),
@@ -255,6 +276,12 @@ Widget bankTransferCard(BuildContext context) {
           "BIC : CIBBSGSGXXX",
           style: TextStyle(height: 1.6),
         ),
+        const SizedBox(height: 20),
+
+        const Text(
+          "After payment, please email your transfer receipt to info@junubullion.com.",
+          style: TextStyle(height: 1.5),
+        ),
 
         const SizedBox(height: 30),
 
@@ -269,7 +296,11 @@ Widget bankTransferCard(BuildContext context) {
               ),
             ),
             onPressed: () {
-              // Navigator.popUntil(context, (route) => route.isFirst);
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/home',
+                (route) => false,
+              );
             },
             child: const Text(
               "Continue Shopping",

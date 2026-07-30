@@ -7,6 +7,7 @@ import 'package:junubullion/screens/checkout/checkout.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/cart/custom_cartitem.dart';
 import 'package:junubullion/widgets/cart/custom_summary.dart';
+import 'package:junubullion/widgets/cart/custom_deliverymethod.dart';
 import 'package:provider/provider.dart';
 
 class CartScreen extends StatefulWidget {
@@ -159,6 +160,11 @@ class _CartScreenState extends State<CartScreen> {
                   ],
                 ),
               ),
+
+              const SizedBox(height: 20),
+
+              DeliveryMethodWidget(),
+
               const SizedBox(height: 20),
 
               SummaryWidget(
