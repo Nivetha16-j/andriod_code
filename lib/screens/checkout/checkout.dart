@@ -1,11 +1,14 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/checkout/banktransfersuccess.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
+import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/cart/custom_summary.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
@@ -31,6 +34,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   bool showAddressForm = false;
   String? localAddress;
+  String? selectedCard;
 
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
@@ -77,6 +81,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
 
     return Scaffold(
       appBar: const CustomAppBar(),
@@ -357,6 +362,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       paymentBox("Apple Pay"),
                     ],
                   ),
+
+                  const SizedBox(height: 20),
                 ],
 
                 const SizedBox(height: 20),
@@ -543,6 +550,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     cartProvider.selectedDeliveryMethod,
                                 terms: true,
                                 paymentType: "bank_transfer",
+                                currency: currencyProvider.selectedCurrency,
+                              );
+
+                              log(
+                                "RRRRRRRRRR $response.........${response.values}",
                               );
 
                               if (response["status"] == true) {
@@ -561,6 +573,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   MaterialPageRoute(
                                     builder: (_) => BankTransferSuccessScreen(
                                       order: response["data"],
+                                      currencySymbol:
+                                          response["summary"]["symbol"],
                                     ),
                                   ),
                                 );
@@ -595,6 +609,105 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               );
                             }
                           }
+
+                          if (payment == "Card") {
+                            setState(() {
+                              _isPlacingOrder = true;
+                            });
+
+                            try {
+                              final stripeResponse =
+                                  await StripeService.createStripeSession(
+                                    shippingAddress: addressProvider.hasAddress
+                                        ? addressProvider.address!
+                                        : localAddress!,
+                                    fulfillmentType: delivery,
+                                    courierService:
+                                        cartProvider.selectedDeliveryMethod,
+                                    currency: currencyProvider.selectedCurrency,
+                                    digitalSubtype:
+                                        delivery.toLowerCase() == "digital"
+                                        ? digitalSubtype
+                                        : null,
+                                    terms: true,
+                                    paymentMethod: "visa",
+                                  );
+
+                              final clientSecret =
+                                  stripeResponse["data"]["client_secret"];
+
+                              final paymentSuccess =
+                                  await StripeService.makePayment(clientSecret);
+
+                              if (!paymentSuccess) {
+                                setState(() {
+                                  _isPlacingOrder = false;
+                                });
+
+                                return;
+                              }
+
+                              final orderResponse =
+                                  await CheckoutService.placeOrder(
+                                    shippingAddress: addressProvider.hasAddress
+                                        ? addressProvider.address!
+                                        : localAddress!,
+                                    deliveryOption: delivery,
+                                    digitalType:
+                                        delivery.toLowerCase() == "digital"
+                                        ? digitalSubtype
+                                        : null,
+                                    courierService:
+                                        cartProvider.selectedDeliveryMethod,
+                                    terms: true,
+                                    paymentType: "card",
+                                    currency: currencyProvider.selectedCurrency,
+                                  );
+                              if (orderResponse["status"] == true) {
+                                if (!mounted) return;
+
+                                // Navigator.push(
+                                //   context,
+                                //   MaterialPageRoute(
+                                //     builder: (_) => BankTransferSuccessScreen(
+                                //       order: orderResponse,
+                                //     ),
+                                //   ),
+                                // );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BankTransferSuccessScreen(
+                                      order: orderResponse["data"],
+                                      currencySymbol:
+                                          orderResponse["summary"]["symbol"],
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      orderResponse["message"] ??
+                                          "Order failed",
+                                    ),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              debugPrint(e.toString());
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.toString())),
+                              );
+                            } finally {
+                              if (mounted) {
+                                setState(() {
+                                  _isPlacingOrder = false;
+                                });
+                              }
+                            }
+                          }
                         },
                         child: const Text(
                           "Proceed to pay",
@@ -619,17 +732,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget paymentBox(String text) {
-    return Container(
-      width: 90,
-      height: 50,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.black12),
-        borderRadius: BorderRadius.circular(8),
+  Widget paymentBox(String title) {
+    final bool isSelected = selectedCard == title;
+
+    return GestureDetector(
+      onTap: () async {
+        setState(() {
+          selectedCard = title;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(title),
       ),
-      child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 

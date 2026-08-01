@@ -9,7 +9,13 @@ import 'package:provider/provider.dart';
 
 class BankTransferSuccessScreen extends StatefulWidget {
   final Map<String, dynamic> order;
-  const BankTransferSuccessScreen({super.key, required this.order});
+  final String currencySymbol;
+
+  const BankTransferSuccessScreen({
+    super.key,
+    required this.order,
+    required this.currencySymbol,
+  });
 
   @override
   State<BankTransferSuccessScreen> createState() =>
@@ -48,7 +54,7 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
           ).format(DateTime.parse(widget.order['created_at']))
         : "";
     final cartProvider = context.watch<CartProvider>();
-    final total = cartProvider.formattedOrderTotal;
+    final total = widget.order['grand_total'];
 
     return Scaffold(
       appBar: CustomAppBar(),
@@ -72,8 +78,8 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
                 order_no: widget.order['order_number'],
                 date: date,
                 email: widget.order['customer_email'],
-                total: total,
-                paymentMethod: "Direct bank transfer",
+                total: "${widget.currencySymbol}${total ?? ""}",
+                paymentMethod: widget.order['payment_method'] ?? '',
               ),
 
               const SizedBox(height: 20),

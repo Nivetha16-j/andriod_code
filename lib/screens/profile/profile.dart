@@ -1,13 +1,16 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:junubullion/widgets/profile/custom_dashboard.dart';
+import 'package:junubullion/widgets/profile/downloads.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
+import 'package:junubullion/widgets/profile/recentorders.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -62,13 +65,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ProfileMenuTile(
               icon: Icons.shopping_cart_outlined,
               title: "Orders",
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const OrderScreen()),
+                );
+              },
             ),
 
             ProfileMenuTile(
               icon: Icons.download,
               title: "Downloads",
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const DownloadsScreen()),
+                );
+              },
             ),
 
             ProfileMenuTile(
@@ -89,7 +102,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onTap: () {},
             ),
 
-            ProfileMenuTile(icon: Icons.logout, title: "Logout", onTap: () {}),
+            ProfileMenuTile(
+              icon: Icons.logout,
+              title: "Logout",
+              onTap: () async {
+                final shouldLogout = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    backgroundColor: const Color(0xffF7F7F7),
+                    title: const Text("Log Out"),
+                    content: const Text("Are you sure you want to Log out?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text("No"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text(
+                          "Yes",
+                          style: TextStyle(color: AppColors.primaryRed),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (shouldLogout == true) {
+                  await SessionManager.logout();
+
+                  if (context.mounted) {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.login,
+                      (route) => false,
+                    );
+                  }
+                }
+              },
+            ),
           ],
         ),
       ),
@@ -115,6 +166,32 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: CustomAppBar(),
       body: const Dashboard(), // Your existing Dashboard widget
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _switchToTab,
+      ),
+    );
+  }
+}
+
+class OrderScreen extends StatelessWidget {
+  const OrderScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    int _currentIndex = 3;
+
+    void _switchToTab(int index) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => MainScreen(initialIndex: index)),
+        (route) => false,
+      );
+    }
+
+    return Scaffold(
+      appBar: CustomAppBar(),
+      body: const RecentOrdersSection(),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _switchToTab,

@@ -137,13 +137,13 @@ class _CustomAppBarState extends State<CustomAppBar> {
                     padding: EdgeInsets.zero,
                     icon: const Icon(Icons.menu, color: Colors.white, size: 24),
                     onPressed: () async {
-                      await SessionManager.logout();
+                      // await SessionManager.logout();
 
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        AppRoutes.login,
-                        (route) => false,
-                      );
+                      // Navigator.pushNamedAndRemoveUntil(
+                      //   context,
+                      //   AppRoutes.login,
+                      //   (route) => false,
+                      // );
                     },
                   ),
                 ],

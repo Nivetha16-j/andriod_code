@@ -13,6 +13,7 @@ class CheckoutService {
     required String courierService,
     required bool terms,
     required String paymentType,
+    required String currency,
   }) async {
     try {
       final token = await SessionManager.getToken();
@@ -24,6 +25,7 @@ class CheckoutService {
         "courier_service": courierService.toLowerCase(),
         "terms": terms,
         "payment_type": paymentType,
+        "currency": currency,
       };
 
       // Add digital_type only for Digital delivery
@@ -46,7 +48,7 @@ class CheckoutService {
             },
             body: jsonEncode(payload),
           )
-          .timeout(const Duration(seconds: 30));
+          .timeout(const Duration(seconds: 60));
 
       log("Status Code : ${response.statusCode}");
       log("Response Body : ${response.body}");
