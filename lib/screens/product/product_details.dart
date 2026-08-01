@@ -11,6 +11,7 @@ import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
+import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
 
@@ -32,6 +33,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   String? _lastCurrency;
   String? _lastUnit;
   Timer? _timer;
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   int selectedRating = 0;
   final TextEditingController reviewController = TextEditingController();
@@ -44,7 +46,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
     if (maxExtent <= 0) return;
 
-    // Already at the end → do nothing
     if (currentOffset >= maxExtent - 10) {
       return;
     }
@@ -103,7 +104,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         selectedRating = 0;
       });
 
-      // Refresh product details (includes reviews)
       await _fetchProductDetails();
 
       ScaffoldMessenger.of(
@@ -122,14 +122,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
     _scrollController = ScrollController();
 
-    // Initial fetch with loader
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   if (mounted) {
-    //     _fetchProductDetails(showLoader: true);
-    //   }
-    // });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _fetchProductDetails(showLoader: true);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
       final cart = context.read<CartProvider>();
 
       if (cart.isProductInCart(widget.productId)) {
@@ -145,7 +140,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       }
     });
 
-    // Live refresh without loader
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         _fetchProductDetails(showLoader: false);
@@ -171,23 +165,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       }
     });
   }
-
-  // Future<void> _fetchProductDetails() {
-  //   final currencyProvider = context.read<CurrencyProvider>();
-  //   return context.read<ProductDetailsProvider>().fetchProductDetails(
-  //     widget.productId,
-  //   );
-  // }
-
-  // Future<void> _fetchProductDetails() {
-  //   final currency = context.read<CurrencyProvider>();
-
-  //   return context.read<ProductDetailsProvider>().fetchProductDetails(
-  //     widget.productId,
-  //     currency: currency.selectedCurrency,
-  //     unit: currency.selectedUnit,
-  //   );
-  // }
 
   Future<void> _fetchProductDetails({bool showLoader = false}) {
     final currency = context.read<CurrencyProvider>();
@@ -232,6 +209,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
 
     if (provider.product == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (!provider.isLoading && provider.product == null) {
       return const Scaffold(body: Center(child: Text("Product not found")));
     }
 
@@ -293,7 +274,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
     return Scaffold(
       backgroundColor: Color(0xffFAFAF8),
-      appBar: CustomAppBar(),
+      key: scaffoldKey,
+      drawer: const CustomDrawer(),
+      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(14),
@@ -404,12 +387,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 builder: (context, cartProvider, child) {
                   final isInCart = cartProvider.isProductInCart(product["id"]);
 
-                  // final cartQuantity = isInCart
-                  //     ? cartProvider.cartItems.firstWhere(
-                  //             (e) => e["product_id"] == product["id"],
-                  //           )["quantity"] ??
-                  //           1
-                  //     : 1;
                   return Row(
                     children: [
                       Expanded(
@@ -787,7 +764,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         padding: EdgeInsets.only(left: 10),
                         child: Text(
                           brand,
-                          style: TextStyle(color: Colors.grey, fontSize: 15),
+                          style: TextStyle(color: Colors.black87, fontSize: 15),
                         ),
                       ),
                   ],

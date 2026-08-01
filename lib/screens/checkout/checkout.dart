@@ -6,12 +6,14 @@ import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/checkout/banktransfersuccess.dart';
+import 'package:junubullion/screens/checkout/success.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
 import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/cart/custom_summary.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
+import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,6 +37,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool showAddressForm = false;
   String? localAddress;
   String? selectedCard;
+
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
@@ -84,7 +88,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
 
     return Scaffold(
-      appBar: const CustomAppBar(),
+      key: scaffoldKey,
+      drawer: const CustomDrawer(),
+      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
 
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,
@@ -568,7 +574,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   _isPlacingOrder = false;
                                 });
 
-                                Navigator.push(
+                                Navigator.pushAndRemoveUntil(
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => BankTransferSuccessScreen(
@@ -577,7 +583,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                           response["summary"]["symbol"],
                                     ),
                                   ),
+                                  (route) => false,
                                 );
+
+                                // Navigator.push(
+                                //   context,
+                                //   MaterialPageRoute(
+                                //     builder: (_) => BankTransferSuccessScreen(
+                                //       order: response["data"],
+                                //       currencySymbol:
+                                //           response["summary"]["symbol"],
+                                //     ),
+                                //   ),
+                                // );
                               } else {
                                 if (!mounted) return;
 
@@ -665,25 +683,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   );
                               if (orderResponse["status"] == true) {
                                 if (!mounted) return;
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => OrderSuccessScreen(),
+                                  ),
+                                  (route) => false,
+                                );
 
                                 // Navigator.push(
                                 //   context,
                                 //   MaterialPageRoute(
                                 //     builder: (_) => BankTransferSuccessScreen(
-                                //       order: orderResponse,
+                                //       order: orderResponse["data"],
+                                //       currencySymbol:
+                                //           orderResponse["summary"]["symbol"],
                                 //     ),
                                 //   ),
                                 // );
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => BankTransferSuccessScreen(
-                                      order: orderResponse["data"],
-                                      currencySymbol:
-                                          orderResponse["summary"]["symbol"],
-                                    ),
-                                  ),
-                                );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(

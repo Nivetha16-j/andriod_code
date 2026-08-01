@@ -29,25 +29,6 @@ class StripeService {
     }
   }
 
-  // static Future<bool> confirmCardPayment({required String clientSecret}) async {
-  //   try {
-  //     await Stripe.instance.confirmPayment(
-  //       paymentIntentClientSecret: clientSecret,
-  //       data: const PaymentMethodParams.card(
-  //         paymentMethodData: PaymentMethodData(),
-  //       ),
-  //     );
-
-  //     return true;
-  //   } on StripeException catch (e) {
-  //     print(e.error.localizedMessage);
-  //     return false;
-  //   } catch (e) {
-  //     print(e);
-  //     return false;
-  //   }
-  // }
-
   static Future<Map<String, dynamic>> createStripeSession({
     required String shippingAddress,
     required String fulfillmentType,

@@ -1,7 +1,13 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:junubullion/main.dart';
+import 'package:junubullion/providers/order_provider.dart';
+import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/widgets/profile/quickaction.dart';
 import 'package:junubullion/widgets/profile/recentorders.dart';
 import 'package:junubullion/widgets/profile/wallet.dart';
+import 'package:provider/provider.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -11,8 +17,26 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+  Map<String, dynamic> user = {};
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    user = (await SessionManager.getUser())!;
+    log("User Data: $user");
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
+    final ordersProvider = context.watch<OrdersProvider>();
+
+    final int orderCount = ordersProvider.orders.length;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -45,8 +69,8 @@ class _DashboardState extends State<Dashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Welcome Back, Nivi",
+                Text(
+                  "Welcome Back, ${user['name'] ?? 'User'}",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -68,7 +92,7 @@ class _DashboardState extends State<Dashboard> {
                     Expanded(
                       child: _InfoButton(
                         image: "assets/order_count.png",
-                        title: "4 Orders",
+                        title: "$orderCount Orders",
                       ),
                     ),
                     const SizedBox(width: 10),

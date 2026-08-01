@@ -68,6 +68,12 @@ class ProductDetailsProvider extends ChangeNotifier {
   }) async {
     if (showLoader) {
       isLoading = true;
+
+      product = null;
+      reviews = [];
+      relatedProducts = [];
+      subcategories = [];
+
       notifyListeners();
     }
 

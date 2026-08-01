@@ -6,6 +6,8 @@ import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/home/custom_drawer.dart';
+import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 
@@ -109,6 +111,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     final currencyProvider = context.watch<CurrencyProvider>();
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
     final productProvider = context.watch<ExclusiveProductProvider>();
 
@@ -254,21 +257,25 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
-        title: Text(
-          widget.title,
-          style: const TextStyle(
-            color: Color(0xFFC88E2B),
-            fontWeight: FontWeight.bold,
-            fontSize: 24.0,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: !widget.isEmbedded,
-        iconTheme: const IconThemeData(color: Colors.black87),
-      ),
+      // appBar: AppBar(
+
+      //   title: Text(
+      //     widget.title,
+      //     style: const TextStyle(
+      //       color: Color(0xFFC88E2B),
+      //       fontWeight: FontWeight.bold,
+      //       fontSize: 24.0,
+      //     ),
+      //   ),
+      //   centerTitle: true,
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      //   automaticallyImplyLeading: !widget.isEmbedded,
+      //   iconTheme: const IconThemeData(color: Colors.black87),
+      // ),
+      key: scaffoldKey,
+      drawer: const CustomDrawer(),
+      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: content,
     );
   }

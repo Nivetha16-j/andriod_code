@@ -82,7 +82,58 @@ class _CartScreenState extends State<CartScreen> {
       body: Consumer<CartProvider>(
         builder: (context, provider, child) {
           if (provider.cartItems.isEmpty) {
-            return const Center(child: Text("No products in cart"));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    "assets/no_product.png",
+                    height: 80,
+                    width: 80,
+                    // color: Colors.grey,
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    "Your cart is empty",
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                  SizedBox(height: 50),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 30.0, right: 30),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8E2323),
+                          foregroundColor: Colors.white,
+                          elevation: 4,
+                          shadowColor: Colors.black26,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/home',
+                            (route) => false,
+                          );
+                        },
+                        child: const Text(
+                          "CONTINUE SHOPPING",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
 
           return ListView(

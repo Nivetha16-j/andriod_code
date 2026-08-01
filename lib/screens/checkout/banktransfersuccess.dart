@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/services/session_manager.dart';
+import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
 
@@ -25,6 +26,7 @@ class BankTransferSuccessScreen extends StatefulWidget {
 class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
   String email = "";
   String total = '';
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -57,7 +59,11 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
     final total = widget.order['grand_total'];
 
     return Scaffold(
-      appBar: CustomAppBar(),
+      key: scaffoldKey,
+      backgroundColor: const Color(0xFFFAFAFA),
+      resizeToAvoidBottomInset: false,
+      drawer: const CustomDrawer(),
+      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: SingleChildScrollView(

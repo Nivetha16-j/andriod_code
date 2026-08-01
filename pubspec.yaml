@@ -77,6 +77,7 @@ flutter:
     - assets/logo/logo.png
     - assets/
     - assets/orders.png
+    - assets/no_product.png
     - .env
   #   - images/a_dot_ham.jpeg
 

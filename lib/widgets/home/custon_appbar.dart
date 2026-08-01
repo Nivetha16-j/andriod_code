@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
@@ -9,7 +11,8 @@ import 'package:provider/provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
-  const CustomAppBar({Key? key}) : super(key: key);
+  final GlobalKey<ScaffoldState>? scaffoldKey;
+  const CustomAppBar({Key? key, this.scaffoldKey}) : super(key: key);
 
   static const Color accentGold = Color(0xFFD49E00);
   static const Color textGold = Color(0xFFE5B537);
@@ -137,13 +140,9 @@ class _CustomAppBarState extends State<CustomAppBar> {
                     padding: EdgeInsets.zero,
                     icon: const Icon(Icons.menu, color: Colors.white, size: 24),
                     onPressed: () async {
-                      // await SessionManager.logout();
-
-                      // Navigator.pushNamedAndRemoveUntil(
-                      //   context,
-                      //   AppRoutes.login,
-                      //   (route) => false,
-                      // );
+                      widget.scaffoldKey?.currentState?.openDrawer();
+                      log("sssssssss ${widget.scaffoldKey}");
+                      log("ssssscccc ${widget.scaffoldKey?.currentState}");
                     },
                   ),
                 ],

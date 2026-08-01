@@ -7,6 +7,7 @@ import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
+import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/providers/product_detail_provider.dart';
 import 'package:junubullion/providers/review_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
@@ -35,6 +36,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => AddressProvider()),
+        ChangeNotifierProvider(create: (_) => OrdersProvider()),
       ],
       child: const MyApp(),
     ),

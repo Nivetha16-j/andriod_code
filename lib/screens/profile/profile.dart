@@ -1,16 +1,20 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
+import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:junubullion/widgets/profile/custom_dashboard.dart';
 import 'package:junubullion/widgets/profile/downloads.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
 import 'package:junubullion/widgets/profile/recentorders.dart';
+import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,8 +24,25 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<OrdersProvider>();
+
+      if (provider.orders.isEmpty) {
+        await provider.fetchOrders();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final orders = context.watch<OrdersProvider>().orders;
+
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -153,6 +174,7 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
     int _currentIndex = 3;
 
     void _switchToTab(int index) {
@@ -164,7 +186,9 @@ class DashboardScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: CustomAppBar(),
+      key: scaffoldKey,
+      drawer: const CustomDrawer(),
+      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: const Dashboard(), // Your existing Dashboard widget
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,
@@ -179,6 +203,7 @@ class OrderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
     int _currentIndex = 3;
 
     void _switchToTab(int index) {
@@ -190,7 +215,9 @@ class OrderScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: CustomAppBar(),
+      key: scaffoldKey,
+      drawer: const CustomDrawer(),
+      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: const RecentOrdersSection(),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,

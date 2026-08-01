@@ -5,6 +5,7 @@ import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/screens/cart/cartscreen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
+import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:provider/provider.dart';
 
 import 'package:junubullion/providers/home_provider.dart';
@@ -29,6 +30,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final ScrollController _homeScrollController = ScrollController();
   final ScrollController _productListScrollController = ScrollController();
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   late int _currentIndex;
 
@@ -120,14 +122,22 @@ class _MainScreenState extends State<MainScreen> {
 
     if (homeProvider.isLoading && homeProvider.homeData == null) {
       return Scaffold(
-        appBar: CustomAppBar(),
+        key: scaffoldKey,
+        drawer: const CustomDrawer(),
+        backgroundColor: const Color(0xFFFAFAFA),
+        resizeToAvoidBottomInset: false,
+        appBar: CustomAppBar(scaffoldKey: scaffoldKey),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (homeProvider.errorMessage != null && homeProvider.homeData == null) {
       return Scaffold(
-        appBar: CustomAppBar(),
+        key: scaffoldKey,
+        drawer: const CustomDrawer(),
+        backgroundColor: const Color(0xFFFAFAFA),
+        resizeToAvoidBottomInset: false,
+        appBar: CustomAppBar(scaffoldKey: scaffoldKey),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -180,7 +190,7 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       resizeToAvoidBottomInset: false,
-      appBar: CustomAppBar(),
+      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,

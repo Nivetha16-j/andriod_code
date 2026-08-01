@@ -36,6 +36,7 @@ class ExclusiveProductProvider extends ChangeNotifier {
 
     if (showLoader) {
       isLoading = true;
+      products = []; // Clear previous products
       notifyListeners();
     }
 
