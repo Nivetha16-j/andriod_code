@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/main.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/services/session_manager.dart';
-import 'package:junubullion/widgets/profile/quickaction.dart';
+import 'package:junubullion/widgets/profile/dashboard/quickaction.dart';
 import 'package:junubullion/widgets/profile/recentorders.dart';
-import 'package:junubullion/widgets/profile/wallet.dart';
+import 'package:junubullion/widgets/profile/dashboard/wallet.dart';
 import 'package:provider/provider.dart';
 
 class Dashboard extends StatefulWidget {
@@ -36,7 +36,9 @@ class _DashboardState extends State<Dashboard> {
   Widget build(BuildContext context) {
     final ordersProvider = context.watch<OrdersProvider>();
 
-    final int orderCount = ordersProvider.orders.length;
+    // final int orderCount = ordersProvider.orders.length;
+    // log("orderCount $orderCount");
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -92,7 +94,7 @@ class _DashboardState extends State<Dashboard> {
                     Expanded(
                       child: _InfoButton(
                         image: "assets/order_count.png",
-                        title: "$orderCount Orders",
+                        title: "${ordersProvider.totalOrders} Orders",
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -118,7 +120,7 @@ class _DashboardState extends State<Dashboard> {
 
           const SizedBox(height: 18),
 
-          const RecentOrdersSection(),
+          const RecentOrdersSection(showAll: false),
 
           const SizedBox(height: 18),
         ],
@@ -143,10 +145,10 @@ class _InfoButton extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(.35)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image.asset(image, height: 20, width: 20, color: Colors.white),
-          // const SizedBox(width: 5),
+          const SizedBox(width: 5),
           Text(
             title,
             style: const TextStyle(

@@ -10,7 +10,9 @@ import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
-import 'package:junubullion/widgets/profile/custom_dashboard.dart';
+import 'package:junubullion/widgets/profile/account_details.dart';
+import 'package:junubullion/widgets/profile/addresses.dart';
+import 'package:junubullion/widgets/profile/dashboard/custom_dashboard.dart';
 import 'package:junubullion/widgets/profile/downloads.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
 import 'package:junubullion/widgets/profile/recentorders.dart';
@@ -108,7 +110,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ProfileMenuTile(
               icon: Icons.location_on_outlined,
               title: "Addresses",
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddressSection()),
+                );
+              },
             ),
 
             ProfileMenuTile(
@@ -120,7 +127,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ProfileMenuTile(
               icon: Icons.person_outline,
               title: "Account Details",
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AccountDetailsScreen(),
+                  ),
+                );
+              },
             ),
 
             ProfileMenuTile(
@@ -218,7 +232,9 @@ class OrderScreen extends StatelessWidget {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: const RecentOrdersSection(),
+      body: const RecentOrdersSection(
+        showAll: true,
+      ), // Your existing RecentOrdersSection widget
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _switchToTab,

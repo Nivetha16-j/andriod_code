@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/account_provider.dart';
+import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
@@ -59,6 +61,8 @@ class _MainScreenState extends State<MainScreen> {
       // final currency = context.read<CurrencyProvider>();
 
       final cartProvider = context.read<CartProvider>();
+
+      ChangeNotifierProvider(create: (_) => AddressProvider());
 
       cartProvider.updateSelection(
         currency: currencyProvider.selectedCurrency,

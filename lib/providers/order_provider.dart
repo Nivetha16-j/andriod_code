@@ -8,6 +8,7 @@ class OrdersProvider extends ChangeNotifier {
   String? error;
 
   List<dynamic> orders = [];
+  int totalOrders = 0;
 
   Future<void> fetchOrders() async {
     isLoading = true;
@@ -15,7 +16,11 @@ class OrdersProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      orders = await _service.fetchOrders();
+      final result = await _service.fetchOrders();
+
+      //  orders = result["orders"];
+      orders = result["orders"];
+      totalOrders = result["total"];
     } catch (e) {
       error = e.toString();
     }
