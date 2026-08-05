@@ -87,6 +87,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cartProvider = Provider.of<CartProvider>(context);
     final currencyProvider = Provider.of<CurrencyProvider>(context);
 
+    final isDigital = delivery.toLowerCase() == "digital";
+
+    final courierAmount = isDigital ? 0.0 : cartProvider.courierAmount;
+    final transactionAmount = isDigital
+        ? 0.0
+        : cartProvider.transactionFeeAmount;
+    final gstAmount = isDigital ? 0.0 : cartProvider.gstAmount;
+
+    final orderTotal =
+        cartProvider.subtotalAmount +
+        courierAmount +
+        transactionAmount +
+        gstAmount;
+
     return Scaffold(
       key: scaffoldKey,
       drawer: const CustomDrawer(),
@@ -453,23 +467,52 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                               const SizedBox(height: 15),
 
+                              // _summaryRow(
+                              //   "Courier Charges",
+                              //   "+ ${provider.formattedCourierFee}",
+                              // ),
+
+                              // const SizedBox(height: 15),
+
+                              // _summaryRow(
+                              //   "Transaction Fee",
+                              //   "+ ${provider.formattedTransactionFee}",
+                              // ),
+
+                              // const Divider(height: 35),
+
+                              // _summaryRow(
+                              //   "Order Total",
+                              //   provider.formattedOrderTotal,
+                              //   bold: true,
+                              //   valueColor: Colors.red,
+                              // ),
                               _summaryRow(
                                 "Courier Charges",
-                                "+ ${provider.formattedCourierFee}",
+                                isDigital
+                                    ? "${provider.currencySymbol}0.00"
+                                    : "+ ${provider.formattedCourierFee}",
                               ),
 
                               const SizedBox(height: 15),
 
                               _summaryRow(
                                 "Transaction Fee",
-                                "+ ${provider.formattedTransactionFee}",
+                                isDigital
+                                    ? "${provider.currencySymbol}0.00"
+                                    : "+ ${provider.formattedTransactionFee}",
                               ),
+
+                              if (!isDigital && provider.gstAmount > 0) ...[
+                                const SizedBox(height: 15),
+                                _summaryRow("GST", provider.formattedGST),
+                              ],
 
                               const Divider(height: 35),
 
                               _summaryRow(
                                 "Order Total",
-                                provider.formattedOrderTotal,
+                                "${provider.currencySymbol}${orderTotal.toStringAsFixed(2)}",
                                 bold: true,
                                 valueColor: Colors.red,
                               ),
@@ -657,6 +700,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               final paymentSuccess =
                                   await StripeService.makePayment(clientSecret);
 
+                              log("Payment Success: $paymentSuccess");
+
                               if (!paymentSuccess) {
                                 setState(() {
                                   _isPlacingOrder = false;
@@ -665,52 +710,52 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 return;
                               }
 
-                              final orderResponse =
-                                  await CheckoutService.placeOrder(
-                                    shippingAddress: addressProvider.hasAddress
-                                        ? addressProvider.address!
-                                        : localAddress!,
-                                    deliveryOption: delivery,
-                                    digitalType:
-                                        delivery.toLowerCase() == "digital"
-                                        ? digitalSubtype
-                                        : null,
-                                    courierService:
-                                        cartProvider.selectedDeliveryMethod,
-                                    terms: true,
-                                    paymentType: "card",
-                                    currency: currencyProvider.selectedCurrency,
-                                  );
-                              if (orderResponse["status"] == true) {
-                                if (!mounted) return;
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => OrderSuccessScreen(),
-                                  ),
-                                  (route) => false,
-                                );
+                              // final orderResponse =
+                              //     await CheckoutService.placeOrder(
+                              //       shippingAddress: addressProvider.hasAddress
+                              //           ? addressProvider.address!
+                              //           : localAddress!,
+                              //       deliveryOption: delivery,
+                              //       digitalType:
+                              //           delivery.toLowerCase() == "digital"
+                              //           ? digitalSubtype
+                              //           : null,
+                              //       courierService:
+                              //           cartProvider.selectedDeliveryMethod,
+                              //       terms: true,
+                              //       paymentType: "card",
+                              //       currency: currencyProvider.selectedCurrency,
+                              //     );
+                              // if (orderResponse["status"] == true) {
+                              //   if (!mounted) return;
+                              //   Navigator.pushAndRemoveUntil(
+                              //     context,
+                              //     MaterialPageRoute(
+                              //       builder: (_) => OrderSuccessScreen(),
+                              //     ),
+                              //     (route) => false,
+                              //   );
 
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //     builder: (_) => BankTransferSuccessScreen(
-                                //       order: orderResponse["data"],
-                                //       currencySymbol:
-                                //           orderResponse["summary"]["symbol"],
-                                //     ),
-                                //   ),
-                                // );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      orderResponse["message"] ??
-                                          "Order failed",
-                                    ),
-                                  ),
-                                );
-                              }
+                              //   // Navigator.push(
+                              //   //   context,
+                              //   //   MaterialPageRoute(
+                              //   //     builder: (_) => BankTransferSuccessScreen(
+                              //   //       order: orderResponse["data"],
+                              //   //       currencySymbol:
+                              //   //           orderResponse["summary"]["symbol"],
+                              //   //     ),
+                              //   //   ),
+                              //   // );
+                              // } else {
+                              //   ScaffoldMessenger.of(context).showSnackBar(
+                              //     SnackBar(
+                              //       content: Text(
+                              //         orderResponse["message"] ??
+                              //             "Order failed",
+                              //       ),
+                              //     ),
+                              //   );
+                              // }
                             } catch (e) {
                               debugPrint(e.toString());
 

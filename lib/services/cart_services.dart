@@ -6,15 +6,23 @@ import 'package:junubullion/services/session_manager.dart';
 class CartService {
   static const String _baseUrl = "https://staging.junubullion.com/api";
 
-  // static Future<Map<String, dynamic>> fetchCart() async {
+  // static Future<Map<String, dynamic>> updateCourierCharge({
+  //   required String currency,
+  //   required String courierService,
+  // }) async {
   //   final token = await SessionManager.getToken();
 
-  //   final response = await http.get(
-  //     Uri.parse("$_baseUrl/cart"),
-  //     headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
+  //   final response = await http.post(
+  //     Uri.parse("$_baseUrl/cart/courierCharge"),
+  //     headers: {
+  //       "Authorization": "Bearer $token",
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: jsonEncode({
+  //       "currency": currency,
+  //       "courier_service": courierService.toLowerCase(),
+  //     }),
   //   );
-
-  //   log("responnnn ${response.statusCode}.......${response.contentLength}....");
 
   //   return jsonDecode(response.body);
   // }
@@ -22,6 +30,7 @@ class CartService {
   static Future<Map<String, dynamic>> fetchCart({
     required String currency,
     required String unit,
+    required String courierService,
   }) async {
     final token = await SessionManager.getToken();
 
@@ -33,6 +42,7 @@ class CartService {
             : unit.toLowerCase() == "kilogram"
             ? "kg"
             : "gram",
+        "courier_service": courierService.toLowerCase(),
       },
     );
 

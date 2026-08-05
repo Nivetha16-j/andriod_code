@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/profile/account_details.dart';
+import 'package:junubullion/widgets/profile/addresses.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
 
 class QuickActionsSection extends StatelessWidget {
@@ -49,10 +51,10 @@ class QuickActionsSection extends StatelessWidget {
             ),
             GestureDetector(
               onTap: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(builder: (_) => const AddressScreen()),
-                // );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddressSection()),
+                );
               },
               child: ActionTile(
                 "assets/addresses.png",
@@ -63,10 +65,12 @@ class QuickActionsSection extends StatelessWidget {
             ),
             GestureDetector(
               onTap: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(builder: (_) => const AddressScreen()),
-                // );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AccountDetailsScreen(),
+                  ),
+                );
               },
               child: ActionTile(
                 "assets/acc_details.png",

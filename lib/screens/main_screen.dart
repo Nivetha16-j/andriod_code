@@ -7,6 +7,7 @@ import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/screens/cart/cartscreen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
+import 'package:junubullion/screens/search/search.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:provider/provider.dart';
 
@@ -68,6 +69,7 @@ class _MainScreenState extends State<MainScreen> {
         currency: currencyProvider.selectedCurrency,
         unit: currencyProvider.selectedUnit,
       );
+      // cartProvider.updateCurrency(currencyProvider.selectedCurrency);
 
       cartProvider.fetchCart();
 
@@ -181,7 +183,7 @@ class _MainScreenState extends State<MainScreen> {
         },
         scrollController: _homeScrollController,
       ),
-      const Center(child: Text("Search / Category")),
+      SearchScreen(),
       const CartScreen(),
       ProductListScreen(
         isEmbedded: true,
@@ -192,6 +194,8 @@ class _MainScreenState extends State<MainScreen> {
     ];
 
     return Scaffold(
+      key: scaffoldKey,
+      drawer: const CustomDrawer(),
       backgroundColor: const Color(0xFFFAFAFA),
       resizeToAvoidBottomInset: false,
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),

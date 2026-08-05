@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/theme/app_colors.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
-  static const Color primaryRed = Color(0xFF8B1E1E);
+  // static const Color primaryRed = Color(0xFF8B1E1E);
   static const Color accentGold = Color(0xFFE4B42D);
 
   @override
@@ -11,7 +12,7 @@ class CustomDrawer extends StatelessWidget {
     return Drawer(
       width: 300,
       child: Container(
-        color: primaryRed,
+        color: AppColors.primaryRed,
         child: SafeArea(
           child: Column(
             children: [
@@ -64,7 +65,7 @@ class CustomDrawer extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade700,
+                        color: Color.fromRGBO(153, 30, 30, 1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -114,10 +115,18 @@ class CustomDrawer extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _social(Icons.telegram),
-                        _social(Icons.facebook),
-                        _social(Icons.camera_alt),
-                        _social(Icons.play_arrow),
+                        Image.asset(
+                          "assets/telegram.png",
+                          width: 40,
+                          height: 40,
+                        ),
+                        Image.asset("assets/fb.png", width: 40, height: 40),
+                        Image.asset("assets/insta.png", width: 40, height: 40),
+                        Image.asset(
+                          "assets/youtube.png",
+                          width: 40,
+                          height: 40,
+                        ),
                       ],
                     ),
                   ],
@@ -151,14 +160,6 @@ class CustomDrawer extends StatelessWidget {
         Navigator.pop(context);
         onTap();
       },
-    );
-  }
-
-  Widget _social(IconData icon) {
-    return CircleAvatar(
-      radius: 20,
-      backgroundColor: Colors.white,
-      child: Icon(icon, color: Colors.blue),
     );
   }
 }

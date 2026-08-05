@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
+import 'package:junubullion/providers/account_provider.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/screens/main_screen.dart';
@@ -15,6 +16,7 @@ import 'package:junubullion/widgets/profile/addresses.dart';
 import 'package:junubullion/widgets/profile/dashboard/custom_dashboard.dart';
 import 'package:junubullion/widgets/profile/downloads.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
+import 'package:junubullion/widgets/profile/payment_methods.dart';
 import 'package:junubullion/widgets/profile/recentorders.dart';
 import 'package:provider/provider.dart';
 
@@ -27,6 +29,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  String name = "";
+  String email = "";
 
   @override
   void initState() {
@@ -38,6 +42,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (provider.orders.isEmpty) {
         await provider.fetchOrders();
       }
+
+      final accountProvider = context.read<AccountProvider>();
+
+      await accountProvider.fetchAccountDetails();
+
+      if (!mounted) return;
+
+      setState(() {
+        name = accountProvider.name;
+        email = accountProvider.email;
+      });
     });
   }
 
@@ -50,7 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const ProfileHeader(),
+            ProfileHeader(name, email),
 
             const SizedBox(height: 25),
 
@@ -121,7 +136,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ProfileMenuTile(
               icon: Icons.credit_card,
               title: "Payment Methods",
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PaymentMethodsScreen(),
+                  ),
+                );
+              },
             ),
 
             ProfileMenuTile(
@@ -244,43 +266,59 @@ class OrderScreen extends StatelessWidget {
 }
 
 class ProfileHeader extends StatelessWidget {
-  const ProfileHeader({super.key});
+  final String name;
+  final String email;
+
+  const ProfileHeader(this.name, this.email, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: SessionManager.getUser(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        final user = snapshot.data;
-
-        log("rrrrrrr $user");
-
-        final String name = user?["name"]?.toString() ?? "Guest";
-        final String email = user?["email"]?.toString() ?? "";
-
-        return Column(
-          children: [
-            const CircleAvatar(radius: 45, child: Icon(Icons.person, size: 45)),
-            const SizedBox(height: 12),
-            Text(
-              name,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              email,
-              style: const TextStyle(fontSize: 15, color: Colors.grey),
-            ),
-          ],
-        );
-      },
+    return Column(
+      children: [
+        const CircleAvatar(radius: 45, child: Icon(Icons.person, size: 45)),
+        const SizedBox(height: 12),
+        Text(
+          name,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        Text(email, style: const TextStyle(fontSize: 15, color: Colors.grey)),
+      ],
     );
   }
 }
+
+// builder: (context, snapshot) {
+//   if (snapshot.connectionState == ConnectionState.waiting) {
+//     return const Center(child: CircularProgressIndicator());
+//   }
+
+//   final user = snapshot.data;
+
+//   log("rrrrrrr $user");
+
+//   final String name = user?["name"]?.toString() ?? "Guest";
+//   final String email = user?["email"]?.toString() ?? "";
+
+//   return Column(
+//     children: [
+//       const CircleAvatar(radius: 45, child: Icon(Icons.person, size: 45)),
+//       const SizedBox(height: 12),
+//       Text(
+//         name,
+//         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+//       ),
+//       const SizedBox(height: 10),
+//       Text(
+//         email,
+//         style: const TextStyle(fontSize: 15, color: Colors.grey),
+//       ),
+//     ],
+//   );
+// },
+// );
+// }
+// }
 
 class ProfileMenuTile extends StatelessWidget {
   final IconData icon;

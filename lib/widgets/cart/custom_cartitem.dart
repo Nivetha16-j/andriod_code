@@ -14,6 +14,18 @@ class CartItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool canPurchase = item["stock_status"] == "in_stock";
 
+    final provider = context.watch<CartProvider>();
+
+    final hasCoupon =
+        !provider.isCouponRemoved &&
+        item["has_discount"] == true &&
+        (item["coupon_line_discount"] ?? 0) > 0;
+
+    final showDiscount =
+        !provider.isCouponRemoved &&
+        provider.coupon != null &&
+        item["formatted_compare_price"] != null;
+
     return Container(
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.only(bottom: 15),
@@ -70,15 +82,51 @@ class CartItemCard extends StatelessWidget {
 
                 const SizedBox(height: 5),
 
-                Text(
-                  item["formatted_unit_price"] ??
-                      item["formatted_effective_unit_price"] ??
-                      "",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
+                // Text(
+                //   item["formatted_unit_price"] ??
+                //       item["formatted_effective_unit_price"] ??
+                //       "",
+                //   style: const TextStyle(
+                //     fontWeight: FontWeight.bold,
+                //     fontSize: 12,
+                //   ),
+                // ),
+                Row(
+                  children: [
+                    if (showDiscount)
+                      Text(
+                        item["formatted_compare_price"],
+                        style: const TextStyle(
+                          decoration: TextDecoration.lineThrough,
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+
+                    if (showDiscount) const SizedBox(width: 8),
+
+                    Text(
+                      showDiscount
+                          ? item["formatted_effective_unit_price"]
+                          : item["formatted_compare_price"] ??
+                                item["formatted_unit_price"] ??
+                                "",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
                 ),
+
+                if (hasCoupon && provider.coupon != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      "Coupon ${provider.coupon!["code"]} applied",
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ),
               ],
             ),
           ),

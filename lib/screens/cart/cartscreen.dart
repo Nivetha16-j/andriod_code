@@ -21,27 +21,13 @@ class _CartScreenState extends State<CartScreen> {
   String? _lastCurrency;
   String? _lastUnit;
 
-  // @override
-  // void initState() {
-  //   // TODO: implement initState
-  //   super.initState();
-  //   Future.microtask(() {
-  //     // context.read<CartProvider>().fetchCart();
-  //     final currency = context.read<CurrencyProvider>();
-  //     final cartProvider = context.read<CartProvider>();
+  final TextEditingController couponController = TextEditingController();
 
-  //     cartProvider.updateSelection(
-  //       currency: currency.selectedCurrency,
-  //       unit: currency.selectedUnit,
-  //     );
-
-  //     log(
-  //       "ppppppppppppppp// ${currency.selectedCurrency}......${currency.selectedUnit}",
-  //     );
-
-  //     cartProvider.fetchCart();
-  //   });
-  // }
+  @override
+  void dispose() {
+    couponController.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -81,6 +67,12 @@ class _CartScreenState extends State<CartScreen> {
       backgroundColor: const Color(0xffF7F7F7),
       body: Consumer<CartProvider>(
         builder: (context, provider, child) {
+          log("Couponnnnnnns: ${provider.coupon}");
+          log("Discount: ${provider.formattedDiscount}");
+
+          if (couponController.text != (provider.coupon?["code"] ?? "")) {
+            couponController.text = provider.coupon?["code"] ?? "";
+          }
           if (provider.cartItems.isEmpty) {
             return Center(
               child: Column(
@@ -172,9 +164,10 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: TextField(
-                        decoration: InputDecoration(
+                        controller: couponController,
+                        decoration: const InputDecoration(
                           hintText: "Enter coupon code",
                           hintStyle: TextStyle(
                             fontSize: 13,
@@ -189,7 +182,12 @@ class _CartScreenState extends State<CartScreen> {
                       height: 50,
                       child: ElevatedButton(
                         onPressed: () {
-                          // Apply coupon
+                          if (provider.coupon == null) {
+                            // Apply coupon
+                          } else {
+                            provider.removeCouponLocally();
+                            couponController.clear();
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryRed,
@@ -198,9 +196,9 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 18),
                         ),
-                        child: const Text(
-                          "Apply",
-                          style: TextStyle(
+                        child: Text(
+                          provider.coupon == null ? "Apply" : "Remove",
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -223,6 +221,12 @@ class _CartScreenState extends State<CartScreen> {
                 courier_fee: provider.formattedCourierFee,
                 transaction_fee: provider.formattedTransactionFee,
                 total: provider.formattedOrderTotal,
+                deliveryMethod: provider.selectedDeliveryMethod,
+                coupon: provider.coupon,
+                discount: provider.formattedDiscount,
+                discountPrice: provider.formattedDiscountPrice,
+                gst: provider.formattedGST,
+                currency: provider.currency,
               ),
 
               const SizedBox(height: 30),

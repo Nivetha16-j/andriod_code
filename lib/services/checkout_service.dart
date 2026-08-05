@@ -75,4 +75,28 @@ class CheckoutService {
       throw Exception("Something went wrong.");
     }
   }
+
+  static const String baseUrl = "https://staging.junubullion.com/api";
+
+  Future<List<String>> fetchPaymentMethods() async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.get(
+      Uri.parse("$baseUrl/my-account/payment-methods"),
+      headers: {"Authorization": "Bearer $token", "Accept": "application/json"},
+    );
+
+    print("Status: ${response.statusCode}");
+    print("Response: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+
+      return (json["data"] as List)
+          .map((e) => e["payment_method"].toString())
+          .toList();
+    } else {
+      throw Exception("Failed to fetch payment methods");
+    }
+  }
 }

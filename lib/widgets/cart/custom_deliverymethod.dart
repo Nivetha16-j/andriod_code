@@ -60,6 +60,13 @@ class DeliveryMethodWidget extends StatelessWidget {
     );
   }
 
+  Future<void> _changeDelivery(CartProvider cartProvider, String value) async {
+    if (cartProvider.selectedDeliveryMethod == value) return;
+
+    cartProvider.setDeliveryMethod(value);
+    await cartProvider.fetchCart();
+  }
+
   Widget _deliveryCard({
     required BuildContext context,
     required String title,
@@ -72,9 +79,16 @@ class DeliveryMethodWidget extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(10),
-      onTap: () {
-        cartProvider.setDeliveryMethod(value);
+      // onTap: () {
+      // cartProvider.setDeliveryMethod(value);
+      // cartProvider.updateCourier(
+      //   currency: cartProvider.currency,
+      //   service: value,
+      // );
+      onTap: () async {
+        _changeDelivery(cartProvider, value);
       },
+      // },
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -92,9 +106,9 @@ class DeliveryMethodWidget extends StatelessWidget {
               groupValue: cartProvider.selectedDeliveryMethod,
               activeColor: AppColors.primaryRed,
               visualDensity: VisualDensity.compact,
-              onChanged: (val) {
+              onChanged: (val) async {
                 if (val != null) {
-                  cartProvider.setDeliveryMethod(val);
+                  _changeDelivery(cartProvider, value);
                 }
               },
             ),

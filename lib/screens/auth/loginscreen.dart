@@ -94,6 +94,13 @@ class _LoginScreenState extends State<LoginScreen> {
             token: responseData["token"],
           );
         }
+      } else if (responseData["message"] == "Customer not found.") {
+        _showToast(
+          "${responseData["message"]} Try login with a different account.",
+          isError: true,
+        );
+      } else {
+        _showToast("Unexpected response from server", isError: true);
       }
     } catch (e) {
       log("errorrrrrrrr ${e.toString()}");
