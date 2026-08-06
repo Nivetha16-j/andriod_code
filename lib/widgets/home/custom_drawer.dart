@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/screens/menu/aboutus.dart';
+import 'package:junubullion/screens/menu/contactus.dart';
+import 'package:junubullion/screens/menu/faq.dart';
+import 'package:junubullion/screens/menu/privacy.dart';
+import 'package:junubullion/screens/menu/testimonials.dart';
 import 'package:junubullion/theme/app_colors.dart';
 
 class CustomDrawer extends StatelessWidget {
@@ -10,7 +15,7 @@ class CustomDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      width: 300,
+      width: MediaQuery.of(context).size.width * 0.8,
       child: Container(
         color: AppColors.primaryRed,
         child: SafeArea(
@@ -27,19 +32,47 @@ class CustomDrawer extends StatelessWidget {
                       context,
                       icon: Icons.info_outline,
                       title: "About us",
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context);
+
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AboutUsScreen(),
+                            ),
+                          );
+                        });
+                      },
                     ),
                     _drawerTile(
                       context,
                       icon: Icons.call_outlined,
                       title: "Contact Us",
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context);
+
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ContactUsScreen(),
+                            ),
+                          );
+                        });
+                      },
                     ),
                     _drawerTile(
                       context,
                       icon: Icons.help_outline,
                       title: "FAQ",
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context);
+
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => FaqScreen()),
+                          );
+                        });
+                      },
                     ),
                     _drawerTile(
                       context,
@@ -51,13 +84,31 @@ class CustomDrawer extends StatelessWidget {
                       context,
                       icon: Icons.privacy_tip_outlined,
                       title: "Privacy & More",
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context);
+
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => PrivacyPolicyScreen(),
+                            ),
+                          );
+                        });
+                      },
                     ),
                     _drawerTile(
                       context,
                       icon: Icons.star_border,
                       title: "Testimonial",
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context);
+
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => ReviewsScreen()),
+                          );
+                        });
+                      },
                     ),
 
                     const SizedBox(height: 30),

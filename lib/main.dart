@@ -13,6 +13,7 @@ import 'package:junubullion/providers/kyc_provider.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/providers/product_detail_provider.dart';
 import 'package:junubullion/providers/review_provider.dart';
+import 'package:junubullion/providers/testimonial_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:provider/provider.dart';
@@ -43,6 +44,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => AccountProvider()),
         ChangeNotifierProvider(create: (_) => KycProvider()),
         ChangeNotifierProvider(create: (_) => CheckoutProvider()),
+        ChangeNotifierProvider(create: (_) => TestimonialProvider()),
       ],
       child: const MyApp(),
     ),
