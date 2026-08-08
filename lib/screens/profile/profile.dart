@@ -111,17 +111,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
             ),
 
-            ProfileMenuTile(
-              icon: Icons.download,
-              title: "Downloads",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DownloadsScreen()),
-                );
-              },
-            ),
-
+            // ProfileMenuTile(
+            //   icon: Icons.download,
+            //   title: "Downloads",
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (_) => const DownloadsScreen()),
+            //     );
+            //   },
+            // ),
             ProfileMenuTile(
               icon: Icons.location_on_outlined,
               title: "Addresses",
@@ -133,19 +132,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
             ),
 
-            ProfileMenuTile(
-              icon: Icons.credit_card,
-              title: "Payment Methods",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const PaymentMethodsScreen(),
-                  ),
-                );
-              },
-            ),
-
+            // ProfileMenuTile(
+            //   icon: Icons.credit_card,
+            //   title: "Payment Methods",
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (_) => const PaymentMethodsScreen(),
+            //       ),
+            //     );
+            //   },
+            // ),
             ProfileMenuTile(
               icon: Icons.person_outline,
               title: "Account Details",

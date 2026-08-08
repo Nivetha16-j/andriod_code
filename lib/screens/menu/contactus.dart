@@ -225,15 +225,19 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
             const SizedBox(height: 15),
 
-            const GoogleMapWidget(),
-            SizedBox(
-              width: double.infinity,
+            // const GoogleMapWidget(),
+            Image.asset("assets/map.png"),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryRed,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 10,
+                  ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
                 onPressed: () async {
@@ -254,6 +258,17 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               ),
             ),
 
+            const SizedBox(height: 20),
+
+            const Text(
+              "Our Shopfront Your Destination for Precious Metals!!",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            ),
+
+            const SizedBox(height: 15),
+
+            Image.asset("assets/shop_image.png"),
             const SizedBox(height: 20),
           ],
         ),

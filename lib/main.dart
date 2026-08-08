@@ -69,6 +69,23 @@ class MyApp extends StatelessWidget {
       initialRoute: AppRoutes.splash,
       onGenerateRoute: AppRoutes.generateRoute,
       theme: ThemeData(fontFamily: 'Montserrat'),
+
+      // localizationsDelegates: const [
+      //   GlobalMaterialLocalizations.delegate,
+      //   GlobalWidgetsLocalizations.delegate,
+      //   GlobalCupertinoLocalizations.delegate,
+      // ],
+
+      // supportedLocales: const [
+      //   Locale('en'),
+      //   Locale('ar'),
+      //   Locale('de'),
+      //   Locale('hi'),
+      //   Locale('it'),
+      //   Locale('ml'),
+      //   Locale('es'),
+      //   Locale('ta'),
+      // ],
     );
   }
 }

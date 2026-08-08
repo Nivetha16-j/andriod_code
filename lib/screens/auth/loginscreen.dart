@@ -133,6 +133,12 @@ class _LoginScreenState extends State<LoginScreen> {
       codeSent: (String verificationId, int? resendToken) {
         _showToast("OTP Sent to this number");
 
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -196,13 +202,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   fontWeight: FontWeight.w600,
                   borderRadius: 50,
                   padding: const EdgeInsets.all(25),
-                  onPressed: () {
-                    log("messageeeeeee");
-                    if (!_isLoading) {
-                      log("message...........");
-                      loginUser();
-                    }
-                  },
+                  isLoading: _isLoading,
+                  onPressed: loginUser,
                 ),
                 Center(
                   child: RichText(

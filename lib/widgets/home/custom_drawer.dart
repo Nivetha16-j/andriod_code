@@ -74,12 +74,12 @@ class CustomDrawer extends StatelessWidget {
                         });
                       },
                     ),
-                    _drawerTile(
-                      context,
-                      icon: Icons.local_shipping_outlined,
-                      title: "Shipping",
-                      onTap: () {},
-                    ),
+                    // _drawerTile(
+                    //   context,
+                    //   icon: Icons.local_shipping_outlined,
+                    //   title: "Shipping",
+                    //   onTap: () {},
+                    // ),
                     _drawerTile(
                       context,
                       icon: Icons.privacy_tip_outlined,

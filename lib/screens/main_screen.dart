@@ -167,9 +167,6 @@ class _MainScreenState extends State<MainScreen> {
       );
     }
 
-    final exclusiveProducts =
-        homeProvider.homeData?['data']?['exclusive_products'] as List<dynamic>?;
-
     final pages = [
       HomeScreen(
         onViewMoreTap: () => _switchToTab(3),

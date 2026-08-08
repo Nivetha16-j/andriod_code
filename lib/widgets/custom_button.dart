@@ -31,7 +31,7 @@ class CustomButton extends StatelessWidget {
         width: double.infinity,
         height: height,
         child: ElevatedButton(
-          onPressed: onPressed,
+          onPressed: isLoading ? null : onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryRed,
             elevation: 4,
@@ -40,7 +40,14 @@ class CustomButton extends StatelessWidget {
             ),
           ),
           child: isLoading
-              ? const CircularProgressIndicator()
+              ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
+                  ),
+                )
               : Text(
                   label,
                   style: TextStyle(
