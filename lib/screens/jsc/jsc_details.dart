@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:junubullion/screens/jsc/jsc_form.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
@@ -208,7 +209,14 @@ class _JscScreenState extends State<JscScreen> {
                           borderRadius: BorderRadius.circular(18),
                         ),
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => JscApplicationForm(),
+                          ),
+                        );
+                      },
                       child: const Text(
                         "Open Your Jsc Account",
                         style: TextStyle(
@@ -513,7 +521,7 @@ class _JscScreenState extends State<JscScreen> {
                       const SizedBox(height: 25),
 
                       SizedBox(
-                        height: 400,
+                        height: 450,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           // padding: const EdgeInsets.symmetric(horizontal: 20),

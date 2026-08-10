@@ -116,14 +116,18 @@ class _OTPScreenState extends State<OTPScreen> {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
 
-      String? firebaseToken = await userCredential.user?.getIdToken();
+      String? firebaseToken = await userCredential.user?.getIdToken(true);
+
+      log("Firebase User: ${userCredential.user?.uid}");
+
+      log("Firebase Token - $firebaseToken");
 
       if (firebaseToken == null) {
         throw Exception("Unable to get Firebase token");
       }
 
       /// ============================
-      /// LOGIN FLOW
+      /// LOGIN FLOW0
       /// ============================
       log("isloggggg ${widget.isLogin}");
       if (widget.isLogin) {
@@ -160,6 +164,10 @@ class _OTPScreenState extends State<OTPScreen> {
       /// ============================
 
       final fullName = "${widget.fname ?? ""} ${widget.lname ?? ""}".trim();
+
+      log(
+        "Payloadddddd $fullName ${widget.email} ${widget.phoneNumber} ${widget.password} ${widget.passwordConfirmation} ${widget.countryId} ${firebaseToken}",
+      );
 
       final payload = {
         "name": fullName,
