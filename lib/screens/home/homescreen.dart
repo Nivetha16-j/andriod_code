@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
+import 'package:junubullion/screens/jsc/jsc_dashboard.dart';
 import 'package:junubullion/screens/jsc/jsc_details.dart';
 import 'package:junubullion/widgets/home/custom_banner.dart';
 import 'package:junubullion/widgets/home/custom_brands.dart';
@@ -138,13 +139,20 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 5),
 
-            InvestBanner(
-              imagePath: "assets/jsc.png",
+            GestureDetector(
               onTap: () {
                 Navigator.of(
                   context,
-                ).push(MaterialPageRoute(builder: (_) => JscScreen()));
+                ).push(MaterialPageRoute(builder: (_) => JscDashboardScreen()));
               },
+              child: InvestBanner(
+                imagePath: "assets/jsc.png",
+                onTap: () {
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => JscScreen()));
+                },
+              ),
             ),
             const SizedBox(height: 5),
 

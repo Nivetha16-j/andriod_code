@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "957192942006",
-    "project_id": "junubullion-d0440",
-    "storage_bucket": "junubullion-d0440.firebasestorage.app"
+    "project_number": "105205375316",
+    "project_id": "linear-quasar-505113-p7",
+    "storage_bucket": "linear-quasar-505113-p7.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:957192942006:android:a38aa44c37f1e0be655117",
+        "mobilesdk_app_id": "1:105205375316:android:b93abec424b02ff24028c1",
         "android_client_info": {
           "package_name": "com.example.junubullion"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCrzaZN8D8mwKFbXMaJ5bZf27NqVlFPSDk"
+          "current_key": "AIzaSyA1kGmVzfsS9kyMxs9KpvRwXnHrCSPPU-8"
         }
       ],
       "services": {

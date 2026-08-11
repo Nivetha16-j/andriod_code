@@ -450,49 +450,49 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                   "Submitting KYC with files: ${selectedGovtIdFile!.path}, ${selectedAddressFile?.path}, ${notesController.text.trim()}",
                                 );
 
-                                final response = await provider.submitKyc(
-                                  identityDocument: selectedGovtIdFile!,
-                                  addressDocument: selectedAddressFile,
-                                  customerNotes: notesController.text.trim(),
-                                );
+                                // final response = await provider.submitKyc(
+                                //   identityDocument: selectedGovtIdFile!,
+                                //   addressDocument: selectedAddressFile,
+                                //   customerNotes: notesController.text.trim(),
+                                // );
 
-                                if (!mounted) return;
+                                // if (!mounted) return;
 
-                                if (response["success"] == true) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        response["body"]["message"] ??
-                                            "KYC submitted successfully",
-                                      ),
-                                    ),
-                                  );
+                                // if (response["success"] == true) {
+                                // ScaffoldMessenger.of(context).showSnackBar(
+                                //   SnackBar(
+                                //     content: Text(
+                                //       response["body"]["message"] ??
+                                //           "KYC submitted successfully",
+                                //     ),
+                                //   ),
+                                // );
 
-                                  setState(() {
-                                    selectedGovtIdFile = null;
-                                    selectedAddressFile = null;
-                                    governmentFileName = null;
-                                    addressFileName = null;
-                                    notesController.clear();
-                                  });
+                                // setState(() {
+                                //   selectedGovtIdFile = null;
+                                //   selectedAddressFile = null;
+                                //   governmentFileName = null;
+                                //   addressFileName = null;
+                                //   notesController.clear();
+                                // });
 
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          MainScreen(initialIndex: 3),
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        response["body"]["message"] ??
-                                            "Failed to submit KYC",
-                                      ),
-                                    ),
-                                  );
-                                }
+                                // Navigator.pushReplacement(
+                                //   context,
+                                //   MaterialPageRoute(
+                                //     builder: (_) =>
+                                //         MainScreen(initialIndex: 3),
+                                //   ),
+                                // );
+                                // } else {
+                                //   ScaffoldMessenger.of(context).showSnackBar(
+                                //     SnackBar(
+                                //       content: Text(
+                                //         response["body"]["message"] ??
+                                //             "Failed to submit KYC",
+                                //       ),
+                                //     ),
+                                //   );
+                                // }
                               },
                         child: provider.isLoading
                             ? const SizedBox(

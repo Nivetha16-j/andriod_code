@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:junubullion/routes/app_routes.dart';
+import 'package:junubullion/screens/jsc/jsc_form.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/services/session_manager.dart';
 
@@ -64,6 +65,9 @@ class _SplashScreenState extends State<SplashScreen>
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else {
       Navigator.pushReplacementNamed(context, AppRoutes.login);
+      // Navigator.of(
+      //   context,
+      // ).push(MaterialPageRoute(builder: (_) => JscApplicationForm()));
     }
   }
 
