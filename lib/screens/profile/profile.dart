@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:junubullion/providers/account_provider.dart';
+import 'package:junubullion/providers/convert_physical_provider.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/screens/main_screen.dart';
@@ -11,6 +12,7 @@ import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
 import 'package:junubullion/widgets/profile/account_details.dart';
 import 'package:junubullion/widgets/profile/addresses.dart';
 import 'package:junubullion/widgets/profile/dashboard/custom_dashboard.dart';
@@ -184,7 +186,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
 
                 if (shouldLogout == true) {
+                  context.read<ConvertPhysicalProvider>().clear();
                   await SessionManager.logout();
+
+                  // Reset the in-memory state for all JSC balance sections
+                  balanceUnlockedNotifier.value = false;
 
                   if (context.mounted) {
                     Navigator.pushNamedAndRemoveUntil(

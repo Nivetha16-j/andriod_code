@@ -1,11 +1,18 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/screens/jsc/jsc_form.dart';
 import 'package:junubullion/screens/jsc/jsc_layout.dart';
-import 'package:junubullion/screens/jsc/jsc_purchases.dart';
-import 'package:junubullion/screens/jsc/jsc_sidemenu.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
+import 'package:junubullion/widgets/jsc/jsc_convert_to_physical_section.dart';
+import 'package:provider/provider.dart';
+import 'package:junubullion/widgets/jsc/jsc_purchases_section.dart';
 
 class JscDashboardScreen extends StatefulWidget {
   const JscDashboardScreen({super.key});
@@ -28,7 +35,6 @@ class _JscDashboardScreenState extends State<JscDashboardScreen> {
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: JscLayout(
         selectedMenu: 'Dashboard',
-
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
           child: const _DashboardContent(),
@@ -50,74 +56,45 @@ class _JscDashboardScreenState extends State<JscDashboardScreen> {
   }
 }
 
-// ============================================================
-// SIDEBAR
-// ============================================================
-
-// class _Sidebar extends StatelessWidget {
-//   const _Sidebar();
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       width: MediaQuery.of(context).size.width * 0.3,
-//       // margin: const EdgeInsets.only(left: 27, bottom: 330),
-//       decoration: BoxDecoration(
-//         color: const Color(0xFFFDFCF6),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.18),
-//             blurRadius: 3,
-//             offset: const Offset(1, 2),
-//           ),
-//         ],
-//       ),
-//       child: Padding(
-//         padding: const EdgeInsets.only(left: 8, right: 6, top: 14),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             const Text(
-//               'JSC',
-//               style: TextStyle(fontSize: 14, color: Colors.black87),
-//             ),
-
-//             const SizedBox(height: 10),
-
-//             _sideItem('Dashboard', selected: true),
-//             _sideItem('My Wallet'),
-//             _sideItem('Your Purchases'),
-//             _sideItem('Account Details'),
-//             _sideItem('Transaction History'),
-//             _sideItem('Sell Back Request'),
-//             _sideItem('Lost Password'),
-//             _sideItem('Logout'),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _sideItem(String title, {bool selected = false}) {
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 12),
-//       child: Text(
-//         title,
-//         style: TextStyle(
-//           fontSize: 12,
-//           color: selected ? const Color(0xFFC5142D) : Colors.black87,
-//         ),
-//       ),
-//     );
-//   }
-// }
-
-// ============================================================
-// DASHBOARD CONTENT
-// ============================================================
-
-class _DashboardContent extends StatelessWidget {
+class _DashboardContent extends StatefulWidget {
   const _DashboardContent();
+
+  @override
+  State<_DashboardContent> createState() => _DashboardContentState();
+}
+
+class _DashboardContentState extends State<_DashboardContent> {
+  bool isLoadingApplication = true;
+  bool hasJscRegistration = false;
+  bool isBalancesUnlocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkJscRegistration();
+  }
+
+  Future<void> _checkJscRegistration() async {
+    try {
+      final result = await JscService.getJscApplication();
+
+      if (!mounted) return;
+
+      setState(() {
+        hasJscRegistration = result["hasRegistration"] == true;
+        isLoadingApplication = false;
+      });
+    } catch (e) {
+      debugPrint('JSC registration check error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        hasJscRegistration = false;
+        isLoadingApplication = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,164 +115,115 @@ class _DashboardContent extends StatelessWidget {
 
         const SizedBox(height: 7),
 
-        // JSC APPLICATION FORM
-        _redButton(text: 'Jsc Application Form', onTap: () {}),
+        _buildJscApplicationButton(),
 
         const SizedBox(height: 20),
-
-        // NOMINEE CARD
-        const _NomineeCard(),
-
         const SizedBox(height: 20),
 
-        // UNLOCK BALANCE CARD
-        const _UnlockBalanceCard(),
+        JscBalanceSection(
+          onUnlocked: () {
+            if (!mounted) return;
 
-        const SizedBox(height: 20),
-
-        // GOLD / SILVER BALANCES
-        const Row(
-          children: [
-            Expanded(
-              child: _BalanceCard(
-                title: 'Gold Balance',
-                grams: '... grams',
-                marketValue: '....market value',
-                isGold: true,
-                image: "assets/g_balance.png",
-              ),
-            ),
-            SizedBox(width: 5),
-            Expanded(
-              child: _BalanceCard(
-                title: 'Silver Balance',
-                grams: '... oz',
-                marketValue: '....market value',
-                isGold: false,
-                image: "assets/s_balance.png",
-              ),
-            ),
-          ],
+            setState(() {
+              isBalancesUnlocked = true;
+            });
+          },
         ),
 
         const SizedBox(height: 20),
 
-        // YOUR PURCHASES
-        const _PurchasesCard(),
+        JscPurchasesSection(isUnlocked: isBalancesUnlocked),
 
         const SizedBox(height: 20),
 
-        // CONVERT TO PHYSICAL
-        const _ConvertPhysicalCard(),
+        const JscConvertPhysicalSection(),
       ],
     );
   }
-}
 
-// ============================================================
-// RED BUTTON
-// ============================================================
+  Widget _buildJscApplicationButton() {
+    if (isLoadingApplication) {
+      return const SizedBox(
+        width: double.infinity,
+        height: 30,
+        child: Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
 
-Widget _redButton({required String text, required VoidCallback onTap}) {
-  return SizedBox(
-    width: double.infinity,
-    height: 30,
-    child: ElevatedButton(
-      onPressed: onTap,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFD20D2D),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        padding: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-      ),
-    ),
-  );
-}
+    if (hasJscRegistration) {
+      return SizedBox(
+        width: double.infinity,
+        height: 40,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const JscApplicationForm(isEdit: true),
+              ),
+            );
+          },
+          icon: const Icon(Icons.description_outlined, size: 16),
+          label: const Text(
+            'View JSC Application',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFD20D2D),
+            foregroundColor: Colors.white,
+            elevation: 3,
+            shadowColor: Colors.black26,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(22),
+            ),
+          ),
+        ),
+      );
+    }
 
-// ============================================================
-// NOMINEE CARD
-// ============================================================
+    return _redButton(
+      text: 'Jsc Application Form',
+      onTap: () async {
+        await _checkJscRegistration();
+      },
+    );
+  }
 
-class _NomineeCard extends StatelessWidget {
-  const _NomineeCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget _redButton({required String text, required VoidCallback onTap}) {
+    return SizedBox(
       width: double.infinity,
-      padding: const EdgeInsets.all(7),
-      decoration: BoxDecoration(
-        color: const Color.fromRGBO(255, 248, 230, 1),
-        border: Border.all(color: const Color(0xFFE9C65A), width: 0.7),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.22),
-            blurRadius: 2,
-            offset: const Offset(1, 2),
+      height: 30,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFD20D2D),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(13),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Nominee details missing.',
-            style: TextStyle(
-              fontSize: 10,
-              color: Color.fromRGBO(168, 136, 22, 1),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-
-          const SizedBox(height: 3),
-
-          const Text(
-            'Please add a nominee to your JSC application to secure your holdings.',
-            style: TextStyle(
-              fontSize: 10,
-              color: Color.fromRGBO(168, 136, 22, 1),
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          SizedBox(
-            height: 22,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromRGBO(200, 157, 8, 1),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              child: const Text(
-                'Add Nominee',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ],
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        ),
       ),
     );
   }
 }
 
-// ============================================================
-// UNLOCK BALANCE
-// ============================================================
-
 class _UnlockBalanceCard extends StatefulWidget {
-  const _UnlockBalanceCard();
+  final Function(Map<String, dynamic>) onUnlocked;
+
+  const _UnlockBalanceCard({required this.onUnlocked});
 
   @override
   State<_UnlockBalanceCard> createState() => _UnlockBalanceCardState();
@@ -304,10 +232,81 @@ class _UnlockBalanceCard extends StatefulWidget {
 class _UnlockBalanceCardState extends State<_UnlockBalanceCard> {
   final TextEditingController controller = TextEditingController();
 
+  bool isUnlocking = false;
+
   @override
   void dispose() {
     controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _unlockBalances() async {
+    final password = controller.text.trim();
+
+    if (password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your unlock password.')),
+      );
+      return;
+    }
+
+    setState(() {
+      isUnlocking = true;
+    });
+
+    try {
+      final currencyProvider = Provider.of<CurrencyProvider>(
+        context,
+        listen: false,
+      );
+
+      log("unnnnnnn ${currencyProvider.selectedCurrency}.......$password");
+
+      final result = await JscService.unlockWallet(
+        unlockPassword: password,
+        currency: currencyProvider.selectedCurrency,
+      );
+
+      if (!mounted) return;
+
+      if (result['status'] == true) {
+        final data = result['data'] as Map<String, dynamic>? ?? {};
+
+        // Send balance data to parent
+        widget.onUnlocked(data);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result['message']?.toString() ??
+                  'Balances unlocked successfully.',
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result['message']?.toString() ?? 'Unable to unlock balances.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Unlock balances error: $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to unlock balances: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isUnlocking = false;
+        });
+      }
+    }
   }
 
   @override
@@ -352,6 +351,7 @@ class _UnlockBalanceCardState extends State<_UnlockBalanceCard> {
             height: 30,
             child: TextField(
               controller: controller,
+              obscureText: true,
               style: const TextStyle(fontSize: 12),
               decoration: InputDecoration(
                 hintText: 'Email Prefix + Phone Suffix',
@@ -380,7 +380,7 @@ class _UnlockBalanceCardState extends State<_UnlockBalanceCard> {
             width: double.infinity,
             height: 30,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: isUnlocking ? null : _unlockBalances,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD20D2D),
                 foregroundColor: Colors.white,
@@ -390,10 +390,22 @@ class _UnlockBalanceCardState extends State<_UnlockBalanceCard> {
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
-              child: const Text(
-                'Unlock Balances',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-              ),
+              child: isUnlocking
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text(
+                      'Unlock Balances',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
           ),
         ],
@@ -401,146 +413,6 @@ class _UnlockBalanceCardState extends State<_UnlockBalanceCard> {
     );
   }
 }
-
-// ============================================================
-// BALANCE CARD
-// ============================================================
-
-class _BalanceCard extends StatelessWidget {
-  final String title;
-  final String grams;
-  final String marketValue;
-  final bool isGold;
-  final String image;
-
-  const _BalanceCard({
-    required this.title,
-    required this.grams,
-    required this.marketValue,
-    required this.isGold,
-    required this.image,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = isGold
-        ? const Color.fromRGBO(232, 190, 46, 1)
-        : const Color.fromRGBO(178, 186, 205, 1);
-
-    return Container(
-      height: 100,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Color.fromRGBO(255, 248, 230, 1),
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color.fromRGBO(131, 126, 126, 1),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          const SizedBox(height: 5),
-
-          Text(
-            grams,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-          ),
-
-          const SizedBox(height: 5),
-
-          const Text(
-            '.....market value',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: Color.fromRGBO(178, 186, 205, 1),
-            ),
-          ),
-
-          const SizedBox(height: 5),
-
-          Image.asset(image, height: 25, width: 25),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
-// YOUR PURCHASES
-// ============================================================
-
-class _PurchasesCard extends StatelessWidget {
-  const _PurchasesCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 120,
-      padding: const EdgeInsets.fromLTRB(15, 12, 15, 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFEF9),
-        border: Border.all(color: const Color(0xFFD20D2D), width: 1),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 2),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Your Purchases',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          ),
-
-          const SizedBox(height: 8),
-
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF9E8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  blurRadius: 3,
-                  offset: const Offset(1, 2),
-                ),
-              ],
-            ),
-            child: const Text(
-              "Track each digital purchase against today's market price.",
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // const Spacer(),
-          const Center(
-            child: Text(
-              'No digital gold or silver purchases yet.',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w400,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ============================================================
-// CONVERT TO PHYSICAL
-// ============================================================
 
 class _ConvertPhysicalCard extends StatelessWidget {
   const _ConvertPhysicalCard();

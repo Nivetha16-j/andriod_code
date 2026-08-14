@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/screens/jsc/jsc_layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
-import 'jsc_layout.dart';
-import 'package:junubullion/widgets/jsc/jsc_purchases_section.dart';
+import 'package:junubullion/widgets/jsc/jsc_convert_to_physical_section.dart';
 
-class JscPurchasesScreen extends StatefulWidget {
-  const JscPurchasesScreen({super.key});
+class JscConvertToPhysicalScreen extends StatefulWidget {
+  const JscConvertToPhysicalScreen({super.key});
 
   @override
-  State<JscPurchasesScreen> createState() => _JscPurchasesScreenState();
+  State<JscConvertToPhysicalScreen> createState() =>
+      _JscConvertToPhysicalScreenState();
 }
 
-class _JscPurchasesScreenState extends State<JscPurchasesScreen> {
+class _JscConvertToPhysicalScreenState
+    extends State<JscConvertToPhysicalScreen> {
   @override
   Widget build(BuildContext context) {
     int currentIndex = 0;
@@ -25,10 +27,10 @@ class _JscPurchasesScreenState extends State<JscPurchasesScreen> {
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: JscLayout(
-        selectedMenu: 'Your Purchases',
+        selectedMenu: 'Convert To Physical',
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
-          child: const JscPurchasesContent(),
+          child: const JscConvertToPhysicalContent(),
         ),
       ),
       bottomNavigationBar: CustomBottomNavigationBar(
@@ -47,8 +49,8 @@ class _JscPurchasesScreenState extends State<JscPurchasesScreen> {
   }
 }
 
-class JscPurchasesContent extends StatelessWidget {
-  const JscPurchasesContent({super.key});
+class JscConvertToPhysicalContent extends StatelessWidget {
+  const JscConvertToPhysicalContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +58,7 @@ class JscPurchasesContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Your Purchases',
+          'Convert To Physical',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -67,7 +69,7 @@ class JscPurchasesContent extends StatelessWidget {
         const SizedBox(height: 12),
 
         const Text(
-          "Track each digital purchase against today's market price.",
+          "Convert your digital gold or silver holdings into physical bullion products.",
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w400,
@@ -77,7 +79,7 @@ class JscPurchasesContent extends StatelessWidget {
 
         const SizedBox(height: 25),
 
-        const JscPurchasesSection(),
+        const JscConvertPhysicalSection(),
       ],
     );
   }

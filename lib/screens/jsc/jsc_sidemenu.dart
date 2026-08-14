@@ -41,6 +41,7 @@ class JscSidebar extends StatelessWidget {
             _menuItem('Your Purchases'),
             _menuItem('Account Details'),
             _menuItem('Transaction History'),
+            _menuItem('Convert to Physical'),
             _menuItem('Sell Back Request'),
             _menuItem('Lost Password'),
             _menuItem('Logout'),

@@ -1,9 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/screens/jsc/jsc_layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
+import 'package:provider/provider.dart';
 
 class JscWalletScreen extends StatefulWidget {
   const JscWalletScreen({super.key});
@@ -15,7 +20,7 @@ class JscWalletScreen extends StatefulWidget {
 class _JscWalletScreenState extends State<JscWalletScreen> {
   @override
   Widget build(BuildContext context) {
-    int currentIndex = 0;
+    const int currentIndex = 0;
 
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -47,23 +52,125 @@ class _JscWalletScreenState extends State<JscWalletScreen> {
   }
 }
 
-class JscWallet extends StatelessWidget {
+class JscWallet extends StatefulWidget {
   const JscWallet({super.key});
 
   @override
+  State<JscWallet> createState() => _JscWalletState();
+}
+
+class _JscWalletState extends State<JscWallet> {
+  Timer? _walletTimer;
+
+  bool isLoading = true;
+
+  String goldPrice = '...';
+  String goldUnit = 'g';
+
+  String silverPrice = '...';
+  String silverUnit = 'g';
+
+  String currencySymbol = '\$';
+
+  @override
+  void initState() {
+    super.initState();
+
+    _fetchWallet();
+
+    // Refresh live spot prices every 10 seconds.
+    _walletTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _fetchWallet();
+    });
+  }
+
+  @override
+  void dispose() {
+    _walletTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchWallet() async {
+    try {
+      final currencyProvider = Provider.of<CurrencyProvider>(
+        context,
+        listen: false,
+      );
+
+      final currency = currencyProvider.selectedCurrency;
+
+      final result = await JscService.fetchWallet(currency: currency);
+
+      if (!mounted) return;
+
+      if (result['status'] == true) {
+        final data = result['data'] as Map<String, dynamic>? ?? {};
+
+        final summary = data['summary'] as Map<String, dynamic>? ?? {};
+
+        final symbol = summary['symbol']?.toString() ?? '\$';
+
+        final metals = summary['metals'] as Map<String, dynamic>? ?? {};
+
+        final gold =
+            (metals['gold'] ?? summary['gold']) as Map<String, dynamic>? ?? {};
+
+        final silver =
+            (metals['silver'] ?? summary['silver']) as Map<String, dynamic>? ??
+            {};
+
+        setState(() {
+          currencySymbol = symbol;
+
+          goldPrice = _formatPrice(gold['spot_price']);
+          goldUnit =
+              gold['unit_short']?.toString() ?? gold['unit']?.toString() ?? 'g';
+
+          silverPrice = _formatPrice(silver['spot_price']);
+          silverUnit =
+              silver['unit_short']?.toString() ??
+              silver['unit']?.toString() ??
+              'g';
+
+          isLoading = false;
+        });
+      } else {
+        if (!mounted) return;
+
+        setState(() {
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('JSC Wallet API error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  String _formatPrice(dynamic value) {
+    if (value == null) {
+      return '...';
+    }
+
+    final number = double.tryParse(value.toString());
+
+    if (number == null) {
+      return '...';
+    }
+
+    return number.toStringAsFixed(2);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    const String goldPrice = '\$134.69';
-    const String goldUnit = '/ g';
-
-    const String silverPrice = '\$63.14';
-    const String silverUnit = '/ oz';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ==================================================
-        // PAGE TITLE
-        // ==================================================
         const Text(
           'My Wallet',
           style: TextStyle(
@@ -75,9 +182,6 @@ class JscWallet extends StatelessWidget {
 
         const SizedBox(height: 14),
 
-        // ==================================================
-        // DESCRIPTION
-        // ==================================================
         const Text(
           'View your digital gold and silver balances and live market prices.',
           style: TextStyle(
@@ -90,52 +194,17 @@ class JscWallet extends StatelessWidget {
 
         const SizedBox(height: 25),
 
-        // ==================================================
-        // UNLOCK BALANCE
-        // ==================================================
-        const _UnlockBalanceCard(),
-
-        const SizedBox(height: 25),
-
-        // ==================================================
-        // GOLD + SILVER BALANCE
-        // ==================================================
-        const Row(
-          children: [
-            Expanded(
-              child: _BalanceCard(
-                title: 'Gold Balance',
-                grams: '... grams',
-                marketValue: '.....market value',
-                isGold: true,
-                image: 'assets/g_balance.png',
-              ),
-            ),
-
-            SizedBox(width: 5),
-
-            Expanded(
-              child: _BalanceCard(
-                title: 'Silver Balance',
-                grams: '... oz',
-                marketValue: '.....market value',
-                isGold: false,
-                image: 'assets/s_balance.png',
-              ),
-            ),
-          ],
-        ),
+        const JscBalanceSection(),
 
         const SizedBox(height: 20),
 
-        // ==================================================
-        // LIVE SPOT PRICES
-        // ==================================================
         _LiveSpotPrices(
           goldPrice: goldPrice,
           goldUnit: goldUnit,
           silverPrice: silverPrice,
           silverUnit: silverUnit,
+          currencySymbol: currencySymbol,
+          isLoading: isLoading,
         ),
       ],
     );
@@ -145,14 +214,21 @@ class JscWallet extends StatelessWidget {
 class _LiveSpotPrices extends StatelessWidget {
   final String goldPrice;
   final String goldUnit;
+
   final String silverPrice;
   final String silverUnit;
+
+  final String currencySymbol;
+
+  final bool isLoading;
 
   const _LiveSpotPrices({
     required this.goldPrice,
     required this.goldUnit,
     required this.silverPrice,
     required this.silverUnit,
+    required this.currencySymbol,
+    required this.isLoading,
   });
 
   @override
@@ -174,9 +250,6 @@ class _LiveSpotPrices extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ============================================
-          // TITLE + LIVE
-          // ============================================
           Row(
             children: [
               const Text(
@@ -199,13 +272,31 @@ class _LiveSpotPrices extends StatelessWidget {
                   color: const Color(0xFFFFB7BD),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'LIVE',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFFD5162A),
-                  ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 6,
+                      height: 6,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Color(0xFFD5162A),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(width: 5),
+
+                    Text(
+                      'LIVE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFFD5162A),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -213,9 +304,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ============================================
           // GOLD
-          // ============================================
           Row(
             children: [
               Container(
@@ -241,7 +330,7 @@ class _LiveSpotPrices extends StatelessWidget {
               const Spacer(),
 
               Text(
-                goldPrice,
+                isLoading ? '...' : '$currencySymbol$goldPrice',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -252,7 +341,7 @@ class _LiveSpotPrices extends StatelessWidget {
               const SizedBox(width: 5),
 
               Text(
-                goldUnit,
+                '/ $goldUnit',
                 style: const TextStyle(fontSize: 15, color: Color(0xFF9E4A4A)),
               ),
             ],
@@ -260,16 +349,11 @@ class _LiveSpotPrices extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ============================================
-          // DIVIDER
-          // ============================================
           Container(height: 1, color: const Color(0xFFE8B9B9)),
 
           const SizedBox(height: 11),
 
-          // ============================================
           // SILVER
-          // ============================================
           Row(
             children: [
               Container(
@@ -295,7 +379,7 @@ class _LiveSpotPrices extends StatelessWidget {
               const Spacer(),
 
               Text(
-                silverPrice,
+                isLoading ? '...' : '$currencySymbol$silverPrice',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -306,7 +390,7 @@ class _LiveSpotPrices extends StatelessWidget {
               const SizedBox(width: 5),
 
               Text(
-                silverUnit,
+                '/ $silverUnit',
                 style: const TextStyle(fontSize: 15, color: Color(0xFF9E4A4A)),
               ),
             ],
@@ -314,197 +398,16 @@ class _LiveSpotPrices extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ============================================
-          // DIVIDER
-          // ============================================
           Container(height: 1, color: const Color(0xFFE8B9B9)),
 
           const SizedBox(height: 9),
 
-          // ============================================
-          // FOOTER
-          // ============================================
           const Text(
             'Updated in real time from the live market.',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: Color(0xFFAD6262),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BalanceCard extends StatelessWidget {
-  final String title;
-  final String grams;
-  final String marketValue;
-  final bool isGold;
-  final String image;
-
-  const _BalanceCard({
-    required this.title,
-    required this.grams,
-    required this.marketValue,
-    required this.isGold,
-    required this.image,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = isGold
-        ? const Color.fromRGBO(232, 190, 46, 1)
-        : const Color.fromRGBO(178, 186, 205, 1);
-
-    return Container(
-      height: 100,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Color.fromRGBO(255, 248, 230, 1),
-        border: Border.all(color: borderColor, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color.fromRGBO(131, 126, 126, 1),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          const SizedBox(height: 5),
-
-          Text(
-            grams,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-          ),
-
-          const SizedBox(height: 5),
-
-          const Text(
-            '.....market value',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: Color.fromRGBO(178, 186, 205, 1),
-            ),
-          ),
-
-          const SizedBox(height: 5),
-
-          Image.asset(image, height: 25, width: 25),
-        ],
-      ),
-    );
-  }
-}
-
-class _UnlockBalanceCard extends StatefulWidget {
-  const _UnlockBalanceCard();
-
-  @override
-  State<_UnlockBalanceCard> createState() => _UnlockBalanceCardState();
-}
-
-class _UnlockBalanceCardState extends State<_UnlockBalanceCard> {
-  final TextEditingController controller = TextEditingController();
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(7),
-      decoration: BoxDecoration(
-        color: const Color.fromRGBO(255, 248, 230, 1),
-        border: Border.all(color: const Color(0xFFE9C65A), width: 0.7),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.22),
-            blurRadius: 2,
-            offset: const Offset(1, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Your Gold and Silver balances are protected.',
-            style: TextStyle(
-              fontSize: 10,
-              color: Color.fromRGBO(168, 136, 22, 1),
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-
-          const Text(
-            'Please enter your unlock password (first 4 characters of your registered email ID + last 4 digits of your registered phone number) to view your balance.',
-            style: TextStyle(
-              fontSize: 10,
-              color: Color.fromRGBO(168, 136, 22, 1),
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          SizedBox(
-            height: 30,
-            child: TextField(
-              controller: controller,
-              style: const TextStyle(fontSize: 12),
-              decoration: InputDecoration(
-                hintText: 'Email Prefix + Phone Suffix',
-                hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 4,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(4),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(4),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          SizedBox(
-            width: double.infinity,
-            height: 30,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD20D2D),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              child: const Text(
-                'Unlock Balances',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-              ),
             ),
           ),
         ],

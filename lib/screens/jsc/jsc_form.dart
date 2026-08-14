@@ -11,7 +11,9 @@ import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 
 class JscApplicationForm extends StatefulWidget {
-  const JscApplicationForm({super.key});
+  final bool isEdit;
+
+  const JscApplicationForm({super.key, this.isEdit = false});
 
   @override
   State<JscApplicationForm> createState() => _JscApplicationFormState();
@@ -44,6 +46,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
   List<PlatformFile> selectedIdentityFiles = [];
 
   bool isSubmitting = false;
+  bool isLoadingApplication = false;
+  String? existingPhotoUrl;
+  List<String> existingIdentityFiles = [];
+  bool isEditMode = false;
 
   bool isUploadingIdentityFiles = false;
 
@@ -60,11 +66,35 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
   final TextEditingController nMobileController = TextEditingController();
   final TextEditingController nAddressController = TextEditingController();
 
+  bool hasChanges = false;
+
+  String _originalFullName = "";
+  String _originalDob = "";
+  String _originalEmail = "";
+  String _originalMobile = "";
+  String _originalNationality = "";
+  String _originalOccupation = "";
+  String _originalAddress = "";
+  String _originalIdType = "";
+  String _originalIdNumber = "";
+  String _originalNomineeName = "";
+  String _originalRelationship = "";
+  String _originalNomineeDob = "";
+  String _originalNomineeMobile = "";
+  String _originalNomineeAddress = "";
+  bool _originalDeclarationAccepted = false;
+
+  List<String> _originalIdentityFiles = [];
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+
     loadUser();
+
+    if (widget.isEdit) {
+      loadJscApplication();
+    }
   }
 
   @override
@@ -94,6 +124,46 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
       emailController.text = user?["email"] ?? "";
       mobileController.text = user?["phone_number"] ?? "";
     });
+  }
+
+  void _checkForChanges() {
+    final currentIdentityFiles = List<String>.from(existingIdentityFiles);
+
+    final changed =
+        fullNameController.text.trim() != _originalFullName ||
+        dobController.text.trim() != _originalDob ||
+        emailController.text.trim() != _originalEmail ||
+        mobileController.text.trim() != _originalMobile ||
+        nationalityController.text.trim() != _originalNationality ||
+        occupationController.text.trim() != _originalOccupation ||
+        addressController.text.trim() != _originalAddress ||
+        (selectedIdType ?? "") != _originalIdType ||
+        idNumController.text.trim() != _originalIdNumber ||
+        nomineeNameController.text.trim() != _originalNomineeName ||
+        (selectedRelationship ?? "") != _originalRelationship ||
+        nDobController.text.trim() != _originalNomineeDob ||
+        nMobileController.text.trim() != _originalNomineeMobile ||
+        nAddressController.text.trim() != _originalNomineeAddress ||
+        isDeclarationAccepted != _originalDeclarationAccepted ||
+        selectedPhoto != null ||
+        selectedIdentityFiles.isNotEmpty ||
+        !_listEquals(currentIdentityFiles, _originalIdentityFiles);
+
+    if (hasChanges != changed) {
+      setState(() {
+        hasChanges = changed;
+      });
+    }
+  }
+
+  bool _listEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+
+    return true;
   }
 
   void _scrollToSection(GlobalKey key) {
@@ -140,13 +210,14 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         isUploadingPhoto = true;
       });
 
-      // If you have an API upload, do it here.
-      // await uploadPhoto(file);
-
       setState(() {
         selectedPhoto = file;
         isUploadingPhoto = false;
       });
+
+      if (isEditMode) {
+        _checkForChanges();
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -175,6 +246,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
             "${pickedDate.month.toString().padLeft(2, '0')}/"
             "${pickedDate.year}";
       });
+
+      if (isEditMode) {
+        _checkForChanges();
+      }
     }
   }
 
@@ -193,13 +268,14 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
             "${pickedDate.month.toString().padLeft(2, '0')}/"
             "${pickedDate.year}";
       });
+
+      if (isEditMode) {
+        _checkForChanges();
+      }
     }
   }
 
   Future<void> submitJscApplication() async {
-    // -----------------------------------------
-    // DECLARATION VALIDATION
-    // -----------------------------------------
     if (!isDeclarationAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -209,9 +285,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
       return;
     }
 
-    // -----------------------------------------
-    // IDENTITY TYPE VALIDATION
-    // -----------------------------------------
     if (selectedIdType == null || selectedIdType!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select an identity type.")),
@@ -219,10 +292,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
       return;
     }
 
-    // -----------------------------------------
-    // IDENTITY FILE VALIDATION
-    // -----------------------------------------
-    if (selectedIdentityFiles.isEmpty) {
+    if (selectedIdentityFiles.isEmpty && existingIdentityFiles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please upload your identity document.")),
       );
@@ -237,7 +307,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
       final response = await JscService.submitJscApplication(
         name: fullNameController.text.trim(),
         email: emailController.text.trim(),
-        dob: dobController.text.trim(),
+        dob: _formatDateForApi(dobController.text.trim()),
         mobile: mobileController.text.trim(),
         nationality: nationalityController.text.trim(),
         occupation: occupationController.text.trim(),
@@ -248,7 +318,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
         nomineeName: nomineeNameController.text.trim(),
         nomineeRelationship: selectedRelationship ?? "",
-        nomineeDob: nDobController.text.trim(),
+        nomineeDob: _formatDateForApi(nDobController.text.trim()),
         nomineeMobile: nMobileController.text.trim(),
         nomineeAddress: nAddressController.text.trim(),
 
@@ -313,8 +383,205 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     }
   }
 
+  String _formatDateForApi(String value) {
+    if (value.isEmpty) return "";
+
+    try {
+      final parts = value.split('/');
+
+      if (parts.length == 3) {
+        final day = parts[0];
+        final month = parts[1];
+        final year = parts[2];
+
+        return "$year-$month-$day";
+      }
+    } catch (_) {}
+
+    return value;
+  }
+
+  Future<void> loadJscApplication() async {
+    setState(() {
+      isLoadingApplication = true;
+    });
+
+    try {
+      final response = await JscService.getJscApplication();
+
+      log("JSC APPLICATION RESPONSE: $response");
+
+      if (!mounted) return;
+
+      if (response["success"] == true) {
+        final hasRegistration = response["hasRegistration"] == true;
+
+        if (hasRegistration) {
+          final data = response["data"];
+
+          final registration = data?["registration"];
+
+          log("Regggggggg $registration");
+
+          if (registration != null) {
+            setState(() {
+              isEditMode = true;
+
+              fullNameController.text = registration["name"]?.toString() ?? "";
+
+              emailController.text = registration["email"]?.toString() ?? "";
+
+              mobileController.text = registration["mobile"]?.toString() ?? "";
+
+              final photoPath = registration["photo_path"]?.toString();
+
+              if (photoPath != null && photoPath.isNotEmpty) {
+                existingPhotoUrl = _getFileUrl(photoPath);
+
+                log("JSC PHOTO URL: $existingPhotoUrl");
+              } else {
+                existingPhotoUrl = null;
+              }
+
+              dobController.text = _formatApiDate(
+                registration["dob"]?.toString(),
+              );
+
+              nationalityController.text =
+                  registration["nationality"]?.toString() ?? "";
+
+              occupationController.text =
+                  registration["occupation"]?.toString() ?? "";
+
+              addressController.text =
+                  registration["residential_address"]?.toString() ?? "";
+
+              selectedIdType = registration["identity_type"]?.toString();
+
+              idNumController.text =
+                  registration["identity_number"]?.toString() ?? "";
+
+              final identityDocuments = registration["identity_document"];
+
+              existingIdentityFiles = [];
+
+              if (identityDocuments is List) {
+                existingIdentityFiles = identityDocuments
+                    .map((file) => file.toString())
+                    .where((file) => file.isNotEmpty)
+                    .toList();
+              }
+
+              nomineeNameController.text =
+                  registration["nominee_name"]?.toString() ?? "";
+
+              selectedRelationship = registration["nominee_relationship"]
+                  ?.toString();
+
+              nDobController.text = _formatApiDate(
+                registration["nominee_dob"]?.toString(),
+              );
+
+              nMobileController.text =
+                  registration["nominee_mobile"]?.toString() ?? "";
+
+              nAddressController.text =
+                  registration["nominee_address"]?.toString() ?? "";
+
+              isDeclarationAccepted =
+                  registration["declaration_accepted"] == true;
+
+              _originalFullName = fullNameController.text.trim();
+              _originalDob = dobController.text.trim();
+              _originalEmail = emailController.text.trim();
+              _originalMobile = mobileController.text.trim();
+              _originalNationality = nationalityController.text.trim();
+              _originalOccupation = occupationController.text.trim();
+              _originalAddress = addressController.text.trim();
+
+              _originalIdType = selectedIdType ?? "";
+
+              _originalIdNumber = idNumController.text.trim();
+
+              _originalNomineeName = nomineeNameController.text.trim();
+
+              _originalRelationship = selectedRelationship ?? "";
+
+              _originalNomineeDob = nDobController.text.trim();
+
+              _originalNomineeMobile = nMobileController.text.trim();
+
+              _originalNomineeAddress = nAddressController.text.trim();
+
+              _originalDeclarationAccepted = isDeclarationAccepted;
+
+              _originalIdentityFiles = List<String>.from(existingIdentityFiles);
+
+              // No changes when page is initially loaded
+              hasChanges = false;
+            });
+          }
+        } else {
+          setState(() {
+            isEditMode = false;
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      log("JSC LOAD ERROR: $e", stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load JSC application: $e")),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoadingApplication = false;
+        });
+      }
+    }
+  }
+
+  String _getFileUrl(String path) {
+    if (path.startsWith("http")) {
+      return path;
+    }
+
+    return "https://staging.junubullion.com/storage/$path";
+  }
+
+  String _formatApiDate(String? date) {
+    if (date == null || date.isEmpty) {
+      return "";
+    }
+
+    try {
+      final parsedDate = DateTime.parse(date);
+
+      return "${parsedDate.day.toString().padLeft(2, '0')}/"
+          "${parsedDate.month.toString().padLeft(2, '0')}/"
+          "${parsedDate.year}";
+    } catch (e) {
+      return date;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (isLoadingApplication) {
+      return Scaffold(
+        backgroundColor: const Color(0xffFAFAF8),
+        key: scaffoldKey,
+        drawer: const CustomDrawer(),
+        appBar: CustomAppBar(scaffoldKey: scaffoldKey),
+        body: const Center(
+          child: CircularProgressIndicator(color: Color(0xff941A1D)),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Color(0xffFAFAF8),
       key: scaffoldKey,
@@ -427,6 +694,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                               setState(() {
                                 isDeclarationAccepted = value ?? false;
                               });
+
+                              if (isEditMode) {
+                                _checkForChanges();
+                              }
                             },
                             activeColor: const Color(0xff941A1D),
                             side: const BorderSide(
@@ -464,21 +735,12 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                       width: double.infinity,
                       height: 70,
                       child: ElevatedButton(
-                        // onPressed: () {
-                        //   // if (!isDeclarationAccepted) {
-                        //   //   ScaffoldMessenger.of(context).showSnackBar(
-                        //   //     const SnackBar(
-                        //   //       content: Text(
-                        //   //         "Please accept the declaration before submitting.",
-                        //   //       ),
-                        //   //     ),
-                        //   //   );
-                        //   //   return;
-                        //   // }
+                        onPressed: isSubmitting
+                            ? null
+                            : isEditMode
+                            ? (hasChanges ? updateJscApplication : null)
+                            : submitJscApplication,
 
-                        //   // Submit logic here
-                        // },
-                        onPressed: isSubmitting ? null : submitJscApplication,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xff941A1D),
                           foregroundColor: Colors.white,
@@ -487,6 +749,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                             borderRadius: BorderRadius.circular(23),
                           ),
                         ),
+
                         child: isSubmitting
                             ? const SizedBox(
                                 width: 25,
@@ -496,20 +759,13 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                "SUBMIT",
-                                style: TextStyle(
+                            : Text(
+                                isEditMode ? "UPDATE" : "SUBMIT",
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                        // const Text(
-                        //   "SUBMIT",
-                        //   style: TextStyle(
-                        //     fontSize: 16,
-                        //     fontWeight: FontWeight.w600,
-                        //   ),
-                        // ),
                       ),
                     ),
                   ],
@@ -853,9 +1109,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
       ),
       child: Column(
         children: [
-          // ------------------------------------------------
-          // RED HEADER
-          // ------------------------------------------------
           InkWell(
             onTap: () {
               setState(() {
@@ -891,18 +1144,12 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
             ),
           ),
 
-          // ------------------------------------------------
-          // CONTENT
-          // ------------------------------------------------
           if (isIdentityExpanded)
             Padding(
               padding: const EdgeInsets.fromLTRB(25, 15, 25, 30),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ------------------------------------------------
-                  // IDENTITY TYPE
-                  // ------------------------------------------------
                   _buildLabel("Identity Type"),
                   const SizedBox(height: 8),
 
@@ -950,17 +1197,17 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                       setState(() {
                         selectedIdType = value;
 
-                        // Clear previously uploaded files
                         selectedIdentityFiles.clear();
                       });
+
+                      if (isEditMode) {
+                        _checkForChanges();
+                      }
                     },
                   ),
 
                   const SizedBox(height: 25),
 
-                  // ------------------------------------------------
-                  // IDENTITY NUMBER
-                  // ------------------------------------------------
                   _buildLabel("Identity Number"),
                   const SizedBox(height: 9),
 
@@ -970,9 +1217,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                     maxLines: 1,
                   ),
 
-                  // =================================================
-                  // SHOW UPLOAD ONLY AFTER IDENTITY TYPE IS SELECTED
-                  // =================================================
                   if (selectedIdType != null) ...[
                     const SizedBox(height: 25),
 
@@ -998,9 +1242,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
                     const SizedBox(height: 12),
 
-                    // ------------------------------------------------
-                    // UPLOAD BUTTON
-                    // ------------------------------------------------
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -1048,9 +1289,137 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
                     const SizedBox(height: 15),
 
-                    // ------------------------------------------------
-                    // IMAGE PREVIEWS
-                    // ------------------------------------------------
+                    if (existingIdentityFiles.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+
+                      const Text(
+                        "Uploaded Documents",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      ...existingIdentityFiles.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final filePath = entry.value;
+
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xffE0E0E0)),
+                          ),
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Image.network(
+                                  _getFileUrl(filePath),
+                                  width: 90,
+                                  height: 70,
+                                  fit: BoxFit.cover,
+
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null) {
+                                          return child;
+                                        }
+
+                                        return Container(
+                                          width: 90,
+                                          height: 70,
+                                          color: Colors.grey.shade200,
+                                          child: const Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Color(0xffA7191F),
+                                            ),
+                                          ),
+                                        );
+                                      },
+
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 90,
+                                      height: 70,
+                                      color: Colors.grey.shade200,
+                                      child: const Icon(
+                                        Icons.broken_image_outlined,
+                                        color: Colors.grey,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+
+                              const SizedBox(width: 12),
+
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Text(
+                                    //   index == 0
+                                    //       ? "Front Document"
+                                    //       : "Back Document",
+                                    //   style: const TextStyle(
+                                    //     fontSize: 13,
+                                    //     fontWeight: FontWeight.w600,
+                                    //   ),
+                                    // ),
+
+                                    // const SizedBox(height: 4),
+                                    Text(
+                                      filePath.split('/').last,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 4),
+
+                                    const Text(
+                                      "Previously uploaded",
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    existingIdentityFiles.removeAt(index);
+                                  });
+
+                                  if (isEditMode) {
+                                    _checkForChanges();
+                                  }
+                                },
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Color(0xffA7191F),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+
                     if (selectedIdentityFiles.isNotEmpty)
                       Column(
                         children: selectedIdentityFiles.asMap().entries.map((
@@ -1072,9 +1441,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                             ),
                             child: Row(
                               children: [
-                                // --------------------------------
-                                // IMAGE
-                                // --------------------------------
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(6),
                                   child: file.bytes != null
@@ -1097,9 +1463,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
                                 const SizedBox(width: 12),
 
-                                // --------------------------------
-                                // FILE DETAILS
-                                // --------------------------------
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -1139,9 +1502,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                                   ),
                                 ),
 
-                                // --------------------------------
-                                // REMOVE
-                                // --------------------------------
                                 IconButton(
                                   onPressed: () {
                                     setState(() {
@@ -1190,7 +1550,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         return;
       }
 
-      // Check if total files exceed 2
       if (selectedIdentityFiles.length + result.files.length > 2) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1235,6 +1594,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         selectedIdentityFiles.addAll(result.files);
         isUploadingIdentityFiles = false;
       });
+
+      if (isEditMode) {
+        _checkForChanges();
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -1371,6 +1734,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                       setState(() {
                         selectedRelationship = value;
                       });
+
+                      if (isEditMode) {
+                        _checkForChanges();
+                      }
                     },
                   ),
                   const SizedBox(height: 25),
@@ -1459,7 +1826,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
               // Image preview
               if (selectedPhoto != null && selectedPhoto!.bytes != null)
                 ClipRRect(
-                  // borderRadius: BorderRadius.circular(12),
                   child: Image.memory(
                     selectedPhoto!.bytes!,
                     width: 170,
@@ -1467,11 +1833,51 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                     fit: BoxFit.cover,
                   ),
                 )
+              else if (existingPhotoUrl != null && existingPhotoUrl!.isNotEmpty)
+                ClipRRect(
+                  child: Image.network(
+                    existingPhotoUrl!,
+                    width: 170,
+                    height: 150,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) {
+                        return child;
+                      }
+
+                      return const SizedBox(
+                        width: 170,
+                        height: 150,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xffA7191D),
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      log("PASSPORT PHOTO ERROR: $error");
+                      log("PASSPORT PHOTO URL: $existingPhotoUrl");
+
+                      return SizedBox(
+                        width: 170,
+                        height: 150,
+                        child: Image.asset(
+                          "assets/before_upload.png",
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    },
+                  ),
+                )
               else
-                Container(
+                SizedBox(
                   width: 170,
                   height: 150,
-                  child: Image.asset("assets/before_upload.png"),
+                  child: Image.asset(
+                    "assets/before_upload.png",
+                    fit: BoxFit.cover,
+                  ),
                 ),
               const SizedBox(height: 10),
 
@@ -1565,6 +1971,11 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
       controller: controller,
       readOnly: readOnly,
       maxLines: maxLines,
+      onChanged: (_) {
+        if (isEditMode) {
+          _checkForChanges();
+        }
+      },
       style: const TextStyle(fontSize: 16, color: Colors.black),
       decoration: const InputDecoration(
         filled: true,
@@ -1578,5 +1989,110 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         ),
       ),
     );
+  }
+
+  Future<void> updateJscApplication() async {
+    if (!hasChanges) {
+      return;
+    }
+
+    if (!isDeclarationAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please accept the declaration before updating."),
+        ),
+      );
+      return;
+    }
+
+    if (selectedIdType == null || selectedIdType!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select an identity type.")),
+      );
+      return;
+    }
+
+    if (selectedIdentityFiles.isEmpty && existingIdentityFiles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please upload your identity document.")),
+      );
+      return;
+    }
+
+    setState(() {
+      isSubmitting = true;
+    });
+
+    try {
+      final response = await JscService.submitJscApplication(
+        name: fullNameController.text.trim(),
+        email: emailController.text.trim(),
+        dob: _formatDateForApi(dobController.text.trim()),
+        mobile: mobileController.text.trim(),
+        nationality: nationalityController.text.trim(),
+        occupation: occupationController.text.trim(),
+        residentialAddress: addressController.text.trim(),
+
+        identityType: selectedIdType!,
+        identityNumber: idNumController.text.trim(),
+
+        nomineeName: nomineeNameController.text.trim(),
+        nomineeRelationship: selectedRelationship ?? "",
+        nomineeDob: _formatDateForApi(nDobController.text.trim()),
+        nomineeMobile: nMobileController.text.trim(),
+        nomineeAddress: nAddressController.text.trim(),
+
+        declarationAccepted: isDeclarationAccepted,
+
+        photo: selectedPhoto,
+
+        identityFiles: selectedIdentityFiles,
+      );
+
+      log("JSC UPDATE RESPONSE: $response");
+
+      if (!mounted) return;
+
+      if (response["success"] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("JSC application updated successfully."),
+          ),
+        );
+
+        // Clear newly selected files
+        selectedIdentityFiles.clear();
+        selectedPhoto = null;
+
+        // Reload the application so the current values
+        // become the new original values.
+        await loadJscApplication();
+      } else {
+        final body = response["body"];
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              body?["message"]?.toString() ??
+                  "Failed to update JSC application.",
+            ),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      log("JSC UPDATE ERROR: $e", stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Something went wrong: $e")));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSubmitting = false;
+        });
+      }
+    }
   }
 }
