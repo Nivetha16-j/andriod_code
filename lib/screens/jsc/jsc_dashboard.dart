@@ -136,7 +136,7 @@ class _DashboardContentState extends State<_DashboardContent> {
 
         const SizedBox(height: 20),
 
-        const JscConvertPhysicalSection(),
+        JscConvertPhysicalSection(isUnlocked: isBalancesUnlocked),
       ],
     );
   }

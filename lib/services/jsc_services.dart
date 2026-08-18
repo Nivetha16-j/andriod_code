@@ -8,10 +8,6 @@ import 'package:junubullion/services/session_manager.dart';
 class JscService {
   static const String baseUrl = "https://staging.junubullion.com/api";
 
-  // ============================================================
-  // SUBMIT JSC APPLICATION
-  // ============================================================
-
   static Future<Map<String, dynamic>> submitJscApplication({
     required String name,
     required String email,
@@ -149,10 +145,6 @@ class JscService {
       };
     }
   }
-
-  // ============================================================
-  // GET JSC APPLICATION
-  // ============================================================
 
   static Future<Map<String, dynamic>> getJscApplication() async {
     try {
@@ -360,10 +352,16 @@ class JscService {
     }
   }
 
-  static Future<Map<String, dynamic>> fetchConvertPhysical() async {
+  static Future<Map<String, dynamic>> fetchConvertPhysicalDetails({
+    required String currency,
+  }) async {
     final token = await SessionManager.getToken();
+    final uri = Uri.parse(
+      '$baseUrl/my-account/convert-physical',
+    ).replace(queryParameters: {'currency': currency});
+
     final response = await http.get(
-      Uri.parse('$baseUrl/my-account/convert-physical'),
+      uri,
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
 

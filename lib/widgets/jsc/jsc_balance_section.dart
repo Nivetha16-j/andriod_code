@@ -229,7 +229,6 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter your unlock password.')),
       );
-
       return;
     }
 
@@ -237,15 +236,18 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
       isUnlocking = true;
     });
 
+    // IMPORTANT:
+    // Get these BEFORE any await.
+    final currencyProvider = context.read<CurrencyProvider>();
+
+    final currency = currencyProvider.selectedCurrency;
+
     try {
-      final currencyProvider = Provider.of<CurrencyProvider>(
-        context,
-        listen: false,
-      );
-
-      final currency = currencyProvider.selectedCurrency;
-
       log('Unlock wallet - Currency: $currency');
+
+      // ============================================================
+      // 1. UNLOCK BALANCES
+      // ============================================================
 
       final result = await JscService.unlockWallet(
         unlockPassword: password,
@@ -254,50 +256,7 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
 
       if (!mounted) return;
 
-      if (result['status'] == true) {
-        final data = result['data'] as Map<String, dynamic>? ?? {};
-
-        widget.onUnlocked(data);
-
-        try {
-          final transactionsResult = await JscService.getTransactions(
-            currency: currency,
-          );
-
-          log('Transactions after unlock: $transactionsResult');
-        } catch (e) {
-          log('Failed to fetch transactions after unlock: $e');
-        }
-
-        try {
-          final sellBackResult = await JscService.getSellBackDetails(
-            currency: currency,
-          );
-
-          log('Sell Back after unlock: $sellBackResult');
-        } catch (e) {
-          log('Failed to fetch sell back details after unlock: $e');
-        }
-
-        try {
-          final sellBackResult = await JscService.fetchConvertPhysical();
-
-          log('Sell Back after unlock: $sellBackResult');
-        } catch (e) {
-          log('Failed to fetch sell back details after unlock: $e');
-        }
-
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              result['message']?.toString() ??
-                  'Balances unlocked successfully.',
-            ),
-          ),
-        );
-      } else {
+      if (result['status'] != true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -305,7 +264,79 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
             ),
           ),
         );
+        return;
       }
+
+      final data = result['data'] as Map<String, dynamic>? ?? {};
+
+      // ============================================================
+      // 2. SAVE BALANCE DATA
+      // ============================================================
+
+      widget.onUnlocked(data);
+
+      // ============================================================
+      // 3. TRANSACTIONS
+      // ============================================================
+
+      try {
+        final transactionsResult = await JscService.getTransactions(
+          currency: currency,
+        );
+
+        log(
+          'Transactions after unlock: '
+          '$transactionsResult',
+        );
+      } catch (e) {
+        log('Failed to fetch transactions after unlock: $e');
+      }
+
+      // ============================================================
+      // 4. SELL BACK
+      // ============================================================
+
+      try {
+        final sellBackResult = await JscService.getSellBackDetails(
+          currency: currency,
+        );
+
+        log(
+          'Sell Back after unlock: '
+          '$sellBackResult',
+        );
+      } catch (e) {
+        log('Failed to fetch sell back details after unlock: $e');
+      }
+
+      // ============================================================
+      // 5. CONVERT TO PHYSICAL
+      // ============================================================
+
+      log('🔥 ABOUT TO CALL CONVERT PHYSICAL');
+
+      // try {
+      //   final convertPhysicalResult =
+      //       await JscService.fetchConvertPhysicalDetails(currency: currency);
+
+      //   log('🔥 CONVERT PHYSICAL FETCH COMPLETED $convertPhysicalResult');
+      // } catch (e) {
+      //   debugPrint('❌ Failed to fetch convert physical: $e');
+      // }
+
+      // ============================================================
+      // 6. SUCCESS MESSAGE
+      // ============================================================
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result['message']?.toString() ?? 'Balances unlocked successfully.',
+          ),
+        ),
+      );
     } catch (e) {
       debugPrint('Unlock balances error: $e');
 
@@ -464,75 +495,66 @@ class _BalanceCard extends StatelessWidget {
         : const Color.fromRGBO(178, 186, 205, 1);
 
     return Container(
-      height: 100,
+      height: 120,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: const Color.fromRGBO(255, 248, 230, 1),
         border: Border.all(color: borderColor, width: 1),
       ),
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Text(
+            title.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color.fromRGBO(131, 126, 126, 1),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          // const SizedBox(height: 5),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
-                title.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color.fromRGBO(131, 126, 126, 1),
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  balanceValue,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
 
-              const SizedBox(height: 5),
-
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Flexible(
-                    child: Text(
-                      balanceValue,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(width: 4),
-
-                  Text(
-                    unit,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 5),
-
+              // const SizedBox(width: 4),
               Text(
-                marketValue == '...'
-                    ? '... market value'
-                    : '$currencySymbol$marketValue market value',
-                overflow: TextOverflow.ellipsis,
+                unit,
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: Color.fromRGBO(178, 186, 205, 1),
                 ),
               ),
             ],
           ),
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Image.asset(image, height: 35, width: 35),
+
+          // const SizedBox(height: 5),
+          Text(
+            marketValue == '...'
+                ? '... market value'
+                : '$currencySymbol$marketValue market value',
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: Color.fromRGBO(178, 186, 205, 1),
+            ),
           ),
+          // const SizedBox(height: 5),
+          Image.asset(image, height: 35, width: 35),
         ],
       ),
     );

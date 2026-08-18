@@ -1,9 +1,5 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:junubullion/providers/account_provider.dart';
-import 'package:junubullion/providers/convert_physical_provider.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/screens/main_screen.dart';
@@ -186,7 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
 
                 if (shouldLogout == true) {
-                  context.read<ConvertPhysicalProvider>().clear();
+                  // context.read<ConvertPhysicalProvider>().clear();
                   await SessionManager.logout();
 
                   // Reset the in-memory state for all JSC balance sections
