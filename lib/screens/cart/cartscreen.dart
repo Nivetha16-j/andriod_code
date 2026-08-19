@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/checkout/checkout.dart';
 import 'package:junubullion/theme/app_colors.dart';
@@ -24,8 +25,26 @@ class _CartScreenState extends State<CartScreen> {
   final TextEditingController couponController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final physicalProvider = context.read<PhysicalConversionProvider>();
+
+      physicalProvider.addListener(_physicalConversionChanged);
+    });
+  }
+
+  @override
   void dispose() {
+    context.read<PhysicalConversionProvider>().removeListener(
+      _physicalConversionChanged,
+    );
+
     couponController.dispose();
+
     super.dispose();
   }
 
@@ -61,17 +80,41 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
+  void _physicalConversionChanged() {
+    if (!mounted) return;
+
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    if (!physicalProvider.isActive) {
+      return;
+    }
+
+    final cartProvider = context.read<CartProvider>();
+
+    if (cartProvider.cartItems.isNotEmpty) {
+      log("Physical conversion activated -> clearing normal cart");
+
+      cartProvider.clearCart();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF7F7F7),
       body: Consumer<CartProvider>(
         builder: (context, provider, child) {
+          final physicalProvider = context.watch<PhysicalConversionProvider>();
+
           log("Couponnnnnnns: ${provider.coupon}");
           log("Discount: ${provider.formattedDiscount}");
 
           if (couponController.text != (provider.coupon?["code"] ?? "")) {
             couponController.text = provider.coupon?["code"] ?? "";
+          }
+
+          if (physicalProvider.isActive) {
+            return _buildPhysicalConversionCart(physicalProvider);
           }
           if (provider.cartItems.isEmpty) {
             return Center(
@@ -266,6 +309,189 @@ class _CartScreenState extends State<CartScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildPhysicalConversionCart(
+    PhysicalConversionProvider physicalProvider,
+  ) {
+    final metal = physicalProvider.metal ?? '';
+    final amount = physicalProvider.formattedAmount;
+
+    log("retrieve provider $metal $amount");
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBF0),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5C76B), width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF981B1B),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.sync, size: 15, color: Colors.white),
+                          SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'PHYSICAL CONVERSION ACTIVE',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    OutlinedButton(
+                      onPressed: () {
+                        physicalProvider.cancelConversion();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF981B1B),
+                        side: const BorderSide(color: Color(0xFF981B1B)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
+                    children: [
+                      const TextSpan(text: 'Add '),
+                      TextSpan(
+                        text: metal,
+                        style: const TextStyle(
+                          color: Color(0xFF981B1B),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const TextSpan(text: ' products up to '),
+                      TextSpan(
+                        text: '$amount g',
+                        style: const TextStyle(
+                          color: Color(0xFF981B1B),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const TextSpan(text: '.'),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                const Text(
+                  'No payment will be required at checkout.',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 120),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset("assets/no_product.png", height: 80, width: 80),
+
+                    const SizedBox(height: 20),
+
+                    const Text(
+                      "Your cart is empty",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    SizedBox(
+                      height: 52,
+                      width: 280,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/home');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF981B1B),
+                          foregroundColor: Colors.white,
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'CONTINUE SHOPPING',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

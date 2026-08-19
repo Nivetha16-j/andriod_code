@@ -39,32 +39,37 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final currencyProvider = context.read<CurrencyProvider>();
+      if (!mounted) return;
 
-      await context.read<HomeProvider>().fetchHomeData(
-        currency: currencyProvider.selectedCurrency,
-        unit: currencyProvider.selectedUnit,
-      );
-      // final currency = context.read<CurrencyProvider>();
-      context.read<CartProvider>().updateSelection(
-        currency: currencyProvider.selectedCurrency,
-        unit: currencyProvider.selectedUnit.toLowerCase() == "ounce"
+      final currencyProvider = context.read<CurrencyProvider>();
+      final homeProvider = context.read<HomeProvider>();
+      final cartProvider = context.read<CartProvider>();
+      final exclusiveProductProvider = context.read<ExclusiveProductProvider>();
+
+      final currency = currencyProvider.selectedCurrency;
+      final unit = currencyProvider.selectedUnit;
+
+      await homeProvider.fetchHomeData(currency: currency, unit: unit);
+
+      if (!mounted) return;
+
+      cartProvider.updateSelection(
+        currency: currency,
+        unit: unit.toLowerCase() == "ounce"
             ? "toz"
-            : currencyProvider.selectedUnit.toLowerCase() == "kilogram"
+            : unit.toLowerCase() == "kilogram"
             ? "kg"
             : "gram",
       );
 
-      await context.read<CartProvider>().fetchCart();
+      await cartProvider.fetchCart();
 
-      context.read<ExclusiveProductProvider>().fetchProducts(
-        currency: currencyProvider.selectedCurrency,
-        unit: currencyProvider.selectedUnit,
+      if (!mounted) return;
+
+      await exclusiveProductProvider.fetchProducts(
+        currency: currency,
+        unit: unit,
       );
-    });
-
-    Future.microtask(() {
-      // context.read<CartProvider>().fetchCart();.
     });
   }
 
@@ -94,47 +99,27 @@ class _HomeScreenState extends State<HomeScreen> {
               selectedCurrency: currencyProvider.selectedCurrency,
               selectedUnit: currencyProvider.selectedUnit,
               onSelectionChanged: (currency, unit) async {
-                // // Update selected currency & unit
-                // context.read<CurrencyProvider>().update(currency, unit);
+                if (!mounted) return;
 
-                // // Fetch fresh data from backend
-                // await context.read<HomeProvider>().fetchHomeData(
-                //   currency: currency,
-                //   unit: unit,
-                // );
+                final currencyProvider = context.read<CurrencyProvider>();
+                final homeProvider = context.read<HomeProvider>();
+                final exclusiveProductProvider = context
+                    .read<ExclusiveProductProvider>();
+                final cartProvider = context.read<CartProvider>();
 
-                // context.read<CartProvider>().updateSelection(
-                //   currency: currency,
-                //   unit: unit.toLowerCase() == "ounce"
-                //       ? "toz"
-                //       : unit.toLowerCase() == "kilogram"
-                //       ? "kg"
-                //       : "gram",
-                // );
-
-                // await context.read<CartProvider>().fetchCart();
-
-                // onSelectionChanged: (currency, unit) async {
-                context.read<CurrencyProvider>().update(currency, unit);
+                currencyProvider.update(currency, unit);
 
                 await Future.wait([
-                  context.read<HomeProvider>().fetchHomeData(
-                    currency: currency,
-                    unit: unit,
-                  ),
-
-                  context.read<ExclusiveProductProvider>().fetchProducts(
+                  homeProvider.fetchHomeData(currency: currency, unit: unit),
+                  exclusiveProductProvider.fetchProducts(
                     endpoint: "exclusive-products",
                     currency: currency,
                     unit: unit,
                   ),
-
-                  context.read<CartProvider>().fetchCart(
-                    // currency: currency,
-                    // unit: unit,
-                  ),
+                  cartProvider.fetchCart(),
                 ]);
-                // }
+
+                if (!mounted) return;
               },
             ),
             const SizedBox(height: 5),

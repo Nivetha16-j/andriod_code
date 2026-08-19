@@ -35,13 +35,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final provider = context.read<OrdersProvider>();
+      if (!mounted) return;
 
-      if (provider.orders.isEmpty) {
-        await provider.fetchOrders();
-      }
-
+      final ordersProvider = context.read<OrdersProvider>();
       final accountProvider = context.read<AccountProvider>();
+
+      if (ordersProvider.orders.isEmpty) {
+        await ordersProvider.fetchOrders();
+
+        if (!mounted) return;
+      }
 
       await accountProvider.fetchAccountDetails();
 
