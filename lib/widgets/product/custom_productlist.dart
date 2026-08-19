@@ -1,7 +1,9 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/product/product_details.dart';
@@ -290,6 +292,15 @@ class _ProductGridCard extends StatelessWidget {
     required this.currencyProvider,
   });
 
+  String? _validatePhysicalConversion(BuildContext context) {
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    return physicalProvider.validateProduct(
+      brand: product['brand']?.toString(),
+      metalType: product['metal_type']?.toString(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final String name = product['name']?.toString() ?? 'Product Name';
@@ -429,6 +440,23 @@ class _ProductGridCard extends StatelessWidget {
                                 size: 18,
                               ),
                               onPressed: () async {
+                                final validationError =
+                                    _validatePhysicalConversion(context);
+
+                                if (validationError != null) {
+                                  Fluttertoast.showToast(
+                                    msg: validationError,
+                                    toastLength: Toast.LENGTH_SHORT,
+                                    gravity: ToastGravity.BOTTOM,
+                                    // backgroundColor: isError
+                                    //     ? AppColors.primaryRed
+                                    //     : Colors.green,
+                                    textColor: Colors.white,
+                                    fontSize: 14.0,
+                                  );
+
+                                  return;
+                                }
                                 await cartProvider.updateCartQuantity(
                                   productId: product["id"],
                                   quantity: cartQuantity + 1,
@@ -459,6 +487,23 @@ class _ProductGridCard extends StatelessWidget {
                         : cartProvider.isAdding(product["id"])
                         ? null
                         : () async {
+                            final validationError = _validatePhysicalConversion(
+                              context,
+                            );
+
+                            log("VVVVVVVVVV $validationError");
+
+                            if (validationError != null) {
+                              Fluttertoast.showToast(
+                                msg: validationError,
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.BOTTOM,
+                                textColor: Colors.white,
+                                fontSize: 14.0,
+                              );
+
+                              return;
+                            }
                             final success = await cartProvider.addToCart(
                               productId: product["id"],
                               quantity: 1,

@@ -6,6 +6,7 @@ import 'package:junubullion/providers/account_provider.dart';
 import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/checkout_provider.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
@@ -45,7 +46,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => KycProvider()),
         ChangeNotifierProvider(create: (_) => CheckoutProvider()),
         ChangeNotifierProvider(create: (_) => TestimonialProvider()),
-        // ChangeNotifierProvider(create: (_) => ConvertPhysicalProvider()),
+        ChangeNotifierProvider(create: (_) => PhysicalConversionProvider()),
       ],
       child: const MyApp(),
     ),

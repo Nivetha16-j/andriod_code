@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:provider/provider.dart';
 
@@ -23,8 +26,13 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
   Map<String, dynamic>? silver;
 
   bool isLoading = false;
-
   bool _isUnlocked = false;
+
+  final TextEditingController _goldAmountController = TextEditingController();
+  final TextEditingController _silverAmountController = TextEditingController();
+
+  String? _goldAmountError;
+  String? _silverAmountError;
 
   @override
   void initState() {
@@ -32,10 +40,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
     _initializeConvert();
   }
-
-  // ============================================================
-  // INITIALIZE
-  // ============================================================
 
   void _initializeConvert() {
     if (widget.isUnlocked != null) {
@@ -52,10 +56,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       }
     }
   }
-
-  // ============================================================
-  // WIDGET UPDATE
-  // ============================================================
 
   @override
   void didUpdateWidget(covariant JscConvertPhysicalSection oldWidget) {
@@ -80,9 +80,13 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     }
   }
 
-  // ============================================================
-  // START REFRESH
-  // ============================================================
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _goldAmountController.dispose();
+    _silverAmountController.dispose();
+    super.dispose();
+  }
 
   void _startConvertRefresh() {
     _stopConvertRefresh();
@@ -98,18 +102,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     });
   }
 
-  // ============================================================
-  // STOP REFRESH
-  // ============================================================
-
   void _stopConvertRefresh() {
     _timer?.cancel();
     _timer = null;
   }
-
-  // ============================================================
-  // FETCH CONVERT PHYSICAL
-  // ============================================================
 
   Future<void> fetchConvertPhysical() async {
     if (!_isUnlocked) return;
@@ -157,6 +153,34 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
         gold = fetchedGold;
         silver = fetchedSilver;
       });
+
+      // Set default conversion amounts
+      final goldBalance =
+          double.tryParse('${fetchedGold?['balance'] ?? 0}') ?? 0;
+
+      final goldMinimum =
+          double.tryParse('${fetchedGold?['minimum_balance'] ?? 50}') ?? 50;
+
+      final silverBalance =
+          double.tryParse('${fetchedSilver?['balance'] ?? 0}') ?? 0;
+
+      final silverMinimum =
+          double.tryParse('${fetchedSilver?['minimum_balance'] ?? 1000}') ??
+          1000;
+
+      // Gold
+      if (_goldAmountController.text.isEmpty) {
+        if (goldBalance >= goldMinimum) {
+          _goldAmountController.text = goldMinimum.toStringAsFixed(4);
+        }
+      }
+
+      // Silver
+      if (_silverAmountController.text.isEmpty) {
+        if (silverBalance >= silverMinimum) {
+          _silverAmountController.text = silverMinimum.toStringAsFixed(4);
+        }
+      }
     } catch (e) {
       debugPrint('❌ Convert Physical Error: $e');
     } finally {
@@ -167,10 +191,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       }
     }
   }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -221,17 +241,37 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
           const SizedBox(height: 9),
 
-          // ======================================================
-          // LOCKED
-          // ======================================================
+          // if (!_isUnlocked) ...[
+          //   _convertRow(
+          //     metal: 'Gold',
+          //     available: 'Available: .... · Min: 50 g',
+          //     buttonText:
+          //         'Unlock your balances to check physical '
+          //         'conversion eligibility.',
+          //     enabled: false,
+          //     onPressed: null,
+          //   ),
+
+          //   const SizedBox(height: 8),
+
+          //   _convertRow(
+          //     metal: 'Silver',
+          //     available: 'Available: .... · Min: 1 kg',
+          //     buttonText:
+          //         'Unlock your balances to check physical '
+          //         'conversion eligibility.',
+          //     enabled: false,
+          //     onPressed: null,
+          //   ),
+          // ]
           if (!_isUnlocked) ...[
             _convertRow(
               metal: 'Gold',
               available: 'Available: .... · Min: 50 g',
-              buttonText:
-                  'Unlock your balances to check physical '
-                  'conversion eligibility.',
               enabled: false,
+              controller: _goldAmountController,
+              errorText: null,
+              onAmountChanged: (_) {},
               onPressed: null,
             ),
 
@@ -240,17 +280,13 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
             _convertRow(
               metal: 'Silver',
               available: 'Available: .... · Min: 1 kg',
-              buttonText:
-                  'Unlock your balances to check physical '
-                  'conversion eligibility.',
               enabled: false,
+              controller: _silverAmountController,
+              errorText: null,
+              onAmountChanged: (_) {},
               onPressed: null,
             ),
-          ]
-          // ======================================================
-          // LOADING
-          // ======================================================
-          else if (isLoading && gold == null && silver == null)
+          ] else if (isLoading && gold == null && silver == null)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Center(
@@ -261,20 +297,16 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                 ),
               ),
             )
-          // ======================================================
-          // DATA
-          // ======================================================
           else ...[
             _convertRow(
               metal: 'Gold',
               available:
                   'Available: $_goldAvailableText · '
                   'Min: $_goldThresholdLabel',
-              buttonText: _canConvertGold
-                  ? 'Convert to physical gold'
-                  : 'Reach $_goldThresholdLabel '
-                        'to unlock physical conversion.',
               enabled: _canConvertGold,
+              controller: _goldAmountController,
+              errorText: _goldAmountError,
+              onAmountChanged: _onGoldAmountChanged,
               onPressed: _canConvertGold ? _openGoldConversion : null,
             ),
 
@@ -285,11 +317,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
               available:
                   'Available: $_silverAvailableText · '
                   'Min: $_silverThresholdLabel',
-              buttonText: _canConvertSilver
-                  ? 'Convert to physical silver'
-                  : 'Reach $_silverThresholdLabel '
-                        'to unlock physical conversion.',
               enabled: _canConvertSilver,
+              controller: _silverAmountController,
+              errorText: _silverAmountError,
+              onAmountChanged: _onSilverAmountChanged,
               onPressed: _canConvertSilver ? _openSilverConversion : null,
             ),
           ],
@@ -297,10 +328,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       ),
     );
   }
-
-  // ============================================================
-  // GOLD
-  // ============================================================
 
   String get _goldAvailableText {
     final value = gold?['balance'];
@@ -312,10 +339,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     return '$value g';
   }
 
-  // ============================================================
-  // SILVER
-  // ============================================================
-
   String get _silverAvailableText {
     final value = silver?['balance'];
 
@@ -325,10 +348,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
     return '$value g';
   }
-
-  // ============================================================
-  // GOLD THRESHOLD
-  // ============================================================
 
   String get _goldThresholdLabel {
     final value = gold?['minimum_balance'];
@@ -340,10 +359,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     return '$value g';
   }
 
-  // ============================================================
-  // SILVER THRESHOLD
-  // ============================================================
-
   String get _silverThresholdLabel {
     final value = silver?['minimum_balance'];
 
@@ -354,10 +369,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     return '$value g';
   }
 
-  // ============================================================
-  // GOLD ELIGIBILITY
-  // ============================================================
-
   bool get _canConvertGold {
     final balance = double.tryParse('${gold?['balance'] ?? 0}') ?? 0;
 
@@ -365,10 +376,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
     return balance >= minimum;
   }
-
-  // ============================================================
-  // SILVER ELIGIBILITY
-  // ============================================================
 
   bool get _canConvertSilver {
     final balance = double.tryParse('${silver?['balance'] ?? 0}') ?? 0;
@@ -378,10 +385,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
     return balance >= minimum;
   }
-
-  // ============================================================
-  // CONTAINER
-  // ============================================================
 
   Widget _buildContainer({required Widget child}) {
     return Container(
@@ -398,15 +401,13 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     );
   }
 
-  // ============================================================
-  // ROW
-  // ============================================================
-
   Widget _convertRow({
     required String metal,
     required String available,
-    required String buttonText,
     required bool enabled,
+    required TextEditingController controller,
+    required String? errorText,
+    required ValueChanged<String> onAmountChanged,
     VoidCallback? onPressed,
   }) {
     final bool isGold = metal == 'Gold';
@@ -444,47 +445,192 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
         const SizedBox(height: 4),
 
-        SizedBox(
-          width: double.infinity,
-          height: 27,
-          child: OutlinedButton(
-            onPressed: enabled ? onPressed : null,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.black87,
-              backgroundColor: const Color(0xFFFFFBF0),
-              side: BorderSide(
-                color: isGold
-                    ? const Color.fromRGBO(200, 157, 8, 1)
-                    : const Color.fromRGBO(149, 152, 154, 1),
-                width: 0.7,
+        if (enabled)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  style: const TextStyle(fontSize: 11),
+                  decoration: InputDecoration(
+                    labelText: 'AMOUNT TO CONVERT (G)',
+                    labelStyle: const TextStyle(fontSize: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    errorText: errorText,
+                  ),
+                  onChanged: onAmountChanged,
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(7),
+
+              const SizedBox(width: 8),
+
+              SizedBox(
+                height: 40,
+                child: ElevatedButton(
+                  onPressed: errorText == null ? onPressed : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF168A3D),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                  ),
+                  child: const Text(
+                    'Start Order',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                ),
               ),
-            ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                buttonText,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF555555),
+            ],
+          )
+        else
+          SizedBox(
+            width: double.infinity,
+            height: 34,
+            child: OutlinedButton(
+              onPressed: null,
+              style: OutlinedButton.styleFrom(
+                backgroundColor: const Color(0xFFFFFBF0),
+                side: BorderSide(
+                  color: isGold
+                      ? const Color.fromRGBO(200, 157, 8, 1)
+                      : const Color.fromRGBO(149, 152, 154, 1),
+                  width: 0.7,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(7),
+                ),
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Reach ${isGold ? _goldThresholdLabel : _silverThresholdLabel} '
+                  'to unlock physical conversion.',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF555555),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
 
-  void _openGoldConversion() {
-    // TODO
+  Future<void> _openGoldConversion() async {
+    final amount = double.tryParse(_goldAmountController.text);
+
+    if (amount == null) {
+      return;
+    }
+
+    final cartProvider = context.read<CartProvider>();
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    // Clear existing normal cart
+    cartProvider.clearCart();
+
+    if (!mounted) return;
+
+    // Start Physical Conversion
+    physicalProvider.startConversion(metal: 'Gold', amount: amount);
+
+    // Navigate to Cart
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 2)),
+    );
   }
 
-  void _openSilverConversion() {
-    // TODO
+  Future<void> _openSilverConversion() async {
+    final amount = double.tryParse(_silverAmountController.text);
+
+    if (amount == null) {
+      return;
+    }
+
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    // Clear existing normal cart
+    await context.read<CartProvider>().fetchCart();
+    context.read<CartProvider>().clearCart();
+
+    if (!mounted) return;
+
+    // Start Physical Conversion
+    physicalProvider.startConversion(metal: 'Silver', amount: amount);
+
+    // Navigate to Cart
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 2)),
+    );
+  }
+
+  void _onGoldAmountChanged(String value) {
+    final entered = double.tryParse(value);
+
+    final balance = double.tryParse('${gold?['balance'] ?? 0}') ?? 0;
+
+    final minimum = double.tryParse('${gold?['minimum_balance'] ?? 50}') ?? 50;
+
+    setState(() {
+      if (entered == null) {
+        _goldAmountError = 'Enter a valid amount.';
+      } else if (entered < minimum) {
+        _goldAmountError =
+            'Value must be at least ${minimum.toStringAsFixed(4)} g.';
+      } else if (entered > balance) {
+        _goldAmountError =
+            'Value must be less than or equal to '
+            '${balance.toStringAsFixed(4)}.';
+      } else {
+        _goldAmountError = null;
+      }
+    });
+  }
+
+  void _onSilverAmountChanged(String value) {
+    final entered = double.tryParse(value);
+
+    final balance = double.tryParse('${silver?['balance'] ?? 0}') ?? 0;
+
+    final minimum =
+        double.tryParse('${silver?['minimum_balance'] ?? 1000}') ?? 1000;
+
+    setState(() {
+      if (entered == null) {
+        _silverAmountError = 'Enter a valid amount.';
+      } else if (entered < minimum) {
+        _silverAmountError =
+            'Value must be at least ${minimum.toStringAsFixed(4)} g.';
+      } else if (entered > balance) {
+        _silverAmountError =
+            'Value must be less than or equal to '
+            '${balance.toStringAsFixed(4)}.';
+      } else {
+        _silverAmountError = null;
+      }
+    });
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/home_services.dart';
@@ -227,6 +229,15 @@ class _ProductCard extends StatelessWidget {
 
   const _ProductCard({required this.product});
 
+  String? _validatePhysicalConversion(BuildContext context) {
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    return physicalProvider.validateProduct(
+      brand: product['brand']?.toString(),
+      metalType: product['metal_type']?.toString(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // 1. Extract Name
@@ -409,7 +420,31 @@ class _ProductCard extends StatelessWidget {
                           ),
 
                           InkWell(
+                            // onTap: () async {
+                            //   await cartProvider.updateCartQuantity(
+                            //     productId: product["id"],
+                            //     quantity: cartQuantity + 1,
+                            //   );
+                            // },
                             onTap: () async {
+                              final validationError =
+                                  _validatePhysicalConversion(context);
+
+                              if (validationError != null) {
+                                Fluttertoast.showToast(
+                                  msg: validationError,
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.BOTTOM,
+                                  // backgroundColor: isError
+                                  //     ? AppColors.primaryRed
+                                  //     : Colors.green,
+                                  textColor: Colors.white,
+                                  fontSize: 14.0,
+                                );
+
+                                return;
+                              }
+
                               await cartProvider.updateCartQuantity(
                                 productId: product["id"],
                                 quantity: cartQuantity + 1,
@@ -434,13 +469,66 @@ class _ProductCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
+                    // onPressed: cartProvider.isAdding(product["id"])
+                    //     ? null
+                    //     : () async {
+                    //         bool success = await cartProvider.addToCart(
+                    //           productId: product["id"],
+                    //           quantity: 1,
+                    //         );
+
+                    //         ScaffoldMessenger.of(context).showSnackBar(
+                    //           SnackBar(
+                    //             content: Text(
+                    //               success
+                    //                   ? "Added to Cart"
+                    //                   : "Failed to add product",
+                    //             ),
+                    //           ),
+                    //         );
+                    //       },
                     onPressed: cartProvider.isAdding(product["id"])
                         ? null
                         : () async {
-                            bool success = await cartProvider.addToCart(
+                            // --------------------------------------------------
+                            // Check Physical Conversion restrictions
+                            // --------------------------------------------------
+                            final validationError = _validatePhysicalConversion(
+                              context,
+                            );
+
+                            log("VVVVVVVVVV $validationError");
+
+                            // If conversion is active and product is invalid,
+                            // stop here.
+                            if (validationError != null) {
+                              // ScaffoldMessenger.of(context).showSnackBar(
+                              //   SnackBar(content: Text(validationError)),
+                              // );
+
+                              Fluttertoast.showToast(
+                                msg: validationError,
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.BOTTOM,
+                                // backgroundColor: isError
+                                //     ? AppColors.primaryRed
+                                //     : Colors.green,
+                                textColor: Colors.white,
+                                fontSize: 14.0,
+                              );
+
+                              return;
+                            }
+
+                            // --------------------------------------------------
+                            // Normal Add To Cart
+                            // --------------------------------------------------
+                            final bool success = await cartProvider.addToCart(
                               productId: product["id"],
                               quantity: 1,
                             );
+
+                            if (!context.mounted) return;
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
