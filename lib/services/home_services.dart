@@ -45,10 +45,15 @@ class ApiService {
       '$_baseUrl/home',
     ).replace(queryParameters: {'currency': currency, 'unit': unit});
 
+    log('🔥 ACTUAL API URL: $url');
+
     final response = await http.get(
       url,
       headers: {'Accept': 'application/json'},
     );
+
+    log('🔥 STATUS: ${response.statusCode}');
+    log('🔥 RAW API RESPONSE: ${response.body}');
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);

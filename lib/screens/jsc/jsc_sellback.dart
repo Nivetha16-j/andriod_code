@@ -7,6 +7,7 @@ import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/jsc/custom_sellbackdialog.dart';
 import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
 import 'package:provider/provider.dart';
 
@@ -288,27 +289,27 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
   Widget _buildSellBackDetails() {
     final gold = sellBackData?['gold'] as Map<String, dynamic>? ?? {};
-
     final silver = sellBackData?['silver'] as Map<String, dynamic>? ?? {};
 
     final goldBalance = gold['balance']?.toString() ?? '0.0000';
-
     final goldUnit = gold['unit']?.toString() ?? 'gram';
-
     final goldMarketRate = gold['market_rate']?.toString() ?? '0';
 
     final silverBalance = silver['balance']?.toString() ?? '0.0000';
-
     final silverUnit = silver['unit']?.toString() ?? 'gram';
-
     final silverMarketRate = silver['market_rate']?.toString() ?? '0';
 
     final currency = sellBackData?['currency']?.toString() ?? '';
-
     final currencySymbol = _currencySymbol(currency);
 
+    // Get sell back requests from API
+    final List<dynamic> sellBacks =
+        sellBackData?['sell_backs'] as List<dynamic>? ?? [];
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // GOLD
         _buildSellBackMetalRow(
           metal: 'Gold',
           balance: goldBalance,
@@ -319,6 +320,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
         const SizedBox(height: 8),
 
+        // SILVER
         _buildSellBackMetalRow(
           metal: 'Silver',
           balance: silverBalance,
@@ -329,12 +331,22 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
         const SizedBox(height: 12),
 
+        // MINIMUM BALANCE MESSAGE
         _buildMinimumBalanceMessage(
           goldBalance: goldBalance,
           goldUnit: goldUnit,
           silverBalance: silverBalance,
           silverUnit: silverUnit,
         ),
+
+        // ------------------------------------------------
+        // SHOW TABLE ONLY WHEN sell_backs HAS DATA
+        // ------------------------------------------------
+        if (sellBacks.isNotEmpty) ...[
+          const SizedBox(height: 25),
+
+          _buildSellBackRequestsTable(sellBacks),
+        ],
       ],
     );
   }
@@ -380,8 +392,15 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
               child: ElevatedButton(
                 onPressed: enabled
                     ? () {
-                        // TODO:
-                        // Open Sell Back form for this metal.
+                        showDialog(
+                          context: context,
+                          builder: (context) => SellBackDialog(
+                            metal: metal,
+                            balance: balance,
+                            unit: unit,
+                            spotPrice: spotPrice,
+                          ),
+                        );
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
@@ -409,6 +428,335 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
         Container(height: 1, color: const Color(0xFFE8E3E3)),
       ],
     );
+  }
+
+  Widget _buildSellBackRequestsTable(List<dynamic> sellBacks) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Sell Back Requests',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+
+        const SizedBox(height: 4),
+
+        const Text(
+          'Track the status of your sell back and bank transfer requests.',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: Colors.black,
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(color: Colors.white),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Table(
+              columnWidths: const {
+                0: FixedColumnWidth(145),
+                1: FixedColumnWidth(80),
+                2: FixedColumnWidth(90),
+                3: FixedColumnWidth(90),
+                4: FixedColumnWidth(90),
+                5: FixedColumnWidth(210),
+                6: FixedColumnWidth(90),
+              },
+              border: TableBorder(
+                horizontalInside: BorderSide(
+                  color: Color(0xFFE8E3E3),
+                  width: 1,
+                ),
+                bottom: BorderSide(color: Color(0xFFE8E3E3), width: 1),
+              ),
+              children: [
+                // HEADER
+                TableRow(
+                  children: [
+                    _buildTableHeader('REFERENCE'),
+                    _buildTableHeader('METAL'),
+                    _buildTableHeader('QUANTITY'),
+                    _buildTableHeader('PAYOUT'),
+                    _buildTableHeader('STATUS'),
+                    _buildTableHeader('EXPECTED TRANSFER'),
+                    _buildTableHeader('DATE'),
+                  ],
+                ),
+
+                // DATA ROWS
+                ...sellBacks.map((item) {
+                  final sellBack = item as Map<String, dynamic>;
+
+                  return TableRow(
+                    children: [
+                      _buildReferenceCell(
+                        sellBack['reference_number']?.toString() ?? '-',
+                      ),
+
+                      _buildTableCell(
+                        _capitalize(sellBack['metal_type']?.toString() ?? '-'),
+                      ),
+
+                      _buildTableCell(
+                        '${sellBack['amount']?.toString() ?? '0'} '
+                        '${_getSellBackUnit(sellBack)}',
+                      ),
+
+                      _buildTableCell(
+                        '${_currencySymbol(sellBack['currency']?.toString() ?? '')}'
+                        '${sellBack['payout_value']?.toString() ?? '0'}',
+                      ),
+
+                      _buildStatusCell(sellBack['status']?.toString() ?? ''),
+
+                      _buildExpectedTransferCell(
+                        sellBack['status']?.toString() ?? '',
+                      ),
+
+                      _buildDateCell(sellBack['created_at']?.toString()),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTableHeader(String text) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF807878),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTableCell(String text) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w400,
+          color: Colors.black,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReferenceCell(String reference) {
+    final parts = reference.split('-');
+
+    String firstLine = reference;
+    String? secondLine;
+
+    if (parts.length >= 3) {
+      firstLine = '${parts[0]}-${parts[1]}';
+      secondLine = parts.sublist(2).join('-');
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
+      alignment: Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            firstLine,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w400,
+              color: Colors.black,
+            ),
+          ),
+          if (secondLine != null)
+            Text(
+              secondLine,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
+                color: Colors.black,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCell(String status) {
+    final normalizedStatus = status.toLowerCase();
+
+    Color backgroundColor;
+    Color textColor;
+
+    switch (normalizedStatus) {
+      case 'approved':
+        backgroundColor = const Color(0xFFE8F7E8);
+        textColor = const Color(0xFF2E7D32);
+        break;
+
+      case 'paid':
+        backgroundColor = const Color(0xFFE8F7E8);
+        textColor = const Color(0xFF2E7D32);
+        break;
+
+      case 'rejected':
+        backgroundColor = const Color(0xFFFFE8E8);
+        textColor = const Color(0xFFC62828);
+        break;
+
+      case 'pending':
+      default:
+        backgroundColor = const Color(0xFFFFF3D9);
+        textColor = const Color(0xFFE58A00);
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          _capitalize(status),
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpectedTransferCell(String status) {
+    String text;
+
+    switch (status.toLowerCase()) {
+      case 'paid':
+        text = 'Payment has been credited to your bank account.';
+        break;
+
+      case 'rejected':
+        text = 'Your sell back request has been rejected.';
+        break;
+
+      case 'approved':
+        text =
+            'Payment will be credited to your bank account within up to 24 hours.';
+        break;
+
+      case 'pending':
+      default:
+        text =
+            'Payment will be credited to your bank account within up to 24 hours.';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w400,
+          height: 1.3,
+          color: Colors.black,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateCell(String? dateString) {
+    if (dateString == null || dateString.isEmpty) {
+      return _buildTableCell('-');
+    }
+
+    try {
+      final date = DateTime.parse(dateString).toLocal();
+
+      final month = _monthName(date.month);
+      final formattedDate = '$month ${date.day}, ${date.year}';
+
+      return Container(
+        padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
+        alignment: Alignment.centerLeft,
+        child: Text(
+          formattedDate,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w400,
+            color: Colors.black,
+          ),
+        ),
+      );
+    } catch (e) {
+      return _buildTableCell(dateString);
+    }
+  }
+
+  String _getSellBackUnit(Map<String, dynamic> sellBack) {
+    final metalType = sellBack['metal_type']?.toString().toLowerCase();
+
+    // Your current API does not return unit inside sell_backs,
+    // so use gram based on the balance unit.
+    //
+    // If API starts returning "unit", it will automatically use it.
+    if (sellBack['unit'] != null) {
+      return sellBack['unit'].toString();
+    }
+
+    return 'g';
+  }
+
+  String _capitalize(String value) {
+    if (value.isEmpty) return value;
+
+    return value[0].toUpperCase() + value.substring(1).toLowerCase();
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return months[month - 1];
   }
 
   Widget _buildMinimumBalanceMessage({
