@@ -544,18 +544,12 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       return;
     }
 
-    final cartProvider = context.read<CartProvider>();
     final physicalProvider = context.read<PhysicalConversionProvider>();
 
-    // Clear existing normal cart
-    cartProvider.clearCart();
+    physicalProvider.startConversion(metal: 'Gold', amount: amount);
 
     if (!mounted) return;
 
-    // Start Physical Conversion
-    physicalProvider.startConversion(metal: 'Gold', amount: amount);
-
-    // Navigate to Cart
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 2)),
@@ -571,16 +565,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
     final physicalProvider = context.read<PhysicalConversionProvider>();
 
-    // Clear existing normal cart
-    await context.read<CartProvider>().fetchCart();
-    context.read<CartProvider>().clearCart();
+    physicalProvider.startConversion(metal: 'Silver', amount: amount);
 
     if (!mounted) return;
 
-    // Start Physical Conversion
-    physicalProvider.startConversion(metal: 'Silver', amount: amount);
-
-    // Navigate to Cart
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 2)),

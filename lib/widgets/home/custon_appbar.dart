@@ -9,6 +9,7 @@ import 'package:junubullion/theme/app_colors.dart';
 import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final GlobalKey<ScaffoldState>? scaffoldKey;
@@ -77,8 +78,12 @@ class _CustomAppBarState extends State<CustomAppBar> {
                   const Spacer(),
 
                   // Cart Icon
-                  Consumer<CartProvider>(
-                    builder: (context, cartProvider, child) {
+                  Consumer2<CartProvider, PhysicalConversionProvider>(
+                    builder: (context, cartProvider, physicalProvider, child) {
+                      final count = physicalProvider.isActive
+                          ? physicalProvider.physicalCartCount
+                          : cartProvider.cartItems.length;
+
                       return GestureDetector(
                         onTap: () {
                           Navigator.pushAndRemoveUntil(
@@ -102,7 +107,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                                 ),
                               ),
 
-                              if (cartProvider.cartCount > 0)
+                              if (count > 0)
                                 Positioned(
                                   right: -8,
                                   top: -4,
@@ -115,9 +120,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                                       shape: BoxShape.circle,
                                     ),
                                     child: Text(
-                                      cartProvider.cartCount > 99
-                                          ? "99+"
-                                          : cartProvider.cartCount.toString(),
+                                      count > 99 ? "99+" : count.toString(),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 9,

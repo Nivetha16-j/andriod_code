@@ -240,18 +240,15 @@ class _ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Extract Name
     final String name = product['name']?.toString() ?? 'Product Name';
 
-    // 2. Extract Live Price from JSON Response
-    // Checks "live_price" -> "formatted_price" -> "price" in priority order
     final String priceText =
         product['live_price']?.toString() ??
         product['formatted_price']?.toString() ??
         (product['price'] != null ? '\$${product['price']}' : '\$0.00');
 
-    // 3. Extract Image Path / URL
     final String? imageUrlFromApi = product['image_url']?.toString();
+
     final String? imagePath = product['image_path']?.toString();
 
     final String fullImageUrl =
@@ -261,29 +258,16 @@ class _ProductCard extends StatelessWidget {
               ? '${TrendingProductsSection.imageBaseUrl}$imagePath'
               : '');
 
-    // 4. Extract Stock Status
-    // final bool isInStock = product['stock_status'] == 'in_stock';
-
-    // final int quantity = int.tryParse(product["quantity"].toString()) ?? 0;
-
     final bool canPurchase = product["stock_status"] == "in_stock";
 
     return InkWell(
       onTap: () {
-        log("Product tapped");
-        log("Proooo $product");
-
-        try {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ProductDetailsScreen(productId: product["id"]),
-            ),
-          );
-        } catch (e, s) {
-          log("Navigation Error: $e.......$s");
-          log(s.toString());
-        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailsScreen(productId: product["id"]),
+          ),
+        );
       },
       child: Container(
         width: 170.0,
@@ -292,7 +276,6 @@ class _ProductCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // Image Container with Border & Rounded Corners
             Container(
               height: 170.0,
               width: 170.0,
@@ -306,11 +289,13 @@ class _ProductCard extends StatelessWidget {
                   ? Image.network(
                       fullImageUrl,
                       fit: BoxFit.fill,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.broken_image,
-                        size: 40,
-                        color: Colors.grey,
-                      ),
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.broken_image,
+                          size: 40,
+                          color: Colors.grey,
+                        );
+                      },
                     )
                   : const Icon(
                       Icons.image_not_supported,
@@ -321,7 +306,6 @@ class _ProductCard extends StatelessWidget {
 
             const SizedBox(height: 8.0),
 
-            // Title
             SizedBox(
               height: 34.0,
               child: Text(
@@ -339,7 +323,6 @@ class _ProductCard extends StatelessWidget {
 
             const SizedBox(height: 6.0),
 
-            // Display Live Price
             Text(
               priceText,
               style: const TextStyle(
@@ -351,21 +334,153 @@ class _ProductCard extends StatelessWidget {
 
             const SizedBox(height: 6.0),
 
-            // Add to Cart / Out of Stock Button
             SizedBox(
               width: double.infinity,
               height: 36,
-              child: Consumer<CartProvider>(
-                builder: (context, cartProvider, child) {
-                  final isInCart = cartProvider.isProductInCart(product["id"]);
+              child: Consumer2<CartProvider, PhysicalConversionProvider>(
+                builder: (context, cartProvider, physicalProvider, child) {
+                  // ========================================================
+                  // PHYSICAL CONVERSION MODE
+                  // ========================================================
 
-                  final cartItem = isInCart
-                      ? cartProvider.cartItems.firstWhere(
-                          (e) => e["product_id"] == product["id"],
-                        )
-                      : null;
+                  if (physicalProvider.isActive) {
+                    final physicalCart = physicalProvider.physicalCart;
 
-                  final int cartQuantity = cartItem?["quantity"] ?? 0;
+                    final physicalItemIndex = physicalCart.indexWhere(
+                      (item) => '${item['product_id']}' == '${product["id"]}',
+                    );
+
+                    final bool isInPhysicalCart = physicalItemIndex != -1;
+
+                    final Map<String, dynamic>? physicalItem = isInPhysicalCart
+                        ? physicalCart[physicalItemIndex]
+                        : null;
+
+                    final int physicalQuantity =
+                        int.tryParse('${physicalItem?['quantity'] ?? 0}') ?? 0;
+
+                    // ======================================================
+                    // ALREADY IN PHYSICAL CART
+                    // ======================================================
+
+                    if (isInPhysicalCart) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryRed,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            InkWell(
+                              onTap: () async {
+                                if (physicalQuantity <= 1) {
+                                  await physicalProvider.removePhysicalProduct(
+                                    product["id"],
+                                  );
+                                } else {
+                                  await physicalProvider.updatePhysicalQuantity(
+                                    productId: product["id"],
+                                    quantity: physicalQuantity - 1,
+                                  );
+                                }
+                              },
+                              child: const Icon(
+                                Icons.remove,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+
+                            Text(
+                              '$physicalQuantity',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+
+                            InkWell(
+                              onTap: () async {
+                                final error = _validatePhysicalConversion(
+                                  context,
+                                );
+
+                                if (error != null) {
+                                  Fluttertoast.showToast(
+                                    msg: error,
+                                    toastLength: Toast.LENGTH_SHORT,
+                                    gravity: ToastGravity.BOTTOM,
+                                    textColor: Colors.white,
+                                    fontSize: 14,
+                                  );
+                                  return;
+                                }
+
+                                await physicalProvider.addPhysicalProduct(
+                                  product: product,
+                                );
+                              },
+                              child: const Icon(
+                                Icons.add,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // ======================================================
+                    // NOT IN PHYSICAL CART
+                    // ======================================================
+
+                    return ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryRed,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final error = _validatePhysicalConversion(context);
+
+                        if (error != null) {
+                          Fluttertoast.showToast(
+                            msg: error,
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            textColor: Colors.white,
+                            fontSize: 14,
+                          );
+                          return;
+                        }
+
+                        final success = await physicalProvider
+                            .addPhysicalProduct(product: product);
+
+                        if (!success) {
+                          return;
+                        }
+
+                        debugPrint(
+                          '✅ Added to physical cart: '
+                          '${product["name"]}',
+                        );
+                      },
+                      child: const Text(
+                        'ADD TO CART',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  }
+
+                  // ========================================================
+                  // NORMAL CART MODE
+                  // ========================================================
 
                   if (!canPurchase) {
                     return ElevatedButton(
@@ -377,9 +492,27 @@ class _ProductCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                      child: const Text("Out of stock"),
+                      child: const Text('Out of stock'),
                     );
                   }
+
+                  final bool isInCart = cartProvider.isProductInCart(
+                    product["id"],
+                  );
+
+                  final Map<String, dynamic>? cartItem = isInCart
+                      ? cartProvider.cartItems.firstWhere(
+                          (item) =>
+                              '${item["product_id"]}' == '${product["id"]}',
+                        )
+                      : null;
+
+                  final int cartQuantity =
+                      int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
+
+                  // ========================================================
+                  // NORMAL CART PRODUCT EXISTS
+                  // ========================================================
 
                   if (isInCart) {
                     return Container(
@@ -392,7 +525,7 @@ class _ProductCard extends StatelessWidget {
                         children: [
                           InkWell(
                             onTap: () async {
-                              if (cartQuantity == 1) {
+                              if (cartQuantity <= 1) {
                                 await cartProvider.removeFromCart(
                                   product["id"],
                                 );
@@ -411,7 +544,7 @@ class _ProductCard extends StatelessWidget {
                           ),
 
                           Text(
-                            "$cartQuantity",
+                            '$cartQuantity',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -420,31 +553,7 @@ class _ProductCard extends StatelessWidget {
                           ),
 
                           InkWell(
-                            // onTap: () async {
-                            //   await cartProvider.updateCartQuantity(
-                            //     productId: product["id"],
-                            //     quantity: cartQuantity + 1,
-                            //   );
-                            // },
                             onTap: () async {
-                              final validationError =
-                                  _validatePhysicalConversion(context);
-
-                              if (validationError != null) {
-                                Fluttertoast.showToast(
-                                  msg: validationError,
-                                  toastLength: Toast.LENGTH_SHORT,
-                                  gravity: ToastGravity.BOTTOM,
-                                  // backgroundColor: isError
-                                  //     ? AppColors.primaryRed
-                                  //     : Colors.green,
-                                  textColor: Colors.white,
-                                  fontSize: 14.0,
-                                );
-
-                                return;
-                              }
-
                               await cartProvider.updateCartQuantity(
                                 productId: product["id"],
                                 quantity: cartQuantity + 1,
@@ -461,6 +570,10 @@ class _ProductCard extends StatelessWidget {
                     );
                   }
 
+                  // ========================================================
+                  // NORMAL ADD TO CART
+                  // ========================================================
+
                   return ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryRed,
@@ -469,73 +582,24 @@ class _ProductCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    // onPressed: cartProvider.isAdding(product["id"])
-                    //     ? null
-                    //     : () async {
-                    //         bool success = await cartProvider.addToCart(
-                    //           productId: product["id"],
-                    //           quantity: 1,
-                    //         );
-
-                    //         ScaffoldMessenger.of(context).showSnackBar(
-                    //           SnackBar(
-                    //             content: Text(
-                    //               success
-                    //                   ? "Added to Cart"
-                    //                   : "Failed to add product",
-                    //             ),
-                    //           ),
-                    //         );
-                    //       },
                     onPressed: cartProvider.isAdding(product["id"])
                         ? null
                         : () async {
-                            // --------------------------------------------------
-                            // Check Physical Conversion restrictions
-                            // --------------------------------------------------
-                            final validationError = _validatePhysicalConversion(
-                              context,
-                            );
-
-                            log("VVVVVVVVVV $validationError");
-
-                            // If conversion is active and product is invalid,
-                            // stop here.
-                            if (validationError != null) {
-                              // ScaffoldMessenger.of(context).showSnackBar(
-                              //   SnackBar(content: Text(validationError)),
-                              // );
-
-                              Fluttertoast.showToast(
-                                msg: validationError,
-                                toastLength: Toast.LENGTH_SHORT,
-                                gravity: ToastGravity.BOTTOM,
-                                // backgroundColor: isError
-                                //     ? AppColors.primaryRed
-                                //     : Colors.green,
-                                textColor: Colors.white,
-                                fontSize: 14.0,
-                              );
-
-                              return;
-                            }
-
-                            // --------------------------------------------------
-                            // Normal Add To Cart
-                            // --------------------------------------------------
-                            final bool success = await cartProvider.addToCart(
+                            final success = await cartProvider.addToCart(
                               productId: product["id"],
                               quantity: 1,
                             );
 
-                            if (!context.mounted) return;
+                            if (!context.mounted) {
+                              return;
+                            }
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
                                   success
-                                      ? "Added to Cart"
-                                      : "Failed to add product",
+                                      ? 'Added to Cart'
+                                      : 'Failed to add product',
                                 ),
                               ),
                             );
@@ -550,7 +614,7 @@ class _ProductCard extends StatelessWidget {
                             ),
                           )
                         : const Text(
-                            "ADD TO CART",
+                            'ADD TO CART',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                   );

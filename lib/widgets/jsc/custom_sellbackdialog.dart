@@ -82,7 +82,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
     try {
       final spotPrices = await ApiService.fetchSpotPrice(
         currency: currencyProvider.selectedCurrency,
-        unit: 'ounce',
+        unit: 'gram',
       );
 
       log('SELL BACK API RESPONSE: $spotPrices');

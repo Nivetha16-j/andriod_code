@@ -46,7 +46,15 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => KycProvider()),
         ChangeNotifierProvider(create: (_) => CheckoutProvider()),
         ChangeNotifierProvider(create: (_) => TestimonialProvider()),
-        ChangeNotifierProvider(create: (_) => PhysicalConversionProvider()),
+        ChangeNotifierProvider<PhysicalConversionProvider>(
+          create: (_) {
+            final provider = PhysicalConversionProvider();
+
+            provider.initializePhysicalConversion();
+
+            return provider;
+          },
+        ),
       ],
       child: const MyApp(),
     ),
