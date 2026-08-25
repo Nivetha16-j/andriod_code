@@ -232,8 +232,10 @@ class _ProductCard extends StatelessWidget {
   String? _validatePhysicalConversion(BuildContext context) {
     final physicalProvider = context.read<PhysicalConversionProvider>();
 
+    log("proooooooo $product");
+
     return physicalProvider.validateProduct(
-      brand: product['brand']?.toString(),
+      // brand: product['brand']?.toString(),
       metalType: product['metal_type']?.toString(),
     );
   }
@@ -259,6 +261,13 @@ class _ProductCard extends StatelessWidget {
               : '');
 
     final bool canPurchase = product["stock_status"] == "in_stock";
+
+    final String brand = (product['brand'] ?? '')
+        .toString()
+        .trim()
+        .toUpperCase();
+
+    final bool isDigitalProduct = brand == "GSP" || brand == "JSC";
 
     return InkWell(
       onTap: () {

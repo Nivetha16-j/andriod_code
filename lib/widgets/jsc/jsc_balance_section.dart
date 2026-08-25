@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:provider/provider.dart';
@@ -9,10 +10,8 @@ import 'package:provider/provider.dart';
 final ValueNotifier<bool> balanceUnlockedNotifier = ValueNotifier<bool>(false);
 
 class JscBalanceSection extends StatefulWidget {
-  final VoidCallback? onUnlocked;
+  final Future<void> Function()? onUnlocked;
 
-  // true = show Gold/Silver balances
-  // false = only show UnlockBalanceCard
   final bool showBalances;
 
   const JscBalanceSection({
@@ -51,9 +50,26 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
   void _onBalanceStateChanged() {
     if (!mounted) return;
 
+    final unlocked = balanceUnlockedNotifier.value;
+
     setState(() {
-      isBalanceUnlocked = balanceUnlockedNotifier.value;
+      isBalanceUnlocked = unlocked;
     });
+
+    // If logout happens, immediately clear displayed balance.
+    if (!unlocked) {
+      setState(() {
+        goldBalance = '...';
+        goldUnit = 'grams';
+        goldMarketValue = '...';
+
+        silverBalance = '...';
+        silverUnit = 'oz';
+        silverMarketValue = '...';
+
+        currencySymbol = '';
+      });
+    }
   }
 
   @override
@@ -66,14 +82,14 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
     try {
       final unlocked = await SessionManager.isBalanceUnlocked();
 
-      debugPrint(
-        'SELL/DASH/WALLET -> isBalanceUnlocked from SessionManager: $unlocked',
-      );
+      debugPrint('JSC BALANCE -> SessionManager unlocked: $unlocked');
 
       if (!mounted) return;
 
-      // Keep the global state synchronized with SessionManager
-      balanceUnlockedNotifier.value = unlocked;
+      // Synchronize global state.
+      if (balanceUnlockedNotifier.value != unlocked) {
+        balanceUnlockedNotifier.value = unlocked;
+      }
 
       if (unlocked) {
         final savedData = await SessionManager.getSavedBalanceData();
@@ -84,76 +100,91 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
           isBalanceUnlocked = true;
 
           goldBalance = savedData['goldBalance'] ?? '...';
+
           goldUnit = savedData['goldUnit'] ?? 'grams';
+
           goldMarketValue = savedData['goldMarketValue'] ?? '...';
 
           silverBalance = savedData['silverBalance'] ?? '...';
+
           silverUnit = savedData['silverUnit'] ?? 'oz';
+
           silverMarketValue = savedData['silverMarketValue'] ?? '...';
 
           currencySymbol = savedData['currencySymbol'] ?? '';
         });
 
-        widget.onUnlocked?.call();
+        // IMPORTANT:
+        // No data argument is required here.
+        // This is only notifying the parent that
+        // balances are already unlocked.
+        await widget.onUnlocked?.call();
       } else {
         setState(() {
           isBalanceUnlocked = false;
         });
       }
     } catch (e) {
-      debugPrint('Balance unlock status error: $e');
+      debugPrint('JSC BALANCE -> unlock status error: $e');
 
       if (!mounted) return;
 
       setState(() {
         isBalanceUnlocked = false;
       });
+
+      balanceUnlockedNotifier.value = false;
+    } finally {
+      if (!mounted) return;
+
+      setState(() {
+        isCheckingBalanceUnlock = false;
+      });
     }
-
-    if (!mounted) return;
-
-    setState(() {
-      isCheckingBalanceUnlock = false;
-    });
   }
 
   Future<void> _onBalancesUnlocked(Map<String, dynamic> data) async {
     try {
+      // Save persistent unlock state.
       await SessionManager.saveBalanceUnlocked();
 
+      // Save balance information.
       await SessionManager.saveBalanceData(data);
-
-      balanceUnlockedNotifier.value = true;
-
-      if (!mounted) return;
 
       final gold = data['gold'] as Map<String, dynamic>? ?? <String, dynamic>{};
 
       final silver =
           data['silver'] as Map<String, dynamic>? ?? <String, dynamic>{};
 
+      // Update global state.
+      balanceUnlockedNotifier.value = true;
+
+      // Update Provider state.
+      if (mounted) {
+        context.read<JscBalanceProvider>().setUnlocked(true);
+      }
+
+      if (!mounted) return;
+
       setState(() {
         isBalanceUnlocked = true;
 
-        // GOLD
         goldBalance = gold['balance']?.toString() ?? '0.0000';
 
         goldUnit = gold['unit']?.toString() ?? 'gram';
 
         goldMarketValue = gold['market_value']?.toString() ?? '0';
 
-        // SILVER
         silverBalance = silver['balance']?.toString() ?? '0.0000';
 
         silverUnit = silver['unit']?.toString() ?? 'oz';
 
         silverMarketValue = silver['market_value']?.toString() ?? '0';
 
-        // CURRENCY
         currencySymbol = data['currency_symbol']?.toString() ?? '';
       });
 
-      widget.onUnlocked?.call();
+      await widget.onUnlocked?.call();
     } catch (e) {
       debugPrint('Saving balance data error: $e');
     }
@@ -184,7 +215,9 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
                   image: 'assets/g_balance.png',
                 ),
               ),
+
               const SizedBox(width: 5),
+
               Expanded(
                 child: _BalanceCard(
                   title: 'Silver Balance',
@@ -204,7 +237,8 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
 }
 
 class UnlockBalanceCard extends StatefulWidget {
-  final void Function(Map<String, dynamic>) onUnlocked;
+  final Future<void> Function(Map<String, dynamic> data) onUnlocked;
+
   const UnlockBalanceCard({super.key, required this.onUnlocked});
 
   @override
@@ -236,18 +270,12 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
       isUnlocking = true;
     });
 
-    // IMPORTANT:
-    // Get these BEFORE any await.
     final currencyProvider = context.read<CurrencyProvider>();
 
     final currency = currencyProvider.selectedCurrency;
 
     try {
-      log('Unlock wallet - Currency: $currency');
-
-      // ============================================================
-      // 1. UNLOCK BALANCES
-      // ============================================================
+      log('JSC UNLOCK -> Currency: $currency');
 
       final result = await JscService.unlockWallet(
         unlockPassword: password,
@@ -267,18 +295,13 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
         return;
       }
 
-      final data = result['data'] as Map<String, dynamic>? ?? {};
+      final data =
+          result['data'] as Map<String, dynamic>? ?? <String, dynamic>{};
 
-      // ============================================================
-      // 2. SAVE BALANCE DATA
-      // ============================================================
+      // This updates SessionManager + Provider + notifier.
+      await widget.onUnlocked(data);
 
-      widget.onUnlocked(data);
-
-      // ============================================================
-      // 3. TRANSACTIONS
-      // ============================================================
-
+      // Transactions.
       try {
         final transactionsResult = await JscService.getTransactions(
           currency: currency,
@@ -292,10 +315,7 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
         log('Failed to fetch transactions after unlock: $e');
       }
 
-      // ============================================================
-      // 4. SELL BACK
-      // ============================================================
-
+      // Sell back details.
       try {
         final sellBackResult = await JscService.getSellBackDetails(
           currency: currency,
@@ -308,25 +328,6 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
       } catch (e) {
         log('Failed to fetch sell back details after unlock: $e');
       }
-
-      // ============================================================
-      // 5. CONVERT TO PHYSICAL
-      // ============================================================
-
-      log('🔥 ABOUT TO CALL CONVERT PHYSICAL');
-
-      // try {
-      //   final convertPhysicalResult =
-      //       await JscService.fetchConvertPhysicalDetails(currency: currency);
-
-      //   log('🔥 CONVERT PHYSICAL FETCH COMPLETED $convertPhysicalResult');
-      // } catch (e) {
-      //   debugPrint('❌ Failed to fetch convert physical: $e');
-      // }
-
-      // ============================================================
-      // 6. SUCCESS MESSAGE
-      // ============================================================
 
       if (!mounted) return;
 
@@ -378,7 +379,6 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
             style: TextStyle(
               fontSize: 10,
               color: Color.fromRGBO(168, 136, 22, 1),
-              fontWeight: FontWeight.w400,
             ),
           ),
 
@@ -387,7 +387,6 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
             style: TextStyle(
               fontSize: 10,
               color: Color.fromRGBO(168, 136, 22, 1),
-              fontWeight: FontWeight.w400,
             ),
           ),
 
@@ -436,8 +435,8 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
               onPressed: isUnlocking ? null : _unlockBalances,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD20D2D),
-                foregroundColor: Colors.white,
                 disabledBackgroundColor: const Color(0xFFD20D2D),
+                foregroundColor: Colors.white,
                 disabledForegroundColor: Colors.white,
                 elevation: 0,
                 padding: EdgeInsets.zero,
@@ -514,7 +513,6 @@ class _BalanceCard extends StatelessWidget {
             ),
           ),
 
-          // const SizedBox(height: 5),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -529,8 +527,6 @@ class _BalanceCard extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // const SizedBox(width: 4),
               Text(
                 unit,
                 style: const TextStyle(
@@ -541,7 +537,6 @@ class _BalanceCard extends StatelessWidget {
             ],
           ),
 
-          // const SizedBox(height: 5),
           Text(
             marketValue == '...'
                 ? '... market value'
@@ -553,7 +548,7 @@ class _BalanceCard extends StatelessWidget {
               color: Color.fromRGBO(178, 186, 205, 1),
             ),
           ),
-          // const SizedBox(height: 5),
+
           Image.asset(image, height: 35, width: 35),
         ],
       ),

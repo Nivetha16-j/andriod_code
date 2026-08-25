@@ -32,39 +32,132 @@ class SummaryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CartProvider>();
+
     return Column(
       children: [
-        _row("Subtotal Product", subtotal),
+        _row("Subtotal Product", _formatCurrency(subtotal)),
 
         const SizedBox(height: 15),
 
-        _row("Courier charge (${deliveryMethod} delivery)", "+ $courier_fee"),
+        _row(
+          "Courier charge (${deliveryMethod} delivery)",
+          "+ ${_formatCurrency(courier_fee)}",
+        ),
+
         if (coupon != null) ...[
           const SizedBox(height: 15),
 
-          _row("Discount (${coupon!["code"]})", "- $discount"),
+          _row(
+            "Discount (${coupon!["code"]})",
+            "- ${_formatCurrency(discount)}",
+          ),
 
           const SizedBox(height: 15),
 
-          _row("Discount Price", discountPrice),
+          _row("Discount Price", _formatCurrency(discountPrice)),
         ],
 
         const SizedBox(height: 15),
 
-        // _row("Transaction fee (4%)", "+ $transaction_fee"),
-        _row("Transaction fee (4%)", "+ $transaction_fee"),
+        _row("Transaction fee (4%)", "+ ${_formatCurrency(transaction_fee)}"),
 
         if (provider.showTax) ...[
           const SizedBox(height: 15),
-          _row("GST (21%)", "+ $gst"),
+
+          _row("GST (21%)", "+ ${_formatCurrency(gst)}"),
         ],
 
         const Divider(height: 35),
 
-        _row("Total", total, bold: true),
+        _row("Total", _formatCurrency(total), bold: true),
       ],
     );
   }
+
+  // ============================================================
+  // CURRENCY HANDLING
+  // ============================================================
+
+  String _formatCurrency(String value) {
+    final String trimmedValue = value.trim();
+
+    if (trimmedValue.isEmpty) {
+      return '$currency 0.00';
+    }
+
+    // Normal cart values already contain the currency.
+    //
+    // Example:
+    // ₹ 100.00
+    // $ 100.00
+    // USD 100.00
+    //
+    // In these cases, return the value exactly as it is.
+    if (_hasCurrency(trimmedValue)) {
+      return trimmedValue;
+    }
+
+    // Physical conversion values are plain:
+    //
+    // 0.00
+    //
+    // So add the currently selected currency.
+    return '$currency $trimmedValue';
+  }
+
+  bool _hasCurrency(String value) {
+    final String upperValue = value.toUpperCase();
+
+    // Currency codes
+    final List<String> currencyCodes = [
+      'USD',
+      'INR',
+      'EUR',
+      'GBP',
+      'SGD',
+      'AED',
+      'SAR',
+      'QAR',
+      'AUD',
+      'CAD',
+      'JPY',
+      'CNY',
+    ];
+
+    for (final code in currencyCodes) {
+      if (upperValue.contains(code)) {
+        return true;
+      }
+    }
+
+    // Common currency symbols
+    final List<String> currencySymbols = [
+      '₹',
+      '\$',
+      '€',
+      '£',
+      '¥',
+      '₩',
+      '₽',
+      '₺',
+      '฿',
+      '₫',
+      '₦',
+      '₱',
+    ];
+
+    for (final symbol in currencySymbols) {
+      if (value.contains(symbol)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // ============================================================
+  // SUMMARY ROW
+  // ============================================================
 
   Widget _row(
     String title,

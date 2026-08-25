@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/screens/jsc/jsc_layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/jsc_services.dart';
@@ -21,9 +22,10 @@ class JscSellBackScreen extends StatefulWidget {
 class _JscSellBackScreenState extends State<JscSellBackScreen> {
   @override
   Widget build(BuildContext context) {
-    int currentIndex = 0;
+    const int currentIndex = 0;
 
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
     return Scaffold(
       backgroundColor: const Color(0xffFAFAF8),
       key: scaffoldKey,
@@ -73,23 +75,49 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     _checkUnlockStatus();
   }
 
+  /// ------------------------------------------------------------
+  /// CHECK CURRENT SESSION UNLOCK STATUS
+  /// ------------------------------------------------------------
   Future<void> _checkUnlockStatus() async {
-    final unlocked = await SessionManager.isBalanceUnlocked();
+    final provider = context.read<JscBalanceProvider>();
+
+    await provider.loadUnlockStatus();
 
     if (!mounted) return;
+
+    final unlocked = provider.isBalancesUnlocked;
 
     setState(() {
       isBalancesUnlocked = unlocked;
     });
 
-    // If already unlocked, fetch Sell Back details immediately.
     if (unlocked) {
       await _fetchSellBackDetails();
     }
   }
 
+  /// ------------------------------------------------------------
+  /// FETCH SELL BACK DETAILS
+  /// ------------------------------------------------------------
   Future<void> _fetchSellBackDetails() async {
     if (!mounted) return;
+
+    // Always verify session unlock state before making the request.
+    final unlocked = await SessionManager.isBalanceUnlocked();
+
+    if (!mounted) return;
+
+    if (!unlocked) {
+      setState(() {
+        isBalancesUnlocked = false;
+        sellBackData = null;
+        isLoadingSellBack = false;
+      });
+
+      debugPrint('SELL BACK -> Fetch cancelled because balances are locked.');
+
+      return;
+    }
 
     setState(() {
       isLoadingSellBack = true;
@@ -103,9 +131,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
       final currency = currencyProvider.selectedCurrency;
 
-      debugPrint(
-        'SELL BACK -> Fetching sell back details with currency: $currency',
-      );
+      debugPrint('SELL BACK -> Fetching details with currency: $currency');
 
       final result = await JscService.getSellBackDetails(currency: currency);
 
@@ -114,9 +140,44 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       if (!mounted) return;
 
       if (result['status'] == true) {
+        final dynamic data = result['data'];
+
+        final Map<String, dynamic> parsedData = data is Map<String, dynamic>
+            ? Map<String, dynamic>.from(data)
+            : <String, dynamic>{};
+
+        // Verify unlock state again before storing data.
+        final stillUnlocked = await SessionManager.isBalanceUnlocked();
+
+        if (!mounted) return;
+
+        if (!stillUnlocked) {
+          setState(() {
+            isBalancesUnlocked = false;
+            sellBackData = null;
+          });
+
+          debugPrint('SELL BACK -> Session became locked. Data discarded.');
+
+          return;
+        }
+
         setState(() {
-          sellBackData = result['data'] as Map<String, dynamic>? ?? {};
+          isBalancesUnlocked = true;
+          sellBackData = parsedData;
         });
+
+        debugPrint('SELL BACK -> Screen refreshed successfully.');
+
+        debugPrint(
+          'SELL BACK -> New GOLD: '
+          '${sellBackData?['gold']?['balance']}',
+        );
+
+        debugPrint(
+          'SELL BACK -> New SILVER: '
+          '${sellBackData?['silver']?['balance']}',
+        );
       } else {
         setState(() {
           sellBackData = null;
@@ -136,8 +197,13 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
       if (!mounted) return;
 
+      // Do not keep stale data after an API/session error.
+      setState(() {
+        sellBackData = null;
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to fetch sell back details: $e')),
+        const SnackBar(content: Text('Failed to refresh sell back details.')),
       );
     } finally {
       if (mounted) {
@@ -176,20 +242,21 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
         const SizedBox(height: 25),
 
-        // IMPORTANT:
-        // We don't show the normal Gold/Silver balance cards here.
         JscBalanceSection(
           showBalances: false,
 
-          // This gets called when unlockWallet succeeds.
+          /// Called after successful wallet unlock.
           onUnlocked: () async {
             if (!mounted) return;
 
+            debugPrint('SELL BACK -> Wallet unlocked.');
+
             setState(() {
               isBalancesUnlocked = true;
+              sellBackData = null;
             });
 
-            // Fetch Sell Back API immediately after unlock.
+            // Fetch latest balances and sell-back requests.
             await _fetchSellBackDetails();
           },
         ),
@@ -201,6 +268,9 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     );
   }
 
+  /// ------------------------------------------------------------
+  /// SELL BACK CARD
+  /// ------------------------------------------------------------
   Widget _buildSellBackCard() {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -266,6 +336,9 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     );
   }
 
+  /// ------------------------------------------------------------
+  /// LOCKED MESSAGE
+  /// ------------------------------------------------------------
   Widget _buildLockedMessage() {
     return Container(
       width: double.infinity,
@@ -287,29 +360,36 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     );
   }
 
+  /// ------------------------------------------------------------
+  /// SELL BACK DETAILS
+  /// ------------------------------------------------------------
   Widget _buildSellBackDetails() {
     final gold = sellBackData?['gold'] as Map<String, dynamic>? ?? {};
+
     final silver = sellBackData?['silver'] as Map<String, dynamic>? ?? {};
 
     final goldBalance = gold['balance']?.toString() ?? '0.0000';
+
     final goldUnit = gold['unit']?.toString() ?? 'gram';
+
     final goldMarketRate = gold['market_rate']?.toString() ?? '0';
 
     final silverBalance = silver['balance']?.toString() ?? '0.0000';
+
     final silverUnit = silver['unit']?.toString() ?? 'gram';
+
     final silverMarketRate = silver['market_rate']?.toString() ?? '0';
 
     final currency = sellBackData?['currency']?.toString() ?? '';
+
     final currencySymbol = _currencySymbol(currency);
 
-    // Get sell back requests from API
     final List<dynamic> sellBacks =
         sellBackData?['sell_backs'] as List<dynamic>? ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // GOLD
         _buildSellBackMetalRow(
           metal: 'Gold',
           balance: goldBalance,
@@ -320,7 +400,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
         const SizedBox(height: 8),
 
-        // SILVER
         _buildSellBackMetalRow(
           metal: 'Silver',
           balance: silverBalance,
@@ -331,7 +410,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
         const SizedBox(height: 12),
 
-        // MINIMUM BALANCE MESSAGE
         _buildMinimumBalanceMessage(
           goldBalance: goldBalance,
           goldUnit: goldUnit,
@@ -339,18 +417,17 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
           silverUnit: silverUnit,
         ),
 
-        // ------------------------------------------------
-        // SHOW TABLE ONLY WHEN sell_backs HAS DATA
-        // ------------------------------------------------
         if (sellBacks.isNotEmpty) ...[
           const SizedBox(height: 25),
-
           _buildSellBackRequestsTable(sellBacks),
         ],
       ],
     );
   }
 
+  /// ------------------------------------------------------------
+  /// GOLD / SILVER ROW
+  /// ------------------------------------------------------------
   Widget _buildSellBackMetalRow({
     required String metal,
     required String balance,
@@ -362,45 +439,80 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       children: [
         Row(
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  metal,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    metal,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
 
-                Text(
-                  'Available: $balance $unit',
-                  style: const TextStyle(fontSize: 9, color: Color(0xFF807878)),
-                ),
-                Text(
-                  'Spot: $spotPrice / $unit',
-                  style: const TextStyle(fontSize: 9, color: Color(0xFF807878)),
-                ),
-              ],
+                  Text(
+                    'Available: $balance $unit',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF807878),
+                    ),
+                  ),
+
+                  Text(
+                    'Spot: $spotPrice / $unit',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: Color(0xFF807878),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
-            Spacer(),
+            const SizedBox(width: 10),
 
             SizedBox(
               width: 100,
               height: 35,
               child: ElevatedButton(
                 onPressed: enabled
-                    ? () {
-                        showDialog(
+                    ? () async {
+                        final bool? submitted = await showDialog<bool>(
                           context: context,
-                          builder: (context) => SellBackDialog(
-                            metal: metal,
-                            balance: balance,
-                            unit: unit,
-                            spotPrice: spotPrice,
-                          ),
+                          barrierDismissible: false,
+                          builder: (dialogContext) {
+                            return SellBackDialog(
+                              metal: metal,
+                              balance: balance,
+                              unit: unit,
+                              spotPrice: spotPrice,
+                            );
+                          },
                         );
+
+                        if (!mounted) return;
+
+                        if (submitted == true) {
+                          debugPrint(
+                            'SELL BACK -> '
+                            'Request submitted successfully.',
+                          );
+
+                          await _fetchSellBackDetails();
+
+                          if (!mounted) return;
+
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Sell Back request submitted successfully.',
+                                ),
+                              ),
+                            );
+                        }
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
@@ -430,6 +542,9 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     );
   }
 
+  /// ------------------------------------------------------------
+  /// SELL BACK REQUEST TABLE
+  /// ------------------------------------------------------------
   Widget _buildSellBackRequestsTable(List<dynamic> sellBacks) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,7 +586,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                 5: FixedColumnWidth(210),
                 6: FixedColumnWidth(90),
               },
-              border: TableBorder(
+              border: const TableBorder(
                 horizontalInside: BorderSide(
                   color: Color(0xFFE8E3E3),
                   width: 1,
@@ -479,7 +594,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                 bottom: BorderSide(color: Color(0xFFE8E3E3), width: 1),
               ),
               children: [
-                // HEADER
                 TableRow(
                   children: [
                     _buildTableHeader('REFERENCE'),
@@ -492,7 +606,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                   ],
                 ),
 
-                // DATA ROWS
                 ...sellBacks.map((item) {
                   final sellBack = item as Map<String, dynamic>;
 
@@ -589,6 +702,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
               color: Colors.black,
             ),
           ),
+
           if (secondLine != null)
             Text(
               secondLine,
@@ -611,10 +725,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
     switch (normalizedStatus) {
       case 'approved':
-        backgroundColor = const Color(0xFFE8F7E8);
-        textColor = const Color(0xFF2E7D32);
-        break;
-
       case 'paid':
         backgroundColor = const Color(0xFFE8F7E8);
         textColor = const Color(0xFF2E7D32);
@@ -666,10 +776,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
         break;
 
       case 'approved':
-        text =
-            'Payment will be credited to your bank account within up to 24 hours.';
-        break;
-
       case 'pending':
       default:
         text =
@@ -701,6 +807,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       final date = DateTime.parse(dateString).toLocal();
 
       final month = _monthName(date.month);
+
       final formattedDate = '$month ${date.day}, ${date.year}';
 
       return Container(
@@ -721,12 +828,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
   }
 
   String _getSellBackUnit(Map<String, dynamic> sellBack) {
-    final metalType = sellBack['metal_type']?.toString().toLowerCase();
-
-    // Your current API does not return unit inside sell_backs,
-    // so use gram based on the balance unit.
-    //
-    // If API starts returning "unit", it will automatically use it.
     if (sellBack['unit'] != null) {
       return sellBack['unit'].toString();
     }
@@ -759,6 +860,9 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     return months[month - 1];
   }
 
+  /// ------------------------------------------------------------
+  /// MINIMUM BALANCE MESSAGE
+  /// ------------------------------------------------------------
   Widget _buildMinimumBalanceMessage({
     required String goldBalance,
     required String goldUnit,
@@ -766,11 +870,9 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     required String silverUnit,
   }) {
     final gold = double.tryParse(goldBalance) ?? 0;
+
     final silver = double.tryParse(silverBalance) ?? 0;
 
-    // Your requirement:
-    // Gold minimum = 50 g
-    // Silver minimum = 1 kg = 1000 g
     final goldEligible = goldUnit.toLowerCase().contains('kg')
         ? gold >= 0.05
         : gold >= 50;
@@ -827,14 +929,19 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     switch (currency.toUpperCase()) {
       case 'USD':
         return '\$';
+
       case 'EUR':
         return '€';
+
       case 'GBP':
         return '£';
+
       case 'SGD':
         return 'S\$';
+
       case 'INR':
         return '₹';
+
       default:
         return '$currency ';
     }

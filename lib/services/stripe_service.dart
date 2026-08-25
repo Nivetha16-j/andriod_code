@@ -32,7 +32,7 @@ class StripeService {
   static Future<Map<String, dynamic>> createStripeSession({
     required String shippingAddress,
     required String fulfillmentType,
-    required String courierService,
+    String? courierService,
     required String currency,
     String? digitalSubtype,
     required bool terms,
@@ -43,7 +43,7 @@ class StripeService {
 
       final Map<String, dynamic> payload = {
         "shipping_address": shippingAddress,
-        "courier_service": courierService.toLowerCase(),
+        "courier_service": courierService,
         "currency": currency,
         "terms": terms,
         "fulfillment_type": fulfillmentType.toLowerCase(),

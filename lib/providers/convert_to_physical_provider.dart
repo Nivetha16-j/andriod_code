@@ -1,13 +1,10 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PhysicalConversionProvider extends ChangeNotifier {
-  // ============================================================
-  // CONVERSION STATE
-  // ============================================================
-
   bool _isActive = false;
   String? _metal;
   double _amount = 0;
@@ -19,10 +16,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
   String get formattedAmount {
     return _amount.toStringAsFixed(4);
   }
-
-  // ============================================================
-  // PHYSICAL LOCAL CART
-  // ============================================================
 
   static const String _physicalCartKey = 'physical_conversion_cart';
   static const String _physicalActiveKey = 'physical_conversion_active';
@@ -43,10 +36,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
 
     return count;
   }
-
-  // ============================================================
-  // INITIALIZE
-  // ============================================================
 
   Future<void> initializePhysicalConversion() async {
     final prefs = await SharedPreferences.getInstance();
@@ -87,10 +76,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================
-  // START CONVERSION
-  // ============================================================
-
   Future<void> startConversion({
     required String metal,
     required double amount,
@@ -99,9 +84,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
     _metal = metal;
     _amount = amount;
 
-    // New conversion = new physical cart.
-    // IMPORTANT:
-    // This does NOT touch CartProvider.cartItems.
     _physicalCart = [];
 
     final prefs = await SharedPreferences.getInstance();
@@ -119,10 +101,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================
-  // ADD PRODUCT TO PHYSICAL CART
-  // ============================================================
-
   Future<bool> addPhysicalProduct({
     required Map<String, dynamic> product,
   }) async {
@@ -132,7 +110,7 @@ class PhysicalConversionProvider extends ChangeNotifier {
     }
 
     final validationError = validateProduct(
-      brand: product['brand']?.toString(),
+      // brand: product['brand']?.toString(),
       metalType: product['metal_type']?.toString(),
     );
 
@@ -155,20 +133,12 @@ class PhysicalConversionProvider extends ChangeNotifier {
       (item) => '${item['product_id']}' == '$productId',
     );
 
-    // ==========================================================
-    // PRODUCT ALREADY EXISTS
-    // ==========================================================
-
     if (index != -1) {
       final currentQuantity =
           int.tryParse('${_physicalCart[index]['quantity'] ?? 0}') ?? 0;
 
       _physicalCart[index]['quantity'] = currentQuantity + 1;
-    }
-    // ==========================================================
-    // NEW PRODUCT
-    // ==========================================================
-    else {
+    } else {
       _physicalCart.add({
         'product_id': productId,
         'quantity': 1,
@@ -178,8 +148,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
         'image_path': product['image_path'],
         'brand': product['brand'],
         'metal_type': product['metal_type'],
-
-        // Physical conversion product has no normal cart price.
         'price': 0,
         'formatted_price': '0.00',
         'live_price': '0.00',
@@ -194,10 +162,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
 
     return true;
   }
-
-  // ============================================================
-  // UPDATE QUANTITY
-  // ============================================================
 
   Future<void> updatePhysicalQuantity({
     required dynamic productId,
@@ -222,10 +186,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================
-  // REMOVE PRODUCT
-  // ============================================================
-
   Future<void> removePhysicalProduct(dynamic productId) async {
     _physicalCart.removeWhere(
       (item) => '${item['product_id']}' == '$productId',
@@ -236,10 +196,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================
-  // CLEAR PHYSICAL CART
-  // ============================================================
-
   Future<void> clearPhysicalCart() async {
     _physicalCart.clear();
 
@@ -247,10 +203,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
 
     notifyListeners();
   }
-
-  // ============================================================
-  // CANCEL CONVERSION
-  // ============================================================
 
   Future<void> cancelConversion() async {
     final prefs = await SharedPreferences.getInstance();
@@ -271,34 +223,21 @@ class PhysicalConversionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================
-  // SAVE PHYSICAL CART
-  // ============================================================
-
   Future<void> _savePhysicalCart() async {
     final prefs = await SharedPreferences.getInstance();
 
     await prefs.setString(_physicalCartKey, jsonEncode(_physicalCart));
   }
 
-  // ============================================================
-  // VALIDATION
-  // ============================================================
-
-  String? validateProduct({String? brand, String? metalType}) {
+  String? validateProduct({String? metalType}) {
     if (!_isActive) {
       return null;
     }
 
-    final normalizedBrand = brand?.trim().toLowerCase();
+    log("validateProduct $metalType");
+
     final normalizedMetal = metalType?.trim().toLowerCase();
 
-    // Only JSC or GSP
-    if (normalizedBrand != 'jsc' && normalizedBrand != 'gsp') {
-      return 'Only JSC or GSP products can be added during physical conversion.';
-    }
-
-    // Metal must match conversion metal
     if (_metal?.trim().toLowerCase() != normalizedMetal) {
       return 'Only $_metal products can be added during this conversion.';
     }

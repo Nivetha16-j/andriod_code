@@ -5,6 +5,7 @@ import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/checkout/checkout.dart';
+import 'package:junubullion/screens/checkout/physical_checkout.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/cart/custom_cartitem.dart';
 import 'package:junubullion/widgets/cart/custom_summary.dart';
@@ -22,8 +23,7 @@ class _CartScreenState extends State<CartScreen> {
   String? _lastCurrency;
   String? _lastUnit;
 
-  final TextEditingController couponController =
-      TextEditingController();
+  final TextEditingController couponController = TextEditingController();
 
   @override
   void initState() {
@@ -93,14 +93,8 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF7F7F7),
-
       body: Consumer2<CartProvider, PhysicalConversionProvider>(
-        builder: (
-          context,
-          cartProvider,
-          physicalProvider,
-          child,
-        ) {
+        builder: (context, cartProvider, physicalProvider, child) {
           log(
             'Cart -> '
             'physicalActive=${physicalProvider.isActive} '
@@ -125,9 +119,7 @@ class _CartScreenState extends State<CartScreen> {
           // ========================================================
 
           if (physicalProvider.isActive) {
-            return _buildPhysicalConversionCart(
-              physicalProvider,
-            );
+            return _buildPhysicalConversionCart(physicalProvider, cartProvider);
           }
 
           // ========================================================
@@ -153,29 +145,19 @@ class _CartScreenState extends State<CartScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/no_product.png',
-            height: 80,
-            width: 80,
-          ),
+          Image.asset('assets/no_product.png', height: 80, width: 80),
 
           const SizedBox(height: 20),
 
           const Text(
             'Your cart is empty',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 18, color: Colors.grey),
           ),
 
           const SizedBox(height: 50),
 
           Padding(
-            padding: const EdgeInsets.only(
-              left: 30.0,
-              right: 30,
-            ),
+            padding: const EdgeInsets.only(left: 30.0, right: 30),
             child: SizedBox(
               width: double.infinity,
               height: 56,
@@ -216,18 +198,14 @@ class _CartScreenState extends State<CartScreen> {
   // NORMAL CART
   // ============================================================
 
-  Widget _buildNormalCart(
-    CartProvider provider,
-  ) {
+  Widget _buildNormalCart(CartProvider provider) {
     log(
       '🛒 BUILDING NORMAL CART -> '
       '${provider.cartItems.length} items',
     );
 
-    if (couponController.text !=
-        (provider.coupon?['code'] ?? '')) {
-      couponController.text =
-          provider.coupon?['code'] ?? '';
+    if (couponController.text != (provider.coupon?['code'] ?? '')) {
+      couponController.text = provider.coupon?['code'] ?? '';
     }
 
     return ListView(
@@ -235,10 +213,7 @@ class _CartScreenState extends State<CartScreen> {
       children: [
         const Text(
           'Your cart',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 15),
@@ -248,9 +223,7 @@ class _CartScreenState extends State<CartScreen> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: provider.cartItems.length,
           itemBuilder: (context, index) {
-            return CartItemCard(
-              item: provider.cartItems[index],
-            );
+            return CartItemCard(item: provider.cartItems[index]);
           },
         ),
 
@@ -258,10 +231,7 @@ class _CartScreenState extends State<CartScreen> {
 
         const Text(
           'Cart Summary',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 20),
@@ -269,89 +239,29 @@ class _CartScreenState extends State<CartScreen> {
         // ========================================================
         // COUPON
         // ========================================================
-
-        Container(
-          height: 50,
-          padding: const EdgeInsets.only(left: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(
-              color: Colors.grey.shade300,
-            ),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: couponController,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter coupon code',
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                    ),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-
-              SizedBox(
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (provider.coupon == null) {
-                      // Apply coupon
-                    } else {
-                      provider.removeCouponLocally();
-                      couponController.clear();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        AppColors.primaryRed,
-                    shape:
-                        const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                    padding:
-                        const EdgeInsets.symmetric(
-                      horizontal: 18,
-                    ),
-                  ),
-                  child: Text(
-                    provider.coupon == null
-                        ? 'Apply'
-                        : 'Remove',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        _buildCouponSection(provider: provider, isPhysical: false),
 
         const SizedBox(height: 20),
 
+        // ========================================================
+        // DELIVERY METHOD
+        // ========================================================
         const DeliveryMethodWidget(),
 
         const SizedBox(height: 20),
 
+        // ========================================================
+        // NORMAL CART SUMMARY
+        // ========================================================
         SummaryWidget(
           subtotal: provider.formattedSubtotal,
           courier_fee: provider.formattedCourierFee,
-          transaction_fee:
-              provider.formattedTransactionFee,
+          transaction_fee: provider.formattedTransactionFee,
           total: provider.formattedOrderTotal,
-          deliveryMethod:
-              provider.selectedDeliveryMethod,
+          deliveryMethod: provider.selectedDeliveryMethod,
           coupon: provider.coupon,
           discount: provider.formattedDiscount,
-          discountPrice:
-              provider.formattedDiscountPrice,
+          discountPrice: provider.formattedDiscountPrice,
           gst: provider.formattedGST,
           currency: provider.currency,
         ),
@@ -367,18 +277,13 @@ class _CartScreenState extends State<CartScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        const CheckoutScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const CheckoutScreen()),
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    AppColors.primaryRed,
+                backgroundColor: AppColors.primaryRed,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(30),
                 ),
               ),
               child: const Text(
@@ -397,17 +302,118 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   // ============================================================
+  // COMMON COUPON SECTION
+  // ============================================================
+  //
+  // Same design is used for:
+  //
+  // 1. Normal cart
+  // 2. Physical conversion cart
+  //
+  // For normal cart:
+  //    Uses CartProvider coupon data.
+  //
+  // For physical cart:
+  //    Only the design is shown.
+  //    No normal-cart coupon data is used.
+  //
+  // ============================================================
+
+  Widget _buildCouponSection({
+    CartProvider? provider,
+    bool isPhysical = false,
+  }) {
+    final bool couponApplied = !isPhysical && provider?.coupon != null;
+
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.only(left: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: couponController,
+              decoration: const InputDecoration(
+                hintText: 'Enter coupon code',
+                hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+
+          SizedBox(
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () {
+                // ==================================================
+                // PHYSICAL CONVERSION
+                // ==================================================
+                //
+                // Coupon UI is displayed, but physical conversion
+                // prices remain 0.00.
+                //
+                // Coupon functionality can be connected later
+                // if the API supports coupons for conversion.
+                // ==================================================
+
+                if (isPhysical) {
+                  return;
+                }
+
+                // ==================================================
+                // NORMAL CART
+                // ==================================================
+
+                if (provider == null) {
+                  return;
+                }
+
+                if (provider.coupon == null) {
+                  // Apply coupon
+                  //
+                  // Keep your existing coupon API logic here.
+                } else {
+                  provider.removeCouponLocally();
+                  couponController.clear();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryRed,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+              ),
+              child: Text(
+                couponApplied ? 'Remove' : 'Apply',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
   // PHYSICAL CONVERSION CART
   // ============================================================
 
   Widget _buildPhysicalConversionCart(
     PhysicalConversionProvider physicalProvider,
+    CartProvider provider,
   ) {
-    final String metal =
-        physicalProvider.metal ?? '';
+    final String metal = physicalProvider.metal ?? '';
 
-    final String amount =
-        physicalProvider.formattedAmount;
+    final String amount = physicalProvider.formattedAmount;
 
     // ==========================================================
     // IMPORTANT
@@ -415,6 +421,8 @@ class _CartScreenState extends State<CartScreen> {
     // ONLY physicalCart is used here.
     //
     // cartProvider.cartItems is intentionally NOT used.
+    //
+    // Existing normal cart remains untouched and hidden.
     // ==========================================================
 
     final List<Map<String, dynamic>> physicalCart =
@@ -427,193 +435,253 @@ class _CartScreenState extends State<CartScreen> {
       'amount=$amount',
     );
 
+    // Currency is only required for the SummaryWidget display.
+    // We are NOT using CartProvider's prices.
+    final currencyProvider = context.read<CurrencyProvider>();
+
+    final String currency = currencyProvider.selectedCurrency;
+
     return SafeArea(
-      child: Padding(
+      child: ListView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // ====================================================
-            // CONVERSION HEADER
-            // ====================================================
+        children: [
+          // ========================================================
+          // CONVERSION HEADER
+          // ========================================================
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBF0),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5C76B)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF981B1B),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.sync, size: 15, color: Colors.white),
 
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBF0),
-                borderRadius:
-                    BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFE5C76B),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
-                    children: [
-                      Flexible(
-                        child: Container(
-                          padding:
-                              const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                const Color(0xFF981B1B),
-                            borderRadius:
-                                BorderRadius.circular(
-                              20,
-                            ),
-                          ),
-                          child: const Row(
-                            mainAxisSize:
-                                MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.sync,
-                                size: 15,
-                                color: Colors.white,
-                              ),
+                            SizedBox(width: 6),
 
-                              SizedBox(width: 6),
-
-                              Flexible(
-                                child: Text(
-                                  'PHYSICAL CONVERSION ACTIVE',
-                                  overflow:
-                                      TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color:
-                                        Colors.white,
-                                    fontSize: 11,
-                                    fontWeight:
-                                        FontWeight.bold,
-                                  ),
+                            Flexible(
+                              child: Text(
+                                'PHYSICAL CONVERSION ACTIVE',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    OutlinedButton(
+                      onPressed: () async {
+                        await physicalProvider.cancelConversion();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF981B1B),
+                        side: const BorderSide(color: Color(0xFF981B1B)),
+                      ),
+                      child: const Text(
+                        'Cancel conversion',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(fontSize: 14, color: Colors.black87),
+                    children: [
+                      const TextSpan(text: 'Add '),
+
+                      TextSpan(
+                        text: metal,
+                        style: const TextStyle(
+                          color: Color(0xFF981B1B),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
 
-                      const SizedBox(width: 8),
+                      const TextSpan(text: ' products up to '),
 
-                      OutlinedButton(
-                        onPressed: () async {
-                          await physicalProvider
-                              .cancelConversion();
-                        },
-                        style:
-                            OutlinedButton.styleFrom(
-                          foregroundColor:
-                              const Color(
-                            0xFF981B1B,
-                          ),
-                          side:
-                              const BorderSide(
-                            color:
-                                Color(0xFF981B1B),
-                          ),
-                        ),
-                        child: const Text(
-                          'Cancel conversion',
-                          style: TextStyle(
-                            fontSize: 11,
-                          ),
+                      TextSpan(
+                        text: '$amount g',
+                        style: const TextStyle(
+                          color: Color(0xFF981B1B),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+
+                      const TextSpan(text: '.'),
                     ],
                   ),
+                ),
 
-                  const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
-                  RichText(
-                    text: TextSpan(
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
+                const Text(
+                  'No payment will be required at checkout.',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // ========================================================
+          // PHYSICAL CART PRODUCTS
+          // ========================================================
+          if (physicalCart.isEmpty)
+            _buildPhysicalEmptyCart()
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: physicalCart.length,
+              itemBuilder: (context, index) {
+                final item = physicalCart[index];
+
+                return _buildPhysicalCartItem(
+                  context,
+                  physicalProvider,
+                  item,
+                  currency,
+                );
+              },
+            ),
+
+          const SizedBox(height: 20),
+
+          // ============================================================
+          // COUPON + SUMMARY
+          // ONLY SHOW WHEN PHYSICAL CART HAS PRODUCTS
+          // ============================================================
+          if (physicalCart.isNotEmpty) ...[
+            const SizedBox(height: 20),
+
+            _buildCouponSection(isPhysical: true),
+
+            const SizedBox(height: 20),
+
+            const DeliveryMethodWidget(),
+
+            const SizedBox(height: 20),
+
+            SummaryWidget(
+              subtotal: '0.00',
+              courier_fee: '0.00',
+              transaction_fee: '0.00',
+              total: '0.00',
+              deliveryMethod: provider.selectedDeliveryMethod,
+              coupon: null,
+              discount: '0.00',
+              discountPrice: '0.00',
+              gst: '0.00',
+              currency: provider.currency,
+            ),
+
+            const SizedBox(height: 30),
+
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SizedBox(
+                height: 60,
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PhysicalCheckoutScreen(),
                       ),
-                      children: [
-                        const TextSpan(
-                          text: 'Add ',
-                        ),
-
-                        TextSpan(
-                          text: metal,
-                          style: const TextStyle(
-                            color:
-                                Color(0xFF981B1B),
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
-
-                        const TextSpan(
-                          text: ' products up to ',
-                        ),
-
-                        TextSpan(
-                          text: '$amount g',
-                          style: const TextStyle(
-                            color:
-                                Color(0xFF981B1B),
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
-
-                        const TextSpan(
-                          text: '.',
-                        ),
-                      ],
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    'No payment will be required at checkout.',
+                  child: const Text(
+                    'Send Order',
                     style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
+                ),
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // ====================================================
-            // PHYSICAL CART
-            // ====================================================
-
-            Expanded(
-              child: physicalCart.isEmpty
-                  ? _buildPhysicalEmptyCart()
-                  : ListView.builder(
-                      itemCount:
-                          physicalCart.length,
-                      itemBuilder:
-                          (context, index) {
-                        final item =
-                            physicalCart[index];
-
-                        return _buildPhysicalCartItem(
-                          context,
-                          physicalProvider,
-                          item,
-                        );
-                      },
-                    ),
-            ),
           ],
-        ),
+          // const SizedBox(height: 30),
+
+          // // ========================================================
+          // // SEND ORDER
+          // // ========================================================
+          // Padding(
+          //   padding: const EdgeInsets.all(8.0),
+          //   child: SizedBox(
+          //     height: 60,
+          //     width: double.infinity,
+          //     child: ElevatedButton(
+          //       onPressed: () {
+          //         // ==================================================
+          //         // IMPORTANT
+          //         //
+          //         // Do NOT navigate to the normal CheckoutScreen
+          //         // here unless your physical conversion flow uses
+          //         // the same checkout process.
+          //         //
+          //         // Add your physical conversion order API here.
+          //         // ==================================================
+          //       },
+          //       style: ElevatedButton.styleFrom(
+          //         backgroundColor: AppColors.primaryRed,
+          //         shape: RoundedRectangleBorder(
+          //           borderRadius: BorderRadius.circular(30),
+          //         ),
+          //       ),
+          //       child: const Text(
+          //         'Send Order',
+          //         style: TextStyle(
+          //           color: Colors.white,
+          //           fontSize: 20,
+          //           fontWeight: FontWeight.bold,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ),
+        ],
       ),
     );
   }
@@ -627,21 +695,14 @@ class _CartScreenState extends State<CartScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            'assets/no_product.png',
-            height: 80,
-            width: 80,
-          ),
+          Image.asset('assets/no_product.png', height: 80, width: 80),
 
           const SizedBox(height: 20),
 
           const Text(
             'Your physical conversion cart is empty',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 18, color: Colors.grey),
           ),
 
           const SizedBox(height: 30),
@@ -651,26 +712,18 @@ class _CartScreenState extends State<CartScreen> {
             width: 280,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/home',
-                );
+                Navigator.pushNamed(context, '/home');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    const Color(0xFF981B1B),
+                backgroundColor: const Color(0xFF981B1B),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: const Text(
                 'CONTINUE SHOPPING',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -687,83 +740,55 @@ class _CartScreenState extends State<CartScreen> {
     BuildContext context,
     PhysicalConversionProvider provider,
     Map<String, dynamic> item,
+    String currency,
   ) {
-    final String name =
-        item['name']?.toString() ?? 'Product';
+    final String name = item['name']?.toString() ?? 'Product';
 
-    final int quantity =
-        int.tryParse(
-              '${item['quantity'] ?? 1}',
-            ) ??
-            1;
+    final int quantity = int.tryParse('${item['quantity'] ?? 1}') ?? 1;
 
-    final String? imageUrl =
-        item['image_url']?.toString();
+    final String? imageUrl = item['image_url']?.toString();
 
-    final String? imagePath =
-        item['image_path']?.toString();
+    final String? imagePath = item['image_path']?.toString();
 
     String image = '';
 
-    if (imageUrl != null &&
-        imageUrl.isNotEmpty) {
+    if (imageUrl != null && imageUrl.isNotEmpty) {
       image = imageUrl;
-    } else if (imagePath != null &&
-        imagePath.isNotEmpty) {
-      image =
-          'https://staging.junubullion.com/storage/$imagePath';
+    } else if (imagePath != null && imagePath.isNotEmpty) {
+      image = 'https://staging.junubullion.com/storage/$imagePath';
     }
 
-    final dynamic productId =
-        item['product_id'];
+    final dynamic productId = item['product_id'];
 
     return Container(
-      margin:
-          const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade300,
-        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Row(
         children: [
           // ======================================================
           // IMAGE
           // ======================================================
-
           Container(
             height: 110,
             width: 90,
             decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.grey.shade300,
-              ),
+              border: Border.all(color: Colors.grey.shade300),
             ),
-            padding:
-                const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
             child: image.isNotEmpty
                 ? Image.network(
                     image,
                     fit: BoxFit.contain,
-                    errorBuilder: (
-                      context,
-                      error,
-                      stackTrace,
-                    ) {
-                      return const Icon(
-                        Icons.broken_image,
-                        color: Colors.grey,
-                      );
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.broken_image, color: Colors.grey);
                     },
                   )
-                : const Icon(
-                    Icons.image,
-                    color: Colors.grey,
-                  ),
+                : const Icon(Icons.image, color: Colors.grey),
           ),
 
           const SizedBox(width: 14),
@@ -771,47 +796,41 @@ class _CartScreenState extends State<CartScreen> {
           // ======================================================
           // DETAILS
           // ======================================================
-
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   name,
                   maxLines: 2,
-                  overflow:
-                      TextOverflow.ellipsis,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 14,
-                    fontWeight:
-                        FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
 
                 const SizedBox(height: 8),
 
-                const Text(
-                  'Physical conversion',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey,
-                  ),
+                const SizedBox(height: 5),
+
+                Text(
+                  "Free 2 - 4 days shipping",
+                  style: const TextStyle(fontSize: 12),
                 ),
+                const SizedBox(height: 5),
+                Text("7 days return", style: const TextStyle(fontSize: 12)),
+
+                const SizedBox(height: 5),
 
                 const SizedBox(height: 6),
 
                 // ==================================================
                 // ALWAYS ZERO FOR PHYSICAL CONVERSION
                 // ==================================================
-
-                const Text(
-                  '0.00',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight:
-                        FontWeight.bold,
-                  ),
+                Text(
+                  '$currency 0.00',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -822,101 +841,64 @@ class _CartScreenState extends State<CartScreen> {
           // ======================================================
           // QUANTITY + DELETE
           // ======================================================
-
           Column(
             children: [
               IconButton(
                 onPressed: () async {
-                  await provider
-                      .removePhysicalProduct(
-                    productId,
-                  );
+                  await provider.removePhysicalProduct(productId);
                 },
-                icon: const Icon(
-                  Icons.delete,
-                  color: Colors.red,
-                  size: 20,
-                ),
+                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
               ),
 
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(
-                    color:
-                        Colors.grey.shade300,
-                  ),
-                  borderRadius:
-                      BorderRadius.circular(
-                    20,
-                  ),
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
-                  mainAxisSize:
-                      MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // ==================================================
                     // MINUS
                     // ==================================================
-
                     IconButton(
-                      visualDensity:
-                          VisualDensity.compact,
+                      visualDensity: VisualDensity.compact,
                       onPressed: () async {
                         if (quantity <= 1) {
-                          await provider
-                              .removePhysicalProduct(
-                            productId,
-                          );
+                          await provider.removePhysicalProduct(productId);
                         } else {
-                          await provider
-                              .updatePhysicalQuantity(
-                            productId:
-                                productId,
-                            quantity:
-                                quantity - 1,
+                          await provider.updatePhysicalQuantity(
+                            productId: productId,
+                            quantity: quantity - 1,
                           );
                         }
                       },
-                      icon: const Icon(
-                        Icons.remove,
-                        size: 16,
-                      ),
+                      icon: const Icon(Icons.remove, size: 16),
                     ),
 
                     // ==================================================
                     // QUANTITY
                     // ==================================================
-
                     Text(
                       '$quantity',
-                      style:
-                          const TextStyle(
+                      style: const TextStyle(
                         fontSize: 13,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
 
                     // ==================================================
                     // PLUS
                     // ==================================================
-
                     IconButton(
-                      visualDensity:
-                          VisualDensity.compact,
+                      visualDensity: VisualDensity.compact,
                       onPressed: () async {
-                        await provider
-                            .updatePhysicalQuantity(
-                          productId:
-                              productId,
-                          quantity:
-                              quantity + 1,
+                        await provider.updatePhysicalQuantity(
+                          productId: productId,
+                          quantity: quantity + 1,
                         );
                       },
-                      icon: const Icon(
-                        Icons.add,
-                        size: 16,
-                      ),
+                      icon: const Icon(Icons.add, size: 16),
                     ),
                   ],
                 ),

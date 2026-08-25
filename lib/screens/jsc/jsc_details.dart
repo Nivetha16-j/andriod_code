@@ -1,6 +1,9 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
+import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/screens/jsc/jsc_form.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
@@ -8,6 +11,8 @@ import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:junubullion/widgets/jsc/custom_featurecard.dart';
+import 'package:provider/provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 
 class JscScreen extends StatefulWidget {
   const JscScreen({super.key});
@@ -20,19 +25,6 @@ class _JscScreenState extends State<JscScreen> {
   int _currentIndex = 0;
 
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-
-  final products = [
-    {
-      "image": "assets/gold_coin.png",
-      "title": "1 Gram Digital Gold (JSC)",
-      "price": "\$145.39",
-    },
-    {
-      "image": "assets/silver_coin.png",
-      "title": "1 oz Gram Digital Silver (JSC)",
-      "price": "\$71.63",
-    },
-  ];
 
   final List<Map<String, dynamic>> features = [
     {
@@ -105,10 +97,55 @@ class _JscScreenState extends State<JscScreen> {
       "image": "assets/emergency_safety.png",
     },
   ];
+
   final PageController _pageController = PageController();
   Timer? _autoScrollTimer;
 
   int _currentPage = 0;
+
+  String? _lastCurrency;
+  String? _lastUnit;
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchJscProducts();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final currencyProvider = context.watch<CurrencyProvider>();
+
+    if (_lastCurrency == currencyProvider.selectedCurrency &&
+        _lastUnit == currencyProvider.selectedUnit) {
+      return;
+    }
+
+    _lastCurrency = currencyProvider.selectedCurrency;
+    _lastUnit = currencyProvider.selectedUnit;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _fetchJscProducts(showLoader: false);
+      }
+    });
+  }
+
+  Future<void> _fetchJscProducts({bool showLoader = true}) async {
+    final currencyProvider = context.read<CurrencyProvider>();
+
+    await context.read<ExclusiveProductProvider>().fetchProducts(
+      endpoint: "exclusive-products",
+      currency: currencyProvider.selectedCurrency,
+      unit: currencyProvider.selectedUnit,
+      showLoader: showLoader,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -312,98 +349,62 @@ class _JscScreenState extends State<JscScreen> {
 
             const SizedBox(height: 16),
 
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: products.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 18,
-                  childAspectRatio: .60,
-                ),
-                itemBuilder: (_, index) {
-                  final product = products[index];
+            Consumer<ExclusiveProductProvider>(
+              builder: (context, exclusiveProvider, child) {
+                if (exclusiveProvider.isLoading &&
+                    exclusiveProvider.products.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
 
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(.18),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(5),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(22),
-                          child: Image.asset(
-                            product["image"]!,
-                            height: 180,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                final List<Map<String, dynamic>> jscProducts = exclusiveProvider
+                    .products
+                    .where(
+                      (product) =>
+                          (product['brand'] ?? '')
+                              .toString()
+                              .trim()
+                              .toUpperCase() ==
+                          'JSC',
+                    )
+                    .map((product) => Map<String, dynamic>.from(product))
+                    .toList();
 
-                        const SizedBox(height: 10),
-
-                        Text(
-                          product["title"]!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-
-                        const SizedBox(height: 5),
-
-                        Text(
-                          product["price"]!,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        // const Spacer(),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 45,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xffA51E22),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25),
-                              ),
-                            ),
-                            child: const Text(
-                              "ADD TO CART",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                if (jscProducts.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 30),
+                    child: Center(
+                      child: Text(
+                        "No JSC products available.",
+                        style: TextStyle(color: Colors.grey, fontSize: 15),
+                      ),
                     ),
                   );
-                },
-              ),
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: jscProducts.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 18,
+                          childAspectRatio: .60,
+                        ),
+                    itemBuilder: (context, index) {
+                      final product = jscProducts[index];
+
+                      return _JscProductCard(product: product);
+                    },
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 16),
@@ -760,6 +761,362 @@ class _JscScreenState extends State<JscScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _JscProductCard extends StatelessWidget {
+  final Map<String, dynamic> product;
+
+  const _JscProductCard({required this.product});
+
+  static const String imageBaseUrl = 'https://staging.junubullion.com/storage/';
+
+  @override
+  Widget build(BuildContext context) {
+    final int productId = int.tryParse('${product['id']}') ?? 0;
+
+    final String productName = product['name']?.toString() ?? 'JSC Product';
+
+    final String imagePath = product['image_path']?.toString() ?? '';
+
+    final String imageUrl = imagePath.isNotEmpty
+        ? '$imageBaseUrl$imagePath'
+        : '';
+
+    final String priceText =
+        product['live_price']?.toString() ??
+        product['formatted_price']?.toString() ??
+        (product['price'] != null ? '\$${product['price']}' : '\$0.00');
+
+    final String stockStatus =
+        product['stock_status']?.toString().toLowerCase() ?? 'out_of_stock';
+
+    final bool isInStock = stockStatus == 'in_stock';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.18),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // ==========================================================
+          // IMAGE
+          // ==========================================================
+          ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: SizedBox(
+              height: 180,
+              width: double.infinity,
+              child: imageUrl.isNotEmpty
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        return const Icon(
+                          Icons.image_not_supported,
+                          size: 50,
+                          color: Colors.grey,
+                        );
+                      },
+                    )
+                  : const Icon(
+                      Icons.image_not_supported,
+                      size: 50,
+                      color: Colors.grey,
+                    ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // ==========================================================
+          // PRODUCT NAME
+          // ==========================================================
+          Text(
+            productName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+
+          const SizedBox(height: 5),
+
+          // ==========================================================
+          // PRICE
+          // ==========================================================
+          Text(
+            priceText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+
+          const SizedBox(height: 4),
+
+          // ==========================================================
+          // STOCK STATUS
+          // ==========================================================
+          Text(
+            isInStock ? "In Stock" : "Out of Stock",
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isInStock ? Colors.green : Colors.red,
+            ),
+          ),
+
+          const SizedBox(height: 5),
+
+          // ==========================================================
+          // CART BUTTON
+          // ==========================================================
+          SizedBox(
+            width: double.infinity,
+            height: 45,
+            child: Consumer2<CartProvider, PhysicalConversionProvider>(
+              builder: (context, cartProvider, physicalProvider, child) {
+                // ====================================================
+                // PHYSICAL CONVERSION ACTIVE
+                // ====================================================
+
+                if (physicalProvider.isActive) {
+                  return _buildConversionButton(context);
+                }
+
+                // ====================================================
+                // NORMAL CART
+                // ====================================================
+
+                return _buildNormalCartButton(
+                  context: context,
+                  cartProvider: cartProvider,
+                  productId: productId,
+                  isInStock: isInStock,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==================================================================
+  // PHYSICAL CONVERSION BUTTON
+  // ==================================================================
+
+  Widget _buildConversionButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () {
+        Fluttertoast.showToast(
+          msg: "Digital products cannot be added during physical conversion.",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.black87,
+          textColor: Colors.white,
+          fontSize: 14,
+        );
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primaryRed,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+      ),
+      child: const Text(
+        "ADD TO CART",
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // ==================================================================
+  // NORMAL CART BUTTON
+  // ==================================================================
+
+  Widget _buildNormalCartButton({
+    required BuildContext context,
+    required CartProvider cartProvider,
+    required int productId,
+    required bool isInStock,
+  }) {
+    // ================================================================
+    // OUT OF STOCK
+    // ================================================================
+
+    if (!isInStock) {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromRGBO(218, 218, 218, 1),
+          foregroundColor: Colors.black54,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+        ),
+        child: const Text(
+          "OUT OF STOCK",
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+      );
+    }
+
+    // ================================================================
+    // CHECK WHETHER PRODUCT IS ALREADY IN CART
+    // ================================================================
+
+    final bool isInCart = cartProvider.isProductInCart(productId);
+
+    Map<String, dynamic>? cartItem;
+
+    if (isInCart) {
+      try {
+        cartItem = cartProvider.cartItems.firstWhere(
+          (item) => item["product_id"] == productId,
+        );
+      } catch (_) {
+        cartItem = null;
+      }
+    }
+
+    final int cartQuantity = int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
+
+    // ================================================================
+    // PRODUCT ALREADY IN CART
+    // ================================================================
+
+    if (isInCart && cartQuantity > 0) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.primaryRed,
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // --------------------------------------------------------
+            // MINUS
+            // --------------------------------------------------------
+            InkWell(
+              onTap: () async {
+                if (cartQuantity <= 1) {
+                  await cartProvider.removeFromCart(productId);
+                } else {
+                  await cartProvider.updateCartQuantity(
+                    productId: productId,
+                    quantity: cartQuantity - 1,
+                  );
+                }
+              },
+              child: const SizedBox(
+                width: 40,
+                height: 45,
+                child: Center(
+                  child: Icon(Icons.remove, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+
+            // --------------------------------------------------------
+            // QUANTITY
+            // --------------------------------------------------------
+            Text(
+              "$cartQuantity",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+
+            // --------------------------------------------------------
+            // PLUS
+            // --------------------------------------------------------
+            InkWell(
+              onTap: () async {
+                await cartProvider.updateCartQuantity(
+                  productId: productId,
+                  quantity: cartQuantity + 1,
+                );
+              },
+              child: const SizedBox(
+                width: 40,
+                height: 45,
+                child: Center(
+                  child: Icon(Icons.add, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ================================================================
+    // ADD TO CART
+    // ================================================================
+
+    final bool isAdding = cartProvider.isAdding(productId);
+
+    return ElevatedButton(
+      onPressed: isAdding
+          ? null
+          : () async {
+              final bool success = await cartProvider.addToCart(
+                productId: productId,
+                quantity: 1,
+              );
+
+              if (!context.mounted) {
+                return;
+              }
+
+              Fluttertoast.showToast(
+                msg: success ? "Added to Cart" : "Failed to add product",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+              );
+            },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primaryRed,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+      ),
+      child: isAdding
+          ? const SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Text(
+              "ADD TO CART",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
     );
   }
 }

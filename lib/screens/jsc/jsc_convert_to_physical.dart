@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/screens/jsc/jsc_layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:junubullion/widgets/jsc/jsc_convert_to_physical_section.dart';
+import 'package:provider/provider.dart';
 
 class JscConvertToPhysicalScreen extends StatefulWidget {
   const JscConvertToPhysicalScreen({super.key});
@@ -18,14 +20,16 @@ class _JscConvertToPhysicalScreenState
     extends State<JscConvertToPhysicalScreen> {
   @override
   Widget build(BuildContext context) {
-    int currentIndex = 0;
+    const int currentIndex = 0;
 
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
     return Scaffold(
       backgroundColor: const Color(0xffFAFAF8),
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
+
       body: JscLayout(
         selectedMenu: 'Convert To Physical',
         child: SingleChildScrollView(
@@ -33,6 +37,7 @@ class _JscConvertToPhysicalScreenState
           child: const JscConvertToPhysicalContent(),
         ),
       ),
+
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: currentIndex,
         onTap: _switchToTab,
@@ -54,6 +59,8 @@ class JscConvertToPhysicalContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isUnlocked = context.watch<JscBalanceProvider>().isBalancesUnlocked;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -69,7 +76,7 @@ class JscConvertToPhysicalContent extends StatelessWidget {
         const SizedBox(height: 12),
 
         const Text(
-          "Convert your digital gold or silver holdings into physical bullion products.",
+          'Convert your digital gold or silver holdings into physical bullion products.',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w400,
@@ -79,7 +86,7 @@ class JscConvertToPhysicalContent extends StatelessWidget {
 
         const SizedBox(height: 25),
 
-        const JscConvertPhysicalSection(),
+        JscConvertPhysicalSection(isUnlocked: isUnlocked),
       ],
     );
   }

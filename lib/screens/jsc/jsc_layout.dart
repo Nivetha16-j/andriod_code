@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/screens/jsc/jsc_convert_to_physical.dart';
 import 'package:junubullion/screens/jsc/jsc_dashboard.dart';
@@ -9,8 +10,8 @@ import 'package:junubullion/screens/jsc/jsc_transaction.dart';
 import 'package:junubullion/screens/jsc/jsc_wallet.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
-import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
 import 'package:junubullion/widgets/profile/account_details.dart';
+import 'package:provider/provider.dart';
 
 class JscLayout extends StatelessWidget {
   final String selectedMenu;
@@ -109,11 +110,13 @@ class JscLayout extends StatelessWidget {
         );
 
         if (shouldLogout == true) {
-          // context.read<ConvertPhysicalProvider>().clear();
-          await SessionManager.logout();
+          // Reset in-memory JSC state
+          if (context.mounted) {
+            context.read<JscBalanceProvider>().clearUnlockStatus();
+          }
 
-          // Reset the in-memory state for all JSC balance sections
-          balanceUnlockedNotifier.value = false;
+          // Clear login + all persisted JSC data
+          await SessionManager.logout();
 
           if (context.mounted) {
             Navigator.pushNamedAndRemoveUntil(

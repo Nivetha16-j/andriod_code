@@ -81,7 +81,7 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
               const SizedBox(height: 24),
 
               orderDetailsCard(
-                order_no: widget.order['order_number'],
+                order_no: widget.order['order_number'] ?? "",
                 date: date,
                 email: widget.order['customer_email'],
                 total: "${widget.currencySymbol}${total ?? ""}",

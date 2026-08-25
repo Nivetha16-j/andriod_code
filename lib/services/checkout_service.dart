@@ -10,7 +10,7 @@ class CheckoutService {
     required String shippingAddress,
     required String deliveryOption,
     String? digitalType,
-    required String courierService,
+    String? courierService,
     required bool terms,
     required String paymentType,
     required String currency,
@@ -22,11 +22,13 @@ class CheckoutService {
       final Map<String, dynamic> payload = {
         "shipping_address": shippingAddress,
         "delivery_option": deliveryOption.toLowerCase(),
-        "courier_service": courierService.toLowerCase(),
+        "courier_service": courierService,
         "terms": terms,
         "payment_type": paymentType,
         "currency": currency,
       };
+
+      log("ccccc $courierService");
 
       // Add digital_type only for Digital delivery
       if (deliveryOption.toLowerCase() == "digital" &&
@@ -98,5 +100,50 @@ class CheckoutService {
     } else {
       throw Exception("Failed to fetch payment methods");
     }
+  }
+
+  static Future<Map<String, dynamic>> placePhysicalOrder({
+    required String shippingAddress,
+    required bool terms,
+  }) async {
+    final token = await SessionManager.getToken();
+
+    final uri = Uri.parse('https://staging.junubullion.com/api/checkout/place');
+
+    final body = {
+      "delivery_option": "physical",
+      "digital_type": "jsc",
+      "terms": terms,
+      "payment_type": "wallet",
+      "payment_method": "wallet",
+      "courier_service": "",
+      "shipping_address": shippingAddress,
+    };
+
+    final response = await http.post(
+      uri,
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode(body),
+    );
+
+    final responseData = jsonDecode(response.body);
+
+    log(
+      "PHYSICAL CHECKOUT API -> "
+      "statusCode=${response.statusCode}, "
+      "response=$responseData",
+    );
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return Map<String, dynamic>.from(responseData);
+    }
+
+    throw Exception(
+      responseData["message"]?.toString() ?? "Unable to place physical order",
+    );
   }
 }

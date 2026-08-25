@@ -5,7 +5,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
-import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -36,7 +35,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
   String? _lastCurrency;
   String? _lastUnit;
 
-  // 1. Variable to control how many items are shown
   int _displayCount = 6;
 
   final List<String> _categories = [
@@ -76,13 +74,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
       if (mounted) _fetchProducts();
     });
   }
-
-  // Future<void> _fetchProducts() {
-  //   final currencyProvider = context.read<CurrencyProvider>();
-  //   return context.read<ExclusiveProductProvider>().fetchProducts(
-  //     endpoint: _endpoints[_selectedCategoryIndex],
-  //   );
-  // }
 
   Future<void> _fetchProducts() {
     final currency = context.read<CurrencyProvider>();
@@ -219,13 +210,24 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       final product =
                           productsToDisplay[index] as Map<String, dynamic>;
 
-                      // The first 4 products returned by the API are digital products.
-                      final int apiIndex = displayedProducts.indexOf(product);
+                      // // The first 4 products returned by the API are digital products.
+                      // final int apiIndex = displayedProducts.indexOf(product);
+
+                      // final bool isDigitalProduct =
+                      //     _selectedCategoryIndex == 0 &&
+                      //     apiIndex >= 0 &&
+                      //     apiIndex < 4;
+
+                      // final bool isDigitalProduct =
+                      //     apiIndex >= 0 && apiIndex < 4;
+
+                      final String brand = (product['brand'] ?? '')
+                          .toString()
+                          .trim()
+                          .toUpperCase();
 
                       final bool isDigitalProduct =
-                          _selectedCategoryIndex == 0 &&
-                          apiIndex >= 0 &&
-                          apiIndex < 4;
+                          brand == "GSP" || brand == "JSC";
 
                       return _ProductGridCard(
                         product: product,
@@ -237,7 +239,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
             const SizedBox(height: 24.0),
 
-            // 6. View More Button (Only show if there are hidden products)
             if (hasMoreProducts)
               GestureDetector(
                 onTap: () {
@@ -269,22 +270,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      // appBar: AppBar(
-
-      //   title: Text(
-      //     widget.title,
-      //     style: const TextStyle(
-      //       color: Color(0xFFC88E2B),
-      //       fontWeight: FontWeight.bold,
-      //       fontSize: 24.0,
-      //     ),
-      //   ),
-      //   centerTitle: true,
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   automaticallyImplyLeading: !widget.isEmbedded,
-      //   iconTheme: const IconThemeData(color: Colors.black87),
-      // ),
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
@@ -304,22 +289,14 @@ class _ProductGridCard extends StatelessWidget {
     required this.isDigitalProduct,
   });
 
-  // ================================================================
-  // VALIDATE GOLD / SILVER PHYSICAL PRODUCT
-  // ================================================================
-
   String? _validatePhysicalProduct(BuildContext context) {
     final physicalProvider = context.read<PhysicalConversionProvider>();
 
     return physicalProvider.validateProduct(
-      brand: product['brand']?.toString(),
+      // brand: product['brand']?.toString(),
       metalType: product['metal_type']?.toString(),
     );
   }
-
-  // ================================================================
-  // MESSAGE
-  // ================================================================
 
   void _showMessage(String message) {
     Fluttertoast.showToast(
@@ -331,9 +308,6 @@ class _ProductGridCard extends StatelessWidget {
       fontSize: 14,
     );
   }
-  // ========================================================================
-  // PHYSICAL CONVERSION BUTTON
-  // ========================================================================
 
   Widget _buildPhysicalConversionButton({
     required BuildContext context,
@@ -342,11 +316,6 @@ class _ProductGridCard extends StatelessWidget {
     required bool canPurchase,
   }) {
     final productId = product["id"];
-
-    // ============================================================
-    // DIGITAL PRODUCT
-    // First 4 products from API
-    // ============================================================
 
     if (isDigital) {
       return ElevatedButton(
@@ -369,10 +338,6 @@ class _ProductGridCard extends StatelessWidget {
       );
     }
 
-    // ============================================================
-    // OUT OF STOCK
-    // ============================================================
-
     if (!canPurchase) {
       return ElevatedButton(
         onPressed: null,
@@ -390,10 +355,6 @@ class _ProductGridCard extends StatelessWidget {
       );
     }
 
-    // ============================================================
-    // FIND IN LOCAL PHYSICAL CART
-    // ============================================================
-
     final int physicalItemIndex = physicalProvider.physicalCart.indexWhere(
       (item) => item['product_id'] == productId,
     );
@@ -405,10 +366,6 @@ class _ProductGridCard extends StatelessWidget {
         : null;
 
     final int physicalQuantity = physicalItem?['quantity'] ?? 0;
-
-    // ============================================================
-    // ALREADY IN PHYSICAL CART
-    // ============================================================
 
     if (isInPhysicalCart) {
       return Container(
@@ -465,10 +422,6 @@ class _ProductGridCard extends StatelessWidget {
         ),
       );
     }
-
-    // ============================================================
-    // NOT IN PHYSICAL CART
-    // ============================================================
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
@@ -740,10 +693,6 @@ class _ProductGridCard extends StatelessWidget {
               height: 36,
               child: Consumer2<CartProvider, PhysicalConversionProvider>(
                 builder: (context, cartProvider, physicalProvider, child) {
-                  // =================================================
-                  // PHYSICAL CONVERSION MODE
-                  // =================================================
-
                   if (physicalProvider.isActive) {
                     return _buildPhysicalConversionButton(
                       context: context,
@@ -752,10 +701,6 @@ class _ProductGridCard extends StatelessWidget {
                       canPurchase: canPurchase,
                     );
                   }
-
-                  // =================================================
-                  // NORMAL MODE
-                  // =================================================
 
                   return _buildNormalCartButton(
                     context: context,
