@@ -1,14 +1,18 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 
 class CartItemCard extends StatelessWidget {
   final Map<String, dynamic> item;
+  final bool isPhysicalConversion;
 
-  const CartItemCard({super.key, required this.item});
+  const CartItemCard({
+    super.key,
+    required this.item,
+    this.isPhysicalConversion = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,15 +20,26 @@ class CartItemCard extends StatelessWidget {
 
     final provider = context.watch<CartProvider>();
 
+    final currencyProvider = context.watch<CurrencyProvider>();
+
     final hasCoupon =
         !provider.isCouponRemoved &&
         item["has_discount"] == true &&
         (item["coupon_line_discount"] ?? 0) > 0;
 
     final showDiscount =
+        !isPhysicalConversion &&
         !provider.isCouponRemoved &&
         provider.coupon != null &&
         item["formatted_compare_price"] != null;
+
+    final String displayPrice = isPhysicalConversion
+        ? "${currencyProvider.selectedCurrency} 0.00"
+        : showDiscount
+        ? (item["formatted_effective_unit_price"] ?? "0.00")
+        : item["formatted_compare_price"] ??
+              item["formatted_unit_price"] ??
+              "0.00";
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -43,8 +58,8 @@ class CartItemCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: Image.network(
               item["image"] ?? "",
-              // height: 70,
               width: 70,
+              height: 70,
               fit: BoxFit.contain,
               errorBuilder: (_, __, ___) => Container(
                 height: 70,
@@ -73,27 +88,20 @@ class CartItemCard extends StatelessWidget {
 
                 const SizedBox(height: 5),
 
-                Text(
+                const Text(
                   "Free 2 - 4 days shipping",
-                  style: const TextStyle(fontSize: 12),
+                  style: TextStyle(fontSize: 12),
                 ),
-                const SizedBox(height: 5),
-                Text("7 days return", style: const TextStyle(fontSize: 12)),
 
                 const SizedBox(height: 5),
 
-                // Text(
-                //   item["formatted_unit_price"] ??
-                //       item["formatted_effective_unit_price"] ??
-                //       "",
-                //   style: const TextStyle(
-                //     fontWeight: FontWeight.bold,
-                //     fontSize: 12,
-                //   ),
-                // ),
+                const Text("7 days return", style: TextStyle(fontSize: 12)),
+
+                const SizedBox(height: 5),
+
                 Row(
                   children: [
-                    if (showDiscount)
+                    if (showDiscount) ...[
                       Text(
                         item["formatted_compare_price"],
                         style: const TextStyle(
@@ -103,14 +111,11 @@ class CartItemCard extends StatelessWidget {
                         ),
                       ),
 
-                    if (showDiscount) const SizedBox(width: 8),
+                      const SizedBox(width: 8),
+                    ],
 
                     Text(
-                      showDiscount
-                          ? item["formatted_effective_unit_price"]
-                          : item["formatted_compare_price"] ??
-                                item["formatted_unit_price"] ??
-                                "",
+                      displayPrice,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -119,7 +124,9 @@ class CartItemCard extends StatelessWidget {
                   ],
                 ),
 
-                if (hasCoupon && provider.coupon != null)
+                if (!isPhysicalConversion &&
+                    hasCoupon &&
+                    provider.coupon != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
@@ -149,11 +156,15 @@ class CartItemCard extends StatelessWidget {
                       ),
                       actions: [
                         TextButton(
-                          onPressed: () => Navigator.pop(context, false),
+                          onPressed: () {
+                            Navigator.pop(context, false);
+                          },
                           child: const Text("Cancel"),
                         ),
                         TextButton(
-                          onPressed: () => Navigator.pop(context, true),
+                          onPressed: () {
+                            Navigator.pop(context, true);
+                          },
                           child: Text(
                             "Remove",
                             style: TextStyle(color: AppColors.primaryRed),
@@ -168,7 +179,7 @@ class CartItemCard extends StatelessWidget {
                         .read<CartProvider>()
                         .removeFromCart(item["product_id"]);
 
-                    if (success) {
+                    if (success && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Product removed from cart"),

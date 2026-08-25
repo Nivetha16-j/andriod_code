@@ -2,14 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
-import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/screens/main_screen.dart';
-import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
-import 'package:junubullion/providers/convert_to_physical_provider.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final GlobalKey<ScaffoldState>? scaffoldKey;
@@ -78,11 +75,9 @@ class _CustomAppBarState extends State<CustomAppBar> {
                   const Spacer(),
 
                   // Cart Icon
-                  Consumer2<CartProvider, PhysicalConversionProvider>(
-                    builder: (context, cartProvider, physicalProvider, child) {
-                      final count = physicalProvider.isActive
-                          ? physicalProvider.physicalCartCount
-                          : cartProvider.cartItems.length;
+                  Consumer<CartProvider>(
+                    builder: (context, cartProvider, child) {
+                      final count = cartProvider.cartItems.length;
 
                       return GestureDetector(
                         onTap: () {

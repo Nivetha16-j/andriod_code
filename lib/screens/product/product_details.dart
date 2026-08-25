@@ -432,49 +432,34 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 20),
 
-              // ========================================================
-              // MAIN PRODUCT CART
-              // ========================================================
               Consumer2<CartProvider, PhysicalConversionProvider>(
                 builder: (context, cartProvider, physicalProvider, child) {
-                  final bool isInNormalCart = cartProvider.isProductInCart(
-                    product["id"],
-                  );
+                  final productId = product["id"];
 
-                  final int physicalIndex = physicalProvider.physicalCart
-                      .indexWhere(
-                        (item) => '${item['product_id']}' == '${product["id"]}',
+                  final bool isInCart = cartProvider.isProductInCart(productId);
+
+                  Map<String, dynamic>? cartItem;
+
+                  if (isInCart) {
+                    try {
+                      cartItem = cartProvider.cartItems.firstWhere(
+                        (item) => '${item["product_id"]}' == '$productId',
                       );
-
-                  final bool isInPhysicalCart = physicalIndex != -1;
-
-                  Map<String, dynamic>? physicalCartItem;
-
-                  if (isInPhysicalCart) {
-                    physicalCartItem =
-                        physicalProvider.physicalCart[physicalIndex];
+                    } catch (_) {
+                      cartItem = null;
+                    }
                   }
 
-                  final int physicalQuantity =
-                      int.tryParse('${physicalCartItem?['quantity'] ?? 0}') ??
-                      0;
-
-                  // ====================================================
-                  // CURRENT MODE
-                  // ====================================================
+                  final int cartQuantity =
+                      int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
 
                   final bool isPhysicalMode = physicalProvider.isActive;
 
-                  final bool isCurrentCartItem = isPhysicalMode
-                      ? isInPhysicalCart
-                      : isInNormalCart;
-
-                  // ====================================================
-                  // QUANTITY
-                  // ====================================================
-
                   return Row(
                     children: [
+                      // ============================================================
+                      // QUANTITY
+                      // ============================================================
                       Expanded(
                         child: Container(
                           height: 48,
@@ -487,53 +472,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.remove),
-                                onPressed: quantity <= 1
+                                onPressed: !isInCart || cartQuantity <= 1
                                     ? null
                                     : () async {
-                                        setState(() {
-                                          quantity--;
-                                        });
-
-                                        // --------------------------------
-                                        // PHYSICAL CART
-                                        // --------------------------------
-
-                                        if (isPhysicalMode) {
-                                          if (isInPhysicalCart) {
-                                            if (quantity <= 0) {
-                                              await physicalProvider
-                                                  .removePhysicalProduct(
-                                                    product["id"],
-                                                  );
-                                            } else {
-                                              await physicalProvider
-                                                  .updatePhysicalQuantity(
-                                                    productId: product["id"],
-                                                    quantity: quantity,
-                                                  );
-                                            }
-                                          }
-
-                                          return;
-                                        }
-
-                                        // --------------------------------
-                                        // NORMAL CART
-                                        // --------------------------------
-
-                                        if (isInNormalCart) {
-                                          await cartProvider.updateCartQuantity(
-                                            productId: product["id"],
-                                            quantity: quantity,
-                                          );
-                                        }
+                                        await cartProvider.removeFromCart(
+                                          productId,
+                                        );
                                       },
                               ),
 
                               Text(
-                                isPhysicalMode && isInPhysicalCart
-                                    ? physicalQuantity.toString()
-                                    : quantity.toString(),
+                                isInCart ? cartQuantity.toString() : "1",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -542,49 +491,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                               IconButton(
                                 icon: const Icon(Icons.add),
-                                onPressed: () async {
-                                  // --------------------------------
-                                  // DIGITAL PRODUCT
-                                  // --------------------------------
-
-                                  if (isPhysicalMode && isDigitalProduct) {
-                                    _showMessage(
-                                      "Digital products cannot be added during physical conversion.",
-                                    );
-                                    return;
-                                  }
-
-                                  setState(() {
-                                    quantity++;
-                                  });
-
-                                  // --------------------------------
-                                  // PHYSICAL CART
-                                  // --------------------------------
-
-                                  if (isPhysicalMode) {
-                                    if (isInPhysicalCart) {
-                                      await physicalProvider
-                                          .updatePhysicalQuantity(
-                                            productId: product["id"],
-                                            quantity: quantity,
-                                          );
-                                    }
-
-                                    return;
-                                  }
-
-                                  // --------------------------------
-                                  // NORMAL CART
-                                  // --------------------------------
-
-                                  if (isInNormalCart) {
-                                    await cartProvider.updateCartQuantity(
-                                      productId: product["id"],
-                                      quantity: quantity,
-                                    );
-                                  }
-                                },
+                                onPressed: !isInCart
+                                    ? null
+                                    : () async {
+                                        await cartProvider.updateCartQuantity(
+                                          productId: productId,
+                                          quantity: cartQuantity + 1,
+                                        );
+                                      },
                               ),
                             ],
                           ),
@@ -593,9 +507,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                       const SizedBox(width: 12),
 
-                      // ==================================================
-                      // ADD TO CART BUTTON
-                      // ==================================================
+                      // ============================================================
+                      // ADD TO CART / GO TO CART
+                      // ============================================================
                       Expanded(
                         child: SizedBox(
                           height: 48,
@@ -612,18 +526,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                             ),
+
                             onPressed: !canPurchase
                                 ? null
+                                : cartProvider.isAdding(productId)
+                                ? null
                                 : () async {
-                                    // ==================================
-                                    // PHYSICAL CONVERSION MODE
-                                    // ==================================
+                                    // ==================================================
+                                    // PHYSICAL CONVERSION VALIDATION
+                                    // ==================================================
 
                                     if (isPhysicalMode) {
-                                      // ------------------------------
-                                      // DIGITAL PRODUCT
-                                      // ------------------------------
-
                                       if (isDigitalProduct) {
                                         _showMessage(
                                           "Digital products cannot be added during physical conversion.",
@@ -631,62 +544,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                         return;
                                       }
 
-                                      // ------------------------------
-                                      // ALREADY IN PHYSICAL CART
-                                      // ------------------------------
-
-                                      if (isInPhysicalCart) {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => const MainScreen(
-                                              initialIndex: 2,
-                                            ),
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      // ------------------------------
-                                      // VALIDATE
-                                      // ------------------------------
-
-                                      final error = physicalProvider
+                                      final validationError = physicalProvider
                                           .validateProduct(
                                             metalType: product['metal_type']
                                                 ?.toString(),
                                           );
 
-                                      if (error != null) {
-                                        _showMessage(error);
+                                      if (validationError != null) {
+                                        _showMessage(validationError);
                                         return;
                                       }
-
-                                      // ------------------------------
-                                      // ADD PHYSICAL PRODUCT
-                                      // ------------------------------
-
-                                      final success = await physicalProvider
-                                          .addPhysicalProduct(product: product);
-
-                                      if (!success) {
-                                        return;
-                                      }
-
-                                      setState(() {
-                                        quantity = 1;
-                                      });
-
-                                      _showMessage("Added to Physical Cart");
-
-                                      return;
                                     }
 
-                                    // ==================================
-                                    // NORMAL CART MODE
-                                    // ==================================
+                                    // ==================================================
+                                    // ALREADY IN API CART
+                                    // ==================================================
 
-                                    if (isInNormalCart) {
+                                    if (isInCart) {
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
@@ -694,27 +568,29 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                               const MainScreen(initialIndex: 2),
                                         ),
                                       );
-
                                       return;
                                     }
 
-                                    // ------------------------------
-                                    // NORMAL ADD TO CART
-                                    // ------------------------------
+                                    // ==================================================
+                                    // ADD TO API CART
+                                    // ==================================================
 
                                     final success = await cartProvider
                                         .addToCart(
-                                          productId: product["id"],
+                                          productId: productId,
                                           quantity: quantity,
                                         );
 
-                                    if (success) {
-                                      _showMessage("Added to Cart");
-                                    }
+                                    if (!context.mounted) return;
+
+                                    _showMessage(
+                                      success
+                                          ? "Added to Cart"
+                                          : "Failed to add product",
+                                    );
                                   },
-                            child:
-                                cartProvider.isAdding(product["id"]) &&
-                                    !isPhysicalMode
+
+                            child: cartProvider.isAdding(productId)
                                 ? const SizedBox(
                                     height: 18,
                                     width: 18,
@@ -726,13 +602,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 : Text(
                                     !canPurchase
                                         ? "OUT OF STOCK"
-                                        : isPhysicalMode
-                                        ? isDigitalProduct
-                                              ? "ADD TO CART"
-                                              : isCurrentCartItem
-                                              ? "GO TO CART"
-                                              : "ADD TO CART"
-                                        : isInNormalCart
+                                        : isInCart
                                         ? "GO TO CART"
                                         : "ADD TO CART",
                                     style: const TextStyle(
@@ -1163,22 +1033,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 width: double.infinity,
                                 child: Consumer2<CartProvider, PhysicalConversionProvider>(
                                   builder: (context, cartProvider, physicalProvider, child) {
-                                    final bool isInNormalCart = cartProvider
-                                        .isProductInCart(relatedProduct["id"]);
+                                    final productId = relatedProduct["id"];
 
-                                    final bool isInPhysicalCart =
-                                        physicalProvider.physicalCart.any(
-                                          (item) =>
-                                              '${item['product_id']}' ==
-                                              '${relatedProduct["id"]}',
-                                        );
+                                    final bool isInNormalCart = cartProvider
+                                        .isProductInCart(productId);
 
                                     final bool physicalMode =
                                         physicalProvider.isActive;
-
-                                    final bool currentCart = physicalMode
-                                        ? isInPhysicalCart
-                                        : isInNormalCart;
 
                                     return ElevatedButton(
                                       style: ElevatedButton.styleFrom(
@@ -1201,30 +1062,20 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                         ),
                                         padding: EdgeInsets.zero,
                                       ),
+
                                       onPressed: !relatedCanPurchase
                                           ? null
+                                          : cartProvider.isAdding(productId)
+                                          ? null
                                           : () async {
-                                              // ==================================
-                                              // PHYSICAL MODE
-                                              // ==================================
+                                              // ==================================================
+                                              // PHYSICAL CONVERSION VALIDATION
+                                              // ==================================================
 
                                               if (physicalMode) {
                                                 if (isRelatedDigital) {
                                                   _showMessage(
                                                     "Digital products cannot be added during physical conversion.",
-                                                  );
-                                                  return;
-                                                }
-
-                                                if (isInPhysicalCart) {
-                                                  Navigator.pushReplacement(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          const MainScreen(
-                                                            initialIndex: 2,
-                                                          ),
-                                                    ),
                                                   );
                                                   return;
                                                 }
@@ -1240,26 +1091,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                                   _showMessage(error);
                                                   return;
                                                 }
-
-                                                final success =
-                                                    await physicalProvider
-                                                        .addPhysicalProduct(
-                                                          product:
-                                                              relatedProduct,
-                                                        );
-
-                                                if (success && mounted) {
-                                                  _showMessage(
-                                                    "Added to Physical Cart",
-                                                  );
-                                                }
-
-                                                return;
                                               }
 
-                                              // ==================================
-                                              // NORMAL MODE
-                                              // ==================================
+                                              // ==================================================
+                                              // ALREADY IN API CART
+                                              // ==================================================
 
                                               if (isInNormalCart) {
                                                 Navigator.pushReplacement(
@@ -1271,26 +1107,29 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                                         ),
                                                   ),
                                                 );
-
                                                 return;
                                               }
 
-                                              final bool success =
-                                                  await cartProvider.addToCart(
-                                                    productId:
-                                                        relatedProduct["id"],
+                                              // ==================================================
+                                              // ADD TO NORMAL API CART
+                                              // ==================================================
+
+                                              final success = await cartProvider
+                                                  .addToCart(
+                                                    productId: productId,
                                                     quantity: 1,
                                                   );
 
-                                              if (success && mounted) {
-                                                _showMessage("Added to Cart");
-                                              }
+                                              if (!context.mounted) return;
+
+                                              _showMessage(
+                                                success
+                                                    ? "Added to Cart"
+                                                    : "Failed to add product",
+                                              );
                                             },
-                                      child:
-                                          cartProvider.isAdding(
-                                                relatedProduct["id"],
-                                              ) &&
-                                              !physicalMode
+
+                                      child: cartProvider.isAdding(productId)
                                           ? const SizedBox(
                                               height: 18,
                                               width: 18,
@@ -1302,17 +1141,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                           : Text(
                                               !relatedCanPurchase
                                                   ? "Out of stock"
-                                                  : physicalMode
-                                                  ? isRelatedDigital
-                                                        ? "ADD TO CART"
-                                                        : currentCart
-                                                        ? "GO TO CART"
-                                                        : "ADD TO CART"
                                                   : isInNormalCart
                                                   ? "GO TO CART"
                                                   : "ADD TO CART",
                                               style: const TextStyle(
                                                 color: Colors.white,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                     );

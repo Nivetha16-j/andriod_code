@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:junubullion/services/account_services.dart';
 import 'package:junubullion/services/cart_services.dart';
 import 'package:junubullion/services/session_manager.dart';
 
@@ -145,7 +146,11 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> addToCart({required int productId, int quantity = 1}) async {
+  Future<bool> addToCart({
+    required int productId,
+    int quantity = 1,
+    bool refreshCart = true,
+  }) async {
     addingProducts.add(productId);
     notifyListeners();
 
@@ -155,11 +160,15 @@ class CartProvider extends ChangeNotifier {
         quantity: quantity,
       );
 
-      log("CARTTT ${response}");
+      log("CARTTT $response");
 
       if (response["status"] == true) {
         restoreCoupon();
-        await fetchCart();
+
+        if (refreshCart) {
+          await fetchCart();
+        }
+
         return true;
       }
 
@@ -298,5 +307,152 @@ class CartProvider extends ChangeNotifier {
 
   void restoreCoupon() {
     isCouponRemoved = false;
+  }
+
+  Future<bool> moveCartToPhysicalOrder() async {
+    try {
+      // ============================================================
+      // CASE 1: CART IS EMPTY
+      // ============================================================
+      // Do NOT:
+      // - call account details API
+      // - remove backend cart
+      // - save products to SharedPreferences
+      //
+      // Just allow the physical order flow to start directly.
+      // ============================================================
+
+      if (cartItems.isEmpty) {
+        log('🟢 Normal cart is empty.');
+        log('➡️ Skipping account API');
+        log('➡️ Skipping remove cart API');
+        log('➡️ Skipping local storage');
+        log('✅ Starting physical order directly');
+
+        return true;
+      }
+
+      // ============================================================
+      // CASE 2: CART HAS PRODUCTS
+      // ============================================================
+
+      final products = cartItems
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+
+      log(
+        '📦 Saving ${products.length} products '
+        'for physical order',
+      );
+
+      // Save normal cart products temporarily
+      await SessionManager.savePhysicalOrderProducts(products);
+
+      log('✅ Products saved locally');
+
+      // ============================================================
+      // GET ACCOUNT DETAILS
+      // ============================================================
+
+      final accountService = AccountService();
+
+      final accountResponse = await accountService.fetchAccountDetails();
+
+      log('👤 Account Response: $accountResponse');
+
+      final accountData = accountResponse['data'] as Map<String, dynamic>?;
+
+      final accountId = accountData?['id'];
+
+      if (accountId == null) {
+        log('❌ Account ID not found');
+
+        await SessionManager.clearPhysicalOrderProducts();
+
+        return false;
+      }
+
+      log('👤 Account ID: $accountId');
+
+      // ============================================================
+      // REMOVE NORMAL CART FROM BACKEND
+      // ============================================================
+
+      final removeResponse = await CartService.removeCart(
+        id: accountId.toString(),
+      );
+
+      log('🗑️ Remove Cart Response: $removeResponse');
+
+      if (removeResponse['status'] != true) {
+        log('❌ Failed to remove backend cart');
+
+        await SessionManager.clearPhysicalOrderProducts();
+
+        return false;
+      }
+
+      log('✅ Backend cart removed');
+
+      // ============================================================
+      // CLEAR LOCAL NORMAL CART
+      // ============================================================
+
+      cartItems.clear();
+
+      notifyListeners();
+
+      log('✅ Normal cart cleared');
+
+      return true;
+    } catch (e, stackTrace) {
+      log('❌ moveCartToPhysicalOrder error: $e', stackTrace: stackTrace);
+
+      // Only clear saved products if we actually saved them.
+      if (cartItems.isNotEmpty) {
+        await SessionManager.clearPhysicalOrderProducts();
+      }
+
+      return false;
+    }
+  }
+
+  Future<void> restorePhysicalOrderProducts() async {
+    try {
+      final products = await SessionManager.getPhysicalOrderProducts();
+
+      if (products.isEmpty) {
+        log('ℹ️ No saved products to restore');
+        return;
+      }
+
+      log(
+        '♻️ Restoring ${products.length} products '
+        'to normal cart',
+      );
+
+      for (final product in products) {
+        final dynamic productId = product['product_id'];
+
+        if (productId == null) {
+          continue;
+        }
+
+        final int quantity = int.tryParse('${product['quantity'] ?? 1}') ?? 1;
+
+        await addToCart(
+          productId: int.parse(productId.toString()),
+          quantity: quantity,
+        );
+      }
+
+      await SessionManager.clearPhysicalOrderProducts();
+
+      await fetchCart();
+
+      log('✅ Physical order products restored');
+    } catch (e, stackTrace) {
+      log('❌ restorePhysicalOrderProducts error: $e', stackTrace: stackTrace);
+    }
   }
 }

@@ -5,12 +5,12 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
-import 'package:junubullion/providers/currency_provider.dart';
 
 class ProductListScreen extends StatefulWidget {
   final String title;
@@ -54,13 +54,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
   ];
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     final currencyProvider = context.watch<CurrencyProvider>();
 
     if (_lastCurrency == currencyProvider.selectedCurrency &&
@@ -70,8 +66,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     _lastCurrency = currencyProvider.selectedCurrency;
     _lastUnit = currencyProvider.selectedUnit;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _fetchProducts();
+      if (mounted) {
+        _fetchProducts();
+      }
     });
   }
 
@@ -85,17 +84,20 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
-  // Gets the filtered list based on category
   List<dynamic> _filteredProducts(List<dynamic> products) {
-    if (_selectedCategoryIndex == 0) return products;
+    if (_selectedCategoryIndex == 0) {
+      return products;
+    }
 
     final selectedCategory = _categories[_selectedCategoryIndex].toLowerCase();
 
     return products.where((product) {
       final String name = (product['name'] ?? '').toString().toLowerCase();
+
       final String subcategory = (product['subcategory'] ?? '')
           .toString()
           .toLowerCase();
+
       return name.contains(selectedCategory) ||
           subcategory.contains(selectedCategory);
     }).toList();
@@ -104,9 +106,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   Widget build(BuildContext context) {
     final currencyProvider = context.watch<CurrencyProvider>();
-    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-
     final productProvider = context.watch<ExclusiveProductProvider>();
+
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
     if (productProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -118,37 +120,38 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     final productsToDisplay = allFilteredProducts.take(_displayCount).toList();
 
-    log("productsToDisplay $productsToDisplay");
-
     final hasMoreProducts = _displayCount < allFilteredProducts.length;
+
+    log("productsToDisplay $productsToDisplay");
 
     final Widget content = RefreshIndicator(
       onRefresh: widget.onRefresh ?? () async {},
       child: SingleChildScrollView(
-        controller: widget.scrollController, // Attached controller
+        controller: widget.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Column(
           children: [
-            Text(
+            const Text(
               "Our Products",
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 34.0,
                 fontWeight: FontWeight.w700,
                 color: Color.fromRGBO(208, 145, 29, 1),
               ),
             ),
-            SizedBox(height: 12.0),
-            // Filter Pills
+
+            const SizedBox(height: 12),
+
             SizedBox(
-              height: 38.0,
+              height: 38,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: _categories.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(width: 8.0),
+                separatorBuilder: (_, index) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
                   final bool isSelected = _selectedCategoryIndex == index;
+
                   return ChoiceChip(
                     label: Text(
                       _categories[index],
@@ -157,16 +160,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.w500,
-                        fontSize: 13.0,
+                        fontSize: 13,
                       ),
                     ),
                     selected: isSelected,
                     selectedColor: AppColors.primaryRed,
                     backgroundColor: const Color(0xFFE0E0E0),
                     showCheckmark: false,
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
+                      borderRadius: BorderRadius.circular(20),
                       side: BorderSide.none,
                     ),
                     onSelected: (selected) async {
@@ -182,16 +185,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
               ),
             ),
 
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 20),
 
-            // Product Grid
             productsToDisplay.isEmpty
                 ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40.0),
+                    padding: EdgeInsets.symmetric(vertical: 40),
                     child: Center(
                       child: Text(
                         'No products found in this category.',
-                        style: TextStyle(color: Colors.grey, fontSize: 14.0),
+                        style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                     ),
                   )
@@ -202,24 +204,13 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          crossAxisSpacing: 14.0,
-                          mainAxisSpacing: 16.0,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 16,
                           childAspectRatio: 0.62,
                         ),
                     itemBuilder: (context, index) {
                       final product =
                           productsToDisplay[index] as Map<String, dynamic>;
-
-                      // // The first 4 products returned by the API are digital products.
-                      // final int apiIndex = displayedProducts.indexOf(product);
-
-                      // final bool isDigitalProduct =
-                      //     _selectedCategoryIndex == 0 &&
-                      //     apiIndex >= 0 &&
-                      //     apiIndex < 4;
-
-                      // final bool isDigitalProduct =
-                      //     apiIndex >= 0 && apiIndex < 4;
 
                       final String brand = (product['brand'] ?? '')
                           .toString()
@@ -237,22 +228,21 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     },
                   ),
 
-            const SizedBox(height: 24.0),
+            const SizedBox(height: 24),
 
             if (hasMoreProducts)
               GestureDetector(
                 onTap: () {
                   setState(() {
-                    // Add 6 more to the display count
                     _displayCount += 6;
                   });
                 },
                 child: const Padding(
-                  padding: EdgeInsets.only(bottom: 24.0),
+                  padding: EdgeInsets.only(bottom: 24),
                   child: Text(
                     'View more',
                     style: TextStyle(
-                      fontSize: 16.0,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryRed,
                     ),
@@ -289,15 +279,6 @@ class _ProductGridCard extends StatelessWidget {
     required this.isDigitalProduct,
   });
 
-  String? _validatePhysicalProduct(BuildContext context) {
-    final physicalProvider = context.read<PhysicalConversionProvider>();
-
-    return physicalProvider.validateProduct(
-      // brand: product['brand']?.toString(),
-      metalType: product['metal_type']?.toString(),
-    );
-  }
-
   void _showMessage(String message) {
     Fluttertoast.showToast(
       msg: message,
@@ -309,19 +290,140 @@ class _ProductGridCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPhysicalConversionButton({
-    required BuildContext context,
-    required PhysicalConversionProvider physicalProvider,
-    required bool isDigital,
-    required bool canPurchase,
-  }) {
+  String? _validatePhysicalProduct(BuildContext context) {
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    return physicalProvider.validateProduct(
+      metalType: product['metal_type']?.toString(),
+    );
+  }
+
+  Future<void> _addProduct(
+    BuildContext context,
+    CartProvider cartProvider,
+  ) async {
     final productId = product["id"];
 
-    if (isDigital) {
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    // ============================================================
+    // PHYSICAL CONVERSION MODE
+    // ============================================================
+
+    if (physicalProvider.isActive) {
+      // Digital products cannot be added during physical conversion
+      if (isDigitalProduct) {
+        _showMessage(
+          "Digital products cannot be added during physical conversion.",
+        );
+        return;
+      }
+
+      // Validate physical product
+      final validationError = _validatePhysicalProduct(context);
+
+      log(
+        "PHYSICAL PRODUCT VALIDATION -> "
+        "${product['name']} -> $validationError",
+      );
+
+      if (validationError != null) {
+        _showMessage(validationError);
+        return;
+      }
+    }
+
+    // ============================================================
+    // NORMAL CART
+    // ============================================================
+
+    final success = await cartProvider.addToCart(
+      productId: productId,
+      quantity: 1,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    _showMessage(success ? "Added to Cart" : "Failed to add product");
+  }
+
+  Future<void> _increaseQuantity(
+    BuildContext context,
+    CartProvider cartProvider,
+    int currentQuantity,
+  ) async {
+    final productId = product["id"];
+
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    // ============================================================
+    // PHYSICAL CONVERSION MODE
+    // ============================================================
+
+    if (physicalProvider.isActive) {
+      // Digital products cannot be modified during physical conversion
+      if (isDigitalProduct) {
+        _showMessage(
+          "Digital products cannot be added during physical conversion.",
+        );
+        return;
+      }
+
+      final validationError = _validatePhysicalProduct(context);
+
+      if (validationError != null) {
+        _showMessage(validationError);
+        return;
+      }
+    }
+
+    // ============================================================
+    // NORMAL CART
+    // ============================================================
+
+    await cartProvider.updateCartQuantity(
+      productId: productId,
+      quantity: currentQuantity + 1,
+    );
+  }
+
+  Widget _buildCartButton(
+    BuildContext context,
+    CartProvider cartProvider,
+    PhysicalConversionProvider physicalProvider,
+    bool canPurchase,
+  ) {
+    final productId = product["id"];
+
+    if (!canPurchase) {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromRGBO(218, 218, 218, 1),
+          foregroundColor: Colors.black54,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        child: const Text(
+          "OUT OF STOCK",
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
+      );
+    }
+
+    // ============================================================
+    // PHYSICAL CONVERSION + DIGITAL PRODUCT
+    // ============================================================
+
+    if (physicalProvider.isActive && isDigitalProduct) {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryRed,
           foregroundColor: Colors.white,
+          elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -338,139 +440,9 @@ class _ProductGridCard extends StatelessWidget {
       );
     }
 
-    if (!canPurchase) {
-      return ElevatedButton(
-        onPressed: null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromRGBO(218, 218, 218, 1),
-          foregroundColor: Colors.black54,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        child: const Text(
-          "OUT OF STOCK",
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-        ),
-      );
-    }
-
-    final int physicalItemIndex = physicalProvider.physicalCart.indexWhere(
-      (item) => item['product_id'] == productId,
-    );
-
-    final bool isInPhysicalCart = physicalItemIndex != -1;
-
-    final Map<String, dynamic>? physicalItem = isInPhysicalCart
-        ? physicalProvider.physicalCart[physicalItemIndex]
-        : null;
-
-    final int physicalQuantity = physicalItem?['quantity'] ?? 0;
-
-    if (isInPhysicalCart) {
-      return Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryRed,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            InkWell(
-              onTap: () async {
-                if (physicalQuantity <= 1) {
-                  await physicalProvider.removePhysicalProduct(productId);
-                } else {
-                  await physicalProvider.updatePhysicalQuantity(
-                    productId: productId,
-                    quantity: physicalQuantity - 1,
-                  );
-                }
-              },
-              child: const Icon(Icons.remove, color: Colors.white, size: 18),
-            ),
-
-            Text(
-              '$physicalQuantity',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-
-            InkWell(
-              onTap: () async {
-                final validationError = _validatePhysicalProduct(context);
-
-                if (validationError != null) {
-                  _showMessage(validationError);
-                  return;
-                }
-
-                final success = await physicalProvider.addPhysicalProduct(
-                  product: product,
-                );
-
-                if (!success) {
-                  _showMessage("Unable to add product.");
-                }
-              },
-              child: const Icon(Icons.add, color: Colors.white, size: 18),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primaryRed,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      ),
-      onPressed: () async {
-        // Gold / Silver validation
-        final validationError = _validatePhysicalProduct(context);
-
-        log(
-          "PHYSICAL PRODUCT VALIDATION -> "
-          "${product['name']} -> $validationError",
-        );
-
-        if (validationError != null) {
-          _showMessage(validationError);
-          return;
-        }
-
-        // Add ONLY to local physical cart
-        final success = await physicalProvider.addPhysicalProduct(
-          product: product,
-        );
-
-        if (!context.mounted) {
-          return;
-        }
-
-        if (!success) {
-          _showMessage(
-            "Product could not be added to physical conversion cart.",
-          );
-        }
-      },
-      child: const Text(
-        "ADD TO CART",
-        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-      ),
-    );
-  }
-
-  Widget _buildNormalCartButton({
-    required BuildContext context,
-    required CartProvider cartProvider,
-    required bool canPurchase,
-  }) {
-    final productId = product["id"];
+    // ============================================================
+    // NORMAL CART
+    // ============================================================
 
     final bool isInCart = cartProvider.isProductInCart(productId);
 
@@ -479,31 +451,18 @@ class _ProductGridCard extends StatelessWidget {
     if (isInCart) {
       try {
         cartItem = cartProvider.cartItems.firstWhere(
-          (item) => item["product_id"] == productId,
+          (item) => '${item["product_id"]}' == '$productId',
         );
       } catch (_) {
         cartItem = null;
       }
     }
 
-    final int cartQuantity = cartItem?["quantity"] ?? 0;
+    final int cartQuantity = int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
 
-    if (!canPurchase) {
-      return ElevatedButton(
-        onPressed: null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromRGBO(218, 218, 218, 1),
-          foregroundColor: Colors.black54,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        child: const Text(
-          "OUT OF STOCK",
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-        ),
-      );
-    }
+    // ============================================================
+    // ALREADY IN CART
+    // ============================================================
 
     if (isInCart && cartQuantity > 0) {
       return Container(
@@ -511,7 +470,6 @@ class _ProductGridCard extends StatelessWidget {
           color: AppColors.primaryRed,
           borderRadius: BorderRadius.circular(20),
         ),
-
         child: Row(
           children: [
             Expanded(
@@ -532,7 +490,7 @@ class _ProductGridCard extends StatelessWidget {
             ),
 
             Text(
-              "$cartQuantity",
+              '$cartQuantity',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -544,10 +502,7 @@ class _ProductGridCard extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 icon: const Icon(Icons.add, color: Colors.white, size: 18),
                 onPressed: () async {
-                  await cartProvider.updateCartQuantity(
-                    productId: productId,
-                    quantity: cartQuantity + 1,
-                  );
+                  await _increaseQuantity(context, cartProvider, cartQuantity);
                 },
               ),
             ),
@@ -556,6 +511,10 @@ class _ProductGridCard extends StatelessWidget {
       );
     }
 
+    // ============================================================
+    // ADD TO CART
+    // ============================================================
+
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryRed,
@@ -563,22 +522,11 @@ class _ProductGridCard extends StatelessWidget {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-
       onPressed: cartProvider.isAdding(productId)
           ? null
           : () async {
-              final success = await cartProvider.addToCart(
-                productId: productId,
-                quantity: 1,
-              );
-
-              if (!context.mounted) {
-                return;
-              }
-
-              _showMessage(success ? "Added to Cart" : "Failed to add product");
+              await _addProduct(context, cartProvider);
             },
-
       child: cartProvider.isAdding(productId)
           ? const SizedBox(
               width: 18,
@@ -607,9 +555,7 @@ class _ProductGridCard extends StatelessWidget {
         ? 'https://staging.junubullion.com/storage/$imagePath'
         : '';
 
-    final bool isInStock = product["stock_status"] == "in_stock";
-
-    final bool canPurchase = isInStock;
+    final bool canPurchase = product["stock_status"] == "in_stock";
 
     return InkWell(
       onTap: () {
@@ -693,19 +639,11 @@ class _ProductGridCard extends StatelessWidget {
               height: 36,
               child: Consumer2<CartProvider, PhysicalConversionProvider>(
                 builder: (context, cartProvider, physicalProvider, child) {
-                  if (physicalProvider.isActive) {
-                    return _buildPhysicalConversionButton(
-                      context: context,
-                      physicalProvider: physicalProvider,
-                      isDigital: isDigitalProduct,
-                      canPurchase: canPurchase,
-                    );
-                  }
-
-                  return _buildNormalCartButton(
-                    context: context,
-                    cartProvider: cartProvider,
-                    canPurchase: canPurchase,
+                  return _buildCartButton(
+                    context,
+                    cartProvider,
+                    physicalProvider,
+                    canPurchase,
                   );
                 },
               ),

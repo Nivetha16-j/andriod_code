@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:provider/provider.dart';
-import 'package:junubullion/providers/convert_to_physical_provider.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
@@ -55,11 +54,10 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
               // Index 2: Cart
               // Index 2: Cart
-              Consumer2<CartProvider, PhysicalConversionProvider>(
-                builder: (context, cartProvider, physicalProvider, child) {
-                  final count = physicalProvider.isActive
-                      ? physicalProvider.physicalCartCount
-                      : cartProvider.cartItems.length;
+              // Index 2: Cart
+              Consumer<CartProvider>(
+                builder: (context, cartProvider, child) {
+                  final count = cartProvider.cartItems.length;
 
                   return _NavItem(
                     isSelected: currentIndex == 2,
@@ -85,7 +83,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                               ),
                               child: Center(
                                 child: Text(
-                                  count > 99 ? "99+" : count.toString(),
+                                  count > 99 ? '99+' : count.toString(),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,

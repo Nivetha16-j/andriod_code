@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
@@ -26,68 +25,45 @@ class _CartScreenState extends State<CartScreen> {
   final TextEditingController couponController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  // ============================================================
-  // DISPOSE
-  // ============================================================
-
-  @override
   void dispose() {
-    debugPrint('🔥 CartScreen dispose called');
-
     couponController.dispose();
-
     super.dispose();
   }
-
-  // ============================================================
-  // CURRENCY / UNIT CHANGES
-  // ============================================================
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    final currency = context.watch<CurrencyProvider>();
+    final currencyProvider = context.watch<CurrencyProvider>();
+    final physicalProvider = context.read<PhysicalConversionProvider>();
 
-    if (_lastCurrency == currency.selectedCurrency &&
-        _lastUnit == currency.selectedUnit) {
+    if (_lastCurrency == currencyProvider.selectedCurrency &&
+        _lastUnit == currencyProvider.selectedUnit) {
       return;
     }
 
-    _lastCurrency = currency.selectedCurrency;
-    _lastUnit = currency.selectedUnit;
+    _lastCurrency = currencyProvider.selectedCurrency;
+    _lastUnit = currencyProvider.selectedUnit;
 
     log(
-      'cartProvider '
-      '${currency.selectedCurrency}'
-      '.....'
-      '${currency.selectedUnit}',
+      'Cart currency=${currencyProvider.selectedCurrency}, '
+      'unit=${currencyProvider.selectedUnit}, '
+      'physicalActive=${physicalProvider.isActive}',
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
       final cartProvider = context.read<CartProvider>();
 
       cartProvider.updateSelection(
-        currency: currency.selectedCurrency,
-        unit: currency.selectedUnit,
+        currency: currencyProvider.selectedCurrency,
+        unit: currencyProvider.selectedUnit,
       );
 
-      // IMPORTANT:
-      // This only fetches the NORMAL cart.
-      // It does NOT affect physicalProvider.physicalCart.
-      cartProvider.fetchCart();
+      await cartProvider.fetchCart();
     });
   }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -95,97 +71,246 @@ class _CartScreenState extends State<CartScreen> {
       backgroundColor: const Color(0xffF7F7F7),
       body: Consumer2<CartProvider, PhysicalConversionProvider>(
         builder: (context, cartProvider, physicalProvider, child) {
-          log(
-            'Cart -> '
-            'physicalActive=${physicalProvider.isActive} '
-            'normalCartCount=${cartProvider.cartItems.length} '
-            'physicalCartCount=${physicalProvider.physicalCart.length}',
-          );
-
-          // ========================================================
-          // PHYSICAL CONVERSION MODE
-          // ========================================================
-          //
-          // IMPORTANT:
-          //
-          // We DO NOT use cartProvider.cartItems here.
-          //
-          // Existing normal cart products remain inside
-          // cartProvider.cartItems untouched.
-          //
-          // They are simply hidden while conversion is active.
-          //
-          // Only physicalProvider.physicalCart is displayed.
-          // ========================================================
-
-          if (physicalProvider.isActive) {
-            return _buildPhysicalConversionCart(physicalProvider, cartProvider);
-          }
-
-          // ========================================================
-          // NORMAL CART MODE
-          // ========================================================
-
-          if (cartProvider.cartItems.isEmpty) {
-            return _buildNormalEmptyCart();
-          }
-
-          return _buildNormalCart(cartProvider);
+          return _buildCartScreen(cartProvider, physicalProvider);
         },
       ),
     );
   }
 
-  // ============================================================
-  // NORMAL EMPTY CART
-  // ============================================================
+  Widget _buildCartScreen(
+    CartProvider cartProvider,
+    PhysicalConversionProvider physicalProvider,
+  ) {
+    final bool isPhysicalActive = physicalProvider.isActive;
 
-  Widget _buildNormalEmptyCart() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    // Both normal cart and physical conversion use CartProvider.cartItems.
+    final bool hasItems = cartProvider.cartItems.isNotEmpty;
+
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          Image.asset('assets/no_product.png', height: 80, width: 80),
-
-          const SizedBox(height: 20),
+          if (isPhysicalActive) ...[
+            _buildPhysicalConversionHeader(physicalProvider),
+            const SizedBox(height: 20),
+          ],
 
           const Text(
-            'Your cart is empty',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
+            'Your cart',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
 
-          const SizedBox(height: 50),
+          const SizedBox(height: 15),
 
-          Padding(
-            padding: const EdgeInsets.only(left: 30.0, right: 30),
-            child: SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8E2323),
-                  foregroundColor: Colors.white,
-                  elevation: 4,
-                  shadowColor: Colors.black26,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+          if (!hasItems)
+            _buildEmptyCart()
+          else
+            _buildCartProducts(cartProvider, isPhysicalActive),
+
+          if (hasItems) ...[
+            const SizedBox(height: 30),
+
+            const Text(
+              'Cart Summary',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 20),
+
+            _buildCouponSection(provider: cartProvider),
+
+            const SizedBox(height: 20),
+
+            const DeliveryMethodWidget(),
+
+            const SizedBox(height: 20),
+
+            SummaryWidget(
+              subtotal: isPhysicalActive
+                  ? '0.00'
+                  : cartProvider.formattedSubtotal,
+
+              courier_fee: isPhysicalActive
+                  ? '0.00'
+                  : cartProvider.formattedCourierFee,
+
+              transaction_fee: isPhysicalActive
+                  ? '0.00'
+                  : cartProvider.formattedTransactionFee,
+
+              total: isPhysicalActive
+                  ? '0.00'
+                  : cartProvider.formattedOrderTotal,
+
+              deliveryMethod: isPhysicalActive
+                  ? 'Standard'
+                  : cartProvider.selectedDeliveryMethod,
+
+              coupon: cartProvider.coupon,
+
+              discount: isPhysicalActive
+                  ? '0.00'
+                  : cartProvider.formattedDiscount,
+
+              discountPrice: isPhysicalActive
+                  ? '0.00'
+                  : cartProvider.formattedDiscountPrice,
+
+              gst: isPhysicalActive ? '0.00' : cartProvider.formattedGST,
+
+              currency: cartProvider.currency,
+            ),
+
+            const SizedBox(height: 30),
+
+            if (isPhysicalActive)
+              _buildPhysicalOrderButton()
+            else
+              _buildCheckoutButton(),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhysicalConversionHeader(PhysicalConversionProvider provider) {
+    final String metal = provider.metal ?? '';
+    final String amount = provider.formattedAmount;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF0),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5C76B)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF981B1B),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.sync, size: 15, color: Colors.white),
+                      SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'PHYSICAL CONVERSION ACTIVE',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/home',
-                    (route) => false,
-                  );
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: () async {
+                  log("Clicked cancel");
+                  final cartProvider = context.read<CartProvider>();
+                  await provider.cancelConversion(cartProvider: cartProvider);
+                  if (!mounted) return;
                 },
-                child: const Text(
-                  'CONTINUE SHOPPING',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.8,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF981B1B),
+                  side: const BorderSide(color: Color(0xFF981B1B)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
                   ),
                 ),
+                child: const Text(
+                  'Cancel conversion',
+                  style: TextStyle(fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+              children: [
+                const TextSpan(text: 'Add '),
+                TextSpan(
+                  text: metal,
+                  style: const TextStyle(
+                    color: Color(0xFF981B1B),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const TextSpan(text: ' products up to '),
+                TextSpan(
+                  text: '$amount g',
+                  style: const TextStyle(
+                    color: Color(0xFF981B1B),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const TextSpan(text: '.'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'No payment will be required at checkout.',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyCart() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+      child: Column(
+        children: [
+          Image.asset('assets/no_product.png', height: 80, width: 80),
+          const SizedBox(height: 20),
+          const Text(
+            'Your cart is empty',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+          const SizedBox(height: 30),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/home');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF981B1B),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'CONTINUE SHOPPING',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -194,137 +319,90 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // ============================================================
-  // NORMAL CART
-  // ============================================================
-
-  Widget _buildNormalCart(CartProvider provider) {
-    log(
-      '🛒 BUILDING NORMAL CART -> '
-      '${provider.cartItems.length} items',
-    );
-
+  Widget _buildCartProducts(CartProvider provider, bool isPhysicalConversion) {
     if (couponController.text != (provider.coupon?['code'] ?? '')) {
       couponController.text = provider.coupon?['code'] ?? '';
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const Text(
-          'Your cart',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-
-        const SizedBox(height: 15),
-
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: provider.cartItems.length,
-          itemBuilder: (context, index) {
-            return CartItemCard(item: provider.cartItems[index]);
-          },
-        ),
-
-        const SizedBox(height: 30),
-
-        const Text(
-          'Cart Summary',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-
-        const SizedBox(height: 20),
-
-        // ========================================================
-        // COUPON
-        // ========================================================
-        _buildCouponSection(provider: provider, isPhysical: false),
-
-        const SizedBox(height: 20),
-
-        // ========================================================
-        // DELIVERY METHOD
-        // ========================================================
-        const DeliveryMethodWidget(),
-
-        const SizedBox(height: 20),
-
-        // ========================================================
-        // NORMAL CART SUMMARY
-        // ========================================================
-        SummaryWidget(
-          subtotal: provider.formattedSubtotal,
-          courier_fee: provider.formattedCourierFee,
-          transaction_fee: provider.formattedTransactionFee,
-          total: provider.formattedOrderTotal,
-          deliveryMethod: provider.selectedDeliveryMethod,
-          coupon: provider.coupon,
-          discount: provider.formattedDiscount,
-          discountPrice: provider.formattedDiscountPrice,
-          gst: provider.formattedGST,
-          currency: provider.currency,
-        ),
-
-        const SizedBox(height: 30),
-
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: SizedBox(
-            height: 60,
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CheckoutScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryRed,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-              child: const Text(
-                'CheckOut',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: provider.cartItems.length,
+      itemBuilder: (context, index) {
+        return CartItemCard(
+          item: provider.cartItems[index],
+          isPhysicalConversion: isPhysicalConversion,
+        );
+      },
     );
   }
 
-  // ============================================================
-  // COMMON COUPON SECTION
-  // ============================================================
-  //
-  // Same design is used for:
-  //
-  // 1. Normal cart
-  // 2. Physical conversion cart
-  //
-  // For normal cart:
-  //    Uses CartProvider coupon data.
-  //
-  // For physical cart:
-  //    Only the design is shown.
-  //    No normal-cart coupon data is used.
-  //
-  // ============================================================
+  Widget _buildCheckoutButton() {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: SizedBox(
+        height: 60,
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryRed,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+          ),
+          child: const Text(
+            'CheckOut',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-  Widget _buildCouponSection({
-    CartProvider? provider,
-    bool isPhysical = false,
-  }) {
-    final bool couponApplied = !isPhysical && provider?.coupon != null;
+  Widget _buildPhysicalOrderButton() {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: SizedBox(
+        height: 60,
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryRed,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+          ),
+          child: const Text(
+            'Send Order',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildCouponSection({required CartProvider provider}) {
+    final bool couponApplied = provider.coupon != null;
     return Container(
       height: 50,
       padding: const EdgeInsets.only(left: 12),
@@ -344,38 +422,11 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
           ),
-
           SizedBox(
             height: 50,
             child: ElevatedButton(
               onPressed: () {
-                // ==================================================
-                // PHYSICAL CONVERSION
-                // ==================================================
-                //
-                // Coupon UI is displayed, but physical conversion
-                // prices remain 0.00.
-                //
-                // Coupon functionality can be connected later
-                // if the API supports coupons for conversion.
-                // ==================================================
-
-                if (isPhysical) {
-                  return;
-                }
-
-                // ==================================================
-                // NORMAL CART
-                // ==================================================
-
-                if (provider == null) {
-                  return;
-                }
-
                 if (provider.coupon == null) {
-                  // Apply coupon
-                  //
-                  // Keep your existing coupon API logic here.
                 } else {
                   provider.removeCouponLocally();
                   couponController.clear();
@@ -397,513 +448,6 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // PHYSICAL CONVERSION CART
-  // ============================================================
-
-  Widget _buildPhysicalConversionCart(
-    PhysicalConversionProvider physicalProvider,
-    CartProvider provider,
-  ) {
-    final String metal = physicalProvider.metal ?? '';
-
-    final String amount = physicalProvider.formattedAmount;
-
-    // ==========================================================
-    // IMPORTANT
-    //
-    // ONLY physicalCart is used here.
-    //
-    // cartProvider.cartItems is intentionally NOT used.
-    //
-    // Existing normal cart remains untouched and hidden.
-    // ==========================================================
-
-    final List<Map<String, dynamic>> physicalCart =
-        physicalProvider.physicalCart;
-
-    log(
-      '🟢 PHYSICAL CART UI -> '
-      'items=${physicalCart.length} '
-      'metal=$metal '
-      'amount=$amount',
-    );
-
-    // Currency is only required for the SummaryWidget display.
-    // We are NOT using CartProvider's prices.
-    final currencyProvider = context.read<CurrencyProvider>();
-
-    final String currency = currencyProvider.selectedCurrency;
-
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // ========================================================
-          // CONVERSION HEADER
-          // ========================================================
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFBF0),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5C76B)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF981B1B),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.sync, size: 15, color: Colors.white),
-
-                            SizedBox(width: 6),
-
-                            Flexible(
-                              child: Text(
-                                'PHYSICAL CONVERSION ACTIVE',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    OutlinedButton(
-                      onPressed: () async {
-                        await physicalProvider.cancelConversion();
-                      },
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF981B1B),
-                        side: const BorderSide(color: Color(0xFF981B1B)),
-                      ),
-                      child: const Text(
-                        'Cancel conversion',
-                        style: TextStyle(fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontSize: 14, color: Colors.black87),
-                    children: [
-                      const TextSpan(text: 'Add '),
-
-                      TextSpan(
-                        text: metal,
-                        style: const TextStyle(
-                          color: Color(0xFF981B1B),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const TextSpan(text: ' products up to '),
-
-                      TextSpan(
-                        text: '$amount g',
-                        style: const TextStyle(
-                          color: Color(0xFF981B1B),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const TextSpan(text: '.'),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                const Text(
-                  'No payment will be required at checkout.',
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // ========================================================
-          // PHYSICAL CART PRODUCTS
-          // ========================================================
-          if (physicalCart.isEmpty)
-            _buildPhysicalEmptyCart()
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: physicalCart.length,
-              itemBuilder: (context, index) {
-                final item = physicalCart[index];
-
-                return _buildPhysicalCartItem(
-                  context,
-                  physicalProvider,
-                  item,
-                  currency,
-                );
-              },
-            ),
-
-          const SizedBox(height: 20),
-
-          // ============================================================
-          // COUPON + SUMMARY
-          // ONLY SHOW WHEN PHYSICAL CART HAS PRODUCTS
-          // ============================================================
-          if (physicalCart.isNotEmpty) ...[
-            const SizedBox(height: 20),
-
-            _buildCouponSection(isPhysical: true),
-
-            const SizedBox(height: 20),
-
-            const DeliveryMethodWidget(),
-
-            const SizedBox(height: 20),
-
-            SummaryWidget(
-              subtotal: '0.00',
-              courier_fee: '0.00',
-              transaction_fee: '0.00',
-              total: '0.00',
-              deliveryMethod: provider.selectedDeliveryMethod,
-              coupon: null,
-              discount: '0.00',
-              discountPrice: '0.00',
-              gst: '0.00',
-              currency: provider.currency,
-            ),
-
-            const SizedBox(height: 30),
-
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: SizedBox(
-                height: 60,
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const PhysicalCheckoutScreen(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryRed,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: const Text(
-                    'Send Order',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-          // const SizedBox(height: 30),
-
-          // // ========================================================
-          // // SEND ORDER
-          // // ========================================================
-          // Padding(
-          //   padding: const EdgeInsets.all(8.0),
-          //   child: SizedBox(
-          //     height: 60,
-          //     width: double.infinity,
-          //     child: ElevatedButton(
-          //       onPressed: () {
-          //         // ==================================================
-          //         // IMPORTANT
-          //         //
-          //         // Do NOT navigate to the normal CheckoutScreen
-          //         // here unless your physical conversion flow uses
-          //         // the same checkout process.
-          //         //
-          //         // Add your physical conversion order API here.
-          //         // ==================================================
-          //       },
-          //       style: ElevatedButton.styleFrom(
-          //         backgroundColor: AppColors.primaryRed,
-          //         shape: RoundedRectangleBorder(
-          //           borderRadius: BorderRadius.circular(30),
-          //         ),
-          //       ),
-          //       child: const Text(
-          //         'Send Order',
-          //         style: TextStyle(
-          //           color: Colors.white,
-          //           fontSize: 20,
-          //           fontWeight: FontWeight.bold,
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-          // ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // PHYSICAL EMPTY CART
-  // ============================================================
-
-  Widget _buildPhysicalEmptyCart() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset('assets/no_product.png', height: 80, width: 80),
-
-          const SizedBox(height: 20),
-
-          const Text(
-            'Your physical conversion cart is empty',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, color: Colors.grey),
-          ),
-
-          const SizedBox(height: 30),
-
-          SizedBox(
-            height: 52,
-            width: 280,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/home');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF981B1B),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                'CONTINUE SHOPPING',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // PHYSICAL CART ITEM
-  // ============================================================
-
-  Widget _buildPhysicalCartItem(
-    BuildContext context,
-    PhysicalConversionProvider provider,
-    Map<String, dynamic> item,
-    String currency,
-  ) {
-    final String name = item['name']?.toString() ?? 'Product';
-
-    final int quantity = int.tryParse('${item['quantity'] ?? 1}') ?? 1;
-
-    final String? imageUrl = item['image_url']?.toString();
-
-    final String? imagePath = item['image_path']?.toString();
-
-    String image = '';
-
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      image = imageUrl;
-    } else if (imagePath != null && imagePath.isNotEmpty) {
-      image = 'https://staging.junubullion.com/storage/$imagePath';
-    }
-
-    final dynamic productId = item['product_id'];
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        children: [
-          // ======================================================
-          // IMAGE
-          // ======================================================
-          Container(
-            height: 110,
-            width: 90,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            padding: const EdgeInsets.all(8),
-            child: image.isNotEmpty
-                ? Image.network(
-                    image,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.broken_image, color: Colors.grey);
-                    },
-                  )
-                : const Icon(Icons.image, color: Colors.grey),
-          ),
-
-          const SizedBox(width: 14),
-
-          // ======================================================
-          // DETAILS
-          // ======================================================
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                const SizedBox(height: 5),
-
-                Text(
-                  "Free 2 - 4 days shipping",
-                  style: const TextStyle(fontSize: 12),
-                ),
-                const SizedBox(height: 5),
-                Text("7 days return", style: const TextStyle(fontSize: 12)),
-
-                const SizedBox(height: 5),
-
-                const SizedBox(height: 6),
-
-                // ==================================================
-                // ALWAYS ZERO FOR PHYSICAL CONVERSION
-                // ==================================================
-                Text(
-                  '$currency 0.00',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 4),
-
-          // ======================================================
-          // QUANTITY + DELETE
-          // ======================================================
-          Column(
-            children: [
-              IconButton(
-                onPressed: () async {
-                  await provider.removePhysicalProduct(productId);
-                },
-                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-              ),
-
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // ==================================================
-                    // MINUS
-                    // ==================================================
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () async {
-                        if (quantity <= 1) {
-                          await provider.removePhysicalProduct(productId);
-                        } else {
-                          await provider.updatePhysicalQuantity(
-                            productId: productId,
-                            quantity: quantity - 1,
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.remove, size: 16),
-                    ),
-
-                    // ==================================================
-                    // QUANTITY
-                    // ==================================================
-                    Text(
-                      '$quantity',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    // ==================================================
-                    // PLUS
-                    // ==================================================
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () async {
-                        await provider.updatePhysicalQuantity(
-                          productId: productId,
-                          quantity: quantity + 1,
-                        );
-                      },
-                      icon: const Icon(Icons.add, size: 16),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ],
       ),

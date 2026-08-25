@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 
@@ -60,10 +61,22 @@ class DeliveryMethodWidget extends StatelessWidget {
     );
   }
 
-  Future<void> _changeDelivery(CartProvider cartProvider, String value) async {
+  Future<void> _changeDelivery(
+    BuildContext context,
+    CartProvider cartProvider,
+    String value,
+  ) async {
     if (cartProvider.selectedDeliveryMethod == value) return;
 
     cartProvider.setDeliveryMethod(value);
+
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    // Physical conversion does not require normal cart recalculation.
+    if (physicalProvider.isActive) {
+      return;
+    }
+
     await cartProvider.fetchCart();
   }
 
@@ -86,7 +99,7 @@ class DeliveryMethodWidget extends StatelessWidget {
       //   service: value,
       // );
       onTap: () async {
-        _changeDelivery(cartProvider, value);
+        _changeDelivery(context, cartProvider, value);
       },
       // },
       child: Container(
@@ -108,7 +121,7 @@ class DeliveryMethodWidget extends StatelessWidget {
               visualDensity: VisualDensity.compact,
               onChanged: (val) async {
                 if (val != null) {
-                  _changeDelivery(cartProvider, value);
+                  _changeDelivery(context, cartProvider, value);
                 }
               },
             ),

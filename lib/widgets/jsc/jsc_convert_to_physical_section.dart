@@ -26,6 +26,7 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
   Map<String, dynamic>? silver;
 
   bool isLoading = false;
+  bool isStartingOrder = false;
   bool _isUnlocked = false;
 
   final TextEditingController _goldAmountController = TextEditingController();
@@ -483,7 +484,11 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
               SizedBox(
                 height: 40,
                 child: ElevatedButton(
-                  onPressed: errorText == null ? onPressed : null,
+                  onPressed: isStartingOrder
+                      ? null
+                      : errorText == null
+                      ? onPressed
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF168A3D),
                     foregroundColor: Colors.white,
@@ -492,9 +497,9 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                       borderRadius: BorderRadius.circular(7),
                     ),
                   ),
-                  child: const Text(
-                    'Start Order',
-                    style: TextStyle(fontSize: 11),
+                  child: Text(
+                    isStartingOrder ? 'Starting...' : 'Start Order',
+                    style: const TextStyle(fontSize: 11),
                   ),
                 ),
               ),
@@ -544,16 +549,64 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       return;
     }
 
-    final physicalProvider = context.read<PhysicalConversionProvider>();
-
-    physicalProvider.startConversion(metal: 'Gold', amount: amount);
-
     if (!mounted) return;
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 2)),
-    );
+    setState(() {
+      isStartingOrder = true;
+    });
+
+    try {
+      final cartProvider = context.read<CartProvider>();
+
+      // ============================================================
+      // MOVE NORMAL CART TO PHYSICAL ORDER STORAGE
+      // ============================================================
+
+      final success = await cartProvider.moveCartToPhysicalOrder();
+
+      if (!success) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to start physical order. Please try again.'),
+          ),
+        );
+
+        return;
+      }
+
+      // ============================================================
+      // START PHYSICAL CONVERSION
+      // ============================================================
+
+      final physicalProvider = context.read<PhysicalConversionProvider>();
+
+      physicalProvider.startConversion(metal: 'Gold', amount: amount);
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 2)),
+      );
+    } catch (e) {
+      log('❌ Start Gold Order Error: $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong while starting the order.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isStartingOrder = false;
+        });
+      }
+    }
   }
 
   Future<void> _openSilverConversion() async {
@@ -563,16 +616,56 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       return;
     }
 
-    final physicalProvider = context.read<PhysicalConversionProvider>();
-
-    physicalProvider.startConversion(metal: 'Silver', amount: amount);
-
     if (!mounted) return;
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 2)),
-    );
+    setState(() {
+      isStartingOrder = true;
+    });
+
+    try {
+      final cartProvider = context.read<CartProvider>();
+
+      final success = await cartProvider.moveCartToPhysicalOrder();
+
+      if (!success) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to start physical order. Please try again.'),
+          ),
+        );
+
+        return;
+      }
+
+      final physicalProvider = context.read<PhysicalConversionProvider>();
+
+      physicalProvider.startConversion(metal: 'Silver', amount: amount);
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 2)),
+      );
+    } catch (e) {
+      log('❌ Start Silver Order Error: $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong while starting the order.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isStartingOrder = false;
+        });
+      }
+    }
   }
 
   void _onGoldAmountChanged(String value) {

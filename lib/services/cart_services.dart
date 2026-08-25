@@ -1,31 +1,15 @@
 import 'dart:convert';
 import 'dart:developer';
+
 import 'package:http/http.dart' as http;
 import 'package:junubullion/services/session_manager.dart';
 
 class CartService {
   static const String _baseUrl = "https://staging.junubullion.com/api";
 
-  // static Future<Map<String, dynamic>> updateCourierCharge({
-  //   required String currency,
-  //   required String courierService,
-  // }) async {
-  //   final token = await SessionManager.getToken();
-
-  //   final response = await http.post(
-  //     Uri.parse("$_baseUrl/cart/courierCharge"),
-  //     headers: {
-  //       "Authorization": "Bearer $token",
-  //       "Content-Type": "application/json",
-  //     },
-  //     body: jsonEncode({
-  //       "currency": currency,
-  //       "courier_service": courierService.toLowerCase(),
-  //     }),
-  //   );
-
-  //   return jsonDecode(response.body);
-  // }
+  // ============================================================
+  // FETCH CART
+  // ============================================================
 
   static Future<Map<String, dynamic>> fetchCart({
     required String currency,
@@ -54,6 +38,10 @@ class CartService {
     return jsonDecode(response.body);
   }
 
+  // ============================================================
+  // ADD TO CART
+  // ============================================================
+
   static Future<Map<String, dynamic>> addToCart({
     required int productId,
     required int quantity,
@@ -72,6 +60,10 @@ class CartService {
     return jsonDecode(response.body);
   }
 
+  // ============================================================
+  // REMOVE SINGLE PRODUCT FROM CART
+  // ============================================================
+
   static Future<Map<String, dynamic>> removeFromCart({
     required int productId,
   }) async {
@@ -84,6 +76,39 @@ class CartService {
 
     return jsonDecode(response.body);
   }
+
+  // ============================================================
+  // REMOVE ENTIRE CART
+  // DELETE /api/cart/removeCart
+  //
+  // Body:
+  // {
+  //   "id": "194"
+  // }
+  // ============================================================
+
+  static Future<Map<String, dynamic>> removeCart({required String id}) async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.delete(
+      Uri.parse("$_baseUrl/cart/removeCart"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({"id": id}),
+    );
+
+    log("Remove Cart Status: ${response.statusCode}");
+    log("Remove Cart Response: ${response.body}");
+
+    return jsonDecode(response.body);
+  }
+
+  // ============================================================
+  // UPDATE CART QUANTITY
+  // ============================================================
 
   static Future<Map<String, dynamic>> updateCart({
     required int productId,

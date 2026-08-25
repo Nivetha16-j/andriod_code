@@ -6,6 +6,7 @@ import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/checkout/banktransfersuccess.dart';
+import 'package:junubullion/screens/checkout/physical_ordersuccess.dart';
 import 'package:junubullion/screens/checkout/success.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
@@ -50,15 +51,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _sendPhysicalOrder() async {
-    log("checkout screen");
     final addressProvider = context.read<AddressProvider>();
-
+    final cartProvider = context.read<CartProvider>();
     final physicalProvider = context.read<PhysicalConversionProvider>();
 
     final String shippingAddress =
         addressProvider.hasAddress && addressProvider.address != null
         ? addressProvider.address!.trim()
         : (localAddress ?? '').trim();
+
+    // ------------------------------------------------------------
+    // VALIDATION
+    // ------------------------------------------------------------
 
     if (shippingAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -69,17 +73,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     if (!isTermsAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to the Terms & Conditions')),
+        const SnackBar(content: Text("Please agree to the Terms & Conditions")),
       );
-
       return;
     }
 
-    if (physicalProvider.physicalCart.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Your physical conversion cart is empty')),
-      );
+    // IMPORTANT:
+    // Physical checkout uses the SAME cart as normal checkout.
+    if (cartProvider.cartItems.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Your cart is empty")));
+      return;
+    }
 
+    if (!physicalProvider.isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Physical conversion is no longer active"),
+        ),
+      );
       return;
     }
 
@@ -89,37 +102,74 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     try {
       log(
-        'PHYSICAL ORDER -> '
-        'address=$shippingAddress '
-        'items=${physicalProvider.physicalCart.length}',
+        "PHYSICAL ORDER -> "
+        "address=$shippingAddress "
+        "cartItems=${cartProvider.cartItems.length} "
+        "metal=${physicalProvider.metal} "
+        "amount=${physicalProvider.amount}",
       );
 
-      // TODO:
-      // Call physical conversion order API here.
+      final response = await CheckoutService.placePhysicalOrder(
+        shippingAddress: shippingAddress,
+        terms: true,
+      );
 
-      await Future.delayed(const Duration(milliseconds: 500));
+      log("PHYSICAL ORDER RESPONSE -> $response");
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Physical order is ready to be submitted.'),
-        ),
-      );
-    } catch (e) {
-      log('PHYSICAL ORDER ERROR -> $e');
+      if (response["status"] == true) {
+        // ----------------------------------------------------------
+        // ORDER SUCCESS
+        // ----------------------------------------------------------
 
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Unable to send order: $e')));
-    } finally {
-      if (mounted) {
         setState(() {
           _isPlacingOrder = false;
         });
+
+        final orderData =
+            response["data"] as Map<String, dynamic>? ?? <String, dynamic>{};
+
+        final currency = context.read<CurrencyProvider>().selectedCurrency;
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PhysicalOrderSuccessScreen(
+              order: orderData,
+              currencySymbol: currency,
+            ),
+          ),
+          (route) => false,
+        );
+
+        return;
       }
+
+      setState(() {
+        _isPlacingOrder = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            response["message"]?.toString() ??
+                "Order could not be placed. Please try again.",
+          ),
+        ),
+      );
+    } catch (e, stackTrace) {
+      log("PHYSICAL ORDER ERROR -> $e", stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      setState(() {
+        _isPlacingOrder = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst("Exception: ", ""))),
+      );
     }
   }
 
@@ -165,7 +215,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final physicalProvider = context.watch<PhysicalConversionProvider>();
 
-    final bool isPhysicalConversion = physicalProvider.physicalCart.isNotEmpty;
+    final bool isPhysicalConversion = physicalProvider.isActive;
 
     final String currencySymbol = currencyProvider.selectedCurrency;
 
@@ -200,101 +250,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           LayoutBuilder(
             builder: (context, constraints) {
-              final bool isDesktop = constraints.maxWidth >= 900;
-
-              // =========================================================
-              // DESKTOP
-              // =========================================================
-
-              if (isDesktop) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Shipping address',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-
-                            const SizedBox(height: 12),
-
-                            _buildShippingAddress(),
-
-                            const SizedBox(height: 18),
-
-                            // =================================================
-                            // PHYSICAL CONVERSION
-                            // =================================================
-                            if (isPhysicalConversion) ...[
-                              _buildConversionInfo(physicalProvider),
-
-                              const SizedBox(height: 18),
-                            ],
-
-                            // =================================================
-                            // NORMAL DELIVERY
-                            // =================================================
-                            if (!isPhysicalConversion) ...[
-                              _buildDeliverySection(),
-
-                              const SizedBox(height: 20),
-
-                              if (delivery.toLowerCase() == "digital")
-                                _buildDigitalSubtype(),
-
-                              const SizedBox(height: 20),
-
-                              _buildPaymentSection(),
-
-                              const SizedBox(height: 20),
-                            ],
-
-                            _buildTerms(),
-
-                            const SizedBox(height: 20),
-
-                            _buildActionButtons(
-                              currencySymbol,
-                              isPhysicalConversion,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(width: 20),
-
-                      Expanded(
-                        flex: 1,
-                        child: isPhysicalConversion
-                            ? _buildPhysicalOrderSummary(
-                                physicalProvider,
-                                currencySymbol,
-                              )
-                            : _buildNormalOrderSummary(
-                                cartProvider,
-                                currencySymbol,
-                                orderTotal,
-                                isDigital,
-                              ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              // =========================================================
-              // MOBILE
-              // =========================================================
-
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -314,31 +269,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                     const SizedBox(height: 14),
 
-                    // =====================================================
-                    // PHYSICAL CHECKOUT
-                    // =====================================================
                     if (isPhysicalConversion) ...[
                       _buildConversionInfo(physicalProvider),
 
                       const SizedBox(height: 18),
 
+                      // Delivery option
+                      _buildDeliverySection(isPhysicalConversion: true),
+
+                      const SizedBox(height: 20),
+
                       _buildTerms(),
 
                       const SizedBox(height: 18),
 
-                      _buildPhysicalOrderSummary(
-                        physicalProvider,
-                        currencySymbol,
-                      ),
+                      _buildPhysicalOrderSummary(cartProvider, currencySymbol),
 
                       const SizedBox(height: 25),
 
                       _buildActionButtons(currencySymbol, true),
-                    ]
-                    // =====================================================
-                    // NORMAL CHECKOUT
-                    // =====================================================
-                    else ...[
+                    ] else ...[
                       _buildDeliverySection(),
 
                       const SizedBox(height: 20),
@@ -388,7 +338,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildDeliverySection() {
+  Widget _buildDeliverySection({bool isPhysicalConversion = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -397,39 +347,84 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
 
+        const SizedBox(height: 8),
+
         Row(
           children: [
-            Radio(
+            // =========================================================
+            // PHYSICAL
+            // =========================================================
+            Radio<String>(
               activeColor: AppColors.primaryRed,
               value: "physical",
-              groupValue: delivery,
-              onChanged: (value) {
-                setState(() {
-                  delivery = value!;
-                });
-              },
+
+              // When physical conversion is active,
+              // physical MUST always be selected.
+              groupValue: isPhysicalConversion ? "physical" : delivery,
+
+              onChanged: isPhysicalConversion
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+
+                      setState(() {
+                        delivery = value;
+                      });
+                    },
             ),
 
-            const Text("Physical"),
+            Text(
+              "Physical",
+              style: TextStyle(
+                fontWeight: isPhysicalConversion
+                    ? FontWeight.w600
+                    : FontWeight.normal,
+                color: isPhysicalConversion ? Colors.black : Colors.black87,
+              ),
+            ),
 
-            Radio(
+            const SizedBox(width: 20),
+
+            // =========================================================
+            // DIGITAL
+            // =========================================================
+            Radio<String>(
               activeColor: AppColors.primaryRed,
               value: "Digital",
-              groupValue: delivery,
-              onChanged: (value) {
-                setState(() {
-                  delivery = value!;
-                });
-              },
+              groupValue: isPhysicalConversion ? "physical" : delivery,
+
+              // Disable Digital during physical conversion.
+              onChanged: isPhysicalConversion
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+
+                      setState(() {
+                        delivery = value;
+                      });
+                    },
             ),
 
-            const Text("Digital"),
+            Text(
+              "Digital",
+              style: TextStyle(
+                color: isPhysicalConversion ? Colors.grey : Colors.black87,
+              ),
+            ),
           ],
         ),
 
-        const Text(
-          "Digital orders are charged at the product price only — no tax, shipping, or transaction fees.",
-          style: TextStyle(fontSize: 12),
+        // =========================================================
+        // DESCRIPTION
+        // =========================================================
+        Text(
+          isPhysicalConversion
+              ? "Physical delivery is required for physical conversion orders."
+              : "Digital orders are charged at the product price only — no tax, shipping, or transaction fees.",
+          style: TextStyle(
+            fontSize: 12,
+            color: isPhysicalConversion ? Colors.black54 : Colors.black54,
+          ),
         ),
       ],
     );
@@ -993,15 +988,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 15),
 
+          // =========================================================
+          // CART PRODUCTS
+          // =========================================================
           ...provider.cartItems.map((item) {
+            final String name = item["name"]?.toString() ?? "Product";
+
+            final int quantity =
+                int.tryParse(item["quantity"]?.toString() ?? "1") ?? 1;
+
+            final String productPrice =
+                item["formatted_effective_unit_price"]?.toString() ??
+                item["formatted_unit_price"]?.toString() ??
+                item["formatted_compare_price"]?.toString() ??
+                "0.00";
+
             return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: 12),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Product name + quantity
                   Expanded(
                     child: Text(
-                      "${item["name"]} × ${item["quantity"]}",
+                      "$name × $quantity",
                       style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Product price
+                  Text(
+                    productPrice,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -1011,10 +1033,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const Divider(height: 30),
 
+          // =========================================================
+          // SUBTOTAL
+          // =========================================================
           _summaryRow("Subtotal Product", provider.formattedSubtotal),
 
           const SizedBox(height: 15),
 
+          // =========================================================
+          // COURIER
+          // =========================================================
           _summaryRow(
             "Courier Charges",
             isDigital
@@ -1024,6 +1052,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 15),
 
+          // =========================================================
+          // TRANSACTION FEE
+          // =========================================================
           _summaryRow(
             "Transaction Fee",
             isDigital
@@ -1031,6 +1062,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 : "+ ${provider.formattedTransactionFee}",
           ),
 
+          // =========================================================
+          // GST
+          // =========================================================
           if (!isDigital && provider.gstAmount > 0) ...[
             const SizedBox(height: 15),
 
@@ -1039,6 +1073,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const Divider(height: 35),
 
+          // =========================================================
+          // TOTAL
+          // =========================================================
           _summaryRow(
             "Order Total",
             "${provider.currencySymbol}${orderTotal.toStringAsFixed(2)}",
@@ -1056,7 +1093,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF0),
         borderRadius: BorderRadius.circular(10),
@@ -1066,6 +1103,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Flexible(
                 child: Container(
@@ -1095,7 +1133,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 onPressed: _isPlacingOrder
                     ? null
                     : () async {
-                        await physicalProvider.cancelConversion();
+                        final cartProvider = context.read<CartProvider>();
+
+                        await physicalProvider.cancelConversion(
+                          cartProvider: cartProvider,
+                        );
 
                         if (!mounted) return;
 
@@ -1105,8 +1147,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   foregroundColor: const Color(0xFF981B1B),
                   side: const BorderSide(color: Color(0xFF981B1B)),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 9,
+                    horizontal: 14,
+                    vertical: 10,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -1188,10 +1230,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildPhysicalOrderSummary(
-    PhysicalConversionProvider provider,
+    CartProvider cartProvider,
     String currencySymbol,
   ) {
-    final items = provider.physicalCart;
+    if (cartProvider.cartItems.isEmpty) {
+      return const Text("No items in cart");
+    }
 
     return Container(
       width: double.infinity,
@@ -1205,29 +1249,37 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           const Text(
             'Order Summary',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
           ),
 
           const SizedBox(height: 20),
 
-          ...items.map((item) {
-            final name = item['name']?.toString() ?? 'Product';
+          // =========================================================
+          // CART PRODUCTS
+          // =========================================================
+          ...cartProvider.cartItems.map((item) {
+            final String name = item["name"]?.toString() ?? "Product";
 
-            final quantity = int.tryParse('${item['quantity'] ?? 1}') ?? 1;
+            final int quantity =
+                int.tryParse(item["quantity"]?.toString() ?? "1") ?? 1;
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Text(
-                      '$name × $quantity',
+                      "$name × $quantity",
                       style: const TextStyle(fontSize: 14),
                     ),
                   ),
 
+                  const SizedBox(width: 10),
+
+                  // Physical conversion has no monetary charge.
                   Text(
-                    '$currencySymbol 0.00',
+                    "$currencySymbol 0.00",
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
@@ -1235,30 +1287,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             );
           }),
 
-          const Divider(height: 30),
+          const Divider(height: 28),
 
+          // =========================================================
+          // CHARGES
+          // =========================================================
           _summaryRow(
-            'Courier charge (Standard delivery)',
-            '$currencySymbol 0.00',
+            "Courier charge (Standard delivery)",
+            "$currencySymbol 0.00",
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          _summaryRow('Total (ex tax)', '$currencySymbol 0.00'),
+          _summaryRow("Total (ex tax)", "$currencySymbol 0.00"),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          _summaryRow('Tax (21%)', '$currencySymbol 0.00'),
+          _summaryRow("Tax (21%)", "$currencySymbol 0.00"),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          _summaryRow('Transaction Fee (4%)', '$currencySymbol 0.00'),
+          _summaryRow("Transaction Fee (4%)", "$currencySymbol 0.00"),
 
           const Divider(height: 30),
 
           _summaryRow(
-            'Order Total',
-            '$currencySymbol 0.00',
+            "Order Total",
+            "$currencySymbol 0.00",
             bold: true,
             valueColor: AppColors.primaryRed,
           ),
@@ -1290,6 +1345,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey.shade300,
               foregroundColor: Colors.black,
+              disabledBackgroundColor: Colors.grey.shade300,
+              disabledForegroundColor: Colors.black45,
               padding: const EdgeInsets.symmetric(vertical: 15),
               elevation: 0,
               shape: RoundedRectangleBorder(

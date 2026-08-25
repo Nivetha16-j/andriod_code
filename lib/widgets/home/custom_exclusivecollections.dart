@@ -35,7 +35,12 @@ class ExclusiveCollectionsSection extends StatefulWidget {
 
 class _ExclusiveCollectionsSectionState
     extends State<ExclusiveCollectionsSection> {
-  List<dynamic>? _liveProducts;
+  /// The 4 products that are actually displayed.
+  ///
+  /// IMPORTANT:
+  /// These are fixed after the first load so the products do not change
+  /// when the API returns the exclusive products in a different order.
+  List<Map<String, dynamic>> _displayProducts = [];
 
   Timer? _refreshTimer;
 
@@ -45,7 +50,7 @@ class _ExclusiveCollectionsSectionState
   void initState() {
     super.initState();
 
-    _liveProducts = widget.products;
+    _initializeProducts(widget.products);
 
     _startAutoRefresh();
   }
@@ -54,23 +59,56 @@ class _ExclusiveCollectionsSectionState
   void didUpdateWidget(covariant ExclusiveCollectionsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // Currency/unit changed.
+    //
+    // We DO NOT change which 4 products are displayed.
+    // We only refresh their latest prices.
     if (widget.currency != oldWidget.currency ||
         widget.unit != oldWidget.unit) {
       _refreshTimer?.cancel();
-
       _startAutoRefresh();
     }
 
-    if (widget.products != oldWidget.products) {
-      _liveProducts = widget.products;
+    // Parent provided a new product list.
+    //
+    // Only initialize if we don't already have our fixed 4 products.
+    if (_displayProducts.isEmpty &&
+        widget.products != null &&
+        widget.products!.isNotEmpty) {
+      _initializeProducts(widget.products);
     }
   }
 
   @override
   void dispose() {
     _refreshTimer?.cancel();
-
     super.dispose();
+  }
+
+  // ============================================================
+  // INITIAL PRODUCT SET
+  // ============================================================
+
+  void _initializeProducts(List<dynamic>? products) {
+    if (products == null || products.isEmpty) {
+      return;
+    }
+
+    final firstFour = products
+        .take(4)
+        .whereType<Map>()
+        .map((product) => Map<String, dynamic>.from(product))
+        .toList();
+
+    if (firstFour.isEmpty) {
+      return;
+    }
+
+    setStateIfMounted(() {
+      _displayProducts = firstFour;
+    });
+
+    _updateDigitalProducts(_displayProducts);
   }
 
   // ============================================================
@@ -85,26 +123,29 @@ class _ExclusiveCollectionsSectionState
         return;
       }
 
+      // Nothing has been initialized yet.
+      if (_displayProducts.isEmpty) {
+        return;
+      }
+
       _isFetching = true;
 
       try {
         final homeData = await ApiService.fetchHomeData(
           currency: widget.currency,
-          unit: widget.unit == "Gram"
-              ? "gram"
-              : widget.unit == "Ounce"
-              ? "toz"
-              : "kg",
+          unit: _apiUnit(widget.unit),
         );
 
         final products =
             homeData['data']?['exclusive_products'] as List<dynamic>?;
 
-        if (mounted && products != null) {
-          setState(() {
-            _liveProducts = products;
-          });
+        if (!mounted || products == null || products.isEmpty) {
+          return;
         }
+
+        log("product exccc ${products.length}");
+
+        _updateDisplayedProducts(products);
       } catch (e) {
         debugPrint('Exclusive products refresh error: $e');
       } finally {
@@ -113,9 +154,93 @@ class _ExclusiveCollectionsSectionState
     });
   }
 
-  void _updateDigitalProducts(List<dynamic> products) {
+  // ============================================================
+  // UNIT
+  // ============================================================
+
+  String _apiUnit(String unit) {
+    switch (unit.toLowerCase()) {
+      case 'gram':
+        return 'gram';
+
+      case 'ounce':
+        return 'toz';
+
+      default:
+        return 'kg';
+    }
+  }
+
+  // ============================================================
+  // UPDATE ONLY EXISTING 4 PRODUCTS
+  // ============================================================
+
+  void _updateDisplayedProducts(List<dynamic> latestProducts) {
+    final Map<String, Map<String, dynamic>> latestById = {};
+
+    for (final item in latestProducts) {
+      if (item is! Map) {
+        continue;
+      }
+
+      final product = Map<String, dynamic>.from(item);
+
+      final id = product['id'];
+
+      if (id == null) {
+        continue;
+      }
+
+      latestById[id.toString()] = product;
+    }
+
+    final updatedProducts = <Map<String, dynamic>>[];
+
+    for (final oldProduct in _displayProducts) {
+      final oldId = oldProduct['id'];
+
+      if (oldId == null) {
+        continue;
+      }
+
+      final latestProduct = latestById[oldId.toString()];
+
+      if (latestProduct != null) {
+        // Latest API data for the SAME product.
+        //
+        // This updates live_price, formatted_price, stock status, etc.
+        // but keeps the product identity/order fixed.
+        updatedProducts.add({...oldProduct, ...latestProduct});
+      } else {
+        // Product wasn't returned in this particular refresh.
+        //
+        // Keep the previous product instead of replacing it with
+        // another product.
+        updatedProducts.add(oldProduct);
+      }
+    }
+
+    if (!mounted || updatedProducts.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _displayProducts = updatedProducts;
+    });
+
+    // Keep the exact same 4 products as digital products.
+    _updateDigitalProducts(_displayProducts);
+  }
+
+  // ============================================================
+  // DIGITAL PRODUCT IDS
+  // ============================================================
+
+  void _updateDigitalProducts(List<Map<String, dynamic>> products) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       context.read<PhysicalConversionProvider>().setDigitalProductIds(
         products.take(4).toList(),
@@ -123,22 +248,29 @@ class _ExclusiveCollectionsSectionState
     });
   }
 
+  void setStateIfMounted(VoidCallback callback) {
+    if (mounted) {
+      setState(callback);
+    }
+  }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
-    final products = _liveProducts ?? widget.products;
-
-    if (products == null || products.isEmpty) {
+    if (_displayProducts.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    // ------------------------------------------------------------
-    // ONLY FIRST 4 PRODUCTS ARE SHOWN ON HOME SCREEN
-    // These 4 are DIGITAL PRODUCTS.
-    // ------------------------------------------------------------
+    // ALWAYS exactly these same 4 products.
+    final displayProducts = _displayProducts.take(4).toList();
 
-    final displayProducts = products.take(4).toList();
-
-    _updateDigitalProducts(products);
+    log(
+      "Exclusive displayed products: "
+      "${displayProducts.map((e) => '${e['id']} - ${e['name']}').toList()}",
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -185,7 +317,7 @@ class _ExclusiveCollectionsSectionState
               childAspectRatio: 0.72,
             ),
             itemBuilder: (context, index) {
-              final product = displayProducts[index] as Map<String, dynamic>;
+              final product = displayProducts[index];
 
               return _ExclusiveProductCard(product: product);
             },
@@ -207,10 +339,6 @@ class _ExclusiveProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ============================================================
-    // PRODUCT DETAILS
-    // ============================================================
-
     final String name = product['name']?.toString() ?? 'Product Name';
 
     final String priceText =
@@ -220,7 +348,7 @@ class _ExclusiveProductCard extends StatelessWidget {
 
     final String? imagePath = product['image_path']?.toString();
 
-    final String fullImageUrl = (imagePath != null && imagePath.isNotEmpty)
+    final String fullImageUrl = imagePath != null && imagePath.isNotEmpty
         ? '${ExclusiveCollectionsSection.imageBaseUrl}$imagePath'
         : '';
 
@@ -228,22 +356,16 @@ class _ExclusiveProductCard extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        log("Product tapped");
+        log("Exclusive Product tapped");
         log("Product: $product");
 
-        try {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ProductDetailsScreen(productId: product["id"]),
-            ),
-          );
-        } catch (e, s) {
-          log("Navigation Error: $e");
-          log(s.toString());
-        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailsScreen(productId: product["id"]),
+          ),
+        );
       },
-
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -257,7 +379,6 @@ class _ExclusiveProductCard extends StatelessWidget {
             ),
           ],
         ),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -334,18 +455,10 @@ class _ExclusiveProductCard extends StatelessWidget {
               child: Consumer2<CartProvider, PhysicalConversionProvider>(
                 builder: (context, cartProvider, physicalProvider, child) {
                   // ==================================================
-                  // PHYSICAL CONVERSION ACTIVE
+                  // PHYSICAL CONVERSION
                   //
-                  // IMPORTANT:
-                  // These first 4 Exclusive Collection products
-                  // are DIGITAL PRODUCTS.
-                  //
-                  // They must NOT:
-                  // - go to normal cart
-                  // - go to physical cart
-                  // - change quantity
-                  //
-                  // Just show toast.
+                  // Exclusive products are digital products.
+                  // They must NOT be added to physical cart.
                   // ==================================================
 
                   if (physicalProvider.isActive) {
@@ -353,7 +466,7 @@ class _ExclusiveProductCard extends StatelessWidget {
                   }
 
                   // ==================================================
-                  // NORMAL CART MODE
+                  // NORMAL CART
                   // ==================================================
 
                   return _buildNormalCartButton(
@@ -381,7 +494,6 @@ class _ExclusiveProductCard extends StatelessWidget {
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-
       onPressed: () {
         Fluttertoast.showToast(
           msg: "Digital products cannot be added during physical conversion.",
@@ -392,7 +504,6 @@ class _ExclusiveProductCard extends StatelessWidget {
           fontSize: 14,
         );
       },
-
       child: const Text(
         "ADD TO CART",
         style: TextStyle(fontWeight: FontWeight.bold),
@@ -411,10 +522,6 @@ class _ExclusiveProductCard extends StatelessWidget {
   }) {
     final productId = product["id"];
 
-    // ============================================================
-    // CHECK NORMAL CART
-    // ============================================================
-
     final bool isInCart = cartProvider.isProductInCart(productId);
 
     Map<String, dynamic>? cartItem;
@@ -422,14 +529,14 @@ class _ExclusiveProductCard extends StatelessWidget {
     if (isInCart) {
       try {
         cartItem = cartProvider.cartItems.firstWhere(
-          (item) => item["product_id"] == productId,
+          (item) => '${item["product_id"]}' == '$productId',
         );
       } catch (_) {
         cartItem = null;
       }
     }
 
-    final int cartQuantity = cartItem?["quantity"] ?? 0;
+    final int cartQuantity = int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
 
     // ============================================================
     // OUT OF STOCK
@@ -450,7 +557,7 @@ class _ExclusiveProductCard extends StatelessWidget {
     }
 
     // ============================================================
-    // PRODUCT ALREADY IN NORMAL CART
+    // ALREADY IN CART
     // ============================================================
 
     if (isInCart && cartQuantity > 0) {
@@ -459,13 +566,9 @@ class _ExclusiveProductCard extends StatelessWidget {
           color: AppColors.primaryRed,
           borderRadius: BorderRadius.circular(20),
         ),
-
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // ------------------------------------------------------
-            // MINUS
-            // ------------------------------------------------------
             InkWell(
               onTap: () async {
                 if (cartQuantity <= 1) {
@@ -480,9 +583,6 @@ class _ExclusiveProductCard extends StatelessWidget {
               child: const Icon(Icons.remove, color: Colors.white, size: 18),
             ),
 
-            // ------------------------------------------------------
-            // QUANTITY
-            // ------------------------------------------------------
             Text(
               "$cartQuantity",
               style: const TextStyle(
@@ -492,9 +592,6 @@ class _ExclusiveProductCard extends StatelessWidget {
               ),
             ),
 
-            // ------------------------------------------------------
-            // PLUS
-            // ------------------------------------------------------
             InkWell(
               onTap: () async {
                 await cartProvider.updateCartQuantity(
@@ -510,7 +607,7 @@ class _ExclusiveProductCard extends StatelessWidget {
     }
 
     // ============================================================
-    // ADD TO NORMAL CART
+    // ADD TO CART
     // ============================================================
 
     return ElevatedButton(
@@ -519,7 +616,6 @@ class _ExclusiveProductCard extends StatelessWidget {
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-
       onPressed: cartProvider.isAdding(productId)
           ? null
           : () async {
@@ -538,7 +634,6 @@ class _ExclusiveProductCard extends StatelessWidget {
                 gravity: ToastGravity.BOTTOM,
               );
             },
-
       child: cartProvider.isAdding(productId)
           ? const SizedBox(
               height: 18,
