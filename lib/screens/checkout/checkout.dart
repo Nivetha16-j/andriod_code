@@ -1,7 +1,5 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
@@ -12,7 +10,6 @@ import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
 import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
-import 'package:junubullion/widgets/cart/custom_summary.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -35,10 +32,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController addressController = TextEditingController();
   bool isTermsAccepted = false;
   bool _isPlacingOrder = false;
-
   bool showAddressForm = false;
   String? localAddress;
   String? selectedCard;
+  bool _isCancellingConversion = false;
 
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -60,10 +57,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ? addressProvider.address!.trim()
         : (localAddress ?? '').trim();
 
-    // ------------------------------------------------------------
-    // VALIDATION
-    // ------------------------------------------------------------
-
     if (shippingAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please add your shipping address")),
@@ -78,8 +71,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    // IMPORTANT:
-    // Physical checkout uses the SAME cart as normal checkout.
     if (cartProvider.cartItems.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -104,9 +95,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       log(
         "PHYSICAL ORDER -> "
         "address=$shippingAddress "
-        "cartItems=${cartProvider.cartItems.length} "
+        "cartItems=${cartProvider.cartItems} "
         "metal=${physicalProvider.metal} "
-        "amount=${physicalProvider.amount}",
+        "amount=${physicalProvider.amount}"
+        "length = ${cartProvider.cartItems.length}",
       );
 
       final response = await CheckoutService.placePhysicalOrder(
@@ -119,18 +111,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!mounted) return;
 
       if (response["status"] == true) {
-        // ----------------------------------------------------------
-        // ORDER SUCCESS
-        // ----------------------------------------------------------
+        final Map<String, dynamic> orderData =
+            response["data"] is Map<String, dynamic>
+            ? response["data"] as Map<String, dynamic>
+            : <String, dynamic>{};
+
+        final String currency = context
+            .read<CurrencyProvider>()
+            .selectedCurrency;
 
         setState(() {
           _isPlacingOrder = false;
         });
-
-        final orderData =
-            response["data"] as Map<String, dynamic>? ?? <String, dynamic>{};
-
-        final currency = context.read<CurrencyProvider>().selectedCurrency;
 
         Navigator.pushAndRemoveUntil(
           context,
@@ -187,49 +179,70 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _loadLocalAddress() async {
     final prefs = await SharedPreferences.getInstance();
 
-    localAddress = prefs.getString("checkout_address");
+    final savedAddress = prefs.getString("checkout_address");
 
-    if (localAddress != null) {
-      addressController.text = localAddress!;
-    }
+    if (!mounted) return;
 
-    setState(() {});
+    setState(() {
+      localAddress = savedAddress;
+
+      if (savedAddress != null) {
+        addressController.text = savedAddress;
+      }
+    });
   }
 
   Future<void> _saveAddress() async {
+    final address = addressController.text.trim();
+
+    if (address.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a shipping address")),
+      );
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString("checkout_address", addressController.text.trim());
+    await prefs.setString("checkout_address", address);
+
+    if (!mounted) return;
 
     setState(() {
-      localAddress = addressController.text.trim();
+      localAddress = address;
       showAddressForm = false;
     });
   }
 
   @override
+  void dispose() {
+    addressController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cartProvider = context.watch<CartProvider>();
-
     final currencyProvider = context.watch<CurrencyProvider>();
-
     final physicalProvider = context.watch<PhysicalConversionProvider>();
+
+    final bool isCancelling = _isCancellingConversion;
 
     final bool isPhysicalConversion = physicalProvider.isActive;
 
     final String currencySymbol = currencyProvider.selectedCurrency;
 
-    final isDigital = delivery.toLowerCase() == "digital";
+    final bool isDigital = delivery.toLowerCase() == "digital";
 
-    final courierAmount = isDigital ? 0.0 : cartProvider.courierAmount;
+    final double courierAmount = isDigital ? 0.0 : cartProvider.courierAmount;
 
-    final transactionAmount = isDigital
+    final double transactionAmount = isDigital
         ? 0.0
         : cartProvider.transactionFeeAmount;
 
-    final gstAmount = isDigital ? 0.0 : cartProvider.gstAmount;
+    final double gstAmount = isDigital ? 0.0 : cartProvider.gstAmount;
 
-    final orderTotal =
+    final double orderTotal =
         cartProvider.subtotalAmount +
         courierAmount +
         transactionAmount +
@@ -239,92 +252,81 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _switchToTab,
       ),
-
       backgroundColor: Colors.grey.shade100,
       body: Stack(
         children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Shipping address',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _buildShippingAddress(),
-
-                    const SizedBox(height: 14),
-
-                    if (isPhysicalConversion) ...[
-                      _buildConversionInfo(physicalProvider),
-
-                      const SizedBox(height: 18),
-
-                      // Delivery option
-                      _buildDeliverySection(isPhysicalConversion: true),
-
-                      const SizedBox(height: 20),
-
-                      _buildTerms(),
-
-                      const SizedBox(height: 18),
-
-                      _buildPhysicalOrderSummary(cartProvider, currencySymbol),
-
-                      const SizedBox(height: 25),
-
-                      _buildActionButtons(currencySymbol, true),
-                    ] else ...[
-                      _buildDeliverySection(),
-
-                      const SizedBox(height: 20),
-
-                      if (delivery.toLowerCase() == "digital") ...[
-                        _buildDigitalSubtype(),
-
-                        const SizedBox(height: 20),
-                      ],
-
-                      _buildPaymentSection(),
-
-                      const SizedBox(height: 20),
-
-                      _buildTerms(),
-
-                      const SizedBox(height: 18),
-
-                      _buildNormalOrderSummary(
-                        cartProvider,
-                        currencySymbol,
-                        orderTotal,
-                        isDigital,
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      _buildActionButtons(currencySymbol, false),
-                    ],
-                  ],
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Shipping address',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                 ),
-              );
-            },
+
+                const SizedBox(height: 12),
+
+                _buildShippingAddress(),
+
+                const SizedBox(height: 14),
+
+                if (isPhysicalConversion) ...[
+                  _buildConversionInfo(physicalProvider),
+
+                  const SizedBox(height: 18),
+
+                  _buildDeliverySection(isPhysicalConversion: true),
+
+                  const SizedBox(height: 20),
+
+                  _buildTerms(),
+
+                  const SizedBox(height: 18),
+
+                  _buildPhysicalOrderSummary(cartProvider, currencySymbol),
+
+                  const SizedBox(height: 25),
+
+                  _buildActionButtons(currencySymbol, true),
+                ] else ...[
+                  _buildDeliverySection(),
+
+                  const SizedBox(height: 20),
+
+                  if (isDigital) ...[
+                    _buildDigitalSubtype(),
+                    const SizedBox(height: 20),
+                  ],
+
+                  _buildPaymentSection(),
+
+                  const SizedBox(height: 20),
+
+                  _buildTerms(),
+
+                  const SizedBox(height: 18),
+
+                  _buildNormalOrderSummary(
+                    cartProvider,
+                    currencySymbol,
+                    orderTotal,
+                    isDigital,
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  _buildActionButtons(currencySymbol, false),
+                ],
+              ],
+            ),
           ),
 
-          if (_isPlacingOrder)
+          if (_isPlacingOrder || _isCancellingConversion)
             Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.4),
@@ -1091,9 +1093,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final String metal = physicalProvider.metal ?? '';
     final String amount = physicalProvider.formattedAmount;
 
+    // final bool isCancelling = physicalProvider.isCancellingConversion;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF0),
         borderRadius: BorderRadius.circular(10),
@@ -1130,22 +1134,73 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(width: 10),
 
               OutlinedButton(
-                onPressed: _isPlacingOrder
+                onPressed: (_isPlacingOrder || _isCancellingConversion)
                     ? null
                     : () async {
-                        final cartProvider = context.read<CartProvider>();
+                        if (_isCancellingConversion) return;
 
-                        await physicalProvider.cancelConversion(
-                          cartProvider: cartProvider,
-                        );
+                        // IMPORTANT:
+                        // Set this BEFORE the API call so the loader
+                        // appears immediately.
+                        setState(() {
+                          _isCancellingConversion = true;
+                        });
 
-                        if (!mounted) return;
+                        try {
+                          log("CHECKOUT -> Cancelling physical conversion...");
 
-                        setState(() {});
+                          final cartProvider = context.read<CartProvider>();
+
+                          final physicalProvider = context
+                              .read<PhysicalConversionProvider>();
+
+                          await physicalProvider.cancelConversion(
+                            cartProvider: cartProvider,
+                          );
+
+                          log(
+                            "CHECKOUT -> Physical conversion cancelled successfully",
+                          );
+
+                          if (!mounted) return;
+
+                          // Refresh normal cart after cancellation.
+                          await cartProvider.fetchCart();
+
+                          if (!mounted) return;
+
+                          setState(() {
+                            _isCancellingConversion = false;
+                          });
+                        } catch (e, stackTrace) {
+                          log(
+                            "CHECKOUT -> Cancel conversion error: $e",
+                            stackTrace: stackTrace,
+                          );
+
+                          if (!mounted) return;
+
+                          setState(() {
+                            _isCancellingConversion = false;
+                          });
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                e.toString().replaceFirst("Exception: ", ""),
+                              ),
+                            ),
+                          );
+                        }
                       },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF981B1B),
-                  side: const BorderSide(color: Color(0xFF981B1B)),
+                  disabledForegroundColor: Colors.grey,
+                  side: BorderSide(
+                    color: _isCancellingConversion
+                        ? Colors.grey
+                        : const Color(0xFF981B1B),
+                  ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 10,
@@ -1154,9 +1209,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                child: const Text(
-                  'Cancel conversion',
-                  style: TextStyle(fontSize: 12),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: _isCancellingConversion
+                      ? const Row(
+                          key: ValueKey('clearing'),
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 8),
+                            Text('Clearing...', style: TextStyle(fontSize: 12)),
+                          ],
+                        )
+                      : const Text(
+                          'Cancel conversion',
+                          key: ValueKey('cancel'),
+                          style: TextStyle(fontSize: 12),
+                        ),
                 ),
               ),
             ],
@@ -1323,11 +1396,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildActionButtons(String currencySymbol, bool isPhysicalConversion) {
+    // final physicalProvider = context.watch<PhysicalConversionProvider>();
+
+    // final bool isCancelling = physicalProvider.isCancellingConversion;
+
     return Row(
       children: [
         Expanded(
           child: ElevatedButton(
-            onPressed: _isPlacingOrder
+            onPressed: (_isPlacingOrder || _isCancellingConversion)
                 ? null
                 : () {
                     if (Navigator.canPop(context)) {
@@ -1362,7 +1439,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         Expanded(
           flex: 2,
           child: ElevatedButton(
-            onPressed: _isPlacingOrder
+            onPressed: (_isPlacingOrder || _isCancellingConversion)
                 ? null
                 : () {
                     if (isPhysicalConversion) {

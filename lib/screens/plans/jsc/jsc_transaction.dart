@@ -1,15 +1,15 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
-
-import 'jsc_layout.dart';
 
 class JscTransactionHistoryScreen extends StatefulWidget {
   const JscTransactionHistoryScreen({super.key});
@@ -35,7 +35,8 @@ class _JscTransactionHistoryScreenState
 
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
 
-      body: JscLayout(
+      body: PlansLayout(
+        plans: Plans.jsc,
         selectedMenu: 'Transaction History',
         child: const JscTransactionHistoryContent(),
       ),

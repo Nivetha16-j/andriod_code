@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
-import 'package:junubullion/screens/jsc/jsc_layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
@@ -31,7 +32,8 @@ class _JscSellBackScreenState extends State<JscSellBackScreen> {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: JscLayout(
+      body: PlansLayout(
+        plans: Plans.jsc,
         selectedMenu: 'Sell Back Request',
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),

@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/models/plans.dart';
 
-class JscSidebar extends StatelessWidget {
+class PlansSidebar extends StatelessWidget {
+  final Plans plans;
   final String selectedMenu;
   final Function(String) onMenuTap;
 
-  const JscSidebar({
+  const PlansSidebar({
     super.key,
+    required this.plans,
     required this.selectedMenu,
     required this.onMenuTap,
   });
+
+  bool get isJsc => plans == Plans.jsc;
+  bool get isGsp => plans == Plans.gsp;
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +35,9 @@ class JscSidebar extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'JSC',
-              style: TextStyle(fontSize: 14, color: Colors.black87),
+            Text(
+              isJsc ? 'JSC' : 'GSP',
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
 
             const SizedBox(height: 10),
@@ -39,9 +45,16 @@ class JscSidebar extends StatelessWidget {
             _menuItem('Dashboard'),
             _menuItem('My Wallet'),
             _menuItem('Your Purchases'),
+
+            // Only GSP
+            if (isGsp) _menuItem('Monthly Investment Plan'),
+
             _menuItem('Account Details'),
             _menuItem('Transaction History'),
-            _menuItem('Convert to Physical'),
+
+            // Only JSC
+            if (isJsc) _menuItem('Convert to Physical'),
+
             _menuItem('Sell Back Request'),
             _menuItem('Lost Password'),
             _menuItem('Logout'),

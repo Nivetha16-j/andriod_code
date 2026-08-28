@@ -1,0 +1,1 @@
+enum Plans { jsc, gsp }

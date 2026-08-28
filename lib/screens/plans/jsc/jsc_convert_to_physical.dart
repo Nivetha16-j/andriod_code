@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
-import 'package:junubullion/screens/jsc/jsc_layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -30,7 +31,8 @@ class _JscConvertToPhysicalScreenState
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
 
-      body: JscLayout(
+      body: PlansLayout(
+        plans: Plans.jsc,
         selectedMenu: 'Convert To Physical',
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),

@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/services/jsc_services.dart';
-import 'package:junubullion/screens/jsc/jsc_layout.dart';
+import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -29,7 +30,8 @@ class _JscWalletScreenState extends State<JscWalletScreen> {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: JscLayout(
+      body: PlansLayout(
+        plans: Plans.jsc,
         selectedMenu: 'My Wallet',
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),

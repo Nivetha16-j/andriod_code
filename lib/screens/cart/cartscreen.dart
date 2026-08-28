@@ -21,7 +21,7 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   String? _lastCurrency;
   String? _lastUnit;
-
+  bool _isClearingConversion = false;
   final TextEditingController couponController = TextEditingController();
 
   @override
@@ -224,23 +224,87 @@ class _CartScreenState extends State<CartScreen> {
               ),
               const SizedBox(width: 8),
               OutlinedButton(
-                onPressed: () async {
-                  log("Clicked cancel");
-                  final cartProvider = context.read<CartProvider>();
-                  await provider.cancelConversion(cartProvider: cartProvider);
-                  if (!mounted) return;
-                },
+                onPressed: _isClearingConversion
+                    ? null
+                    : () async {
+                        log("Clicked cancel");
+
+                        setState(() {
+                          _isClearingConversion = true;
+                        });
+
+                        try {
+                          final cartProvider = context.read<CartProvider>();
+
+                          await provider.cancelConversion(
+                            cartProvider: cartProvider,
+                          );
+
+                          if (!mounted) return;
+
+                          // Refresh normal cart after conversion is completely cleared.
+                          await cartProvider.fetchCart();
+
+                          if (!mounted) return;
+
+                          setState(() {
+                            _isClearingConversion = false;
+                          });
+                        } catch (e, stackTrace) {
+                          log(
+                            "Error clearing conversion: $e",
+                            stackTrace: stackTrace,
+                          );
+
+                          if (!mounted) return;
+
+                          setState(() {
+                            _isClearingConversion = false;
+                          });
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Unable to clear conversion. Please try again.',
+                              ),
+                            ),
+                          );
+                        }
+                      },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF981B1B),
-                  side: const BorderSide(color: Color(0xFF981B1B)),
+                  disabledForegroundColor: Colors.grey,
+                  side: BorderSide(
+                    color: _isClearingConversion
+                        ? Colors.grey
+                        : const Color(0xFF981B1B),
+                  ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 8,
                   ),
                 ),
-                child: const Text(
-                  'Cancel conversion',
-                  style: TextStyle(fontSize: 11),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: _isClearingConversion
+                      ? const Row(
+                          key: ValueKey('clearing'),
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 8),
+                            Text('Clearing...', style: TextStyle(fontSize: 11)),
+                          ],
+                        )
+                      : const Text(
+                          'Cancel conversion',
+                          key: ValueKey('cancel'),
+                          style: TextStyle(fontSize: 11),
+                        ),
                 ),
               ),
             ],

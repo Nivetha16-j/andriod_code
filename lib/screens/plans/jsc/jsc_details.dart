@@ -4,7 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
-import 'package:junubullion/screens/jsc/jsc_form.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_form.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
@@ -772,6 +772,17 @@ class _JscProductCard extends StatelessWidget {
 
   static const String imageBaseUrl = 'https://staging.junubullion.com/storage/';
 
+  void _showMessage(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black87,
+      textColor: Colors.white,
+      fontSize: 14,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final int productId = int.tryParse('${product['id']}') ?? 0;
@@ -887,21 +898,10 @@ class _JscProductCard extends StatelessWidget {
             height: 45,
             child: Consumer2<CartProvider, PhysicalConversionProvider>(
               builder: (context, cartProvider, physicalProvider, child) {
-                // ====================================================
-                // PHYSICAL CONVERSION ACTIVE
-                // ====================================================
-
-                if (physicalProvider.isActive) {
-                  return _buildConversionButton(context);
-                }
-
-                // ====================================================
-                // NORMAL CART
-                // ====================================================
-
-                return _buildNormalCartButton(
+                return _buildCartButton(
                   context: context,
                   cartProvider: cartProvider,
+                  physicalProvider: physicalProvider,
                   productId: productId,
                   isInStock: isInStock,
                 );
@@ -914,45 +914,13 @@ class _JscProductCard extends StatelessWidget {
   }
 
   // ==================================================================
-  // PHYSICAL CONVERSION BUTTON
+  // CART BUTTON
   // ==================================================================
 
-  Widget _buildConversionButton(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () {
-        Fluttertoast.showToast(
-          msg: "Digital products cannot be added during physical conversion.",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.black87,
-          textColor: Colors.white,
-          fontSize: 14,
-        );
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primaryRed,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-      ),
-      child: const Text(
-        "ADD TO CART",
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  // ==================================================================
-  // NORMAL CART BUTTON
-  // ==================================================================
-
-  Widget _buildNormalCartButton({
+  Widget _buildCartButton({
     required BuildContext context,
     required CartProvider cartProvider,
+    required PhysicalConversionProvider physicalProvider,
     required int productId,
     required bool isInStock,
   }) {
@@ -979,7 +947,43 @@ class _JscProductCard extends StatelessWidget {
     }
 
     // ================================================================
-    // CHECK WHETHER PRODUCT IS ALREADY IN CART
+    // PHYSICAL CONVERSION ACTIVE
+    //
+    // JSC products are digital products.
+    // They must NOT be added while physical conversion is active.
+    //
+    // IMPORTANT:
+    // We are NOT using physicalCart here.
+    // ================================================================
+
+    if (physicalProvider.isActive) {
+      return ElevatedButton(
+        onPressed: () {
+          _showMessage(
+            "Digital products cannot be added during physical conversion.",
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryRed,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+        ),
+        child: const Text(
+          "ADD TO CART",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    // ================================================================
+    // NORMAL CART
     // ================================================================
 
     final bool isInCart = cartProvider.isProductInCart(productId);
@@ -989,7 +993,7 @@ class _JscProductCard extends StatelessWidget {
     if (isInCart) {
       try {
         cartItem = cartProvider.cartItems.firstWhere(
-          (item) => item["product_id"] == productId,
+          (item) => '${item["product_id"]}' == '$productId',
         );
       } catch (_) {
         cartItem = null;
@@ -999,7 +1003,7 @@ class _JscProductCard extends StatelessWidget {
     final int cartQuantity = int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
 
     // ================================================================
-    // PRODUCT ALREADY IN CART
+    // ALREADY IN NORMAL CART
     // ================================================================
 
     if (isInCart && cartQuantity > 0) {
@@ -1070,7 +1074,7 @@ class _JscProductCard extends StatelessWidget {
     }
 
     // ================================================================
-    // ADD TO CART
+    // ADD TO NORMAL CART
     // ================================================================
 
     final bool isAdding = cartProvider.isAdding(productId);
@@ -1088,11 +1092,7 @@ class _JscProductCard extends StatelessWidget {
                 return;
               }
 
-              Fluttertoast.showToast(
-                msg: success ? "Added to Cart" : "Failed to add product",
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-              );
+              _showMessage(success ? "Added to Cart" : "Failed to add product");
             },
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryRed,
