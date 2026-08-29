@@ -10,21 +10,21 @@ import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 
-class JscApplicationForm extends StatefulWidget {
+class ApplicationForm extends StatefulWidget {
   final bool isEdit;
   final String applicationType;
 
-  const JscApplicationForm({
+  const ApplicationForm({
     super.key,
     this.isEdit = false,
     required this.applicationType,
   });
 
   @override
-  State<JscApplicationForm> createState() => _JscApplicationFormState();
+  State<ApplicationForm> createState() => _ApplicationFormState();
 }
 
-class _JscApplicationFormState extends State<JscApplicationForm> {
+class _ApplicationFormState extends State<ApplicationForm> {
   bool isPersonalInfoExpanded = true;
   bool isIdentityExpanded = true;
   bool isNomineeExpanded = true;
@@ -94,6 +94,8 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
   bool get isGsp => widget.applicationType.toUpperCase() == 'GSP';
 
   String get applicationName => isGsp ? 'GSP' : 'JSC';
+
+  String get applicationType => widget.applicationType.toUpperCase();
 
   @override
   void initState() {
@@ -321,6 +323,8 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
     try {
       final response = await JscService.submitApplication(
+        applicationType: applicationType,
+
         name: fullNameController.text.trim(),
         email: emailController.text.trim(),
         dob: _formatDateForApi(dobController.text.trim()),
@@ -340,10 +344,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
         declarationAccepted: isDeclarationAccepted,
 
-        // PHOTO
         photo: selectedPhoto,
-
-        // IDENTITY DOCUMENTS
         identityFiles: selectedIdentityFiles,
       );
 
@@ -426,7 +427,9 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     });
 
     try {
-      final response = await JscService.getJscApplication();
+      final response = await JscService.getApplication(
+        applicationType: applicationType,
+      );
 
       log("$applicationName APPLICATION RESPONSE: $response");
 
@@ -2035,6 +2038,8 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
     try {
       final response = await JscService.submitApplication(
+        applicationType: applicationType,
+
         name: fullNameController.text.trim(),
         email: emailController.text.trim(),
         dob: _formatDateForApi(dobController.text.trim()),
@@ -2055,36 +2060,38 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         declarationAccepted: isDeclarationAccepted,
 
         photo: selectedPhoto,
-
         identityFiles: selectedIdentityFiles,
       );
 
-      log("JSC UPDATE RESPONSE: $response");
+      log(" UPDATE RESPONSE: $response");
 
       if (!mounted) return;
 
       if (response["success"] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("JSC application updated successfully."),
-          ),
+          const SnackBar(content: Text("Application updated successfully.")),
         );
 
         // Clear newly selected files
         selectedIdentityFiles.clear();
         selectedPhoto = null;
 
-        // Reload the application so the current values
-        // become the new original values.
-        await loadApplication();
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        if (!mounted) return;
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 0)),
+          (route) => false,
+        );
       } else {
         final body = response["body"];
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              body?["message"]?.toString() ??
-                  "Failed to update JSC application.",
+              body?["message"]?.toString() ?? "Failed to update application.",
             ),
           ),
         );

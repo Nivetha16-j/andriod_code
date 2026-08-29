@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:junubullion/routes/app_routes.dart';
-import 'package:junubullion/screens/plans/jsc/jsc_form.dart';
+import 'package:junubullion/screens/plans/jsc_form.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/services/session_manager.dart';
 

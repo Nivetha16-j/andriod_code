@@ -6,12 +6,13 @@ import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
-import 'package:junubullion/screens/plans/jsc/jsc_form.dart';
+import 'package:junubullion/screens/plans/jsc_form.dart';
 
 class GspScreen extends StatefulWidget {
   const GspScreen({super.key});
@@ -24,6 +25,37 @@ class _GspScreenState extends State<GspScreen> {
   int _currentIndex = 0;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   int? _selectedUserType;
+
+  bool isLoadingApplication = true;
+  bool hasGspRegistration = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkGspRegistration();
+  }
+
+  Future<void> _checkGspRegistration() async {
+    try {
+      final result = await JscService.getApplication(applicationType: 'GSP');
+
+      if (!mounted) return;
+
+      setState(() {
+        hasGspRegistration = result["hasRegistration"] == true;
+        isLoadingApplication = false;
+      });
+    } catch (e) {
+      debugPrint('JSC registration check error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        hasGspRegistration = false;
+        isLoadingApplication = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,14 +107,23 @@ class _GspScreenState extends State<GspScreen> {
                     height: 44,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const JscApplicationForm(
-                              applicationType: 'GSP',
-                            ),
-                          ),
-                        );
+                        hasGspRegistration
+                            ? Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ApplicationForm(
+                                    isEdit: true,
+                                    applicationType: 'GSP',
+                                  ),
+                                ),
+                              )
+                            : Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ApplicationForm(applicationType: 'GSP'),
+                                ),
+                              );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFB83F),
@@ -92,13 +133,21 @@ class _GspScreenState extends State<GspScreen> {
                           borderRadius: BorderRadius.circular(13),
                         ),
                       ),
-                      child: const Text(
-                        'Open Your GSP Account',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      child: hasGspRegistration
+                          ? Text(
+                              "View Your Gsp Application",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            )
+                          : Text(
+                              "Open Your Gsp Account",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
                     ),
                   ),
 

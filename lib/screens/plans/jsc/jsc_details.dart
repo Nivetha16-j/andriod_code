@@ -4,7 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
-import 'package:junubullion/screens/plans/jsc/jsc_form.dart';
+import 'package:junubullion/screens/plans/jsc_form.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
@@ -13,6 +13,7 @@ import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:junubullion/widgets/jsc/custom_featurecard.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/services/jsc_services.dart';
 
 class JscScreen extends StatefulWidget {
   const JscScreen({super.key});
@@ -106,10 +107,13 @@ class _JscScreenState extends State<JscScreen> {
   String? _lastCurrency;
   String? _lastUnit;
 
+  bool isLoadingApplication = true;
+  bool hasJscRegistration = false;
+
   @override
   void initState() {
     super.initState();
-
+    _checkJscRegistration();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchJscProducts();
     });
@@ -134,6 +138,28 @@ class _JscScreenState extends State<JscScreen> {
         _fetchJscProducts(showLoader: false);
       }
     });
+  }
+
+  Future<void> _checkJscRegistration() async {
+    try {
+      final result = await JscService.getApplication(applicationType: 'JSC');
+
+      if (!mounted) return;
+
+      setState(() {
+        hasJscRegistration = result["hasRegistration"] == true;
+        isLoadingApplication = false;
+      });
+    } catch (e) {
+      debugPrint('JSC registration check error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        hasJscRegistration = false;
+        isLoadingApplication = false;
+      });
+    }
   }
 
   Future<void> _fetchJscProducts({bool showLoader = true}) async {
@@ -236,7 +262,7 @@ class _JscScreenState extends State<JscScreen> {
                   const SizedBox(height: 10),
 
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.5,
+                    // width: MediaQuery.of(context).size.width * 0.5,
                     height: 54,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -247,21 +273,39 @@ class _JscScreenState extends State<JscScreen> {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                JscApplicationForm(applicationType: 'JSC'),
-                          ),
-                        );
+                        hasJscRegistration
+                            ? Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ApplicationForm(
+                                    isEdit: true,
+                                    applicationType: 'JSC',
+                                  ),
+                                ),
+                              )
+                            : Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ApplicationForm(applicationType: 'JSC'),
+                                ),
+                              );
                       },
-                      child: const Text(
-                        "Open Your Jsc Account",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
+                      child: hasJscRegistration
+                          ? Text(
+                              "View Your Jsc Application",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            )
+                          : Text(
+                              "Open Your Jsc Account",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
                     ),
                   ),
 

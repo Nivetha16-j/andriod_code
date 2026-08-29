@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
-import 'package:junubullion/screens/plans/jsc/jsc_form.dart';
+import 'package:junubullion/screens/plans/jsc_form.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/jsc_services.dart';
@@ -77,7 +77,7 @@ class _DashboardContentState extends State<_DashboardContent> {
 
   Future<void> _checkJscRegistration() async {
     try {
-      final result = await JscService.getJscApplication();
+      final result = await JscService.getApplication(applicationType: 'JSC');
 
       if (!mounted) return;
 
@@ -99,11 +99,6 @@ class _DashboardContentState extends State<_DashboardContent> {
 
   @override
   Widget build(BuildContext context) {
-    // This is now the SINGLE source of truth.
-    final isBalancesUnlocked = context
-        .watch<JscBalanceProvider>()
-        .isBalancesUnlocked;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -166,10 +161,8 @@ class _DashboardContentState extends State<_DashboardContent> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => const JscApplicationForm(
-                  isEdit: true,
-                  applicationType: 'JSC',
-                ),
+                builder: (_) =>
+                    const ApplicationForm(isEdit: true, applicationType: 'JSC'),
               ),
             );
           },

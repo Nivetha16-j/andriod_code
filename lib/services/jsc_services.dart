@@ -9,6 +9,7 @@ class JscService {
   static const String baseUrl = "https://staging.junubullion.com/api";
 
   static Future<Map<String, dynamic>> submitApplication({
+    required String applicationType,
     required String name,
     required String email,
     required String dob,
@@ -16,109 +17,90 @@ class JscService {
     required String nationality,
     required String occupation,
     required String residentialAddress,
-
     required String identityType,
     required String identityNumber,
-
     required String nomineeName,
     required String nomineeRelationship,
     required String nomineeDob,
     required String nomineeMobile,
     required String nomineeAddress,
-
     required bool declarationAccepted,
-
     PlatformFile? photo,
     List<PlatformFile> identityFiles = const [],
   }) async {
     try {
       final token = await SessionManager.getToken();
 
-      final request = http.MultipartRequest(
-        "POST",
-        Uri.parse("$baseUrl/jsc-registration"),
-      );
+      final endpoint = applicationType.toUpperCase() == "GSP"
+          ? "gsp-registration"
+          : "jsc-registration";
 
-      // ----------------------------------------------------------
-      // HEADERS
-      // ----------------------------------------------------------
+      final uri = Uri.parse("$baseUrl/$endpoint");
+
+      final request = http.MultipartRequest("POST", uri);
 
       request.headers.addAll({
         "Accept": "application/json",
         "Authorization": "Bearer $token",
       });
 
-      // ----------------------------------------------------------
-      // TEXT FIELDS
-      // ----------------------------------------------------------
+      request.fields.addAll({
+        "name": name,
+        "email": email,
+        "dob": dob,
+        "mobile": mobile,
+        "nationality": nationality,
+        "occupation": occupation,
+        "residential_address": residentialAddress,
+        "identity_type": identityType,
+        "identity_number": identityNumber,
+        "nominee_name": nomineeName,
+        "nominee_relationship": nomineeRelationship,
+        "nominee_dob": nomineeDob,
+        "nominee_mobile": nomineeMobile,
+        "nominee_address": nomineeAddress,
+        "declaration_accepted": declarationAccepted ? "1" : "0",
+      });
 
-      request.fields["name"] = name;
-      request.fields["email"] = email;
-      request.fields["dob"] = dob;
-      request.fields["mobile"] = mobile;
-      request.fields["nationality"] = nationality;
-      request.fields["occupation"] = occupation;
-      request.fields["residential_address"] = residentialAddress;
-
-      request.fields["identity_type"] = identityType;
-      request.fields["identity_number"] = identityNumber;
-
-      request.fields["nominee_name"] = nomineeName;
-      request.fields["nominee_relationship"] = nomineeRelationship;
-      request.fields["nominee_dob"] = nomineeDob;
-      request.fields["nominee_mobile"] = nomineeMobile;
-      request.fields["nominee_address"] = nomineeAddress;
-
-      request.fields["declaration_accepted"] = declarationAccepted ? "1" : "0";
-
-      // ----------------------------------------------------------
+      // ---------------------------------------------
       // PHOTO
-      // ----------------------------------------------------------
-
-      if (photo != null && photo.path != null && photo.path!.isNotEmpty) {
+      // ---------------------------------------------
+      if (photo != null &&
+          photo.path != null &&
+          photo.path!.trim().isNotEmpty) {
         request.files.add(
           await http.MultipartFile.fromPath("photo", photo.path!),
         );
+
+        log("$applicationType PHOTO: ${photo.path}");
       }
 
-      // ----------------------------------------------------------
-      // IDENTITY FILES
-      // ----------------------------------------------------------
-
+      // ---------------------------------------------
+      // IDENTITY DOCUMENTS
+      // ---------------------------------------------
       for (int i = 0; i < identityFiles.length; i++) {
         final file = identityFiles[i];
 
-        if (file.path != null && file.path!.isNotEmpty) {
+        if (file.path != null && file.path!.trim().isNotEmpty) {
           request.files.add(
             await http.MultipartFile.fromPath("identity_files[$i]", file.path!),
           );
+
+          log("$applicationType IDENTITY FILE [$i]: ${file.path}");
         }
       }
 
-      // ----------------------------------------------------------
-      // DEBUG LOG
-      // ----------------------------------------------------------
+      log("$applicationType SUBMIT URL: $uri");
 
-      log("JSC PHOTO: ${photo?.path}");
-
-      for (final file in identityFiles) {
-        log("JSC IDENTITY FILE: ${file.path}");
-      }
-
-      // ----------------------------------------------------------
-      // SEND REQUEST
-      // ----------------------------------------------------------
+      log("$applicationType FIELDS: ${request.fields}");
 
       final streamedResponse = await request.send();
 
       final response = await http.Response.fromStream(streamedResponse);
 
-      log("JSC STATUS CODE: ${response.statusCode}");
-      log("JSC RESPONSE: ${response.body}");
+      log("$applicationType STATUS CODE: ${response.statusCode}");
 
-      // ----------------------------------------------------------
-      // DECODE RESPONSE
-      // ----------------------------------------------------------
+      log("$applicationType RESPONSE: ${response.body}");
 
       dynamic body;
 
@@ -128,7 +110,7 @@ class JscService {
         body = {"message": response.body};
       }
 
-      final success = response.statusCode == 200 || response.statusCode == 201;
+      final success = response.statusCode >= 200 && response.statusCode < 300;
 
       return {
         "success": success,
@@ -136,7 +118,7 @@ class JscService {
         "body": body,
       };
     } catch (e, stackTrace) {
-      log("JSC SUBMIT ERROR: $e", stackTrace: stackTrace);
+      log("$applicationType SUBMIT ERROR: $e", stackTrace: stackTrace);
 
       return {
         "success": false,
@@ -146,21 +128,26 @@ class JscService {
     }
   }
 
-  static Future<Map<String, dynamic>> getJscApplication() async {
+  static Future<Map<String, dynamic>> getApplication({
+    required String applicationType,
+  }) async {
     try {
       final token = await SessionManager.getToken();
 
+      final endpoint = applicationType.toUpperCase() == "GSP"
+          ? "gsp-registration"
+          : "jsc-registration";
+
       final response = await http.get(
-        Uri.parse("$baseUrl/jsc-registration"),
+        Uri.parse("$baseUrl/$endpoint"),
         headers: {
           "Authorization": "Bearer $token",
           "Accept": "application/json",
         },
       );
 
-      log("JSC Registration Status: ${response.statusCode}");
-
-      log("JSC Registration Response: ${response.body}");
+      log("$applicationType Registration Status: ${response.statusCode}");
+      log("$applicationType Registration Response: ${response.body}");
 
       dynamic data;
 
@@ -174,42 +161,30 @@ class JscService {
         };
       }
 
-      // ----------------------------------------------------------
-      // SUCCESS RESPONSE
-      // ----------------------------------------------------------
-
       if (response.statusCode == 200) {
-        // IMPORTANT:
-        // Keep this check.
-        final registration = data['data']?['registration'];
+        final registration = data["data"]?["registration"];
 
-        log("JSC Registration Exists: ${registration != null}");
+        log(
+          "$applicationType Registration Exists: "
+          "${registration != null}",
+        );
 
         return {
           "success": true,
-
-          // This tells the UI whether the user already
-          // has a JSC registration.
           "hasRegistration": registration != null,
-
-          // Keep the complete data.
-          "data": data['data'],
-
-          "message": data['message'],
+          "data": data["data"],
+          "message": data["message"],
         };
       }
-
-      // ----------------------------------------------------------
-      // ERROR RESPONSE
-      // ----------------------------------------------------------
 
       return {
         "success": false,
         "hasRegistration": false,
-        "message": data["message"] ?? "Unable to load JSC application.",
+        "message":
+            data["message"] ?? "Unable to load $applicationType application.",
       };
     } catch (e, stackTrace) {
-      log("GET JSC APPLICATION ERROR: $e", stackTrace: stackTrace);
+      log("GET $applicationType APPLICATION ERROR: $e", stackTrace: stackTrace);
 
       return {
         "success": false,
