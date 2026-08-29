@@ -250,7 +250,8 @@ class _JscScreenState extends State<JscScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => JscApplicationForm(),
+                            builder: (_) =>
+                                JscApplicationForm(applicationType: 'JSC'),
                           ),
                         );
                       },

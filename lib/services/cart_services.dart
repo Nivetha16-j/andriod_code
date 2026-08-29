@@ -87,7 +87,7 @@ class CartService {
   // }
   // ============================================================
 
-  static Future<Map<String, dynamic>> removeCart({required String id}) async {
+  static Future<Map<String, dynamic>> removeCart() async {
     final token = await SessionManager.getToken();
 
     final response = await http.delete(
@@ -97,7 +97,6 @@ class CartService {
         "Accept": "application/json",
         "Content-Type": "application/json",
       },
-      body: jsonEncode({"id": id}),
     );
 
     log("Remove Cart Status: ${response.statusCode}");

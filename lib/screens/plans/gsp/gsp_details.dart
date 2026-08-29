@@ -11,6 +11,7 @@ import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_form.dart';
 
 class GspScreen extends StatefulWidget {
   const GspScreen({super.key});
@@ -74,7 +75,14 @@ class _GspScreenState extends State<GspScreen> {
                     height: 44,
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Open GSP Account
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const JscApplicationForm(
+                              applicationType: 'GSP',
+                            ),
+                          ),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFFB83F),
@@ -1042,20 +1050,9 @@ class _DashedCirclePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 
-    const double dashLength = 6;
-    const double gapLength = 5;
-
     final double radius = size.width / 2;
 
     final Path path = Path();
-
-    for (double angle = 0; angle < 360; angle += 1) {
-      final double radians = angle * 3.141592653589793 / 180;
-
-      final double x =
-          size.width / 2 +
-          radius * 0.5 * 2 * 0.5 * 2 * 0; // intentionally unused
-    }
 
     final Rect rect = Rect.fromCircle(
       center: Offset(size.width / 2, size.height / 2),

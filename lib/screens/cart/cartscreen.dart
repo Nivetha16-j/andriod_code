@@ -4,7 +4,6 @@ import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/checkout/checkout.dart';
-import 'package:junubullion/screens/checkout/physical_checkout.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/cart/custom_cartitem.dart';
 import 'package:junubullion/widgets/cart/custom_summary.dart';
@@ -227,7 +226,7 @@ class _CartScreenState extends State<CartScreen> {
                 onPressed: _isClearingConversion
                     ? null
                     : () async {
-                        log("Clicked cancel");
+                        log('Clicked cancel conversion');
 
                         setState(() {
                           _isClearingConversion = true;
@@ -235,24 +234,32 @@ class _CartScreenState extends State<CartScreen> {
 
                         try {
                           final cartProvider = context.read<CartProvider>();
+                          final currencyProvider = context
+                              .read<CurrencyProvider>();
 
-                          await provider.cancelConversion(
+                          final success = await provider.cancelConversion(
                             cartProvider: cartProvider,
+                            currencyProvider: currencyProvider,
                           );
-
-                          if (!mounted) return;
-
-                          // Refresh normal cart after conversion is completely cleared.
-                          await cartProvider.fetchCart();
 
                           if (!mounted) return;
 
                           setState(() {
                             _isClearingConversion = false;
                           });
+
+                          if (!success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Unable to cancel physical conversion. Please try again.',
+                                ),
+                              ),
+                            );
+                          }
                         } catch (e, stackTrace) {
                           log(
-                            "Error clearing conversion: $e",
+                            'Error clearing conversion: $e',
                             stackTrace: stackTrace,
                           );
 
@@ -265,7 +272,7 @@ class _CartScreenState extends State<CartScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                'Unable to clear conversion. Please try again.',
+                                'Unable to cancel physical conversion. Please try again.',
                               ),
                             ),
                           );

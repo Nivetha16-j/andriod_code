@@ -36,40 +36,14 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
   String currencySymbol = '';
 
   bool isBalanceUnlocked = false;
-  bool isCheckingBalanceUnlock = true;
+  bool isCheckingUnlockState = true;
+  bool isFetchingWallet = false;
 
   @override
   void initState() {
     super.initState();
-
     balanceUnlockedNotifier.addListener(_onBalanceStateChanged);
-
-    _checkBalanceUnlockStatus();
-  }
-
-  void _onBalanceStateChanged() {
-    if (!mounted) return;
-
-    final unlocked = balanceUnlockedNotifier.value;
-
-    setState(() {
-      isBalanceUnlocked = unlocked;
-    });
-
-    // If logout happens, immediately clear displayed balance.
-    if (!unlocked) {
-      setState(() {
-        goldBalance = '...';
-        goldUnit = 'grams';
-        goldMarketValue = '...';
-
-        silverBalance = '...';
-        silverUnit = 'oz';
-        silverMarketValue = '...';
-
-        currencySymbol = '';
-      });
-    }
+    _initializeBalanceState();
   }
 
   @override
@@ -78,54 +52,33 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
     super.dispose();
   }
 
-  Future<void> _checkBalanceUnlockStatus() async {
+  Future<void> _initializeBalanceState() async {
     try {
-      final unlocked = await SessionManager.isBalanceUnlocked();
+      final bool unlocked = await SessionManager.isBalanceUnlocked();
 
-      debugPrint('JSC BALANCE -> SessionManager unlocked: $unlocked');
+      log('JSC BALANCE -> Saved unlock state: $unlocked');
 
       if (!mounted) return;
 
-      // Synchronize global state.
-      if (balanceUnlockedNotifier.value != unlocked) {
-        balanceUnlockedNotifier.value = unlocked;
-      }
+      balanceUnlockedNotifier.value = unlocked;
 
-      if (unlocked) {
-        final savedData = await SessionManager.getSavedBalanceData();
+      if (!unlocked) {
+        _clearWalletDisplay();
 
-        if (!mounted) return;
-
-        setState(() {
-          isBalanceUnlocked = true;
-
-          goldBalance = savedData['goldBalance'] ?? '...';
-
-          goldUnit = savedData['goldUnit'] ?? 'grams';
-
-          goldMarketValue = savedData['goldMarketValue'] ?? '...';
-
-          silverBalance = savedData['silverBalance'] ?? '...';
-
-          silverUnit = savedData['silverUnit'] ?? 'oz';
-
-          silverMarketValue = savedData['silverMarketValue'] ?? '...';
-
-          currencySymbol = savedData['currencySymbol'] ?? '';
-        });
-
-        // IMPORTANT:
-        // No data argument is required here.
-        // This is only notifying the parent that
-        // balances are already unlocked.
-        await widget.onUnlocked?.call();
+        if (mounted) {
+          context.read<JscBalanceProvider>().setUnlocked(false);
+        }
       } else {
         setState(() {
-          isBalanceUnlocked = false;
+          isBalanceUnlocked = true;
         });
+
+        context.read<JscBalanceProvider>().setUnlocked(true);
+
+        await _fetchAllBackendData();
       }
-    } catch (e) {
-      debugPrint('JSC BALANCE -> unlock status error: $e');
+    } catch (e, stackTrace) {
+      log('JSC BALANCE -> Initialization error: $e', stackTrace: stackTrace);
 
       if (!mounted) return;
 
@@ -134,32 +87,269 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
       });
 
       balanceUnlockedNotifier.value = false;
+
+      context.read<JscBalanceProvider>().setUnlocked(false);
+
+      _clearWalletDisplay();
     } finally {
       if (!mounted) return;
 
       setState(() {
-        isCheckingBalanceUnlock = false;
+        isCheckingUnlockState = false;
       });
     }
   }
 
-  Future<void> _onBalancesUnlocked(Map<String, dynamic> data) async {
+  void _onBalanceStateChanged() {
+    if (!mounted) return;
+
+    final bool unlocked = balanceUnlockedNotifier.value;
+
+    if (isBalanceUnlocked == unlocked) {
+      return;
+    }
+
+    setState(() {
+      isBalanceUnlocked = unlocked;
+    });
+
+    if (!unlocked) {
+      _clearWalletDisplay();
+      context.read<JscBalanceProvider>().setUnlocked(false);
+    }
+  }
+
+  void _clearWalletDisplay() {
+    if (!mounted) return;
+
+    setState(() {
+      goldBalance = '...';
+      goldUnit = 'grams';
+      goldMarketValue = '...';
+
+      silverBalance = '...';
+      silverUnit = 'oz';
+      silverMarketValue = '...';
+
+      currencySymbol = '';
+    });
+  }
+
+  Future<void> _fetchAllBackendData() async {
+    if (!mounted) return;
+
+    if (isFetchingWallet) {
+      return;
+    }
+
+    if (!isBalanceUnlocked) {
+      return;
+    }
+
+    setState(() {
+      isFetchingWallet = true;
+    });
+
     try {
-      // Save persistent unlock state.
+      final currencyProvider = context.read<CurrencyProvider>();
+
+      final String currency = currencyProvider.selectedCurrency;
+
+      log('JSC BALANCE -> Fetching backend wallet data');
+
+      log('JSC BALANCE -> Currency: $currency');
+
+      await _fetchWallet(currency);
+
+      try {
+        final transactionsResult = await JscService.getTransactions(
+          currency: currency,
+        );
+
+        log(
+          'JSC BALANCE -> Transactions: '
+          '$transactionsResult',
+        );
+      } catch (e, stackTrace) {
+        log('JSC BALANCE -> Transactions error: $e', stackTrace: stackTrace);
+      }
+
+      try {
+        final sellBackResult = await JscService.getSellBackDetails(
+          currency: currency,
+        );
+
+        log(
+          'JSC BALANCE -> Sell Back: '
+          '$sellBackResult',
+        );
+      } catch (e, stackTrace) {
+        log('JSC BALANCE -> Sell Back error: $e', stackTrace: stackTrace);
+      }
+
+      if (mounted) {
+        await widget.onUnlocked?.call();
+      }
+    } catch (e, stackTrace) {
+      log('JSC BALANCE -> Backend fetch error: $e', stackTrace: stackTrace);
+    } finally {
+      if (!mounted) return;
+
+      setState(() {
+        isFetchingWallet = false;
+      });
+    }
+  }
+
+  Future<void> _fetchWallet(String currency) async {
+    try {
+      log('JSC WALLET -> Calling fetchWallet()');
+
+      final result = await JscService.fetchWallet(currency: currency);
+
+      log('JSC WALLET RESPONSE -> $result');
+
+      if (!mounted) return;
+
+      if (result['status'] != true) {
+        log('JSC WALLET -> Backend returned status false');
+        return;
+      }
+
+      final Map<String, dynamic> data = result['data'] is Map
+          ? Map<String, dynamic>.from(result['data'])
+          : <String, dynamic>{};
+
+      log('JSC WALLET DATA -> $data');
+
+      // ============================================================
+      // RESPONSE STRUCTURE:
+      //
+      // data
+      //   -> summary
+      //       -> symbol
+      //       -> metals
+      //           -> gold
+      //           -> silver
+      // ============================================================
+
+      final Map<String, dynamic> summary = data['summary'] is Map
+          ? Map<String, dynamic>.from(data['summary'])
+          : <String, dynamic>{};
+
+      final Map<String, dynamic> metals = summary['metals'] is Map
+          ? Map<String, dynamic>.from(summary['metals'])
+          : <String, dynamic>{};
+
+      final Map<String, dynamic> gold = metals['gold'] is Map
+          ? Map<String, dynamic>.from(metals['gold'])
+          : <String, dynamic>{};
+
+      final Map<String, dynamic> silver = metals['silver'] is Map
+          ? Map<String, dynamic>.from(metals['silver'])
+          : <String, dynamic>{};
+
+      log('JSC WALLET SUMMARY -> $summary');
+      log('JSC WALLET METALS -> $metals');
+      log('JSC WALLET GOLD -> $gold');
+      log('JSC WALLET SILVER -> $silver');
+
+      // ============================================================
+      // GOLD
+      // ============================================================
+
+      final String newGoldBalance = gold['balance']?.toString() ?? '0.0000';
+
+      final String newGoldUnit =
+          gold['unit_label']?.toString() ?? gold['unit']?.toString() ?? 'grams';
+
+      final String newGoldMarketValue =
+          gold['formatted_value']?.toString() ??
+          gold['value']?.toString() ??
+          '0.00';
+
+      // ============================================================
+      // SILVER
+      // ============================================================
+
+      final String newSilverBalance = silver['balance']?.toString() ?? '0.0000';
+
+      final String newSilverUnit =
+          silver['unit_label']?.toString() ??
+          silver['unit']?.toString() ??
+          'grams';
+
+      final String newSilverMarketValue =
+          silver['formatted_value']?.toString() ??
+          silver['value']?.toString() ??
+          '0.00';
+
+      // ============================================================
+      // CURRENCY
+      // ============================================================
+
+      final String newCurrencySymbol =
+          summary['symbol']?.toString() ??
+          data['currency_symbol']?.toString() ??
+          '';
+
+      log(
+        'JSC WALLET FINAL -> '
+        'Gold: $newGoldBalance $newGoldUnit | $newGoldMarketValue | '
+        'Silver: $newSilverBalance $newSilverUnit | $newSilverMarketValue | '
+        'Symbol: $newCurrencySymbol',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        goldBalance = newGoldBalance;
+        goldUnit = newGoldUnit;
+        goldMarketValue = newGoldMarketValue;
+
+        silverBalance = newSilverBalance;
+        silverUnit = newSilverUnit;
+        silverMarketValue = newSilverMarketValue;
+
+        currencySymbol = newCurrencySymbol;
+      });
+    } catch (e, stackTrace) {
+      log('JSC WALLET -> Fetch error: $e', stackTrace: stackTrace);
+    }
+  }
+
+  // ============================================================
+  // CALLED AFTER UNLOCK API SUCCESS
+  // ============================================================
+
+  Future<void> _onBalancesUnlocked(Map<String, dynamic> unlockData) async {
+    try {
+      log(
+        'JSC UNLOCK -> Backend unlock response: '
+        '$unlockData',
+      );
+
+      // ========================================================
+      // STEP 1
+      // SAVE ONLY UNLOCK STATE
+      // ========================================================
+
       await SessionManager.saveBalanceUnlocked();
 
-      // Save balance information.
-      await SessionManager.saveBalanceData(data);
+      log('JSC UNLOCK -> Unlock state saved');
 
-      final gold = data['gold'] as Map<String, dynamic>? ?? <String, dynamic>{};
+      // ========================================================
+      // STEP 2
+      // UPDATE GLOBAL NOTIFIER
+      // ========================================================
 
-      final silver =
-          data['silver'] as Map<String, dynamic>? ?? <String, dynamic>{};
-
-      // Update global state.
       balanceUnlockedNotifier.value = true;
 
-      // Update Provider state.
+      // ========================================================
+      // STEP 3
+      // UPDATE PROVIDER
+      // ========================================================
+
       if (mounted) {
         context.read<JscBalanceProvider>().setUnlocked(true);
       }
@@ -168,39 +358,61 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
 
       setState(() {
         isBalanceUnlocked = true;
-
-        goldBalance = gold['balance']?.toString() ?? '0.0000';
-
-        goldUnit = gold['unit']?.toString() ?? 'gram';
-
-        goldMarketValue = gold['market_value']?.toString() ?? '0';
-
-        silverBalance = silver['balance']?.toString() ?? '0.0000';
-
-        silverUnit = silver['unit']?.toString() ?? 'oz';
-
-        silverMarketValue = silver['market_value']?.toString() ?? '0';
-
-        currencySymbol = data['currency_symbol']?.toString() ?? '';
       });
 
-      await widget.onUnlocked?.call();
-    } catch (e) {
-      debugPrint('Saving balance data error: $e');
+      // ========================================================
+      // STEP 4
+      //
+      // DO NOT DISPLAY unlockData AS THE FINAL WALLET STATE.
+      //
+      // Fetch wallet again from backend.
+      // ========================================================
+
+      await _fetchAllBackendData();
+
+      log('JSC UNLOCK -> All backend data fetched successfully');
+    } catch (e, stackTrace) {
+      log('JSC UNLOCK -> Error after unlock: $e', stackTrace: stackTrace);
     }
   }
 
+  // ============================================================
+  // BUILD
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
+    // ============================================================
+    // CHECKING SAVED UNLOCK STATE
+    // ============================================================
+
+    if (isCheckingUnlockState) {
+      return const SizedBox(
+        height: 120,
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!isCheckingBalanceUnlock && !isBalanceUnlocked)
+        // ========================================================
+        // UNLOCK CARD
+        // ========================================================
+        if (!isBalanceUnlocked)
           UnlockBalanceCard(onUnlocked: _onBalancesUnlocked),
 
-        if (!isCheckingBalanceUnlock && !isBalanceUnlocked)
-          const SizedBox(height: 20),
+        if (!isBalanceUnlocked) const SizedBox(height: 20),
 
+        // ========================================================
+        // WALLET BALANCES
+        // ========================================================
         if (widget.showBalances)
           Row(
             children: [
@@ -236,6 +448,10 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
   }
 }
 
+// ==================================================================
+// UNLOCK BALANCE CARD
+// ==================================================================
+
 class UnlockBalanceCard extends StatefulWidget {
   final Future<void> Function(Map<String, dynamic> data) onUnlocked;
 
@@ -256,13 +472,18 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
     super.dispose();
   }
 
+  // ============================================================
+  // UNLOCK BALANCES
+  // ============================================================
+
   Future<void> _unlockBalances() async {
-    final password = controller.text.trim();
+    final String password = controller.text.trim();
 
     if (password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter your unlock password.')),
       );
+
       return;
     }
 
@@ -272,17 +493,27 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
 
     final currencyProvider = context.read<CurrencyProvider>();
 
-    final currency = currencyProvider.selectedCurrency;
+    final String currency = currencyProvider.selectedCurrency;
 
     try {
       log('JSC UNLOCK -> Currency: $currency');
+
+      // ========================================================
+      // 1. UNLOCK API
+      // ========================================================
 
       final result = await JscService.unlockWallet(
         unlockPassword: password,
         currency: currency,
       );
 
+      log('JSC UNLOCK RESPONSE -> $result');
+
       if (!mounted) return;
+
+      // ========================================================
+      // UNLOCK FAILED
+      // ========================================================
 
       if (result['status'] != true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -292,44 +523,40 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
             ),
           ),
         );
+
         return;
       }
 
-      final data =
-          result['data'] as Map<String, dynamic>? ?? <String, dynamic>{};
+      // ========================================================
+      // BACKEND UNLOCK RESPONSE
+      // ========================================================
 
-      // This updates SessionManager + Provider + notifier.
+      final Map<String, dynamic> data = result['data'] is Map
+          ? Map<String, dynamic>.from(result['data'])
+          : <String, dynamic>{};
+
+      log('JSC UNLOCK DATA -> $data');
+
+      // ========================================================
+      // 2. SAVE ONLY UNLOCK STATE
+      //
+      // _onBalancesUnlocked() handles:
+      //
+      // SharedPreferences
+      // Provider
+      // notifier
+      // wallet API
+      // transactions API
+      // sell-back API
+      // ========================================================
+
       await widget.onUnlocked(data);
 
-      // Transactions.
-      try {
-        final transactionsResult = await JscService.getTransactions(
-          currency: currency,
-        );
-
-        log(
-          'Transactions after unlock: '
-          '$transactionsResult',
-        );
-      } catch (e) {
-        log('Failed to fetch transactions after unlock: $e');
-      }
-
-      // Sell back details.
-      try {
-        final sellBackResult = await JscService.getSellBackDetails(
-          currency: currency,
-        );
-
-        log(
-          'Sell Back after unlock: '
-          '$sellBackResult',
-        );
-      } catch (e) {
-        log('Failed to fetch sell back details after unlock: $e');
-      }
-
       if (!mounted) return;
+
+      // ========================================================
+      // SUCCESS MESSAGE
+      // ========================================================
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -338,14 +565,14 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
           ),
         ),
       );
-    } catch (e) {
-      debugPrint('Unlock balances error: $e');
+    } catch (e, stackTrace) {
+      log('JSC UNLOCK ERROR -> $e', stackTrace: stackTrace);
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to unlock balances: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -354,6 +581,10 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
       }
     }
   }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -468,6 +699,10 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
   }
 }
 
+// ==================================================================
+// BALANCE CARD
+// ==================================================================
+
 class _BalanceCard extends StatelessWidget {
   final String title;
   final String balanceValue;
@@ -527,6 +762,9 @@ class _BalanceCard extends StatelessWidget {
                   ),
                 ),
               ),
+
+              const SizedBox(width: 2),
+
               Text(
                 unit,
                 style: const TextStyle(
@@ -540,7 +778,7 @@ class _BalanceCard extends StatelessWidget {
           Text(
             marketValue == '...'
                 ? '... market value'
-                : '$currencySymbol$marketValue market value',
+                : '$marketValue market value',
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 10,

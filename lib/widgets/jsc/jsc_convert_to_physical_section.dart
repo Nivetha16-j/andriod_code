@@ -549,64 +549,11 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       return;
     }
 
-    if (!mounted) return;
-
-    setState(() {
-      isStartingOrder = true;
-    });
-
-    try {
-      final cartProvider = context.read<CartProvider>();
-
-      // ============================================================
-      // MOVE NORMAL CART TO PHYSICAL ORDER STORAGE
-      // ============================================================
-
-      final success = await cartProvider.moveCartToPhysicalOrder();
-
-      if (!success) {
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to start physical order. Please try again.'),
-          ),
-        );
-
-        return;
-      }
-
-      // ============================================================
-      // START PHYSICAL CONVERSION
-      // ============================================================
-
-      final physicalProvider = context.read<PhysicalConversionProvider>();
-
-      physicalProvider.startConversion(metal: 'Gold', amount: amount);
-
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 2)),
-      );
-    } catch (e) {
-      log('❌ Start Gold Order Error: $e');
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Something went wrong while starting the order.'),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          isStartingOrder = false;
-        });
-      }
+    if (!_canConvertGold) {
+      return;
     }
+
+    await _showStartConversionDialog(metal: 'Gold', amount: amount);
   }
 
   Future<void> _openSilverConversion() async {
@@ -616,6 +563,80 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       return;
     }
 
+    if (!_canConvertSilver) {
+      return;
+    }
+
+    await _showStartConversionDialog(metal: 'Silver', amount: amount);
+  }
+
+  Future<void> _showStartConversionDialog({
+    required String metal,
+    required double amount,
+  }) async {
+    final currencyProvider = context.read<CurrencyProvider>();
+
+    final currency = currencyProvider.selectedCurrency;
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFFEF9),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          title: const Text(
+            'Start Physical Conversion',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'Start a physical conversion order with '
+            '${amount.toStringAsFixed(4)} g of $metal?',
+            style: const TextStyle(fontSize: 14, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF168A3D),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(7),
+                ),
+              ),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await _startPhysicalConversion(
+      metal: metal,
+      amount: amount,
+      currency: currency,
+    );
+  }
+
+  Future<void> _startPhysicalConversion({
+    required String metal,
+    required double amount,
+    required String currency,
+  }) async {
     if (!mounted) return;
 
     setState(() {
@@ -623,40 +644,148 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     });
 
     try {
+      log(
+        '🚀 START PHYSICAL CONVERSION -> '
+        'metal=$metal '
+        'amount=$amount '
+        'currency=$currency',
+      );
+
+      // ============================================================
+      // STEP 1: CALL CONVERT API
+      // ============================================================
+
+      final convertResponse = await JscService.convertToPhysical(
+        metal: metal,
+        amount: amount,
+        currency: currency,
+      );
+
+      log('🔥 CONVERT RESPONSE: $convertResponse');
+
+      if (!mounted) return;
+
+      // ============================================================
+      // STEP 2: READ API RESPONSE
+      // ============================================================
+
+      final bool apiStatus = convertResponse['status'] == true;
+
+      final data = convertResponse['data'];
+
+      final String? conversionStatus = data is Map
+          ? data['status']?.toString().trim().toLowerCase()
+          : null;
+
+      final String responseMetal = data is Map
+          ? data['metal']?.toString() ?? metal
+          : metal;
+
+      final double responseAmount = data is Map
+          ? double.tryParse(
+                  '${data['amount_grams'] ?? data['amount'] ?? amount}',
+                ) ??
+                amount
+          : amount;
+
+      final String message =
+          convertResponse['message']?.toString() ??
+          'Unable to start physical conversion.';
+
+      log(
+        'CONVERT RESULT -> '
+        'apiStatus=$apiStatus '
+        'conversionStatus=$conversionStatus '
+        'metal=$responseMetal '
+        'amount=$responseAmount',
+      );
+
+      // ============================================================
+      // STEP 3: CONVERSION MUST BE ACTIVE
+      // ============================================================
+
+      if (!apiStatus || conversionStatus != 'active') {
+        log(
+          '❌ PHYSICAL CONVERSION NOT ACTIVE -> '
+          'apiStatus=$apiStatus '
+          'status=$conversionStatus',
+        );
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+
+        return;
+      }
+
+      log('✅ PHYSICAL CONVERSION API SUCCESS');
+      log('✅ Conversion status = ACTIVE');
+
+      // ============================================================
+      // STEP 4: MOVE NORMAL CART TO PHYSICAL ORDER
+      // ============================================================
+
+      log('➡️ Moving normal cart to physical order');
+
       final cartProvider = context.read<CartProvider>();
 
-      final success = await cartProvider.moveCartToPhysicalOrder();
+      final cartSuccess = await cartProvider.moveCartToPhysicalOrder();
 
-      if (!success) {
+      if (!cartSuccess) {
         if (!mounted) return;
+
+        log('❌ Failed to move normal cart');
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Unable to start physical order. Please try again.'),
+            content: Text(
+              'Conversion started, but the cart could not be moved.',
+            ),
           ),
         );
 
         return;
       }
 
+      log('✅ NORMAL CART MOVED SUCCESSFULLY');
+
+      // ============================================================
+      // STEP 5: UPDATE PROVIDER FROM API RESPONSE
+      // ============================================================
+
       final physicalProvider = context.read<PhysicalConversionProvider>();
 
-      physicalProvider.startConversion(metal: 'Silver', amount: amount);
+      physicalProvider.updateFromApi(
+        status: conversionStatus ?? '',
+        metal: responseMetal,
+        amount: responseAmount,
+      );
+
+      log(
+        '✅ PHYSICAL PROVIDER UPDATED FROM API -> '
+        'status=$conversionStatus '
+        'metal=$responseMetal '
+        'amount=$responseAmount',
+      );
 
       if (!mounted) return;
+
+      // ============================================================
+      // STEP 6: NAVIGATE TO CART
+      // ============================================================
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 2)),
       );
-    } catch (e) {
-      log('❌ Start Silver Order Error: $e');
+    } catch (e, stackTrace) {
+      log('❌ START PHYSICAL CONVERSION ERROR: $e', stackTrace: stackTrace);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Something went wrong while starting the order.'),
+          content: Text('Something went wrong while starting the conversion.'),
         ),
       );
     } finally {

@@ -8,7 +8,7 @@ import 'package:junubullion/services/session_manager.dart';
 class JscService {
   static const String baseUrl = "https://staging.junubullion.com/api";
 
-  static Future<Map<String, dynamic>> submitJscApplication({
+  static Future<Map<String, dynamic>> submitApplication({
     required String name,
     required String email,
     required String dob,
@@ -374,5 +374,78 @@ class JscService {
     throw Exception(
       'Failed to fetch convert physical data: ${response.statusCode}',
     );
+  }
+
+  static Future<Map<String, dynamic>> convertToPhysical({
+    required String metal,
+    required double amount,
+    required String currency,
+  }) async {
+    final token = await SessionManager.getToken();
+
+    final url = Uri.parse(
+      'https://staging.junubullion.com/api/my-account/wallet/convert',
+    );
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'metal': metal.toLowerCase(),
+        'amount': amount,
+        'currency': currency,
+      }),
+    );
+
+    log('CONVERT API STATUS: ${response.statusCode}');
+    log('CONVERT API BODY: ${response.body}');
+
+    try {
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      return {'status': false, 'message': 'Invalid response from server.'};
+    } catch (e) {
+      log('Convert API JSON error: $e');
+
+      return {'status': false, 'message': 'Invalid response from server.'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> cancelPhysicalConversion({
+    required String metal,
+    required double amount,
+    required String currency,
+  }) async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.post(
+      Uri.parse(
+        'https://staging.junubullion.com/api/my-account/wallet/convert/cancel',
+      ),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'metal': metal.toLowerCase(),
+        'amount': amount,
+        'currency': currency,
+      }),
+    );
+
+    log('CANCEL CONVERSION RESPONSE: ${response.statusCode}');
+    log('CANCEL CONVERSION BODY: ${response.body}');
+
+    final responseData = jsonDecode(response.body);
+
+    return Map<String, dynamic>.from(responseData);
   }
 }

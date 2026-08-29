@@ -12,8 +12,13 @@ import 'package:junubullion/widgets/home/custon_appbar.dart';
 
 class JscApplicationForm extends StatefulWidget {
   final bool isEdit;
+  final String applicationType;
 
-  const JscApplicationForm({super.key, this.isEdit = false});
+  const JscApplicationForm({
+    super.key,
+    this.isEdit = false,
+    required this.applicationType,
+  });
 
   @override
   State<JscApplicationForm> createState() => _JscApplicationFormState();
@@ -86,6 +91,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
   List<String> _originalIdentityFiles = [];
 
+  bool get isGsp => widget.applicationType.toUpperCase() == 'GSP';
+
+  String get applicationName => isGsp ? 'GSP' : 'JSC';
+
   @override
   void initState() {
     super.initState();
@@ -93,7 +102,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     loadUser();
 
     if (widget.isEdit) {
-      loadJscApplication();
+      loadApplication();
     }
   }
 
@@ -116,14 +125,21 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
   }
 
   Future<void> loadUser() async {
-    final user = await SessionManager.getUser();
-    log("uuuuuuu $user");
+    try {
+      final user = await SessionManager.getUser();
 
-    setState(() {
-      fullNameController.text = user?["name"] ?? "";
-      emailController.text = user?["email"] ?? "";
-      mobileController.text = user?["phone_number"] ?? "";
-    });
+      log("USER: $user");
+
+      if (!mounted) return;
+
+      setState(() {
+        fullNameController.text = user?["name"]?.toString() ?? "";
+        emailController.text = user?["email"]?.toString() ?? "";
+        mobileController.text = user?["phone_number"]?.toString() ?? "";
+      });
+    } catch (e, stackTrace) {
+      log("LOAD USER ERROR: $e", stackTrace: stackTrace);
+    }
   }
 
   void _checkForChanges() {
@@ -149,7 +165,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         selectedIdentityFiles.isNotEmpty ||
         !_listEquals(currentIdentityFiles, _originalIdentityFiles);
 
-    if (hasChanges != changed) {
+    if (mounted && hasChanges != changed) {
       setState(() {
         hasChanges = changed;
       });
@@ -275,7 +291,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     }
   }
 
-  Future<void> submitJscApplication() async {
+  Future<void> submitApplication() async {
     if (!isDeclarationAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -304,7 +320,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     });
 
     try {
-      final response = await JscService.submitJscApplication(
+      final response = await JscService.submitApplication(
         name: fullNameController.text.trim(),
         email: emailController.text.trim(),
         dob: _formatDateForApi(dobController.text.trim()),
@@ -337,8 +353,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
       if (response["success"] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("JSC application submitted successfully."),
+          SnackBar(
+            content: Text(
+              "$applicationName application submitted successfully.",
+            ),
           ),
         );
 
@@ -351,9 +369,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
           MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 0)),
           (route) => false,
         );
-
-        // Optional:
-        // Navigator.pop(context);
       } else {
         final body = response["body"];
 
@@ -361,19 +376,23 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
           SnackBar(
             content: Text(
               body?["message"]?.toString() ??
-                  "Failed to submit JSC application.",
+                  "Failed to submit $applicationName application.",
             ),
           ),
         );
       }
     } catch (e) {
-      log("JSC SUBMIT ERROR: $e");
+      log("SUBMIT ERROR: $e");
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Something went wrong: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Something went wrong while submitting $applicationName application: $e",
+          ),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -401,7 +420,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     return value;
   }
 
-  Future<void> loadJscApplication() async {
+  Future<void> loadApplication() async {
     setState(() {
       isLoadingApplication = true;
     });
@@ -409,7 +428,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     try {
       final response = await JscService.getJscApplication();
 
-      log("JSC APPLICATION RESPONSE: $response");
+      log("$applicationName APPLICATION RESPONSE: $response");
 
       if (!mounted) return;
 
@@ -528,12 +547,14 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         }
       }
     } catch (e, stackTrace) {
-      log("JSC LOAD ERROR: $e", stackTrace: stackTrace);
+      log("$applicationName LOAD ERROR: $e", stackTrace: stackTrace);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load JSC application: $e")),
+        SnackBar(
+          content: Text("Failed to load $applicationName application: $e"),
+        ),
       );
     } finally {
       if (mounted) {
@@ -597,12 +618,9 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
               children: [
                 const SizedBox(height: 10),
 
-                // ------------------------------------------------
-                // TITLE
-                // ------------------------------------------------
-                const Text(
-                  "JSC Application Form",
-                  style: TextStyle(
+                Text(
+                  "$applicationName Application Form",
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: Colors.black,
@@ -739,7 +757,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                             ? null
                             : isEditMode
                             ? (hasChanges ? updateJscApplication : null)
-                            : submitJscApplication,
+                            : submitApplication,
 
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xff941A1D),
@@ -1196,7 +1214,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                     onChanged: (value) {
                       setState(() {
                         selectedIdType = value;
-
                         selectedIdentityFiles.clear();
                       });
 
@@ -1507,6 +1524,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                                     setState(() {
                                       selectedIdentityFiles.removeAt(index);
                                     });
+
+                                    if (isEditMode) {
+                                      _checkForChanges();
+                                    }
                                   },
                                   icon: const Icon(
                                     Icons.delete_outline,
@@ -1529,7 +1550,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
   Future<void> pickIdentityFiles() async {
     try {
-      // How many more files can be selected
       final remainingFiles = 2 - selectedIdentityFiles.length;
 
       if (remainingFiles <= 0) {
@@ -1561,7 +1581,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         return;
       }
 
-      // 5 MB per file
       const maxFileSize = 5 * 1024 * 1024;
 
       for (final file in result.files) {
@@ -1574,7 +1593,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
           return;
         }
 
-        // Make sure bytes are available for preview
         if (file.bytes == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1586,28 +1604,20 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
       }
 
       setState(() {
-        isUploadingIdentityFiles = true;
-      });
-
-      // Add instead of replacing
-      setState(() {
         selectedIdentityFiles.addAll(result.files);
-        isUploadingIdentityFiles = false;
       });
 
       if (isEditMode) {
         _checkForChanges();
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          isUploadingIdentityFiles = false;
-        });
+    } catch (e, stackTrace) {
+      log("IDENTITY FILE PICK ERROR: $e", stackTrace: stackTrace);
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Failed to select files: $e")));
-      }
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to select files: $e")));
     }
   }
 
@@ -1998,7 +2008,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
     if (!isDeclarationAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text("Please accept the declaration before updating."),
         ),
       );
@@ -2024,7 +2034,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     });
 
     try {
-      final response = await JscService.submitJscApplication(
+      final response = await JscService.submitApplication(
         name: fullNameController.text.trim(),
         email: emailController.text.trim(),
         dob: _formatDateForApi(dobController.text.trim()),
@@ -2066,7 +2076,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
         // Reload the application so the current values
         // become the new original values.
-        await loadJscApplication();
+        await loadApplication();
       } else {
         final body = response["body"];
 

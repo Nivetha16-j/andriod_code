@@ -166,7 +166,10 @@ class _DashboardContentState extends State<_DashboardContent> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => const JscApplicationForm(isEdit: true),
+                builder: (_) => const JscApplicationForm(
+                  isEdit: true,
+                  applicationType: 'JSC',
+                ),
               ),
             );
           },

@@ -378,9 +378,7 @@ class CartProvider extends ChangeNotifier {
       // REMOVE NORMAL CART FROM BACKEND
       // ============================================================
 
-      final removeResponse = await CartService.removeCart(
-        id: accountId.toString(),
-      );
+      final removeResponse = await CartService.removeCart();
 
       log('🗑️ Remove Cart Response: $removeResponse');
 
@@ -417,42 +415,127 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> restorePhysicalOrderProducts() async {
+  Future<bool> restorePhysicalOrderProducts() async {
     try {
       final products = await SessionManager.getPhysicalOrderProducts();
 
       if (products.isEmpty) {
         log('ℹ️ No saved products to restore');
-        return;
+        return true;
       }
 
       log(
         '♻️ Restoring ${products.length} products '
-        'to normal cart',
+        'from secure storage',
       );
+
+      bool allRestored = true;
 
       for (final product in products) {
         final dynamic productId = product['product_id'];
 
         if (productId == null) {
+          log('⚠️ Saved product has no product_id: $product');
+          allRestored = false;
           continue;
         }
 
         final int quantity = int.tryParse('${product['quantity'] ?? 1}') ?? 1;
 
-        await addToCart(
+        log(
+          '♻️ Restoring product '
+          'productId=$productId '
+          'quantity=$quantity',
+        );
+
+        final success = await addToCart(
           productId: int.parse(productId.toString()),
           quantity: quantity,
         );
+
+        if (!success) {
+          log(
+            '❌ Failed to restore product '
+            'productId=$productId',
+          );
+
+          allRestored = false;
+        }
       }
 
-      await SessionManager.clearPhysicalOrderProducts();
+      // Only clear secure storage if EVERYTHING was restored.
+      if (allRestored) {
+        await SessionManager.clearPhysicalOrderProducts();
 
+        log('🧹 Saved physical-order products cleared');
+      } else {
+        log(
+          '⚠️ Some products failed to restore. '
+          'Keeping secure-storage data for retry.',
+        );
+      }
+
+      // Fetch the actual backend cart once.
       await fetchCart();
 
-      log('✅ Physical order products restored');
+      log(
+        '♻️ Restore completed. '
+        'cartItems=${cartItems.length}',
+      );
+
+      return allRestored;
     } catch (e, stackTrace) {
       log('❌ restorePhysicalOrderProducts error: $e', stackTrace: stackTrace);
+
+      return false;
+    }
+  }
+
+  Future<bool> removeCurrentBackendCart() async {
+    try {
+      log('🗑️ Removing current backend cart...');
+
+      final accountService = AccountService();
+
+      final accountResponse = await accountService.fetchAccountDetails();
+
+      log('👤 Account response: $accountResponse');
+
+      final accountData = accountResponse['data'] as Map<String, dynamic>?;
+
+      final accountId = accountData?['id'];
+
+      if (accountId == null) {
+        log('❌ Account ID not found while removing cart');
+        return false;
+      }
+
+      log('👤 Account ID: $accountId');
+
+      final response = await CartService.removeCart();
+
+      log('🗑️ REMOVE CURRENT CART RESPONSE: $response');
+
+      if (response['status'] == true) {
+        cartItems.clear();
+
+        notifyListeners();
+
+        log('✅ Current backend cart removed successfully');
+
+        return true;
+      }
+
+      log(
+        '❌ Failed to remove current backend cart: '
+        '${response['message'] ?? 'Unknown error'}',
+      );
+
+      return false;
+    } catch (e, stackTrace) {
+      log('❌ removeCurrentBackendCart error: $e', stackTrace: stackTrace);
+
+      return false;
     }
   }
 }
