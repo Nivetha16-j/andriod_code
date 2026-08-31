@@ -423,4 +423,63 @@ class JscService {
 
     return Map<String, dynamic>.from(responseData);
   }
+
+  static Future<Map<String, dynamic>> fetchConvertDetails() async {
+    log('🌐 [SERVICE] fetchConvertDetails() STARTED');
+
+    try {
+      final token = await SessionManager.getToken();
+
+      final url = Uri.parse('$baseUrl/my-account/wallet/convert-details');
+
+      log('🌐 [SERVICE] URL: $url');
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      log('🌐 [SERVICE] STATUS CODE: ${response.statusCode}');
+
+      log('🌐 [SERVICE] RAW BODY: ${response.body}');
+
+      // ============================================================
+      // ALWAYS TRY TO RETURN THE BACKEND RESPONSE
+      //
+      // IMPORTANT:
+      // 404 with:
+      //
+      // {
+      //   "status": false,
+      //   "message": "No active physical conversion found.",
+      //   "data": null
+      // }
+      //
+      // IS A VALID "NO ACTIVE CONVERSION" RESPONSE.
+      // ============================================================
+
+      dynamic decoded;
+
+      try {
+        decoded = jsonDecode(response.body);
+      } catch (e) {
+        log('❌ [SERVICE] JSON DECODE ERROR: $e');
+
+        throw Exception('Invalid conversion status response.');
+      }
+
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      throw Exception('Invalid conversion status response.');
+    } catch (e, stackTrace) {
+      log('❌ [SERVICE] fetchConvertDetails ERROR: $e', stackTrace: stackTrace);
+
+      rethrow;
+    }
+  }
 }

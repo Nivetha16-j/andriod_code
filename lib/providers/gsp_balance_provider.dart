@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/services/session_manager.dart';
-import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
+import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 
-class JscBalanceProvider extends ChangeNotifier {
+class GspBalanceProvider extends ChangeNotifier {
   bool isBalancesUnlocked = false;
 
   bool isLoading = false;
 
-  JscBalanceProvider() {
+  GspBalanceProvider() {
     balanceUnlockedNotifier.addListener(_onGlobalUnlockChanged);
     loadUnlockStatus();
   }
@@ -26,7 +26,7 @@ class JscBalanceProvider extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
-      final unlocked = await SessionManager.isJscBalanceUnlocked();
+      final unlocked = await SessionManager.isGspBalanceUnlocked();
 
       isBalancesUnlocked = unlocked;
 
@@ -34,7 +34,7 @@ class JscBalanceProvider extends ChangeNotifier {
         balanceUnlockedNotifier.value = unlocked;
       }
     } catch (e) {
-      debugPrint('JSC BalanceProvider load error: $e');
+      debugPrint('Gsp BalanceProvider load error: $e');
 
       isBalancesUnlocked = false;
 
@@ -57,7 +57,6 @@ class JscBalanceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Reset all JSC unlock state during logout.
   Future<void> resetBalancesUnlocked() async {
     // Reset provider state
     isBalancesUnlocked = false;
@@ -67,12 +66,11 @@ class JscBalanceProvider extends ChangeNotifier {
       balanceUnlockedNotifier.value = false;
     }
 
-    // Clear persisted JSC balance data
     await SessionManager.clearBalanceUnlocked();
 
     notifyListeners();
 
-    debugPrint('JSC BalanceProvider -> balances reset successfully.');
+    debugPrint('Gsp BalanceProvider -> balances reset successfully.');
   }
 
   // Keep this if other screens already use it.

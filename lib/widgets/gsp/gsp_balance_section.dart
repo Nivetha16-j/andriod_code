@@ -2,29 +2,28 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
-import 'package:junubullion/providers/jsc_balance_provider.dart';
-import 'package:junubullion/services/jsc_services.dart';
+import 'package:junubullion/providers/gsp_balance_provider.dart';
+import 'package:junubullion/services/gsp_service.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:provider/provider.dart';
 
 final ValueNotifier<bool> balanceUnlockedNotifier = ValueNotifier<bool>(false);
 
-class JscBalanceSection extends StatefulWidget {
+class GspBalanceSection extends StatefulWidget {
   final Future<void> Function()? onUnlocked;
 
   final bool showBalances;
-
-  const JscBalanceSection({
+  const GspBalanceSection({
     super.key,
     this.onUnlocked,
     this.showBalances = true,
   });
 
   @override
-  State<JscBalanceSection> createState() => _JscBalanceSectionState();
+  State<GspBalanceSection> createState() => _GspBalanceSectionState();
 }
 
-class _JscBalanceSectionState extends State<JscBalanceSection> {
+class _GspBalanceSectionState extends State<GspBalanceSection> {
   String goldBalance = '...';
   String goldUnit = 'grams';
   String goldMarketValue = '...';
@@ -54,9 +53,9 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
 
   Future<void> _initializeBalanceState() async {
     try {
-      final bool unlocked = await SessionManager.isJscBalanceUnlocked();
+      final bool unlocked = await SessionManager.isGspBalanceUnlocked();
 
-      log('JSC BALANCE -> Saved unlock state: $unlocked');
+      log('Gsp BALANCE -> Saved unlock state: $unlocked');
 
       if (!mounted) return;
 
@@ -66,14 +65,14 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
         _clearWalletDisplay();
 
         if (mounted) {
-          context.read<JscBalanceProvider>().setUnlocked(false);
+          context.read<GspBalanceProvider>().setUnlocked(false);
         }
       } else {
         setState(() {
           isBalanceUnlocked = true;
         });
 
-        context.read<JscBalanceProvider>().setUnlocked(true);
+        context.read<GspBalanceProvider>().setUnlocked(true);
 
         await _fetchAllBackendData();
       }
@@ -88,7 +87,7 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
 
       balanceUnlockedNotifier.value = false;
 
-      context.read<JscBalanceProvider>().setUnlocked(false);
+      context.read<GspBalanceProvider>().setUnlocked(false);
 
       _clearWalletDisplay();
     } finally {
@@ -115,7 +114,7 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
 
     if (!unlocked) {
       _clearWalletDisplay();
-      context.read<JscBalanceProvider>().setUnlocked(false);
+      context.read<GspBalanceProvider>().setUnlocked(false);
     }
   }
 
@@ -155,43 +154,43 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
 
       final String currency = currencyProvider.selectedCurrency;
 
-      log('JSC BALANCE -> Fetching backend wallet data');
+      log('Gsp BALANCE -> Fetching backend wallet data');
 
-      log('JSC BALANCE -> Currency: $currency');
+      log('Gsp BALANCE -> Currency: $currency');
 
-      await _fetchWallet(currency);
+      // await _fetchWallet(currency);
 
-      try {
-        final transactionsResult = await JscService.getTransactions(
-          currency: currency,
-        );
+      // try {
+      //   final transactionsResult = await JscService.getTransactions(
+      //     currency: currency,
+      //   );
 
-        log(
-          'JSC BALANCE -> Transactions: '
-          '$transactionsResult',
-        );
-      } catch (e, stackTrace) {
-        log('JSC BALANCE -> Transactions error: $e', stackTrace: stackTrace);
-      }
+      //   log(
+      //     'JSC BALANCE -> Transactions: '
+      //     '$transactionsResult',
+      //   );
+      // } catch (e, stackTrace) {
+      //   log('JSC BALANCE -> Transactions error: $e', stackTrace: stackTrace);
+      // }
 
-      try {
-        final sellBackResult = await JscService.getSellBackDetails(
-          currency: currency,
-        );
+      // try {
+      //   final sellBackResult = await JscService.getSellBackDetails(
+      //     currency: currency,
+      //   );
 
-        log(
-          'JSC BALANCE -> Sell Back: '
-          '$sellBackResult',
-        );
-      } catch (e, stackTrace) {
-        log('JSC BALANCE -> Sell Back error: $e', stackTrace: stackTrace);
-      }
+      //   log(
+      //     'JSC BALANCE -> Sell Back: '
+      //     '$sellBackResult',
+      //   );
+      // } catch (e, stackTrace) {
+      //   log('JSC BALANCE -> Sell Back error: $e', stackTrace: stackTrace);
+      // }
 
       if (mounted) {
         await widget.onUnlocked?.call();
       }
     } catch (e, stackTrace) {
-      log('JSC BALANCE -> Backend fetch error: $e', stackTrace: stackTrace);
+      log('Gsp BALANCE -> Backend fetch error: $e', stackTrace: stackTrace);
     } finally {
       if (!mounted) return;
 
@@ -201,122 +200,122 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
     }
   }
 
-  Future<void> _fetchWallet(String currency) async {
-    try {
-      log('JSC WALLET -> Calling fetchWallet()');
+  // Future<void> _fetchWallet(String currency) async {
+  //   try {
+  //     log('JSC WALLET -> Calling fetchWallet()');
 
-      final result = await JscService.fetchWallet(currency: currency);
+  //     final result = await GspService.fetchWallet(currency: currency);
 
-      log('JSC WALLET RESPONSE -> $result');
+  //     log('JSC WALLET RESPONSE -> $result');
 
-      if (!mounted) return;
+  //     if (!mounted) return;
 
-      if (result['status'] != true) {
-        log('JSC WALLET -> Backend returned status false');
-        return;
-      }
+  //     if (result['status'] != true) {
+  //       log('JSC WALLET -> Backend returned status false');
+  //       return;
+  //     }
 
-      final Map<String, dynamic> data = result['data'] is Map
-          ? Map<String, dynamic>.from(result['data'])
-          : <String, dynamic>{};
+  //     final Map<String, dynamic> data = result['data'] is Map
+  //         ? Map<String, dynamic>.from(result['data'])
+  //         : <String, dynamic>{};
 
-      log('JSC WALLET DATA -> $data');
+  //     log('JSC WALLET DATA -> $data');
 
-      // ============================================================
-      // RESPONSE STRUCTURE:
-      //
-      // data
-      //   -> summary
-      //       -> symbol
-      //       -> metals
-      //           -> gold
-      //           -> silver
-      // ============================================================
+  //     // ============================================================
+  //     // RESPONSE STRUCTURE:
+  //     //
+  //     // data
+  //     //   -> summary
+  //     //       -> symbol
+  //     //       -> metals
+  //     //           -> gold
+  //     //           -> silver
+  //     // ============================================================
 
-      final Map<String, dynamic> summary = data['summary'] is Map
-          ? Map<String, dynamic>.from(data['summary'])
-          : <String, dynamic>{};
+  //     final Map<String, dynamic> summary = data['summary'] is Map
+  //         ? Map<String, dynamic>.from(data['summary'])
+  //         : <String, dynamic>{};
 
-      final Map<String, dynamic> metals = summary['metals'] is Map
-          ? Map<String, dynamic>.from(summary['metals'])
-          : <String, dynamic>{};
+  //     final Map<String, dynamic> metals = summary['metals'] is Map
+  //         ? Map<String, dynamic>.from(summary['metals'])
+  //         : <String, dynamic>{};
 
-      final Map<String, dynamic> gold = metals['gold'] is Map
-          ? Map<String, dynamic>.from(metals['gold'])
-          : <String, dynamic>{};
+  //     final Map<String, dynamic> gold = metals['gold'] is Map
+  //         ? Map<String, dynamic>.from(metals['gold'])
+  //         : <String, dynamic>{};
 
-      final Map<String, dynamic> silver = metals['silver'] is Map
-          ? Map<String, dynamic>.from(metals['silver'])
-          : <String, dynamic>{};
+  //     final Map<String, dynamic> silver = metals['silver'] is Map
+  //         ? Map<String, dynamic>.from(metals['silver'])
+  //         : <String, dynamic>{};
 
-      log('JSC WALLET SUMMARY -> $summary');
-      log('JSC WALLET METALS -> $metals');
-      log('JSC WALLET GOLD -> $gold');
-      log('JSC WALLET SILVER -> $silver');
+  //     log('JSC WALLET SUMMARY -> $summary');
+  //     log('JSC WALLET METALS -> $metals');
+  //     log('JSC WALLET GOLD -> $gold');
+  //     log('JSC WALLET SILVER -> $silver');
 
-      // ============================================================
-      // GOLD
-      // ============================================================
+  //     // ============================================================
+  //     // GOLD
+  //     // ============================================================
 
-      final String newGoldBalance = gold['balance']?.toString() ?? '0.0000';
+  //     final String newGoldBalance = gold['balance']?.toString() ?? '0.0000';
 
-      final String newGoldUnit =
-          gold['unit_label']?.toString() ?? gold['unit']?.toString() ?? 'grams';
+  //     final String newGoldUnit =
+  //         gold['unit_label']?.toString() ?? gold['unit']?.toString() ?? 'grams';
 
-      final String newGoldMarketValue =
-          gold['formatted_value']?.toString() ??
-          gold['value']?.toString() ??
-          '0.00';
+  //     final String newGoldMarketValue =
+  //         gold['formatted_value']?.toString() ??
+  //         gold['value']?.toString() ??
+  //         '0.00';
 
-      // ============================================================
-      // SILVER
-      // ============================================================
+  //     // ============================================================
+  //     // SILVER
+  //     // ============================================================
 
-      final String newSilverBalance = silver['balance']?.toString() ?? '0.0000';
+  //     final String newSilverBalance = silver['balance']?.toString() ?? '0.0000';
 
-      final String newSilverUnit =
-          silver['unit_label']?.toString() ??
-          silver['unit']?.toString() ??
-          'grams';
+  //     final String newSilverUnit =
+  //         silver['unit_label']?.toString() ??
+  //         silver['unit']?.toString() ??
+  //         'grams';
 
-      final String newSilverMarketValue =
-          silver['formatted_value']?.toString() ??
-          silver['value']?.toString() ??
-          '0.00';
+  //     final String newSilverMarketValue =
+  //         silver['formatted_value']?.toString() ??
+  //         silver['value']?.toString() ??
+  //         '0.00';
 
-      // ============================================================
-      // CURRENCY
-      // ============================================================
+  //     // ============================================================
+  //     // CURRENCY
+  //     // ============================================================
 
-      final String newCurrencySymbol =
-          summary['symbol']?.toString() ??
-          data['currency_symbol']?.toString() ??
-          '';
+  //     final String newCurrencySymbol =
+  //         summary['symbol']?.toString() ??
+  //         data['currency_symbol']?.toString() ??
+  //         '';
 
-      log(
-        'JSC WALLET FINAL -> '
-        'Gold: $newGoldBalance $newGoldUnit | $newGoldMarketValue | '
-        'Silver: $newSilverBalance $newSilverUnit | $newSilverMarketValue | '
-        'Symbol: $newCurrencySymbol',
-      );
+  //     log(
+  //       'JSC WALLET FINAL -> '
+  //       'Gold: $newGoldBalance $newGoldUnit | $newGoldMarketValue | '
+  //       'Silver: $newSilverBalance $newSilverUnit | $newSilverMarketValue | '
+  //       'Symbol: $newCurrencySymbol',
+  //     );
 
-      if (!mounted) return;
+  //     if (!mounted) return;
 
-      setState(() {
-        goldBalance = newGoldBalance;
-        goldUnit = newGoldUnit;
-        goldMarketValue = newGoldMarketValue;
+  //     setState(() {
+  //       goldBalance = newGoldBalance;
+  //       goldUnit = newGoldUnit;
+  //       goldMarketValue = newGoldMarketValue;
 
-        silverBalance = newSilverBalance;
-        silverUnit = newSilverUnit;
-        silverMarketValue = newSilverMarketValue;
+  //       silverBalance = newSilverBalance;
+  //       silverUnit = newSilverUnit;
+  //       silverMarketValue = newSilverMarketValue;
 
-        currencySymbol = newCurrencySymbol;
-      });
-    } catch (e, stackTrace) {
-      log('JSC WALLET -> Fetch error: $e', stackTrace: stackTrace);
-    }
-  }
+  //       currencySymbol = newCurrencySymbol;
+  //     });
+  //   } catch (e, stackTrace) {
+  //     log('JSC WALLET -> Fetch error: $e', stackTrace: stackTrace);
+  //   }
+  // }
 
   Future<void> _onBalancesUnlocked(Map<String, dynamic> unlockData) async {
     try {
@@ -347,7 +346,7 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
       // ========================================================
 
       if (mounted) {
-        context.read<JscBalanceProvider>().setUnlocked(true);
+        context.read<GspBalanceProvider>().setUnlocked(true);
       }
 
       if (!mounted) return;
@@ -478,7 +477,7 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
     try {
       log('JSC UNLOCK -> Currency: $currency');
 
-      final result = await JscService.unlockWallet(
+      final result = await GspService.unlockWallet(
         unlockPassword: password,
         currency: currency,
       );

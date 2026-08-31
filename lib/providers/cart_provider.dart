@@ -56,6 +56,7 @@ class CartProvider extends ChangeNotifier {
 
   Future<void> fetchCart() async {
     log("🔥 fetchCart() called");
+
     isLoading = true;
     notifyListeners();
 
@@ -66,80 +67,162 @@ class CartProvider extends ChangeNotifier {
         courierService: selectedDeliveryMethod,
       );
 
-      log("ccccccccc $_currency......$_unit...$response");
+      log(
+        "🛒 CART RESPONSE -> "
+        "$_currency / $_unit / $response",
+      );
+
+      // ==========================================================
+      // BACKEND SUCCESS
+      // ==========================================================
 
       if (response["status"] == true) {
-        cartItems = response["data"]["summary"]["items"] ?? [];
+        final data = response["data"] as Map<String, dynamic>?;
 
-        final summary = response["data"]["summary"];
+        final summary = data?["summary"] as Map<String, dynamic>?;
 
-        final symbol = summary["symbol"];
-        currencySymbol = summary["symbol"];
+        if (summary == null) {
+          log("⚠️ Cart response has no summary");
 
-        subtotalAmount = (summary["subtotal"] as num).toDouble();
+          // Clear stale local cart if backend did not return summary.
+          cartItems = [];
 
-        isCourierFree = summary["courier"]?["is_free"] ?? false;
-        courierAmount = isCourierFree
-            ? 0
-            : (summary["courier"]["amount"] as num).toDouble();
+          notifyListeners();
+          return;
+        }
+
+        // ========================================================
+        // CART ITEMS
+        // ========================================================
+
+        final items = summary["items"];
+
+        cartItems = items is List ? List<dynamic>.from(items) : <dynamic>[];
+
+        log("🛒 BACKEND CART ITEMS -> ${cartItems.length}");
+
+        // ========================================================
+        // CURRENCY
+        // ========================================================
+
+        final symbol = summary["symbol"]?.toString() ?? "";
+
+        currencySymbol = symbol;
+
+        // ========================================================
+        // SUBTOTAL
+        // ========================================================
+
+        subtotalAmount = (summary["subtotal"] as num?)?.toDouble() ?? 0.0;
 
         formattedSubtotal =
-            "$symbol${NumberFormat('#,##0.00').format(summary["subtotal"])}";
+            summary["formatted_subtotal"] ??
+            "$symbol${NumberFormat('#,##0.00').format(subtotalAmount)}";
 
-        // formattedOrderTotal =
-        //     "$symbol${NumberFormat('#,##0.00').format(summary["total"])}";
-        // formattedTransactionFee =
-        //     "$symbol${NumberFormat('#,##0.00').format(summary["transaction_fee"])}";
+        // ========================================================
+        // COURIER
+        // ========================================================
 
-        transactionFeeAmount = (summary["transaction_fee"] as num).toDouble();
+        final courier = summary["courier"] as Map<String, dynamic>?;
 
-        gstAmount = (summary["tax"] as num).toDouble();
+        isCourierFree = courier?["is_free"] == true;
 
-        totalAmount = (summary["total"] as num).toDouble();
-
-        showTax = summary["show_tax"] ?? false;
-        // } else {
-        //   gstAmount = 0;
-
-        //   totalAmount = subtotalAmount + courierAmount + transactionFeeAmount;
-        // }
-
-        formattedTransactionFee =
-            summary["formatted_transaction_fee"] ??
-            "$currencySymbol${NumberFormat('#,##0.00').format(transactionFeeAmount)}";
-
-        formattedGST =
-            summary["formatted_tax"] ??
-            "$currencySymbol${NumberFormat('#,##0.00').format(gstAmount)}";
-
-        formattedOrderTotal =
-            summary["formatted_total"] ??
-            "$currencySymbol${NumberFormat('#,##0.00').format(totalAmount)}";
-
-        isCourierFree = summary["courier"]?["is_free"] ?? false;
+        courierAmount = isCourierFree
+            ? 0.0
+            : (courier?["amount"] as num?)?.toDouble() ?? 0.0;
 
         formattedCourierFee = isCourierFree
-            ? "$currencySymbol 0.00"
-            : summary["courier"]["formatted_amount"];
+            ? "$symbol 0.00"
+            : courier?["formatted_amount"]?.toString() ??
+                  "$symbol${NumberFormat('#,##0.00').format(courierAmount)}";
+
+        // ========================================================
+        // TRANSACTION FEE
+        // ========================================================
+
+        transactionFeeAmount =
+            (summary["transaction_fee"] as num?)?.toDouble() ?? 0.0;
+
+        formattedTransactionFee =
+            summary["formatted_transaction_fee"]?.toString() ??
+            "$symbol${NumberFormat('#,##0.00').format(transactionFeeAmount)}";
+
+        // ========================================================
+        // GST / TAX
+        // ========================================================
+
+        gstAmount = (summary["tax"] as num?)?.toDouble() ?? 0.0;
+
+        formattedGST =
+            summary["formatted_tax"]?.toString() ??
+            "$symbol${NumberFormat('#,##0.00').format(gstAmount)}";
+
+        showTax = summary["show_tax"] == true;
+
+        // ========================================================
+        // TOTAL
+        // ========================================================
+
+        totalAmount = (summary["total"] as num?)?.toDouble() ?? 0.0;
+
+        formattedOrderTotal =
+            summary["formatted_total"]?.toString() ??
+            "$symbol${NumberFormat('#,##0.00').format(totalAmount)}";
+
+        // ========================================================
+        // COUPON
+        // ========================================================
 
         if (isCouponRemoved) {
           coupon = null;
           formattedDiscount = "";
           formattedDiscountPrice = "";
         } else {
-          coupon = summary["coupon"];
+          coupon = summary["coupon"] as Map<String, dynamic>?;
+
+          if (coupon != null) {
+            formattedDiscount = coupon!["formatted_amount"]?.toString() ?? "";
+
+            final discount = (summary["discount"] as num?)?.toDouble() ?? 0.0;
+
+            formattedDiscountPrice =
+                "$symbol${(subtotalAmount - discount).toStringAsFixed(2)}";
+          } else {
+            formattedDiscount = "";
+            formattedDiscountPrice = "";
+          }
         }
 
-        if (!isCouponRemoved && coupon != null) {
-          formattedDiscount = coupon!["formatted_amount"] ?? "";
+        // ========================================================
+        // IMPORTANT
+        //
+        // Notify AFTER the complete backend state has been applied.
+        // This causes CartScreen to rebuild with the latest items.
+        // ========================================================
 
-          formattedDiscountPrice =
-              "${summary["symbol"]}${((summary["subtotal"] as num) - (summary["discount"] as num)).toStringAsFixed(2)}";
-        }
         notifyListeners();
+
+        log(
+          "✅ CART STATE UPDATED -> "
+          "items=${cartItems.length}, "
+          "subtotal=$subtotalAmount, "
+          "total=$totalAmount",
+        );
+      } else {
+        // ==========================================================
+        // BACKEND EXPLICITLY SAYS REQUEST FAILED
+        //
+        // Do NOT blindly keep stale cart data if the backend
+        // explicitly says the cart is unavailable/empty.
+        // ==========================================================
+
+        log(
+          "⚠️ CART API FAILED -> "
+          "${response["message"] ?? "Unknown error"}",
+        );
       }
-    } catch (e) {
-      debugPrint("Fetch Cart Error: $e");
+    } catch (e, stackTrace) {
+      log("❌ Fetch Cart Error: $e", stackTrace: stackTrace);
     } finally {
       isLoading = false;
       notifyListeners();
@@ -186,37 +269,129 @@ class CartProvider extends ChangeNotifier {
     return cartItems.any((item) => item["product_id"] == productId);
   }
 
+  // Future<bool> removeFromCart(int productId) async {
+  //   try {
+  //     final response = await CartService.removeFromCart(productId: productId);
+
+  //     if (response["status"] == true) {
+  //       await fetchCart();
+  //       if (cartItems.isEmpty) {
+  //         isCouponRemoved = false;
+  //       }
+  //       return true;
+  //     }
+
+  //     return false;
+  //   } catch (e) {
+  //     debugPrint("Remove Cart Error: $e");
+  //     return false;
+  //   }
+  // }
   Future<bool> removeFromCart(int productId) async {
     try {
+      log('🗑️ Removing product from cart -> productId=$productId');
+
       final response = await CartService.removeFromCart(productId: productId);
 
+      log('🗑️ REMOVE PRODUCT RESPONSE -> $response');
+
       if (response["status"] == true) {
+        // Remove immediately from local UI.
+        cartItems.removeWhere((item) => item["product_id"] == productId);
+
+        log(
+          '🗑️ LOCAL CART AFTER REMOVE -> '
+          'items=${cartItems.length}',
+        );
+
+        notifyListeners();
+
+        // Then sync everything with backend.
         await fetchCart();
+
         if (cartItems.isEmpty) {
           isCouponRemoved = false;
+          coupon = null;
+          formattedDiscount = "";
+          formattedDiscountPrice = "";
+          notifyListeners();
         }
+
         return true;
       }
 
+      log(
+        '❌ REMOVE PRODUCT FAILED -> '
+        '${response["message"] ?? "Unknown error"}',
+      );
+
       return false;
-    } catch (e) {
-      debugPrint("Remove Cart Error: $e");
+    } catch (e, stackTrace) {
+      log("❌ Remove Cart Error: $e", stackTrace: stackTrace);
+
       return false;
     }
   }
+
+  // Future<bool> updateCartQuantity({
+  //   required int productId,
+  //   required int quantity,
+  // }) async {
+  //   try {
+  //     final token = await SessionManager.getToken();
+
+  //     final response = await CartService.updateCart(
+  //       productId: productId,
+  //       quantity: quantity,
+  //       token: token!,
+  //     );
+
+  //     if (response["status"] == true) {
+  //       await fetchCart();
+  //       return true;
+  //     }
+
+  //     return false;
+  //   } catch (e) {
+  //     debugPrint("Update Cart Error: $e");
+  //     return false;
+  //   }
+  // }
 
   Future<bool> updateCartQuantity({
     required int productId,
     required int quantity,
   }) async {
     try {
+      log(
+        '🔄 UPDATE CART -> '
+        'productId=$productId '
+        'quantity=$quantity',
+      );
+
+      // ============================================================
+      // QUANTITY 0 = REMOVE PRODUCT
+      // ============================================================
+
+      if (quantity <= 0) {
+        return await removeFromCart(productId);
+      }
+
       final token = await SessionManager.getToken();
+
+      if (token == null || token.isEmpty) {
+        log('❌ No token available');
+
+        return false;
+      }
 
       final response = await CartService.updateCart(
         productId: productId,
         quantity: quantity,
-        token: token!,
+        token: token,
       );
+
+      log('🔄 UPDATE CART RESPONSE -> $response');
 
       if (response["status"] == true) {
         await fetchCart();
@@ -224,8 +399,9 @@ class CartProvider extends ChangeNotifier {
       }
 
       return false;
-    } catch (e) {
-      debugPrint("Update Cart Error: $e");
+    } catch (e, stackTrace) {
+      log("❌ Update Cart Error: $e", stackTrace: stackTrace);
+
       return false;
     }
   }

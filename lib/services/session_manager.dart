@@ -33,7 +33,13 @@ class SessionManager {
   // CHECK BALANCE UNLOCK STATUS
   // ============================================================
 
-  static Future<bool> isBalanceUnlocked() async {
+  static Future<bool> isJscBalanceUnlocked() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    return prefs.getBool(balanceUnlockedKey) ?? false;
+  }
+
+  static Future<bool> isGspBalanceUnlocked() async {
     final prefs = await SharedPreferences.getInstance();
 
     return prefs.getBool(balanceUnlockedKey) ?? false;

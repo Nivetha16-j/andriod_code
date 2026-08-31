@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
@@ -11,30 +12,342 @@ import 'package:junubullion/widgets/cart/custom_deliverymethod.dart';
 import 'package:provider/provider.dart';
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({super.key});
+  final bool isActiveTab;
+
+  const CartScreen({super.key, required this.isActiveTab});
 
   @override
   State<CartScreen> createState() => _CartScreenState();
 }
 
-class _CartScreenState extends State<CartScreen> {
+class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
+  Timer? _conversionStatusTimer;
+
   String? _lastCurrency;
   String? _lastUnit;
+
   bool _isClearingConversion = false;
+  bool _isFetchingConversionStatus = false;
+
   final TextEditingController couponController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      log('🛒 CART SCREEN INITIALIZED');
+
+      await _refreshCartAndConversionStatus();
+
+      if (!mounted) return;
+
+      _startConversionStatusPolling();
+    });
+  }
+
+  void _startConversionStatusPolling() {
+    _conversionStatusTimer?.cancel();
+
+    log('🔄 STARTING CONVERSION STATUS POLLING');
+
+    _conversionStatusTimer = Timer.periodic(const Duration(seconds: 5), (
+      _,
+    ) async {
+      if (!mounted) return;
+
+      // Only poll while Cart tab is active.
+      if (!widget.isActiveTab) {
+        return;
+      }
+
+      await _checkConversionStatusSilently();
+    });
+  }
+
+  Future<void> _checkConversionStatusSilently() async {
+    if (!mounted) return;
+
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    // Don't start another request while one is already running.
+    if (physicalProvider.isFetchingStatus) {
+      return;
+    }
+
+    try {
+      log('🔄 POLLING CONVERSION STATUS...');
+
+      final wasActive = physicalProvider.isActive;
+
+      await physicalProvider.fetchConversionStatus();
+
+      if (!mounted) return;
+
+      final isActive = physicalProvider.isActive;
+
+      log(
+        '🔎 POLLING RESULT -> '
+        'wasActive=$wasActive '
+        'isActive=$isActive',
+      );
+
+      // ----------------------------------------------------------
+      // Conversion was active before but website/mobile elsewhere
+      // cancelled it.
+      // ----------------------------------------------------------
+
+      if (wasActive && !isActive) {
+        log(
+          '🛑 CONVERSION CANCELLED OUTSIDE MOBILE APP '
+          '-> REFRESHING CART',
+        );
+
+        final currencyProvider = context.read<CurrencyProvider>();
+        final cartProvider = context.read<CartProvider>();
+
+        cartProvider.updateSelection(
+          currency: currencyProvider.selectedCurrency,
+          unit: currencyProvider.selectedUnit,
+        );
+
+        await cartProvider.fetchCart();
+
+        if (!mounted) return;
+
+        log(
+          '🛒 CART REFRESHED AFTER EXTERNAL CONVERSION CANCELLATION '
+          '-> items=${cartProvider.cartItems.length}',
+        );
+      }
+    } catch (e, stackTrace) {
+      log(
+        '❌ Silent conversion status check failed: $e',
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.resumed) {
+      log('📱 APP RESUMED -> REFRESHING CONVERSION STATUS');
+
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        if (!widget.isActiveTab) return;
+
+        await _checkConversionStatusSilently();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant CartScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    log(
+      '🛒 didUpdateWidget -> '
+      'oldActive=${oldWidget.isActiveTab}, '
+      'newActive=${widget.isActiveTab}',
+    );
+
+    if (widget.isActiveTab) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+
+        log('🛒 CART TAB ACTIVE -> FORCE BACKEND REFRESH');
+
+        await _refreshCartAndConversionStatus();
+
+        if (!mounted) return;
+
+        _startConversionStatusPolling();
+      });
+    } else {
+      _conversionStatusTimer?.cancel();
+      _conversionStatusTimer = null;
+
+      log('🛑 CART TAB INACTIVE -> POLLING STOPPED');
+    }
+  }
+
+  Future<void> _refreshCartAndConversionStatus() async {
+    if (!mounted) return;
+
+    if (_isFetchingConversionStatus) {
+      log('⏭️ CART REFRESH ALREADY RUNNING');
+      return;
+    }
+
+    _isFetchingConversionStatus = true;
+
+    try {
+      final physicalProvider = context.read<PhysicalConversionProvider>();
+
+      final currencyProvider = context.read<CurrencyProvider>();
+
+      final cartProvider = context.read<CartProvider>();
+
+      log('================================================');
+      log('🛒 FORCE CART REFRESH');
+      log(
+        '🛒 BEFORE BACKEND CHECK -> '
+        'active=${physicalProvider.isActive}, '
+        'metal=${physicalProvider.metal}, '
+        'amount=${physicalProvider.amount}',
+      );
+      log('================================================');
+
+      // ==========================================================
+      // ALWAYS ASK BACKEND
+      // ==========================================================
+
+      await physicalProvider.fetchConversionStatus();
+
+      if (!mounted) return;
+
+      log('================================================');
+      log(
+        '🛒 AFTER BACKEND CHECK -> '
+        'active=${physicalProvider.isActive}, '
+        'metal=${physicalProvider.metal}, '
+        'amount=${physicalProvider.amount}',
+      );
+      log('================================================');
+
+      // ==========================================================
+      // REFRESH NORMAL CART
+      // ==========================================================
+
+      cartProvider.updateSelection(
+        currency: currencyProvider.selectedCurrency,
+        unit: currencyProvider.selectedUnit,
+      );
+
+      await cartProvider.fetchCart();
+
+      if (!mounted) return;
+
+      log(
+        '🛒 CART REFRESH COMPLETE -> '
+        'items=${cartProvider.cartItems.length}',
+      );
+    } catch (e, stackTrace) {
+      log(
+        '❌ _refreshCartAndConversionStatus ERROR: $e',
+        stackTrace: stackTrace,
+      );
+    } finally {
+      _isFetchingConversionStatus = false;
+    }
+  }
+
+  // ============================================================
+  // REFRESH CART STATE
+  // ============================================================
+
+  Future<void> _refreshCartState() async {
+    if (!mounted) return;
+
+    if (_isFetchingConversionStatus) {
+      return;
+    }
+
+    _isFetchingConversionStatus = true;
+
+    try {
+      final physicalProvider = context.read<PhysicalConversionProvider>();
+
+      final currencyProvider = context.read<CurrencyProvider>();
+
+      final cartProvider = context.read<CartProvider>();
+
+      final currency = currencyProvider.selectedCurrency;
+
+      final unit = currencyProvider.selectedUnit;
+
+      log(
+        '🛒 REFRESH CART STATE -> '
+        'currency=$currency '
+        'unit=$unit',
+      );
+
+      // --------------------------------------------------------
+      // STEP 1
+      // Get actual conversion status from backend.
+      // --------------------------------------------------------
+
+      log('🛒 FETCHING BACKEND CONVERSION STATUS...');
+
+      await physicalProvider.fetchConversionStatus();
+
+      if (!mounted) return;
+
+      log(
+        '🛒 BACKEND CONVERSION STATUS -> '
+        'active=${physicalProvider.isActive}, '
+        'metal=${physicalProvider.metal}, '
+        'amount=${physicalProvider.amount}',
+      );
+
+      // --------------------------------------------------------
+      // STEP 2
+      // Update cart selection.
+      // --------------------------------------------------------
+
+      cartProvider.updateSelection(currency: currency, unit: unit);
+
+      // --------------------------------------------------------
+      // STEP 3
+      // Fetch backend cart.
+      //
+      // IMPORTANT:
+      // This is done AFTER conversion status is known.
+      // --------------------------------------------------------
+
+      await cartProvider.fetchCart();
+
+      if (!mounted) return;
+
+      log(
+        '🛒 CART FETCH COMPLETE -> '
+        'items=${cartProvider.cartItems.length}',
+      );
+    } catch (e, stackTrace) {
+      log('❌ _refreshCartState ERROR: $e', stackTrace: stackTrace);
+    } finally {
+      _isFetchingConversionStatus = false;
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+
+    _conversionStatusTimer?.cancel();
+    _conversionStatusTimer = null;
+
     couponController.dispose();
+
     super.dispose();
   }
+
+  // ============================================================
+  // CURRENCY / UNIT CHANGES
+  // ============================================================
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
     final currencyProvider = context.watch<CurrencyProvider>();
-    final physicalProvider = context.read<PhysicalConversionProvider>();
 
     if (_lastCurrency == currencyProvider.selectedCurrency &&
         _lastUnit == currencyProvider.selectedUnit) {
@@ -42,12 +355,12 @@ class _CartScreenState extends State<CartScreen> {
     }
 
     _lastCurrency = currencyProvider.selectedCurrency;
+
     _lastUnit = currencyProvider.selectedUnit;
 
     log(
-      'Cart currency=${currencyProvider.selectedCurrency}, '
-      'unit=${currencyProvider.selectedUnit}, '
-      'physicalActive=${physicalProvider.isActive}',
+      '🛒 Cart currency=${currencyProvider.selectedCurrency}, '
+      'unit=${currencyProvider.selectedUnit}',
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {

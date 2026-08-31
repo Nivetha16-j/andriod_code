@@ -755,11 +755,7 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
       final physicalProvider = context.read<PhysicalConversionProvider>();
 
-      physicalProvider.updateFromApi(
-        status: conversionStatus ?? '',
-        metal: responseMetal,
-        amount: responseAmount,
-      );
+      await physicalProvider.fetchConversionStatus();
 
       log(
         '✅ PHYSICAL PROVIDER UPDATED FROM API -> '

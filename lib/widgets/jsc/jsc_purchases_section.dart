@@ -57,7 +57,7 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
     // Otherwise check saved unlock status
     // from SessionManager.
     try {
-      final unlocked = await SessionManager.isBalanceUnlocked();
+      final unlocked = await SessionManager.isJscBalanceUnlocked();
 
       if (!mounted) return;
 

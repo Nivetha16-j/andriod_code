@@ -105,7 +105,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     if (!mounted) return;
 
     // Always verify session unlock state before making the request.
-    final unlocked = await SessionManager.isBalanceUnlocked();
+    final unlocked = await SessionManager.isJscBalanceUnlocked();
 
     if (!mounted) return;
 
@@ -149,7 +149,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
             : <String, dynamic>{};
 
         // Verify unlock state again before storing data.
-        final stillUnlocked = await SessionManager.isBalanceUnlocked();
+        final stillUnlocked = await SessionManager.isJscBalanceUnlocked();
 
         if (!mounted) return;
 

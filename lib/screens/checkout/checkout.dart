@@ -1654,9 +1654,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!mounted) return;
 
       // Restore physical conversion state from local storage.
-      await context
-          .read<PhysicalConversionProvider>()
-          .initializePhysicalConversion();
+      // await context
+      //     .read<PhysicalConversionProvider>()
+      //     .initializePhysicalConversion();
 
       if (!mounted) return;
 
