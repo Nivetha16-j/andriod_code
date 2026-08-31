@@ -10,6 +10,7 @@ class SessionManager {
   static const String tokenKey = "token";
 
   static const String balanceUnlockedKey = 'balanceUnlocked';
+  static const String gspBalanceUnlockedKey = 'gspBalanceUnlocked';
 
   static const String goldBalanceKey = 'goldBalance';
   static const String goldUnitKey = 'goldUnit';
@@ -29,20 +30,24 @@ class SessionManager {
     log("JSC balance unlocked status saved.");
   }
 
-  // ============================================================
-  // CHECK BALANCE UNLOCK STATUS
-  // ============================================================
-
   static Future<bool> isJscBalanceUnlocked() async {
     final prefs = await SharedPreferences.getInstance();
 
     return prefs.getBool(balanceUnlockedKey) ?? false;
   }
 
+  static Future<void> saveGspBalanceUnlocked() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool(gspBalanceUnlockedKey, true);
+
+    log("GSP balance unlocked status saved.");
+  }
+
   static Future<bool> isGspBalanceUnlocked() async {
     final prefs = await SharedPreferences.getInstance();
 
-    return prefs.getBool(balanceUnlockedKey) ?? false;
+    return prefs.getBool(gspBalanceUnlockedKey) ?? false;
   }
 
   // ============================================================
@@ -142,6 +147,14 @@ class SessionManager {
     await prefs.remove(currencySymbolKey);
 
     log("JSC balance data cleared.");
+  }
+
+  static Future<void> clearGspBalanceUnlocked() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove(gspBalanceUnlockedKey);
+
+    log("GSP balance unlock state cleared.");
   }
 
   // ============================================================

@@ -11,8 +11,8 @@ final ValueNotifier<bool> balanceUnlockedNotifier = ValueNotifier<bool>(false);
 
 class GspBalanceSection extends StatefulWidget {
   final Future<void> Function()? onUnlocked;
-
   final bool showBalances;
+
   const GspBalanceSection({
     super.key,
     this.onUnlocked,
@@ -24,16 +24,6 @@ class GspBalanceSection extends StatefulWidget {
 }
 
 class _GspBalanceSectionState extends State<GspBalanceSection> {
-  String goldBalance = '...';
-  String goldUnit = 'grams';
-  String goldMarketValue = '...';
-
-  String silverBalance = '...';
-  String silverUnit = 'oz';
-  String silverMarketValue = '...';
-
-  String currencySymbol = '';
-
   bool isBalanceUnlocked = false;
   bool isCheckingUnlockState = true;
   bool isFetchingWallet = false;
@@ -41,55 +31,66 @@ class _GspBalanceSectionState extends State<GspBalanceSection> {
   @override
   void initState() {
     super.initState();
+
     balanceUnlockedNotifier.addListener(_onBalanceStateChanged);
+
     _initializeBalanceState();
   }
 
   @override
   void dispose() {
     balanceUnlockedNotifier.removeListener(_onBalanceStateChanged);
+
     super.dispose();
   }
+
+  // ============================================================
+  // INITIALIZE
+  // ============================================================
 
   Future<void> _initializeBalanceState() async {
     try {
       final bool unlocked = await SessionManager.isGspBalanceUnlocked();
 
-      log('Gsp BALANCE -> Saved unlock state: $unlocked');
+      log('GSP BALANCE -> Saved unlock state: $unlocked');
 
       if (!mounted) return;
 
       balanceUnlockedNotifier.value = unlocked;
 
-      if (!unlocked) {
-        _clearWalletDisplay();
+      final provider = context.read<GspBalanceProvider>();
 
-        if (mounted) {
-          context.read<GspBalanceProvider>().setUnlocked(false);
-        }
+      if (!unlocked) {
+        provider.setUnlocked(false);
+        provider.clearWalletData();
       } else {
+        // Same behaviour as JSC
+        provider.setUnlocked(true);
+
         setState(() {
           isBalanceUnlocked = true;
         });
 
-        context.read<GspBalanceProvider>().setUnlocked(true);
-
+        // IMPORTANT:
+        // Restore wallet from backend after app restart.
         await _fetchAllBackendData();
       }
     } catch (e, stackTrace) {
-      log('JSC BALANCE -> Initialization error: $e', stackTrace: stackTrace);
+      log('GSP BALANCE -> Initialization error: $e', stackTrace: stackTrace);
 
       if (!mounted) return;
-
-      setState(() {
-        isBalanceUnlocked = false;
-      });
 
       balanceUnlockedNotifier.value = false;
 
       context.read<GspBalanceProvider>().setUnlocked(false);
 
-      _clearWalletDisplay();
+      context.read<GspBalanceProvider>().clearWalletData();
+
+      setState(() {
+        isBalanceUnlocked = false;
+      });
+
+      await SessionManager.clearGspBalanceUnlocked();
     } finally {
       if (!mounted) return;
 
@@ -98,6 +99,10 @@ class _GspBalanceSectionState extends State<GspBalanceSection> {
       });
     }
   }
+
+  // ============================================================
+  // GLOBAL UNLOCK STATE CHANGED
+  // ============================================================
 
   void _onBalanceStateChanged() {
     if (!mounted) return;
@@ -112,27 +117,17 @@ class _GspBalanceSectionState extends State<GspBalanceSection> {
       isBalanceUnlocked = unlocked;
     });
 
+    final provider = context.read<GspBalanceProvider>();
+
     if (!unlocked) {
-      _clearWalletDisplay();
-      context.read<GspBalanceProvider>().setUnlocked(false);
+      provider.setUnlocked(false);
+      provider.clearWalletData();
     }
   }
 
-  void _clearWalletDisplay() {
-    if (!mounted) return;
-
-    setState(() {
-      goldBalance = '...';
-      goldUnit = 'grams';
-      goldMarketValue = '...';
-
-      silverBalance = '...';
-      silverUnit = 'oz';
-      silverMarketValue = '...';
-
-      currencySymbol = '';
-    });
-  }
+  // ============================================================
+  // FETCH ALL BACKEND DATA
+  // ============================================================
 
   Future<void> _fetchAllBackendData() async {
     if (!mounted) return;
@@ -154,43 +149,17 @@ class _GspBalanceSectionState extends State<GspBalanceSection> {
 
       final String currency = currencyProvider.selectedCurrency;
 
-      log('Gsp BALANCE -> Fetching backend wallet data');
+      log('GSP BALANCE -> Fetching backend data');
 
-      log('Gsp BALANCE -> Currency: $currency');
+      log('GSP BALANCE -> Currency: $currency');
 
-      // await _fetchWallet(currency);
-
-      // try {
-      //   final transactionsResult = await JscService.getTransactions(
-      //     currency: currency,
-      //   );
-
-      //   log(
-      //     'JSC BALANCE -> Transactions: '
-      //     '$transactionsResult',
-      //   );
-      // } catch (e, stackTrace) {
-      //   log('JSC BALANCE -> Transactions error: $e', stackTrace: stackTrace);
-      // }
-
-      // try {
-      //   final sellBackResult = await JscService.getSellBackDetails(
-      //     currency: currency,
-      //   );
-
-      //   log(
-      //     'JSC BALANCE -> Sell Back: '
-      //     '$sellBackResult',
-      //   );
-      // } catch (e, stackTrace) {
-      //   log('JSC BALANCE -> Sell Back error: $e', stackTrace: stackTrace);
-      // }
+      await _fetchWallet(currency);
 
       if (mounted) {
         await widget.onUnlocked?.call();
       }
     } catch (e, stackTrace) {
-      log('Gsp BALANCE -> Backend fetch error: $e', stackTrace: stackTrace);
+      log('GSP BALANCE -> Backend fetch error: $e', stackTrace: stackTrace);
     } finally {
       if (!mounted) return;
 
@@ -200,127 +169,164 @@ class _GspBalanceSectionState extends State<GspBalanceSection> {
     }
   }
 
-  // Future<void> _fetchWallet(String currency) async {
-  //   try {
-  //     log('JSC WALLET -> Calling fetchWallet()');
+  // ============================================================
+  // FETCH GSP WALLET
+  // ============================================================
 
-  //     final result = await GspService.fetchWallet(currency: currency);
+  Future<void> _fetchWallet(String currency) async {
+    try {
+      log('GSP WALLET -> Calling fetchWallet()');
+      log('GSP WALLET -> Currency: $currency');
 
-  //     log('JSC WALLET RESPONSE -> $result');
+      final result = await GspService.fetchWallet(currency: currency);
 
-  //     if (!mounted) return;
+      log('GSP WALLET RESPONSE -> $result');
 
-  //     if (result['status'] != true) {
-  //       log('JSC WALLET -> Backend returned status false');
-  //       return;
-  //     }
+      if (!mounted) return;
 
-  //     final Map<String, dynamic> data = result['data'] is Map
-  //         ? Map<String, dynamic>.from(result['data'])
-  //         : <String, dynamic>{};
+      if (result['status'] != true) {
+        log(
+          'GSP WALLET -> Backend returned status false: '
+          '${result['message']}',
+        );
+        return;
+      }
 
-  //     log('JSC WALLET DATA -> $data');
+      // ==========================================================
+      // DATA
+      // ==========================================================
 
-  //     // ============================================================
-  //     // RESPONSE STRUCTURE:
-  //     //
-  //     // data
-  //     //   -> summary
-  //     //       -> symbol
-  //     //       -> metals
-  //     //           -> gold
-  //     //           -> silver
-  //     // ============================================================
+      final Map<String, dynamic> data = result['data'] is Map
+          ? Map<String, dynamic>.from(result['data'])
+          : <String, dynamic>{};
 
-  //     final Map<String, dynamic> summary = data['summary'] is Map
-  //         ? Map<String, dynamic>.from(data['summary'])
-  //         : <String, dynamic>{};
+      // ==========================================================
+      // WALLET ONLY
+      // ==========================================================
 
-  //     final Map<String, dynamic> metals = summary['metals'] is Map
-  //         ? Map<String, dynamic>.from(summary['metals'])
-  //         : <String, dynamic>{};
+      final Map<String, dynamic> wallet = data['wallet'] is Map
+          ? Map<String, dynamic>.from(data['wallet'])
+          : <String, dynamic>{};
 
-  //     final Map<String, dynamic> gold = metals['gold'] is Map
-  //         ? Map<String, dynamic>.from(metals['gold'])
-  //         : <String, dynamic>{};
+      log('GSP WALLET ONLY -> $wallet');
 
-  //     final Map<String, dynamic> silver = metals['silver'] is Map
-  //         ? Map<String, dynamic>.from(metals['silver'])
-  //         : <String, dynamic>{};
+      // ==========================================================
+      // WALLET SUMMARY
+      // ==========================================================
 
-  //     log('JSC WALLET SUMMARY -> $summary');
-  //     log('JSC WALLET METALS -> $metals');
-  //     log('JSC WALLET GOLD -> $gold');
-  //     log('JSC WALLET SILVER -> $silver');
+      final Map<String, dynamic> summary = wallet['summary'] is Map
+          ? Map<String, dynamic>.from(wallet['summary'])
+          : <String, dynamic>{};
 
-  //     // ============================================================
-  //     // GOLD
-  //     // ============================================================
+      // ==========================================================
+      // METALS
+      // ==========================================================
 
-  //     final String newGoldBalance = gold['balance']?.toString() ?? '0.0000';
+      final Map<String, dynamic> metals = summary['metals'] is Map
+          ? Map<String, dynamic>.from(summary['metals'])
+          : <String, dynamic>{};
 
-  //     final String newGoldUnit =
-  //         gold['unit_label']?.toString() ?? gold['unit']?.toString() ?? 'grams';
+      // ==========================================================
+      // GOLD
+      // ==========================================================
 
-  //     final String newGoldMarketValue =
-  //         gold['formatted_value']?.toString() ??
-  //         gold['value']?.toString() ??
-  //         '0.00';
+      final Map<String, dynamic> gold = metals['gold'] is Map
+          ? Map<String, dynamic>.from(metals['gold'])
+          : <String, dynamic>{};
 
-  //     // ============================================================
-  //     // SILVER
-  //     // ============================================================
+      // ==========================================================
+      // SILVER
+      // ==========================================================
 
-  //     final String newSilverBalance = silver['balance']?.toString() ?? '0.0000';
+      final Map<String, dynamic> silver = metals['silver'] is Map
+          ? Map<String, dynamic>.from(metals['silver'])
+          : <String, dynamic>{};
 
-  //     final String newSilverUnit =
-  //         silver['unit_label']?.toString() ??
-  //         silver['unit']?.toString() ??
-  //         'grams';
+      log('GSP WALLET GOLD -> $gold');
+      log('GSP WALLET SILVER -> $silver');
 
-  //     final String newSilverMarketValue =
-  //         silver['formatted_value']?.toString() ??
-  //         silver['value']?.toString() ??
-  //         '0.00';
+      // ==========================================================
+      // GOLD VALUES
+      // ==========================================================
 
-  //     // ============================================================
-  //     // CURRENCY
-  //     // ============================================================
+      final String goldBalance = gold['balance']?.toString() ?? '0.0000';
 
-  //     final String newCurrencySymbol =
-  //         summary['symbol']?.toString() ??
-  //         data['currency_symbol']?.toString() ??
-  //         '';
+      final String goldUnit =
+          gold['unit_label']?.toString() ?? gold['unit']?.toString() ?? 'grams';
 
-  //     log(
-  //       'JSC WALLET FINAL -> '
-  //       'Gold: $newGoldBalance $newGoldUnit | $newGoldMarketValue | '
-  //       'Silver: $newSilverBalance $newSilverUnit | $newSilverMarketValue | '
-  //       'Symbol: $newCurrencySymbol',
-  //     );
+      final String goldMarketValue =
+          gold['formatted_value']?.toString() ??
+          gold['value']?.toString() ??
+          '0.00';
 
-  //     if (!mounted) return;
+      // ==========================================================
+      // SILVER VALUES
+      // ==========================================================
 
-  //     setState(() {
-  //       goldBalance = newGoldBalance;
-  //       goldUnit = newGoldUnit;
-  //       goldMarketValue = newGoldMarketValue;
+      final String silverBalance = silver['balance']?.toString() ?? '0.0000';
 
-  //       silverBalance = newSilverBalance;
-  //       silverUnit = newSilverUnit;
-  //       silverMarketValue = newSilverMarketValue;
+      final String silverUnit =
+          silver['unit_label']?.toString() ??
+          silver['unit']?.toString() ??
+          'grams';
 
-  //       currencySymbol = newCurrencySymbol;
-  //     });
-  //   } catch (e, stackTrace) {
-  //     log('JSC WALLET -> Fetch error: $e', stackTrace: stackTrace);
-  //   }
-  // }
+      final String silverMarketValue =
+          silver['formatted_value']?.toString() ??
+          silver['value']?.toString() ??
+          '0.00';
+
+      // ==========================================================
+      // CURRENCY FROM WALLET SUMMARY
+      // ==========================================================
+
+      final String walletCurrency = summary['currency']?.toString() ?? currency;
+
+      final String currencySymbol = summary['symbol']?.toString() ?? '';
+
+      log(
+        'GSP WALLET FINAL -> '
+        'Gold: $goldBalance $goldUnit | '
+        'Value: $goldMarketValue | '
+        'Silver: $silverBalance $silverUnit | '
+        'Value: $silverMarketValue | '
+        'Currency: $walletCurrency | '
+        'Symbol: $currencySymbol',
+      );
+
+      // ==========================================================
+      // UPDATE PROVIDER
+      // ==========================================================
+
+      final provider = context.read<GspBalanceProvider>();
+
+      provider.setUnlocked(true);
+
+      provider.setWalletData({
+        'goldBalance': goldBalance,
+        'goldUnit': goldUnit,
+        'goldMarketValue': goldMarketValue,
+
+        'silverBalance': silverBalance,
+        'silverUnit': silverUnit,
+        'silverMarketValue': silverMarketValue,
+
+        'currency': walletCurrency,
+        'currencySymbol': currencySymbol,
+      });
+
+      log('GSP WALLET -> Provider updated successfully');
+    } catch (e, stackTrace) {
+      log('GSP WALLET -> Fetch error: $e', stackTrace: stackTrace);
+    }
+  }
+  // ============================================================
+  // UNLOCK SUCCESS
+  // ============================================================
 
   Future<void> _onBalancesUnlocked(Map<String, dynamic> unlockData) async {
     try {
       log(
-        'JSC UNLOCK -> Backend unlock response: '
+        'GSP UNLOCK -> Backend unlock response: '
         '$unlockData',
       );
 
@@ -329,27 +335,25 @@ class _GspBalanceSectionState extends State<GspBalanceSection> {
       // SAVE ONLY UNLOCK STATE
       // ========================================================
 
-      await SessionManager.saveBalanceUnlocked();
+      await SessionManager.saveGspBalanceUnlocked();
 
-      log('JSC UNLOCK -> Unlock state saved');
+      log('GSP UNLOCK -> Unlock state saved');
+
+      if (!mounted) return;
 
       // ========================================================
       // STEP 2
-      // UPDATE GLOBAL NOTIFIER
+      // GLOBAL NOTIFIER
       // ========================================================
 
       balanceUnlockedNotifier.value = true;
 
       // ========================================================
       // STEP 3
-      // UPDATE PROVIDER
+      // PROVIDER
       // ========================================================
 
-      if (mounted) {
-        context.read<GspBalanceProvider>().setUnlocked(true);
-      }
-
-      if (!mounted) return;
+      context.read<GspBalanceProvider>().setUnlocked(true);
 
       setState(() {
         isBalanceUnlocked = true;
@@ -357,17 +361,23 @@ class _GspBalanceSectionState extends State<GspBalanceSection> {
 
       // ========================================================
       // STEP 4
-      //
-      // DO NOT DISPLAY unlockData AS THE FINAL WALLET STATE.
-      //
-      // Fetch wallet again from backend.
+      // FETCH ACTUAL WALLET FROM BACKEND
       // ========================================================
 
       await _fetchAllBackendData();
 
-      log('JSC UNLOCK -> All backend data fetched successfully');
+      log('GSP UNLOCK -> Backend wallet fetched successfully');
+
+      // ========================================================
+      // STEP 5
+      // CALLBACK
+      // ========================================================
+
+      if (mounted) {
+        await widget.onUnlocked?.call();
+      }
     } catch (e, stackTrace) {
-      log('JSC UNLOCK -> Error after unlock: $e', stackTrace: stackTrace);
+      log('GSP UNLOCK -> Error after unlock: $e', stackTrace: stackTrace);
     }
   }
 
@@ -386,51 +396,50 @@ class _GspBalanceSectionState extends State<GspBalanceSection> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ========================================================
-        // UNLOCK CARD
-        // ========================================================
-        if (!isBalanceUnlocked)
-          UnlockBalanceCard(onUnlocked: _onBalancesUnlocked),
+    return Consumer<GspBalanceProvider>(
+      builder: (context, gspProvider, child) {
+        final bool unlocked = gspProvider.isBalancesUnlocked;
 
-        if (!isBalanceUnlocked) const SizedBox(height: 20),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ======================================================
+            // UNLOCK CARD
+            // ======================================================
+            if (!unlocked) UnlockBalanceCard(onUnlocked: _onBalancesUnlocked),
 
-        // ========================================================
-        // WALLET BALANCES
-        // ========================================================
-        if (widget.showBalances)
-          Row(
-            children: [
-              Expanded(
-                child: _BalanceCard(
-                  title: 'Gold Balance',
-                  balanceValue: goldBalance,
-                  unit: goldUnit,
-                  marketValue: goldMarketValue,
-                  currencySymbol: currencySymbol,
-                  isGold: true,
-                  image: 'assets/g_balance.png',
-                ),
+            if (!unlocked) const SizedBox(height: 20),
+
+            // ======================================================
+            // GOLD
+            // ======================================================
+            if (widget.showBalances)
+              _GoldBalanceCard(
+                balanceValue: gspProvider.goldBalance ?? '...',
+                unit: gspProvider.goldUnit ?? 'grams',
+                marketValue: gspProvider.goldMarketValue ?? '...',
+                currencySymbol: gspProvider.currencySymbol ?? '',
               ),
 
-              const SizedBox(width: 5),
+            // ======================================================
+            // SILVER
+            // ======================================================
+            if (widget.showBalances) ...[
+              const SizedBox(height: 12),
 
-              Expanded(
-                child: _BalanceCard(
-                  title: 'Silver Balance',
-                  balanceValue: silverBalance,
-                  unit: silverUnit,
-                  marketValue: silverMarketValue,
-                  currencySymbol: currencySymbol,
-                  isGold: false,
-                  image: 'assets/s_balance.png',
-                ),
+              _BalanceCard(
+                title: 'Silver Balance',
+                balanceValue: gspProvider.silverBalance ?? '...',
+                unit: gspProvider.silverUnit ?? 'grams',
+                marketValue: gspProvider.silverMarketValue ?? '...',
+                currencySymbol: gspProvider.currencySymbol ?? '',
+                isGold: false,
+                image: 'assets/s_balance.png',
               ),
             ],
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
@@ -470,21 +479,29 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
       isUnlocking = true;
     });
 
-    final currencyProvider = context.read<CurrencyProvider>();
-
-    final String currency = currencyProvider.selectedCurrency;
-
     try {
-      log('JSC UNLOCK -> Currency: $currency');
+      final currencyProvider = context.read<CurrencyProvider>();
 
-      final result = await GspService.unlockWallet(
+      final String currency = currencyProvider.selectedCurrency;
+
+      log('GSP UNLOCK -> Currency: $currency');
+
+      // ========================================================
+      // ONLY API CALL
+      // ========================================================
+
+      final Map<String, dynamic> result = await GspService.unlockWallet(
         unlockPassword: password,
         currency: currency,
       );
 
-      log('JSC UNLOCK RESPONSE -> $result');
+      log('GSP UNLOCK RESPONSE -> $result');
 
       if (!mounted) return;
+
+      // ========================================================
+      // CHECK STATUS
+      // ========================================================
 
       if (result['status'] != true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -498,15 +515,27 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
         return;
       }
 
+      // ========================================================
+      // GET DATA
+      // ========================================================
+
       final Map<String, dynamic> data = result['data'] is Map
           ? Map<String, dynamic>.from(result['data'])
           : <String, dynamic>{};
 
-      log('JSC UNLOCK DATA -> $data');
+      log('GSP UNLOCK DATA -> $data');
+
+      // ========================================================
+      // SEND API RESPONSE DATA TO PARENT
+      // ========================================================
 
       await widget.onUnlocked(data);
 
       if (!mounted) return;
+
+      // ========================================================
+      // SUCCESS MESSAGE
+      // ========================================================
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -515,8 +544,11 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
           ),
         ),
       );
+
+      // Optional: clear password
+      controller.clear();
     } catch (e, stackTrace) {
-      log('JSC UNLOCK ERROR -> $e', stackTrace: stackTrace);
+      log('GSP UNLOCK ERROR -> $e', stackTrace: stackTrace);
 
       if (!mounted) return;
 
@@ -645,6 +677,187 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
   }
 }
 
+class _GoldBalanceCard extends StatelessWidget {
+  final String balanceValue;
+  final String unit;
+  final String marketValue;
+  final String currencySymbol;
+
+  const _GoldBalanceCard({
+    required this.balanceValue,
+    required this.unit,
+    required this.marketValue,
+    required this.currencySymbol,
+  });
+
+  String _formatValue(String value) {
+    final double? number = double.tryParse(value);
+
+    if (number == null) {
+      return value;
+    }
+
+    return number.toStringAsFixed(2);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 137,
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFFFFFBFC), Color(0xFFFFF7E7)],
+        ),
+        border: Border.all(color: const Color(0xFFF5C9D0), width: 0.8),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Stack(
+        children: [
+          // ====================================================
+          // TITLE
+          // ====================================================
+          Positioned(
+            left: 0,
+            top: 6,
+            child: Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFDDB52E),
+                    border: Border.all(
+                      color: const Color(0xFFF1E5B8),
+                      width: 2,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  'GOLD BALANCE',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF777171),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ====================================================
+          // GSP BADGE
+          // ====================================================
+          Positioned(
+            right: 3,
+            top: 1,
+            child: Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 13),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFE8ED),
+                border: Border.all(color: const Color(0xFFF4BFC9), width: 0.8),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'GSP',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFD20D2D),
+                ),
+              ),
+            ),
+          ),
+
+          // ====================================================
+          // BALANCE
+          // ====================================================
+          Positioned(
+            left: 2,
+            bottom: 11,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  balanceValue,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+
+                const SizedBox(width: 4),
+
+                Text(
+                  unit.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ====================================================
+          // CURRENT GOLD VALUE
+          // ====================================================
+          Positioned(
+            right: 3,
+            bottom: 1,
+            child: Container(
+              width: 320,
+              height: 66,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.55),
+                border: Border.all(color: const Color(0xFFF2C9D0), width: 0.8),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text(
+                    'CURRENT GOLD VALUE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF986A25),
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  Text(
+                    marketValue == '...'
+                        ? '....'
+                        : '${_formatValue(marketValue)}',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF986A25),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _BalanceCard extends StatelessWidget {
   final String title;
   final String balanceValue;
@@ -663,6 +876,16 @@ class _BalanceCard extends StatelessWidget {
     required this.isGold,
     required this.image,
   });
+
+  String _formatValue(String value) {
+    final double? number = double.tryParse(value);
+
+    if (number == null) {
+      return value;
+    }
+
+    return number.toStringAsFixed(2);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -720,7 +943,7 @@ class _BalanceCard extends StatelessWidget {
           Text(
             marketValue == '...'
                 ? '... market value'
-                : '$marketValue market value',
+                : '${_formatValue(marketValue)} market value',
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 10,

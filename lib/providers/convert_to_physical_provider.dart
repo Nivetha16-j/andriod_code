@@ -572,19 +572,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================
-  // FETCH CURRENT STATUS FROM BACKEND
-  //
-  // THIS IS THE IMPORTANT METHOD.
-  //
-  // Every time this runs:
-  //
-  // Backend active    -> provider active
-  // Backend inactive  -> provider inactive
-  //
-  // NO LOCAL CACHE.
-  // ============================================================
-
   Future<void> fetchConversionStatus({bool showLoader = false}) async {
     if (_isFetchingStatus) {
       log('⏭️ fetchConversionStatus already running');

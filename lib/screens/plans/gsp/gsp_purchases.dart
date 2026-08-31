@@ -1,0 +1,86 @@
+import 'package:flutter/material.dart';
+import 'package:junubullion/models/plans.dart';
+import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/gsp/gsp_purchase_section.dart';
+import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
+import 'package:junubullion/widgets/home/custom_drawer.dart';
+import 'package:junubullion/widgets/home/custon_appbar.dart';
+import '../layout.dart';
+
+class GspPurchasesScreen extends StatefulWidget {
+  const GspPurchasesScreen({super.key});
+
+  @override
+  State<GspPurchasesScreen> createState() => _GspPurchasesScreenState();
+}
+
+class _GspPurchasesScreenState extends State<GspPurchasesScreen> {
+  @override
+  Widget build(BuildContext context) {
+    int currentIndex = 0;
+
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+    return Scaffold(
+      backgroundColor: const Color(0xffFAFAF8),
+      key: scaffoldKey,
+      drawer: const CustomDrawer(),
+      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
+      body: PlansLayout(
+        plans: Plans.jsc,
+        selectedMenu: 'Your Purchases',
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+          child: const GspPurchasesContent(),
+        ),
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: _switchToTab,
+      ),
+    );
+  }
+
+  void _switchToTab(int index) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => MainScreen(initialIndex: index)),
+      (route) => false,
+    );
+  }
+}
+
+class GspPurchasesContent extends StatelessWidget {
+  const GspPurchasesContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Your Purchases',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        const Text(
+          "Track each digital purchase against today's market price.",
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            color: Colors.black,
+          ),
+        ),
+
+        const SizedBox(height: 25),
+
+        const GspPurchasesSection(),
+      ],
+    );
+  }
+}
