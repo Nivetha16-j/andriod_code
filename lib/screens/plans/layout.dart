@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_convert_to_physical.dart';
 import 'package:junubullion/screens/plans/gsp/gsp_dashboard.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_purchases.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_sellback.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_transaction.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_wallet.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_convert_to_physical.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_dashboard.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_purchases.dart';
@@ -51,7 +56,7 @@ class PlansLayout extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) =>
-                isJsc ? const JscWalletScreen() : const GspDashboardScreen(),
+                isJsc ? const JscWalletScreen() : const GspWalletScreen(),
           ),
         );
         break;
@@ -61,7 +66,7 @@ class PlansLayout extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) =>
-                isJsc ? const JscPurchasesScreen() : const GspDashboardScreen(),
+                isJsc ? const JscPurchasesScreen() : const GspPurchasesScreen(),
           ),
         );
         break;
@@ -79,20 +84,20 @@ class PlansLayout extends StatelessWidget {
           MaterialPageRoute(
             builder: (_) => isJsc
                 ? const JscTransactionHistoryScreen()
-                : const GspDashboardScreen(),
+                : const GspTransactionHistoryScreen(),
           ),
         );
         break;
 
       case 'Convert to Physical':
-        if (isJsc) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const JscConvertToPhysicalScreen(),
-            ),
-          );
-        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => isJsc
+                ? const JscConvertToPhysicalScreen()
+                : const GspConvertToPhysicalScreen(),
+          ),
+        );
         break;
 
       case 'Monthly Investment Plan':
@@ -109,7 +114,7 @@ class PlansLayout extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) =>
-                isJsc ? const JscSellBackScreen() : const GspDashboardScreen(),
+                isJsc ? const JscSellBackScreen() : const GspSellBackScreen(),
           ),
         );
         break;

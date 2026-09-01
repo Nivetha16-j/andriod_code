@@ -155,6 +155,19 @@ class _GspBalanceSectionState extends State<GspBalanceSection> {
 
       await _fetchWallet(currency);
 
+      try {
+        final sellBackResult = await GspService.getSellBackDetails(
+          currency: currency,
+        );
+
+        log(
+          'Gsp BALANCE -> Sell Back: '
+          '$sellBackResult',
+        );
+      } catch (e, stackTrace) {
+        log('JSC BALANCE -> Sell Back error: $e', stackTrace: stackTrace);
+      }
+
       if (mounted) {
         await widget.onUnlocked?.call();
       }

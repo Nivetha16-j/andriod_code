@@ -112,4 +112,30 @@ class GspService {
 
     throw Exception(data['message']?.toString() ?? 'Failed to fetch purchases');
   }
+
+  static Future<Map<String, dynamic>> getSellBackDetails({
+    required String currency,
+  }) async {
+    try {
+      final token = await SessionManager.getToken();
+
+      final uri = Uri.parse(
+        '$baseUrl/my-account/gsp/sell-backs',
+      ).replace(queryParameters: {'currency': currency});
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      log('Sell Back API Response: ${response.statusCode} ${response.body}');
+
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      log('Sell Back API error: $e');
+      rethrow;
+    }
+  }
 }

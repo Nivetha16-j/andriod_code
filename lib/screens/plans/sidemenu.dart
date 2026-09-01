@@ -52,8 +52,7 @@ class PlansSidebar extends StatelessWidget {
             _menuItem('Account Details'),
             _menuItem('Transaction History'),
 
-            // Only JSC
-            if (isJsc) _menuItem('Convert to Physical'),
+            _menuItem('Convert to Physical'),
 
             _menuItem('Sell Back Request'),
             _menuItem('Lost Password'),

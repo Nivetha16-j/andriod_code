@@ -3,27 +3,27 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
-import 'package:junubullion/providers/jsc_balance_provider.dart';
+import 'package:junubullion/providers/gsp_balance_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/plans/custom_sellbackdialog.dart';
 import 'package:junubullion/screens/plans/layout.dart';
-import 'package:junubullion/services/jsc_services.dart';
+import 'package:junubullion/services/gsp_service.dart';
 import 'package:junubullion/services/session_manager.dart';
+import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
-import 'package:junubullion/screens/plans/custom_sellbackdialog.dart';
-import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 
-class JscSellBackScreen extends StatefulWidget {
-  const JscSellBackScreen({super.key});
+class GspSellBackScreen extends StatefulWidget {
+  const GspSellBackScreen({super.key});
 
   @override
-  State<JscSellBackScreen> createState() => _JscSellBackScreenState();
+  State<GspSellBackScreen> createState() => _GspSellBackScreenState();
 }
 
-class _JscSellBackScreenState extends State<JscSellBackScreen> {
+class _GspSellBackScreenState extends State<GspSellBackScreen> {
   @override
   Widget build(BuildContext context) {
     const int currentIndex = 0;
@@ -36,11 +36,11 @@ class _JscSellBackScreenState extends State<JscSellBackScreen> {
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: PlansLayout(
-        plans: Plans.jsc,
+        plans: Plans.gsp,
         selectedMenu: 'Sell Back Request',
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
-          child: const JscSellBackContent(),
+          child: const GspSellBackContent(),
         ),
       ),
       bottomNavigationBar: CustomBottomNavigationBar(
@@ -59,24 +59,32 @@ class _JscSellBackScreenState extends State<JscSellBackScreen> {
   }
 }
 
-class JscSellBackContent extends StatefulWidget {
-  const JscSellBackContent({super.key});
+class GspSellBackContent extends StatefulWidget {
+  const GspSellBackContent({super.key});
 
   @override
-  State<JscSellBackContent> createState() => _JscSellBackContentState();
+  State<GspSellBackContent> createState() => _GspSellBackContentState();
 }
 
-class _JscSellBackContentState extends State<JscSellBackContent> {
+class _GspSellBackContentState extends State<GspSellBackContent> {
   bool isLoadingSellBack = false;
 
   Map<String, dynamic>? sellBackData;
 
   bool isBalancesUnlocked = false;
 
+  Timer? _refreshTimer;
+
   bool isLoading = true;
 
   String? errorMessage;
-  Timer? _refreshTimer;
+
+  // @override
+  // void initState() {
+  //   super.initState();
+
+  //   _checkUnlockStatus();
+  // }
 
   @override
   void initState() {
@@ -93,13 +101,13 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
   void dispose() {
     _refreshTimer?.cancel();
     _refreshTimer = null;
-
     super.dispose();
   }
 
   Future<void> _fetchSellBackData({bool isRefresh = false}) async {
     try {
-      // Loader only for initial API call
+      // Only show loader for the first fetch.
+      // Do NOT show loader every second.
       if (!isRefresh && mounted) {
         setState(() {
           isLoading = true;
@@ -112,13 +120,13 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
         listen: false,
       );
 
-      final currency = currencyProvider.selectedCurrency;
+      final selectedCurrency = currencyProvider.selectedCurrency;
 
-      log('Fetching JSC sell back data - currency: $currency');
+      final result = await GspService.getSellBackDetails(
+        currency: selectedCurrency,
+      );
 
-      final result = await JscService.getSellBackDetails(currency: currency);
-
-      log('JSC Sell Back Response: $result');
+      log('GSP Sell Back Response: $result');
 
       if (!mounted) return;
 
@@ -132,25 +140,28 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
           errorMessage = null;
         });
       } else {
-        // During 1-second refresh, don't clear existing data
+        // Don't destroy already displayed live data
+        // during a temporary refresh failure.
         if (!isRefresh) {
           setState(() {
+            sellBackData = {};
             errorMessage =
                 result['message']?.toString() ??
                 'Unable to fetch sell back details.';
-
             isLoading = false;
           });
         }
       }
     } catch (e, stackTrace) {
-      log('JSC Sell Back Error: $e', stackTrace: stackTrace);
+      log('GSP Sell Back Error: $e', stackTrace: stackTrace);
 
       if (!mounted) return;
 
-      // Keep existing data during background refresh
+      // During background refresh, keep the previous
+      // values visible instead of showing a loader/error.
       if (!isRefresh) {
         setState(() {
+          sellBackData = {};
           errorMessage = 'Unable to load sell back details.';
           isLoading = false;
         });
@@ -159,7 +170,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
   }
 
   Future<void> _checkUnlockStatus() async {
-    final provider = context.read<JscBalanceProvider>();
+    final provider = context.read<GspBalanceProvider>();
 
     await provider.loadUnlockStatus();
 
@@ -180,7 +191,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     if (!mounted) return;
 
     // Always verify session unlock state before making the request.
-    final unlocked = await SessionManager.isJscBalanceUnlocked();
+    final unlocked = await SessionManager.isGspBalanceUnlocked();
 
     if (!mounted) return;
 
@@ -210,7 +221,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
       debugPrint('SELL BACK -> Fetching details with currency: $currency');
 
-      final result = await JscService.getSellBackDetails(currency: currency);
+      final result = await GspService.getSellBackDetails(currency: currency);
 
       debugPrint('SELL BACK -> API RESULT: $result');
 
@@ -224,7 +235,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
             : <String, dynamic>{};
 
         // Verify unlock state again before storing data.
-        final stillUnlocked = await SessionManager.isJscBalanceUnlocked();
+        final stillUnlocked = await SessionManager.isGspBalanceUnlocked();
 
         if (!mounted) return;
 
@@ -319,7 +330,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
         const SizedBox(height: 25),
 
-        JscBalanceSection(
+        GspBalanceSection(
           showBalances: false,
 
           /// Called after successful wallet unlock.
@@ -432,47 +443,64 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
   }
 
   Widget _buildSellBackDetails() {
-    final gold = sellBackData?['gold'] as Map<String, dynamic>? ?? {};
+    // API structure:
+    //
+    // data
+    //   └── summary
+    //        ├── gold
+    //        │    ├── balance
+    //        │    ├── unit
+    //        │    └── formatted_spot_price
+    //        └── silver
+    //             ├── balance
+    //             ├── unit
+    //             └── formatted_spot_price
 
-    final silver = sellBackData?['silver'] as Map<String, dynamic>? ?? {};
+    final summary = sellBackData?['summary'] as Map<String, dynamic>? ?? {};
 
-    final goldBalance = gold['balance']?.toString() ?? '0.0000';
+    final gold = summary['gold'] as Map<String, dynamic>? ?? {};
+
+    final silver = summary['silver'] as Map<String, dynamic>? ?? {};
+
+    // GOLD
+    final goldBalance = gold['balance']?.toString() ?? '0';
 
     final goldUnit = gold['unit']?.toString() ?? 'gram';
 
-    final goldMarketRate = gold['market_rate']?.toString() ?? '0';
+    final goldSpotPrice = gold['formatted_spot_price']?.toString() ?? '\$0.00';
 
-    final silverBalance = silver['balance']?.toString() ?? '0.0000';
+    // SILVER
+    final silverBalance = silver['balance']?.toString() ?? '0';
 
     final silverUnit = silver['unit']?.toString() ?? 'gram';
 
-    final silverMarketRate = silver['market_rate']?.toString() ?? '0';
+    final silverSpotPrice =
+        silver['formatted_spot_price']?.toString() ?? '\$0.00';
 
-    final currency = sellBackData?['currency']?.toString() ?? '';
-
-    final currencySymbol = _currencySymbol(currency);
-
+    // Sell-back requests
     final List<dynamic> sellBacks =
-        sellBackData?['sell_backs'] as List<dynamic>? ?? [];
+        sellBackData?['sellBackRequests'] as List<dynamic>? ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // GOLD
         _buildSellBackMetalRow(
           metal: 'Gold',
           balance: goldBalance,
           unit: goldUnit,
-          spotPrice: '$currencySymbol$goldMarketRate',
+          spotPrice: goldSpotPrice,
           enabled: _canSellGold(goldBalance, goldUnit),
         ),
 
         const SizedBox(height: 8),
 
+        // SILVER
         _buildSellBackMetalRow(
           metal: 'Silver',
           balance: silverBalance,
           unit: silverUnit,
-          spotPrice: '$currencySymbol$silverMarketRate',
+          spotPrice: silverSpotPrice,
           enabled: _canSellSilver(silverBalance, silverUnit),
         ),
 
@@ -548,7 +576,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                           barrierDismissible: false,
                           builder: (dialogContext) {
                             return SellBackDialog(
-                              plan: Plans.jsc,
+                              plan: Plans.gsp,
                               metal: metal,
                               balance: balance,
                               unit: unit,

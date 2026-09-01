@@ -12,7 +12,7 @@ import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
-import 'package:junubullion/screens/plans/jsc_form.dart';
+import 'package:junubullion/screens/plans/form.dart';
 
 class GspScreen extends StatefulWidget {
   const GspScreen({super.key});

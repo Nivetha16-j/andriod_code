@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
-import 'package:junubullion/screens/home/homescreen.dart';
 import 'package:junubullion/services/sell_back_services.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/account_provider.dart';
@@ -16,6 +16,9 @@ class SellBackDialog extends StatefulWidget {
   final String spotPrice;
   final String currency;
 
+  // NEW
+  final Plans plan;
+
   const SellBackDialog({
     super.key,
     required this.metal,
@@ -23,6 +26,7 @@ class SellBackDialog extends StatefulWidget {
     required this.unit,
     required this.spotPrice,
     this.currency = 'USD',
+    required this.plan,
   });
 
   @override
@@ -187,6 +191,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
       log('CURRENCY: $currency');
 
       final response = await SellBackServices.submitSellBack(
+        plan: widget.plan.name,
         metal: widget.metal.toLowerCase(),
         amount: quantity,
         accountHolderName: nameController.text.trim(),

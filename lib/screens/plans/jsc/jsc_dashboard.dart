@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
-import 'package:junubullion/screens/plans/jsc_form.dart';
+import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/jsc_services.dart';

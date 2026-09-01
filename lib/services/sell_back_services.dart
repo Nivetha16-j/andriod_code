@@ -7,6 +7,7 @@ class SellBackServices {
   static const String baseUrl = "https://staging.junubullion.com/api";
 
   static Future<Map<String, dynamic>> submitSellBack({
+    required String plan,
     required String metal,
     required double amount,
     required String accountHolderName,
@@ -19,25 +20,35 @@ class SellBackServices {
   }) async {
     try {
       final token = await SessionManager.getToken();
+      final String endpoint;
+
+      if (plan.toLowerCase() == 'gsp') {
+        endpoint = '$baseUrl/my-account/gsp/wallet/sell-back';
+      } else {
+        // KEEP YOUR EXISTING JSC ENDPOINT HERE
+        endpoint = '$baseUrl/my-account/wallet/sell-back';
+      }
+
+      final payload = {
+        'metal': metal,
+        'amount': amount,
+        'account_holder_name': accountHolderName,
+        'bank_name': bankName,
+        'account_number': accountNumber,
+        'ifsc_code': ifscCode,
+        'swift_code': swiftCode,
+        'bank_branch': bankBranch,
+        'currency': currency,
+      };
 
       final response = await http.post(
-        Uri.parse('$baseUrl/my-account/wallet/sell-back'),
+        Uri.parse(endpoint),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'metal': metal,
-          'amount': amount,
-          'account_holder_name': accountHolderName,
-          'bank_name': bankName,
-          'account_number': accountNumber,
-          'ifsc_code': ifscCode,
-          'swift_code': swiftCode,
-          'bank_branch': bankBranch,
-          'currency': currency,
-        }),
+        body: jsonEncode(payload),
       );
 
       log('SELL BACK STATUS: ${response.statusCode}');

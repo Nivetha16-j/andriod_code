@@ -195,14 +195,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-      '🟢 CONVERT BUILD -> '
-      'unlocked=$_isUnlocked '
-      'loading=$isLoading '
-      'gold=$gold '
-      'silver=$silver',
-    );
-
     return _buildContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,10 +740,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       }
 
       log('✅ NORMAL CART MOVED SUCCESSFULLY');
-
-      // ============================================================
-      // STEP 5: UPDATE PROVIDER FROM API RESPONSE
-      // ============================================================
 
       final physicalProvider = context.read<PhysicalConversionProvider>();
 

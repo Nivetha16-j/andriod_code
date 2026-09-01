@@ -4,7 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
-import 'package:junubullion/screens/plans/jsc_form.dart';
+import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
