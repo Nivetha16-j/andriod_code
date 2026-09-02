@@ -66,6 +66,132 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   // ============================================================
+  // PRODUCT WEIGHT
+  // ============================================================
+
+  double _getProductWeightInGrams(Map<String, dynamic> product) {
+    final weight = double.tryParse('${product['weight'] ?? 0}') ?? 0;
+
+    final unit = (product['weight_unit'] ?? 'gram')
+        .toString()
+        .trim()
+        .toLowerCase();
+
+    switch (unit) {
+      case 'gram':
+      case 'grams':
+      case 'g':
+        return weight;
+
+      case 'kg':
+      case 'kilogram':
+      case 'kilograms':
+        return weight * 1000;
+
+      case 'toz':
+      case 'troy_ounce':
+      case 'troy_ounces':
+      case 'oz':
+        return weight * 31.1035;
+
+      default:
+        log(
+          '⚠️ UNKNOWN PRODUCT WEIGHT UNIT -> '
+          'weight=$weight unit=$unit',
+        );
+        return weight;
+    }
+  }
+
+  // ============================================================
+  // CURRENT CART TOTAL WEIGHT
+  // ============================================================
+
+  double _getCartTotalWeightInGrams(CartProvider cartProvider) {
+    double totalWeight = 0;
+
+    for (final item in cartProvider.cartItems) {
+      final weight = double.tryParse('${item['weight_grams'] ?? 0}') ?? 0;
+
+      // weight_grams is already the line total.
+      // DO NOT multiply by quantity.
+      totalWeight += weight;
+    }
+
+    log(
+      '⚖️ CURRENT CART TOTAL WEIGHT -> '
+      '${totalWeight}g',
+    );
+
+    return totalWeight;
+  }
+
+  // ============================================================
+  // PHYSICAL CONVERSION WEIGHT VALIDATION
+  // ============================================================
+
+  String? _validateConversionWeight(
+    CartProvider cartProvider, {
+    required Map<String, dynamic> product,
+    required int quantityToAdd,
+  }) {
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    if (!physicalProvider.isActive) {
+      return null;
+    }
+
+    final conversionLimit = physicalProvider.amount;
+
+    if (conversionLimit <= 0) {
+      return null;
+    }
+
+    final productWeight = _getProductWeightInGrams(product);
+
+    if (productWeight <= 0) {
+      log(
+        '⚠️ INVALID PRODUCT WEIGHT -> '
+        'product=${product['name']} '
+        'weight=${product['weight']} '
+        'unit=${product['weight_unit']}',
+      );
+
+      return null;
+    }
+
+    final currentCartWeight = _getCartTotalWeightInGrams(cartProvider);
+
+    final addedWeight = productWeight * quantityToAdd;
+
+    final newTotalWeight = currentCartWeight + addedWeight;
+
+    log(
+      '⚖️ PHYSICAL CONVERSION WEIGHT CHECK -> '
+      'product=${product['name']} '
+      'productWeight=${productWeight}g '
+      'currentCartWeight=${currentCartWeight}g '
+      'adding=${addedWeight}g '
+      'newTotal=${newTotalWeight}g '
+      'limit=${conversionLimit}g',
+    );
+
+    if (newTotalWeight > conversionLimit + 0.000001) {
+      final remainingWeight = (conversionLimit - currentCartWeight).clamp(
+        0,
+        conversionLimit,
+      );
+
+      return 'You can add only '
+          '${remainingWeight.toStringAsFixed(2)}g more. '
+          'Your physical conversion limit is '
+          '${conversionLimit.toStringAsFixed(2)}g.';
+    }
+
+    return null;
+  }
+
+  // ============================================================
   // SLIDER
   // ============================================================
 
@@ -218,16 +344,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       showLoader: showLoader,
     );
   }
-
-  String _apiUnit(String unit) => switch (unit.toLowerCase()) {
-    'gram' => 'gram',
-    'ounce' => 'toz',
-    _ => 'kg',
-  };
-
-  // ============================================================
-  // NAVIGATION
-  // ============================================================
 
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
@@ -494,6 +610,42 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 onPressed: !isInCart
                                     ? null
                                     : () async {
+                                        if (isPhysicalMode) {
+                                          // Digital products are never allowed
+                                          // during physical conversion.
+                                          if (isDigitalProduct) {
+                                            _showMessage(
+                                              "Digital products cannot be added during physical conversion.",
+                                            );
+                                            return;
+                                          }
+
+                                          // Metal validation.
+                                          final validationError =
+                                              physicalProvider.validateProduct(
+                                                metalType: product['metal_type']
+                                                    ?.toString(),
+                                              );
+
+                                          if (validationError != null) {
+                                            _showMessage(validationError);
+                                            return;
+                                          }
+
+                                          // Weight validation.
+                                          final weightError =
+                                              _validateConversionWeight(
+                                                cartProvider,
+                                                product: product,
+                                                quantityToAdd: 1,
+                                              );
+
+                                          if (weightError != null) {
+                                            _showMessage(weightError);
+                                            return;
+                                          }
+                                        }
+
                                         await cartProvider.updateCartQuantity(
                                           productId: productId,
                                           quantity: cartQuantity + 1,
@@ -552,6 +704,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                                       if (validationError != null) {
                                         _showMessage(validationError);
+                                        return;
+                                      }
+
+                                      final weightError =
+                                          _validateConversionWeight(
+                                            cartProvider,
+                                            product: product,
+                                            quantityToAdd: quantity,
+                                          );
+
+                                      if (weightError != null) {
+                                        _showMessage(weightError);
                                         return;
                                       }
                                     }
@@ -1089,6 +1253,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                                                 if (error != null) {
                                                   _showMessage(error);
+                                                  return;
+                                                }
+
+                                                final weightError =
+                                                    _validateConversionWeight(
+                                                      cartProvider,
+                                                      product: relatedProduct,
+                                                      quantityToAdd: 1,
+                                                    );
+
+                                                if (weightError != null) {
+                                                  _showMessage(weightError);
                                                   return;
                                                 }
                                               }

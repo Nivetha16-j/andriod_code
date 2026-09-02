@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
-import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/home_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
@@ -43,7 +42,7 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
   void initState() {
     super.initState();
 
-    log("TrendingProducts initState");
+    log("TrendingProducts initState ${widget.products}");
 
     _scrollController = ScrollController();
     _liveProducts = widget.products;
@@ -89,6 +88,8 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
 
         final products =
             homeData['data']['trending_products'] as List<dynamic>?;
+
+        log("TrendingProducts fetched products: $products");
 
         if (mounted && products != null) {
           setState(() {
@@ -229,19 +230,11 @@ class _ProductCard extends StatelessWidget {
 
   const _ProductCard({required this.product});
 
-  String? _validatePhysicalConversion(BuildContext context) {
-    final physicalProvider = context.read<PhysicalConversionProvider>();
-
-    log("proooooooo $product");
-
-    return physicalProvider.validateProduct(
-      // brand: product['brand']?.toString(),
-      metalType: product['metal_type']?.toString(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    log(
+      "Building ProductCard for product: ${product['weight']} ${product['weight_unit']} - ${product['name']}",
+    );
     final String name = product['name']?.toString() ?? 'Product Name';
 
     final String priceText =
@@ -268,6 +261,116 @@ class _ProductCard extends StatelessWidget {
         .toUpperCase();
 
     final bool isDigitalProduct = brand == "GSP" || brand == "JSC";
+
+    double _getProductWeightInGrams() {
+      final weight = double.tryParse('${product['weight'] ?? 0}') ?? 0;
+
+      final unit = (product['weight_unit'] ?? 'gram')
+          .toString()
+          .trim()
+          .toLowerCase();
+
+      switch (unit) {
+        case 'gram':
+        case 'grams':
+        case 'g':
+          return weight;
+
+        case 'kg':
+        case 'kilogram':
+        case 'kilograms':
+          return weight * 1000;
+
+        case 'toz':
+        case 'troy_ounce':
+        case 'troy_ounces':
+        case 'oz':
+          return weight * 31.1035;
+
+        default:
+          log(
+            '⚠️ UNKNOWN PRODUCT WEIGHT UNIT -> '
+            'weight=$weight unit=$unit',
+          );
+          return weight;
+      }
+    }
+
+    double _getCartTotalWeightInGrams(CartProvider cartProvider) {
+      double totalWeight = 0;
+
+      for (final item in cartProvider.cartItems) {
+        final weight = double.tryParse('${item['weight_grams'] ?? 0}') ?? 0;
+
+        // IMPORTANT:
+        // weight_grams is already the total weight of that cart line.
+        totalWeight += weight;
+      }
+
+      log('⚖️ CURRENT CART TOTAL WEIGHT -> ${totalWeight}g');
+
+      return totalWeight;
+    }
+
+    String? _validateConversionWeight(
+      CartProvider cartProvider, {
+      required int quantityToAdd,
+    }) {
+      final physicalProvider = context.read<PhysicalConversionProvider>();
+
+      if (!physicalProvider.isActive) {
+        return null;
+      }
+
+      final conversionLimit = physicalProvider.amount;
+
+      if (conversionLimit <= 0) {
+        return null;
+      }
+
+      final productWeight = _getProductWeightInGrams();
+
+      if (productWeight <= 0) {
+        log(
+          '⚠️ INVALID PRODUCT WEIGHT -> '
+          'product=${product['name']} '
+          'weight=${product['weight']} '
+          'unit=${product['weight_unit']}',
+        );
+
+        return null;
+      }
+
+      final currentCartWeight = _getCartTotalWeightInGrams(cartProvider);
+
+      final addedWeight = productWeight * quantityToAdd;
+
+      final newTotalWeight = currentCartWeight + addedWeight;
+
+      log(
+        '⚖️ PHYSICAL CONVERSION WEIGHT CHECK -> '
+        'product=${product['name']} '
+        'productWeight=${productWeight}g '
+        'currentCartWeight=${currentCartWeight}g '
+        'adding=${addedWeight}g '
+        'newTotal=${newTotalWeight}g '
+        'limit=${conversionLimit}g',
+      );
+
+      if (newTotalWeight > conversionLimit + 0.000001) {
+        final remainingWeight = (conversionLimit - currentCartWeight).clamp(
+          0,
+          conversionLimit,
+        );
+
+        return 'You can add only '
+            '${remainingWeight.toStringAsFixed(2)}g more. '
+            'Your physical conversion limit is '
+            '${conversionLimit.toStringAsFixed(2)}g.';
+      }
+
+      return null;
+    }
 
     return InkWell(
       onTap: () {
@@ -423,11 +526,8 @@ class _ProductCard extends StatelessWidget {
 
                           InkWell(
                             onTap: () async {
-                              /*
-                 * When physical conversion is active,
-                 * validate the product first.
-                 */
                               if (physicalProvider.isActive) {
+                                // 1. Validate metal
                                 final error = physicalProvider.validateProduct(
                                   metalType: product['metal_type']?.toString(),
                                 );
@@ -442,8 +542,26 @@ class _ProductCard extends StatelessWidget {
                                   );
                                   return;
                                 }
+
+                                // 2. Validate conversion weight
+                                final weightError = _validateConversionWeight(
+                                  cartProvider,
+                                  quantityToAdd: 1,
+                                );
+
+                                if (weightError != null) {
+                                  Fluttertoast.showToast(
+                                    msg: weightError,
+                                    toastLength: Toast.LENGTH_SHORT,
+                                    gravity: ToastGravity.BOTTOM,
+                                    textColor: Colors.white,
+                                    fontSize: 14,
+                                  );
+                                  return;
+                                }
                               }
 
+                              // 3. Only update if validation passed
                               await cartProvider.updateCartQuantity(
                                 productId: productId,
                                 quantity: cartQuantity + 1,
@@ -475,12 +593,6 @@ class _ProductCard extends StatelessWidget {
                     onPressed: cartProvider.isAdding(productId)
                         ? null
                         : () async {
-                            /*
-               * Physical conversion active:
-               * validate only.
-               *
-               * Do NOT add to physicalCart.
-               */
                             if (physicalProvider.isActive) {
                               final error = physicalProvider.validateProduct(
                                 metalType: product['metal_type']?.toString(),
@@ -489,6 +601,22 @@ class _ProductCard extends StatelessWidget {
                               if (error != null) {
                                 Fluttertoast.showToast(
                                   msg: error,
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.BOTTOM,
+                                  textColor: Colors.white,
+                                  fontSize: 14,
+                                );
+                                return;
+                              }
+
+                              final weightError = _validateConversionWeight(
+                                cartProvider,
+                                quantityToAdd: 1,
+                              );
+
+                              if (weightError != null) {
+                                Fluttertoast.showToast(
+                                  msg: weightError,
                                   toastLength: Toast.LENGTH_SHORT,
                                   gravity: ToastGravity.BOTTOM,
                                   textColor: Colors.white,

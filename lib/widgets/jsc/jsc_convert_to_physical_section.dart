@@ -743,6 +743,8 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
       final physicalProvider = context.read<PhysicalConversionProvider>();
 
+      physicalProvider.setConversionPlan('jsc');
+
       await physicalProvider.fetchConversionStatus();
 
       log(

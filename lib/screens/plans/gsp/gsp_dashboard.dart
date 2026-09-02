@@ -5,6 +5,7 @@ import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
+import 'package:junubullion/widgets/gsp/gsp_convert_to_physical_section.dart';
 import 'package:junubullion/widgets/gsp/gsp_purchase_section.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -126,11 +127,11 @@ class _DashboardContentState extends State<_DashboardContent> {
           isUnlocked: context.watch<GspBalanceProvider>().isBalancesUnlocked,
         ),
 
-        // const SizedBox(height: 20),
+        const SizedBox(height: 20),
 
-        // JscConvertPhysicalSection(
-        //   isUnlocked: context.watch<JscBalanceProvider>().isBalancesUnlocked,
-        // ),
+        GspConvertPhysicalSection(
+          isUnlocked: context.watch<GspBalanceProvider>().isBalancesUnlocked,
+        ),
       ],
     );
   }

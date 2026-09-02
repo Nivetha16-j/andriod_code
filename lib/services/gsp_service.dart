@@ -138,4 +138,104 @@ class GspService {
       rethrow;
     }
   }
+
+  static Future<Map<String, dynamic>> fetchConvertPhysicalDetails({
+    required String currency,
+  }) async {
+    final token = await SessionManager.getToken();
+    final uri = Uri.parse(
+      '$baseUrl/my-account/gsp/convert-physical',
+    ).replace(queryParameters: {'currency': currency});
+
+    final response = await http.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
+
+    log("ressssssss-- ${response.body}");
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+
+    throw Exception(
+      'Failed to fetch convert physical data: ${response.statusCode}',
+    );
+  }
+
+  static Future<Map<String, dynamic>> convertToPhysical({
+    required String metal,
+    required double amount,
+    required String currency,
+  }) async {
+    final token = await SessionManager.getToken();
+
+    final url = Uri.parse(
+      'https://staging.junubullion.com/api/my-account/gsp/wallet/convert',
+    );
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'metal': metal.toLowerCase(),
+        'amount': amount,
+        'currency': currency,
+      }),
+    );
+
+    log('CONVERT API STATUS: ${response.statusCode}');
+    log('CONVERT API BODY: ${response.body}');
+
+    try {
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+
+      return {'status': false, 'message': 'Invalid response from server.'};
+    } catch (e) {
+      log('Convert API JSON error: $e');
+
+      return {'status': false, 'message': 'Invalid response from server.'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> fetchMonthlyPlan(String currency) async {
+    try {
+      final token = await SessionManager.getToken();
+
+      final response = await http.get(
+        Uri.parse(
+          '$baseUrl/my-account/gsp/monthly-plan',
+        ).replace(queryParameters: {'currency': currency}),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      log('GSP MONTHLY PLAN STATUS: ${response.statusCode}');
+
+      log('GSP MONTHLY PLAN RESPONSE: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+
+      return {
+        'status': false,
+        'message': 'Failed to fetch GSP monthly plan (${response.statusCode})',
+      };
+    } catch (e) {
+      log('GSP MONTHLY PLAN ERROR: $e');
+
+      return {'status': false, 'message': e.toString()};
+    }
+  }
 }

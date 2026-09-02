@@ -3,9 +3,11 @@ import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/layout.dart';
+import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
 import 'package:junubullion/widgets/jsc/jsc_convert_to_physical_section.dart';
 import 'package:provider/provider.dart';
 
@@ -56,12 +58,59 @@ class _JscConvertToPhysicalScreenState
   }
 }
 
-class JscConvertToPhysicalContent extends StatelessWidget {
+class JscConvertToPhysicalContent extends StatefulWidget {
   const JscConvertToPhysicalContent({super.key});
 
   @override
+  State<JscConvertToPhysicalContent> createState() =>
+      _JscConvertToPhysicalContentState();
+}
+
+class _JscConvertToPhysicalContentState
+    extends State<JscConvertToPhysicalContent> {
+  bool isBalancesUnlocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadUnlockStatus();
+  }
+
+  Future<void> _loadUnlockStatus() async {
+    final provider = context.read<JscBalanceProvider>();
+
+    await provider.loadUnlockStatus();
+
+    if (!mounted) return;
+
+    setState(() {
+      isBalancesUnlocked = provider.isBalancesUnlocked;
+    });
+  }
+
+  Future<void> _handleUnlocked() async {
+    if (!mounted) return;
+
+    debugPrint('CONVERT TO PHYSICAL -> Wallet unlocked.');
+
+    final provider = context.read<JscBalanceProvider>();
+
+    // Reload the persisted unlock state after successful unlock.
+    await provider.loadUnlockStatus();
+
+    if (!mounted) return;
+
+    setState(() {
+      isBalancesUnlocked = provider.isBalancesUnlocked;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isUnlocked = context.watch<JscBalanceProvider>().isBalancesUnlocked;
+    final provider = context.watch<JscBalanceProvider>();
+
+    final isUnlocked = provider.isBalancesUnlocked;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,6 +137,23 @@ class JscConvertToPhysicalContent extends StatelessWidget {
 
         const SizedBox(height: 25),
 
+        // ------------------------------------------------------------
+        // JSC BALANCE UNLOCK SECTION
+        // ------------------------------------------------------------
+        JscBalanceSection(
+          showBalances: false,
+
+          /// Called after successful wallet unlock.
+          onUnlocked: () async {
+            await _handleUnlocked();
+          },
+        ),
+
+        const SizedBox(height: 20),
+
+        // ------------------------------------------------------------
+        // CONVERT TO PHYSICAL
+        // ------------------------------------------------------------
         JscConvertPhysicalSection(isUnlocked: isUnlocked),
       ],
     );

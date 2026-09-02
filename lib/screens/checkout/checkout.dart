@@ -1948,9 +1948,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // CALL API
       // ==========================================================
 
+      final plan = physicalProvider.plan;
+
+      if (plan == null || plan.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to determine the physical conversion plan.'),
+          ),
+        );
+        return;
+      }
+
       final response = await CheckoutService.placePhysicalOrder(
         shippingAddress: shippingAddress,
-        terms: isTermsAccepted,
+        terms: true,
+        digitalType: plan,
       );
 
       log("PHYSICAL ORDER RESPONSE -> $response");

@@ -339,6 +339,7 @@ class _ExclusiveProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    log("Excccccccc ${product['weight']}......${product['weight_unit']}");
     final String name = product['name']?.toString() ?? 'Product Name';
 
     final String priceText =
@@ -512,6 +513,136 @@ class _ExclusiveProductCard extends StatelessWidget {
   }
 
   // ========================================================================
+  // PRODUCT WEIGHT
+  // ========================================================================
+
+  double _getProductWeightInGrams() {
+    final weight = double.tryParse('${product['weight'] ?? 0}') ?? 0;
+
+    final unit = (product['weight_unit'] ?? 'gram')
+        .toString()
+        .trim()
+        .toLowerCase();
+
+    switch (unit) {
+      case 'gram':
+      case 'grams':
+      case 'g':
+        return weight;
+
+      case 'kg':
+      case 'kilogram':
+      case 'kilograms':
+        return weight * 1000;
+
+      case 'toz':
+      case 'troy_ounce':
+      case 'troy_ounces':
+      case 'oz':
+        return weight * 31.1035;
+
+      default:
+        log(
+          '⚠️ UNKNOWN PRODUCT WEIGHT UNIT -> '
+          'weight=$weight unit=$unit',
+        );
+        return weight;
+    }
+  }
+
+  // ========================================================================
+  // CURRENT CART TOTAL WEIGHT
+  // ========================================================================
+
+  double _getCartTotalWeightInGrams(CartProvider cartProvider) {
+    double totalWeight = 0;
+
+    for (final item in cartProvider.cartItems) {
+      final weight = double.tryParse('${item['weight_grams'] ?? 0}') ?? 0;
+
+      // IMPORTANT:
+      // weight_grams is already the line's total weight.
+      // Do NOT multiply by quantity.
+      totalWeight += weight;
+    }
+
+    log(
+      '⚖️ CURRENT CART TOTAL WEIGHT -> '
+      '${totalWeight}g',
+    );
+
+    return totalWeight;
+  }
+
+  // ========================================================================
+  // PHYSICAL CONVERSION WEIGHT VALIDATION
+  // ========================================================================
+
+  String? _validateConversionWeight(
+    CartProvider cartProvider, {
+    required int quantityToAdd,
+    required BuildContext context,
+  }) {
+    final physicalProvider = Provider.of<PhysicalConversionProvider>(
+      context,
+      listen: false,
+    );
+
+    if (!physicalProvider.isActive) {
+      return null;
+    }
+
+    final conversionLimit = physicalProvider.amount;
+
+    if (conversionLimit <= 0) {
+      return null;
+    }
+
+    final productWeight = _getProductWeightInGrams();
+
+    if (productWeight <= 0) {
+      log(
+        '⚠️ INVALID PRODUCT WEIGHT -> '
+        'product=${product['name']} '
+        'weight=${product['weight']} '
+        'unit=${product['weight_unit']}',
+      );
+
+      return null;
+    }
+
+    final currentCartWeight = _getCartTotalWeightInGrams(cartProvider);
+
+    final addedWeight = productWeight * quantityToAdd;
+
+    final newTotalWeight = currentCartWeight + addedWeight;
+
+    log(
+      '⚖️ PHYSICAL CONVERSION WEIGHT CHECK -> '
+      'product=${product['name']} '
+      'productWeight=${productWeight}g '
+      'currentCartWeight=${currentCartWeight}g '
+      'adding=${addedWeight}g '
+      'newTotal=${newTotalWeight}g '
+      'limit=${conversionLimit}g',
+    );
+
+    if (newTotalWeight > conversionLimit + 0.000001) {
+      final remainingWeight = (conversionLimit - currentCartWeight).clamp(
+        0,
+        conversionLimit,
+      );
+
+      return 'You can add only '
+          '${remainingWeight.toStringAsFixed(2)}g more. '
+          'Your physical conversion limit is '
+          '${conversionLimit.toStringAsFixed(2)}g.';
+    }
+
+    return null;
+  }
+
+  // ========================================================================
   // NORMAL CART BUTTON
   // ========================================================================
 
@@ -594,6 +725,24 @@ class _ExclusiveProductCard extends StatelessWidget {
 
             InkWell(
               onTap: () async {
+                final weightError = _validateConversionWeight(
+                  cartProvider,
+                  quantityToAdd: 1,
+                  context: context,
+                );
+
+                if (weightError != null) {
+                  Fluttertoast.showToast(
+                    msg: weightError,
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: Colors.black87,
+                    textColor: Colors.white,
+                    fontSize: 14,
+                  );
+                  return;
+                }
+
                 await cartProvider.updateCartQuantity(
                   productId: productId,
                   quantity: cartQuantity + 1,
@@ -619,6 +768,24 @@ class _ExclusiveProductCard extends StatelessWidget {
       onPressed: cartProvider.isAdding(productId)
           ? null
           : () async {
+              final weightError = _validateConversionWeight(
+                cartProvider,
+                quantityToAdd: 1,
+                context: context,
+              );
+
+              if (weightError != null) {
+                Fluttertoast.showToast(
+                  msg: weightError,
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  backgroundColor: Colors.black87,
+                  textColor: Colors.white,
+                  fontSize: 14,
+                );
+                return;
+              }
+
               final bool success = await cartProvider.addToCart(
                 productId: productId,
                 quantity: 1,

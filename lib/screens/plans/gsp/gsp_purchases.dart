@@ -26,7 +26,7 @@ class _GspPurchasesScreenState extends State<GspPurchasesScreen> {
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: PlansLayout(
-        plans: Plans.jsc,
+        plans: Plans.gsp,
         selectedMenu: 'Your Purchases',
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),

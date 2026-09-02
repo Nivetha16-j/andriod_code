@@ -237,7 +237,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
 
       log(
         '🛒 CART REFRESH COMPLETE -> '
-        'items=${cartProvider.cartItems.length}',
+        'items=${cartProvider.cartItems}',
       );
     } catch (e, stackTrace) {
       log(

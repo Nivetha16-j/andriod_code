@@ -105,14 +105,21 @@ class CheckoutService {
   static Future<Map<String, dynamic>> placePhysicalOrder({
     required String shippingAddress,
     required bool terms,
+    required String digitalType,
   }) async {
     final token = await SessionManager.getToken();
+
+    final normalizedDigitalType = digitalType.trim().toLowerCase();
+
+    if (normalizedDigitalType != 'jsc' && normalizedDigitalType != 'gsp') {
+      return {"status": false, "message": "Invalid digital type."};
+    }
 
     final uri = Uri.parse('https://staging.junubullion.com/api/checkout/place');
 
     final body = {
       "delivery_option": "physical",
-      "digital_type": "jsc",
+      "digital_type": normalizedDigitalType,
       "terms": terms,
       "payment_type": "wallet",
       "payment_method": "wallet",

@@ -297,6 +297,337 @@ class _ProductGridCard extends StatelessWidget {
     );
   }
 
+  String? _validateConversionWeight(
+    CartProvider cartProvider, {
+    required int quantityToAdd,
+    required BuildContext context,
+  }) {
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    if (!physicalProvider.isActive) {
+      return null;
+    }
+
+    final conversionLimit = physicalProvider.amount;
+
+    if (conversionLimit <= 0) {
+      return null;
+    }
+
+    final productWeight = _getProductWeightInGrams();
+
+    if (productWeight <= 0) {
+      log(
+        '⚠️ INVALID PRODUCT WEIGHT -> '
+        'product=${product['name']} '
+        'weight=${product['weight']} '
+        'unit=${product['weight_unit']}',
+      );
+
+      return null;
+    }
+
+    final currentCartWeight = _getCartTotalWeightInGrams(cartProvider);
+
+    final addedWeight = productWeight * quantityToAdd;
+
+    final newTotalWeight = currentCartWeight + addedWeight;
+
+    log(
+      '⚖️ PHYSICAL CONVERSION WEIGHT CHECK -> '
+      'product=${product['name']} '
+      'productWeight=${productWeight}g '
+      'currentCartWeight=${currentCartWeight}g '
+      'adding=${addedWeight}g '
+      'newTotal=${newTotalWeight}g '
+      'limit=${conversionLimit}g',
+    );
+
+    if (newTotalWeight > conversionLimit) {
+      final remainingWeight = (conversionLimit - currentCartWeight).clamp(
+        0,
+        conversionLimit,
+      );
+
+      return 'You can add only '
+          '${remainingWeight.toStringAsFixed(2)}g more. '
+          'Your physical conversion limit is '
+          '${conversionLimit.toStringAsFixed(2)}g.';
+    }
+
+    return null;
+  }
+
+  double _getProductWeightInGrams() {
+    final weight = double.tryParse('${product['weight'] ?? 0}') ?? 0;
+
+    final unit = (product['weight_unit'] ?? 'gram')
+        .toString()
+        .trim()
+        .toLowerCase();
+
+    switch (unit) {
+      case 'gram':
+      case 'grams':
+      case 'g':
+        return weight;
+
+      case 'kg':
+      case 'kilogram':
+      case 'kilograms':
+        return weight * 1000;
+
+      case 'toz':
+      case 'troy_ounce':
+      case 'troy_ounces':
+      case 'oz':
+        // 1 troy ounce = 31.1035 grams
+        return weight * 31.1035;
+
+      default:
+        log(
+          '⚠️ UNKNOWN PRODUCT WEIGHT UNIT -> '
+          'weight=$weight unit=$unit',
+        );
+
+        return weight;
+    }
+  }
+
+  double _getCartTotalWeightInGrams(CartProvider cartProvider) {
+    double totalWeight = 0;
+
+    for (final item in cartProvider.cartItems) {
+      final weight = double.tryParse('${item['weight_grams'] ?? 0}') ?? 0;
+
+      final quantity = int.tryParse('${item['quantity'] ?? 0}') ?? 0;
+
+      totalWeight += weight * quantity;
+    }
+
+    return totalWeight;
+  }
+
+  // ============================================================
+  // WEIGHT HELPERS
+  // ============================================================
+
+  double _parseWeight(dynamic value) {
+    if (value == null) {
+      return 0;
+    }
+
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    return double.tryParse(value.toString()) ?? 0;
+  }
+
+  int _parseQuantity(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+
+    if (value is num) {
+      return value.toInt();
+    }
+
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  // ============================================================
+  // CURRENT CART TOTAL WEIGHT
+  //
+  // IMPORTANT:
+  // Backend cart response gives weight_grams as the TOTAL
+  // weight for that cart line.
+  //
+  // Example:
+  // quantity = 2
+  // weight_grams = 10
+  //
+  // This means 5g x 2 = 10g.
+  //
+  // Therefore DO NOT multiply weight_grams by quantity.
+  // ============================================================
+
+  double _getCurrentCartWeight(CartProvider cartProvider) {
+    double totalWeight = 0;
+
+    for (final cartItem in cartProvider.cartItems) {
+      final lineWeight = _parseWeight(cartItem["weight_grams"]);
+
+      totalWeight += lineWeight;
+    }
+
+    return totalWeight;
+  }
+
+  // ============================================================
+  // GET PRODUCT UNIT WEIGHT
+  //
+  // Product API should provide weight_grams for one product.
+  // ============================================================
+
+  double _getProductUnitWeight() {
+    final weight = _parseWeight(product["weight_grams"]);
+
+    return weight;
+  }
+
+  // ============================================================
+  // VALIDATE ADD TO CART
+  //
+  // Used when product is NOT currently in cart.
+  // ============================================================
+
+  bool _canAddPhysicalProduct(
+    BuildContext context,
+    CartProvider cartProvider,
+    PhysicalConversionProvider physicalProvider,
+  ) {
+    if (!physicalProvider.isActive) {
+      return true;
+    }
+
+    final conversionAmount = physicalProvider.amount;
+
+    if (conversionAmount <= 0) {
+      return true;
+    }
+
+    final currentCartWeight = _getCurrentCartWeight(cartProvider);
+
+    final productWeight = _getProductUnitWeight();
+
+    if (productWeight <= 0) {
+      log(
+        "⚠️ PRODUCT WEIGHT NOT AVAILABLE -> "
+        "${product['name']} "
+        "weight_grams=${product['weight_grams']}",
+      );
+
+      return true;
+    }
+
+    final newTotalWeight = currentCartWeight + productWeight;
+
+    final allowed = newTotalWeight <= conversionAmount;
+
+    log(
+      "⚖️ PHYSICAL ADD TO CART CHECK -> "
+      "currentCartWeight=$currentCartWeight g, "
+      "productWeight=$productWeight g, "
+      "newTotalWeight=$newTotalWeight g, "
+      "conversionAmount=$conversionAmount g, "
+      "allowed=$allowed",
+    );
+
+    if (!allowed) {
+      final amountText = conversionAmount % 1 == 0
+          ? conversionAmount.toInt().toString()
+          : conversionAmount.toStringAsFixed(4);
+
+      _showMessage(
+        "The selected products exceed your conversion allowance of $amountText g.",
+      );
+    }
+
+    return allowed;
+  }
+
+  // ============================================================
+  // VALIDATE + QUANTITY
+  //
+  // Existing cart item:
+  //
+  // current line weight / current quantity
+  // = one-unit weight
+  //
+  // Then add one unit to the total cart weight.
+  // ============================================================
+
+  bool _canIncreasePhysicalQuantity(
+    BuildContext context,
+    CartProvider cartProvider,
+    PhysicalConversionProvider physicalProvider,
+    Map<String, dynamic>? cartItem,
+  ) {
+    if (!physicalProvider.isActive) {
+      return true;
+    }
+
+    final conversionAmount = physicalProvider.amount;
+
+    if (conversionAmount <= 0) {
+      return true;
+    }
+
+    final currentCartWeight = _getCurrentCartWeight(cartProvider);
+
+    if (cartItem == null) {
+      log(
+        "⚠️ CART ITEM NOT FOUND -> "
+        "productId=${product['id']}",
+      );
+
+      return true;
+    }
+
+    final currentQuantity = _parseQuantity(cartItem["quantity"]);
+
+    final currentLineWeight = _parseWeight(cartItem["weight_grams"]);
+
+    if (currentQuantity <= 0 || currentLineWeight <= 0) {
+      log(
+        "⚠️ INVALID CART WEIGHT DATA -> "
+        "productId=${product['id']} "
+        "quantity=$currentQuantity "
+        "weight=$currentLineWeight",
+      );
+
+      return true;
+    }
+
+    // Example:
+    //
+    // quantity = 2
+    // weight_grams = 10
+    //
+    // one product = 10 / 2 = 5g
+
+    final productUnitWeight = currentLineWeight / currentQuantity;
+
+    final newTotalWeight = currentCartWeight + productUnitWeight;
+
+    final allowed = newTotalWeight <= conversionAmount;
+
+    log(
+      "⚖️ PHYSICAL QUANTITY CHECK -> "
+      "product=${product['name']} "
+      "currentCartWeight=$currentCartWeight g, "
+      "currentQuantity=$currentQuantity, "
+      "currentLineWeight=$currentLineWeight g, "
+      "unitWeight=$productUnitWeight g, "
+      "newTotalWeight=$newTotalWeight g, "
+      "conversionAmount=$conversionAmount g, "
+      "allowed=$allowed",
+    );
+
+    if (!allowed) {
+      final amountText = conversionAmount % 1 == 0
+          ? conversionAmount.toInt().toString()
+          : conversionAmount.toStringAsFixed(4);
+
+      _showMessage(
+        "The selected products exceed your conversion allowance of $amountText g.",
+      );
+    }
+
+    return allowed;
+  }
+
   Future<void> _addProduct(
     BuildContext context,
     CartProvider cartProvider,
@@ -310,7 +641,10 @@ class _ProductGridCard extends StatelessWidget {
     // ============================================================
 
     if (physicalProvider.isActive) {
-      // Digital products cannot be added during physical conversion
+      // ----------------------------------------------------------
+      // Digital products are not allowed
+      // ----------------------------------------------------------
+
       if (isDigitalProduct) {
         _showMessage(
           "Digital products cannot be added during physical conversion.",
@@ -318,11 +652,14 @@ class _ProductGridCard extends StatelessWidget {
         return;
       }
 
-      // Validate physical product
+      // ----------------------------------------------------------
+      // Validate metal
+      // ----------------------------------------------------------
+
       final validationError = _validatePhysicalProduct(context);
 
       log(
-        "PHYSICAL PRODUCT VALIDATION -> "
+        "PHYSICAL PRODUCT METAL VALIDATION -> "
         "${product['name']} -> $validationError",
       );
 
@@ -330,10 +667,32 @@ class _ProductGridCard extends StatelessWidget {
         _showMessage(validationError);
         return;
       }
+
+      // ----------------------------------------------------------
+      // Validate TOTAL conversion weight
+      //
+      // Since this is ADD TO CART, we are adding 1 quantity.
+      // ----------------------------------------------------------
+
+      final weightError = _validateConversionWeight(
+        cartProvider,
+        quantityToAdd: 1,
+        context: context,
+      );
+
+      log(
+        "PHYSICAL PRODUCT WEIGHT VALIDATION -> "
+        "${product['name']} -> $weightError",
+      );
+
+      if (weightError != null) {
+        _showMessage(weightError);
+        return;
+      }
     }
 
     // ============================================================
-    // NORMAL CART
+    // NORMAL CART / PHYSICAL CART
     // ============================================================
 
     final success = await cartProvider.addToCart(
@@ -362,7 +721,10 @@ class _ProductGridCard extends StatelessWidget {
     // ============================================================
 
     if (physicalProvider.isActive) {
-      // Digital products cannot be modified during physical conversion
+      // ----------------------------------------------------------
+      // Digital products
+      // ----------------------------------------------------------
+
       if (isDigitalProduct) {
         _showMessage(
           "Digital products cannot be added during physical conversion.",
@@ -370,16 +732,44 @@ class _ProductGridCard extends StatelessWidget {
         return;
       }
 
+      // ----------------------------------------------------------
+      // Validate metal
+      // ----------------------------------------------------------
+
       final validationError = _validatePhysicalProduct(context);
 
       if (validationError != null) {
         _showMessage(validationError);
         return;
       }
+
+      // ----------------------------------------------------------
+      // Validate total weight
+      //
+      // Only ONE additional quantity is being added.
+      // ----------------------------------------------------------
+
+      final weightError = _validateConversionWeight(
+        cartProvider,
+        quantityToAdd: 1,
+        context: context,
+      );
+
+      log(
+        "PHYSICAL QUANTITY INCREASE -> "
+        "${product['name']} "
+        "currentQuantity=$currentQuantity "
+        "weightError=$weightError",
+      );
+
+      if (weightError != null) {
+        _showMessage(weightError);
+        return;
+      }
     }
 
     // ============================================================
-    // NORMAL CART
+    // UPDATE CART
     // ============================================================
 
     await cartProvider.updateCartQuantity(

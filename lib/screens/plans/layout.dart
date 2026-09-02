@@ -4,6 +4,7 @@ import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/screens/plans/gsp/gsp_convert_to_physical.dart';
 import 'package:junubullion/screens/plans/gsp/gsp_dashboard.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_monthly_investment_plan.dart';
 import 'package:junubullion/screens/plans/gsp/gsp_purchases.dart';
 import 'package:junubullion/screens/plans/gsp/gsp_sellback.dart';
 import 'package:junubullion/screens/plans/gsp/gsp_transaction.dart';
@@ -12,9 +13,9 @@ import 'package:junubullion/screens/plans/jsc/jsc_convert_to_physical.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_dashboard.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_purchases.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_sellback.dart';
-import 'package:junubullion/screens/plans/sidemenu.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_transaction.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_wallet.dart';
+import 'package:junubullion/screens/plans/sidemenu.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/profile/account_details.dart';
@@ -45,8 +46,11 @@ class PlansLayout extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                isJsc ? const JscDashboardScreen() : const GspDashboardScreen(),
+            builder: (_) {
+              return isJsc
+                  ? const JscDashboardScreen()
+                  : const GspDashboardScreen();
+            },
           ),
         );
         break;
@@ -55,8 +59,9 @@ class PlansLayout extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                isJsc ? const JscWalletScreen() : const GspWalletScreen(),
+            builder: (_) {
+              return isJsc ? const JscWalletScreen() : const GspWalletScreen();
+            },
           ),
         );
         break;
@@ -65,8 +70,11 @@ class PlansLayout extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                isJsc ? const JscPurchasesScreen() : const GspPurchasesScreen(),
+            builder: (_) {
+              return isJsc
+                  ? const JscPurchasesScreen()
+                  : const GspPurchasesScreen();
+            },
           ),
         );
         break;
@@ -82,9 +90,11 @@ class PlansLayout extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => isJsc
-                ? const JscTransactionHistoryScreen()
-                : const GspTransactionHistoryScreen(),
+            builder: (_) {
+              return isJsc
+                  ? const JscTransactionHistoryScreen()
+                  : const GspTransactionHistoryScreen();
+            },
           ),
         );
         break;
@@ -93,28 +103,33 @@ class PlansLayout extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => isJsc
-                ? const JscConvertToPhysicalScreen()
-                : const GspConvertToPhysicalScreen(),
+            builder: (_) {
+              return isJsc
+                  ? const JscConvertToPhysicalScreen()
+                  : const GspConvertToPhysicalScreen();
+            },
           ),
         );
         break;
 
       case 'Monthly Investment Plan':
-        if (isGsp) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const GspDashboardScreen()),
-          );
-        }
+        if (!isGsp) return;
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const GspMonthlyInvestmentPlan()),
+        );
         break;
 
       case 'Sell Back Request':
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                isJsc ? const JscSellBackScreen() : const GspSellBackScreen(),
+            builder: (_) {
+              return isJsc
+                  ? const JscSellBackScreen()
+                  : const GspSellBackScreen();
+            },
           ),
         );
         break;
@@ -180,11 +195,11 @@ class PlansLayout extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             PlansSidebar(
+              plans: plans,
               selectedMenu: selectedMenu,
               onMenuTap: (menu) {
                 _handleMenuTap(context, menu);
               },
-              plans: plans,
             ),
             Expanded(child: child),
           ],

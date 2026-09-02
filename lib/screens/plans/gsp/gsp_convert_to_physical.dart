@@ -3,6 +3,7 @@ import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/gsp_balance_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/layout.dart';
+import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 import 'package:junubullion/widgets/gsp/gsp_convert_to_physical_section.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -56,12 +57,59 @@ class _GspConvertToPhysicalScreenState
   }
 }
 
-class GspConvertToPhysicalContent extends StatelessWidget {
+class GspConvertToPhysicalContent extends StatefulWidget {
   const GspConvertToPhysicalContent({super.key});
 
   @override
+  State<GspConvertToPhysicalContent> createState() =>
+      _GspConvertToPhysicalContentState();
+}
+
+class _GspConvertToPhysicalContentState
+    extends State<GspConvertToPhysicalContent> {
+  bool isBalancesUnlocked = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadUnlockStatus();
+  }
+
+  Future<void> _loadUnlockStatus() async {
+    final provider = context.read<GspBalanceProvider>();
+
+    await provider.loadUnlockStatus();
+
+    if (!mounted) return;
+
+    setState(() {
+      isBalancesUnlocked = provider.isBalancesUnlocked;
+    });
+  }
+
+  Future<void> _handleUnlocked() async {
+    if (!mounted) return;
+
+    debugPrint('GSP CONVERT TO PHYSICAL -> Wallet unlocked.');
+
+    final provider = context.read<GspBalanceProvider>();
+
+    // Reload the persisted unlock state.
+    await provider.loadUnlockStatus();
+
+    if (!mounted) return;
+
+    setState(() {
+      isBalancesUnlocked = provider.isBalancesUnlocked;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isUnlocked = context.watch<GspBalanceProvider>().isBalancesUnlocked;
+    final provider = context.watch<GspBalanceProvider>();
+
+    final isUnlocked = provider.isBalancesUnlocked;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,6 +136,21 @@ class GspConvertToPhysicalContent extends StatelessWidget {
 
         const SizedBox(height: 25),
 
+        // ------------------------------------------------------------
+        // GSP BALANCE UNLOCK SECTION
+        // ------------------------------------------------------------
+        GspBalanceSection(
+          showBalances: false,
+          onUnlocked: () async {
+            await _handleUnlocked();
+          },
+        ),
+
+        const SizedBox(height: 20),
+
+        // ------------------------------------------------------------
+        // CONVERT TO PHYSICAL
+        // ------------------------------------------------------------
         GspConvertPhysicalSection(isUnlocked: isUnlocked),
       ],
     );

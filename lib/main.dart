@@ -10,6 +10,7 @@ import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/gsp_balance_provider.dart';
+import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/providers/kyc_provider.dart';
@@ -51,6 +52,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => PhysicalConversionProvider()),
         ChangeNotifierProvider(create: (_) => JscBalanceProvider()),
         ChangeNotifierProvider(create: (_) => GspBalanceProvider()),
+        ChangeNotifierProvider(create: (_) => GspMonthlyPlanProvider()),
       ],
       child: const MyApp(),
     ),

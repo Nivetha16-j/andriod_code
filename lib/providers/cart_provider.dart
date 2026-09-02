@@ -69,7 +69,7 @@ class CartProvider extends ChangeNotifier {
 
       log(
         "🛒 CART RESPONSE -> "
-        "$_currency / $_unit / $response",
+        "$_currency / $_unit / $selectedDeliveryMethod / $response",
       );
 
       // ==========================================================
