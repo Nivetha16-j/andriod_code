@@ -238,4 +238,38 @@ class GspService {
       return {'status': false, 'message': e.toString()};
     }
   }
+
+  static Future<Map<String, dynamic>> createMonthlyPayment({
+    required double amount,
+    required String shippingAddress,
+    required String paymentMethod,
+  }) async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/my-account/gsp/monthly-plan/pay'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'amount': amount,
+        'shipping_address': shippingAddress,
+        'payment_method': paymentMethod,
+      }),
+    );
+
+    final responseData = jsonDecode(response.body);
+
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300 &&
+        responseData['status'] == true) {
+      return responseData;
+    }
+
+    throw Exception(
+      responseData['message'] ?? 'Unable to create Stripe payment session.',
+    );
+  }
 }

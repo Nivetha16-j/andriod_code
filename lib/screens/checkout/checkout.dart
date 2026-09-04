@@ -1592,6 +1592,7 @@ import 'package:junubullion/screens/checkout/physical_ordersuccess.dart';
 import 'package:junubullion/screens/checkout/success.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
+import 'package:junubullion/services/gsp_service.dart';
 import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
@@ -1864,7 +1865,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Future<void> _sendPhysicalOrder() async {
+  Future<void> _sendPhysicalOrder({required String plan}) async {
     final addressProvider = context.read<AddressProvider>();
     final cartProvider = context.read<CartProvider>();
     final physicalProvider = context.read<PhysicalConversionProvider>();
@@ -1948,9 +1949,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       // CALL API
       // ==========================================================
 
-      final plan = physicalProvider.plan;
+      log("plannnnn $plan");
 
-      if (plan == null || plan.isEmpty) {
+      if (plan.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Unable to determine the physical conversion plan.'),
@@ -2320,6 +2321,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       final String courierService = cartProvider.selectedDeliveryMethod
           .toLowerCase();
+
+      log(
+        "CHECKOUT -> Placing normal order: "
+        "address=$shippingAddress "
+        "delivery=$delivery "
+        "digitalType=$digitalSubtype "
+        "payment=$payment"
+        "isDigital=$isDigital "
+        "courierService=$courierService ",
+      );
 
       // ==========================================================
       // BANK TRANSFER
@@ -3381,11 +3392,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: ElevatedButton(
             onPressed: (_isPlacingOrder || _isCancellingConversion)
                 ? null
-                : () {
-                    if (isPhysicalConversion) {
-                      _sendPhysicalOrder();
-                    } else {
-                      _placeNormalOrder();
+                : () async {
+                    try {
+                      final currencyProvider = context.read<CurrencyProvider>();
+
+                      dynamic plan;
+
+                      final res = await GspService.fetchConvertPhysicalDetails(
+                        currency: currencyProvider.selectedCurrency,
+                      );
+
+                      log("fetchConvertPhysicalDetails response: $res");
+
+                      log(
+                        "fetchConvertPhysicalDetails data: "
+                        "${res['data']}",
+                      );
+
+                      // If you want to print individual values:
+                      if (res['data'] != null) {
+                        final data = Map<String, dynamic>.from(res['data']);
+
+                        log("Convert Physical Data: $data");
+
+                        log("Golddd: ${data['wallet_section']}");
+
+                        plan = data['wallet_section'];
+                      }
+
+                      if (isPhysicalConversion) {
+                        _sendPhysicalOrder(plan: plan);
+                      } else {
+                        _placeNormalOrder();
+                      }
+                    } catch (e, stackTrace) {
+                      log("fetchConvertPhysicalDetails error: $e");
+
+                      log("StackTrace: $stackTrace");
                     }
                   },
             style: ElevatedButton.styleFrom(

@@ -70,7 +70,18 @@ class _CustomAppBarState extends State<CustomAppBar> {
               child: Row(
                 children: [
                   // Logo
-                  Image.asset('assets/logo/logo.png', height: 40),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MainScreen(initialIndex: 0),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                    child: Image.asset('assets/logo/logo.png', height: 40),
+                  ),
 
                   const Spacer(),
 
@@ -147,71 +158,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// Helper Widget for Ticker Items
-class _TickerItem extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _TickerItem({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      '$label $value',
-      style: const TextStyle(
-        color: CustomAppBar.textGold,
-        fontSize: 11.5,
-        fontWeight: FontWeight.w500,
-      ),
-    );
-  }
-}
-
-// Ticker Vertical Divider
-class _Divider extends StatelessWidget {
-  const _Divider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 6.0),
-      child: Text(
-        '|',
-        style: TextStyle(color: CustomAppBar.textGold, fontSize: 11),
-      ),
-    );
-  }
-}
-
-// Gold Action Buttons
-class _HeaderButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-
-  const _HeaderButton({required this.label, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 28,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: CustomAppBar.accentGold,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
       ),
     );

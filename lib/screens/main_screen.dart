@@ -19,7 +19,13 @@ import 'package:provider/provider.dart';
 class MainScreen extends StatefulWidget {
   final int initialIndex;
 
-  const MainScreen({super.key, this.initialIndex = 0});
+  final int productCategoryIndex;
+
+  const MainScreen({
+    super.key,
+    this.initialIndex = 0,
+    this.productCategoryIndex = 0,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -452,6 +458,8 @@ class _MainScreenState extends State<MainScreen> {
         isEmbedded: true,
 
         scrollController: _productListScrollController,
+
+        initialCategoryIndex: widget.productCategoryIndex,
 
         onRefresh: () {
           final currency = _currencyProvider.selectedCurrency;

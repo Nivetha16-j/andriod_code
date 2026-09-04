@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
 
@@ -20,11 +21,23 @@ class PhysicalOrderSuccessScreen extends StatelessWidget {
   }
 
   String _getDate() {
-    return order["date"]?.toString() ?? order["created_at"]?.toString() ?? "-";
+    final createdAt = order["created_at"]?.toString();
+
+    if (createdAt == null || createdAt.isEmpty) {
+      return "-";
+    }
+
+    try {
+      final date = DateTime.parse(createdAt);
+
+      return DateFormat('MMM dd, yyyy').format(date);
+    } catch (e) {
+      return "-";
+    }
   }
 
   String _getEmail() {
-    return order["email"]?.toString() ?? "-";
+    return order["customer_email"]?.toString() ?? "-";
   }
 
   String _getTotal() {
@@ -105,7 +118,7 @@ class PhysicalOrderSuccessScreen extends StatelessWidget {
 
                           const SizedBox(height: 16),
 
-                          _infoRow('Total:', '${_getTotal()} INR'),
+                          _infoRow('Total:', '${_getTotal()}'),
 
                           const SizedBox(height: 16),
 

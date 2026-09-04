@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/gsp_balance_provider.dart';
+import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/services/jsc_services.dart';
@@ -96,6 +97,19 @@ class _DashboardContentState extends State<_DashboardContent> {
     }
   }
 
+  double get minimumInvestment {
+    return context
+            .read<GspMonthlyPlanProvider>()
+            .monthlyPlan
+            ?.gspMinimumAmount ??
+        0;
+  }
+
+  String get currencySymbol {
+    return context.read<GspMonthlyPlanProvider>().monthlyPlan?.currencySymbol ??
+        '\$';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -108,8 +122,8 @@ class _DashboardContentState extends State<_DashboardContent> {
 
         const SizedBox(height: 10),
 
-        const Text(
-          'Your Gold Savings Plan digital gold holdings. GSP starts from \$15.70 (equivalent to SGD 20).',
+        Text(
+          'Your Gold Savings Plan digital gold holdings. GSP starts from $currencySymbol${minimumInvestment.toStringAsFixed(2)}. (equivalent to SGD 20).',
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
 

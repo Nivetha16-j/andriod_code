@@ -29,11 +29,8 @@ class KycProvider extends ChangeNotifier {
         final data = response["data"];
 
         kycStatus = data["kyc_status"] ?? "";
-
         kycApproved = data["kyc_approved"] ?? false;
-
         canSubmit = data["can_submit"] ?? false;
-
         submission = data["submission"];
 
         allowedExtensions = List<String>.from(data["allowed_extensions"] ?? []);
@@ -61,17 +58,11 @@ class KycProvider extends ChangeNotifier {
         customerNotes: customerNotes,
       );
 
-      if (response["success"] == true) {
-        // Refresh status after successful upload
-        await fetchKycDetails();
-      }
+      await fetchKycDetails();
 
       return response;
     } catch (e) {
-      return {
-        "success": false,
-        "body": {"message": e.toString()},
-      };
+      return {"status": false, "message": e.toString()};
     } finally {
       isLoading = false;
       notifyListeners();

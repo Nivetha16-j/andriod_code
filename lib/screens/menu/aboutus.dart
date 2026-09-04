@@ -377,7 +377,16 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                               const SizedBox(height: 16),
                               InkWell(
                                 onTap: () {
-                                  // Navigate or perform action
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const MainScreen(
+                                        initialIndex: 3,
+                                        productCategoryIndex: 1, // Gold Coin
+                                      ),
+                                    ),
+                                    (route) => false,
+                                  );
                                 },
                                 child: const Text(
                                   "Discover more ›",
@@ -440,7 +449,16 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                               const SizedBox(height: 16),
                               InkWell(
                                 onTap: () {
-                                  // Navigate or perform action
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const MainScreen(
+                                        initialIndex: 3,
+                                        productCategoryIndex: 4, // Gold Coin
+                                      ),
+                                    ),
+                                    (route) => false,
+                                  );
                                 },
                                 child: const Text(
                                   "Discover more ›",

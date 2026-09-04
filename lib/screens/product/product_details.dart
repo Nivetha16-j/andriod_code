@@ -763,15 +763,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : Text(
-                                    !canPurchase
-                                        ? "OUT OF STOCK"
-                                        : isInCart
-                                        ? "GO TO CART"
-                                        : "ADD TO CART",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
+                                : FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      !canPurchase
+                                          ? "OUT OF STOCK"
+                                          : isInCart
+                                          ? "GO TO CART"
+                                          : "ADD TO CART",
+                                      maxLines: 1,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                           ),
@@ -1314,15 +1318,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                                 color: Colors.white,
                                               ),
                                             )
-                                          : Text(
-                                              !relatedCanPurchase
-                                                  ? "Out of stock"
-                                                  : isInNormalCart
-                                                  ? "GO TO CART"
-                                                  : "ADD TO CART",
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w600,
+                                          : FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                !relatedCanPurchase
+                                                    ? "Out of stock"
+                                                    : isInNormalCart
+                                                    ? "GO TO CART"
+                                                    : "ADD TO CART",
+                                                maxLines: 1,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                               ),
                                             ),
                                     );

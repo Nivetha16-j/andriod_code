@@ -273,29 +273,49 @@ class _OTPScreenState extends State<OTPScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // OTP Input Field
-                  OtpTextField(
-                    numberOfFields: 6,
-                    borderColor: const Color.fromRGBO(0, 0, 0, 0.15),
-                    focusedBorderColor: AppColors.primaryRed,
-                    showFieldAsBox: true,
-                    fieldWidth: 46.0,
-                    borderRadius: BorderRadius.circular(10.0),
-                    filled: true,
-                    cursorColor: AppColors.primaryRed,
-                    fillColor: Colors.white,
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    onCodeChanged: (String code) {
-                      _enteredOtp = code;
-                    },
-                    onSubmit: (String verificationCode) {
-                      setState(() {
-                        _enteredOtp = verificationCode;
-                      });
-                      _verifyAndSubmitOtp();
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Calculate a responsive width for 6 OTP boxes.
+                      // 12px spacing between boxes.
+                      const double spacing = 4.0;
+
+                      final double availableWidth = constraints.maxWidth;
+                      final double fieldWidth =
+                          ((availableWidth - (spacing * 5)) / 6).clamp(
+                            35.0,
+                            46.0,
+                          );
+
+                      return OtpTextField(
+                        numberOfFields: 6,
+                        borderColor: const Color.fromRGBO(0, 0, 0, 0.15),
+                        focusedBorderColor: AppColors.primaryRed,
+                        showFieldAsBox: true,
+
+                        fieldWidth: fieldWidth,
+                        fieldHeight: 48,
+
+                        borderRadius: BorderRadius.circular(10.0),
+                        filled: true,
+                        cursorColor: AppColors.primaryRed,
+                        fillColor: Colors.white,
+
+                        textStyle: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+
+                        onCodeChanged: (String code) {
+                          _enteredOtp = code;
+                        },
+
+                        onSubmit: (String verificationCode) {
+                          setState(() {
+                            _enteredOtp = verificationCode;
+                          });
+                          _verifyAndSubmitOtp();
+                        },
+                      );
                     },
                   ),
 

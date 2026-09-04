@@ -1,14 +1,19 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/layout.dart';
+import 'package:junubullion/services/gsp_service.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 
 class GspMonthlyInvestmentPlan extends StatefulWidget {
   const GspMonthlyInvestmentPlan({super.key});
@@ -65,6 +70,8 @@ class _GspMonthlyInvestmentPlanContentState
     extends State<GspMonthlyInvestmentPlanContent> {
   final TextEditingController _amountController = TextEditingController();
 
+  Timer? _refreshTimer;
+
   double get minimumInvestment {
     return context
             .read<GspMonthlyPlanProvider>()
@@ -111,61 +118,218 @@ class _GspMonthlyInvestmentPlanContentState
     return value.toStringAsFixed(2);
   }
 
+  Future<void> _fetchMonthlyPlan() async {
+    if (!mounted) return;
+
+    final provider = context.read<GspMonthlyPlanProvider>();
+    final currencyProvider = context.read<CurrencyProvider>();
+
+    await provider.fetchMonthlyPlan(
+      currency: currencyProvider.selectedCurrency,
+    );
+
+    final minimum = provider.monthlyPlan?.gspMinimumAmount;
+
+    if (minimum != null &&
+        (_amountController.text.isEmpty ||
+            double.tryParse(_amountController.text) == 0)) {
+      _amountController.text = minimum.toStringAsFixed(2);
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final provider = context.read<GspMonthlyPlanProvider>();
-      final currencyProvider = Provider.of<CurrencyProvider>(
-        context,
-        listen: false,
-      );
+      await _fetchMonthlyPlan();
 
-      final currency = currencyProvider.selectedCurrency;
-
-      await provider.fetchMonthlyPlan(currency: currency);
-
-      if (!mounted) return;
-
-      final minimum = provider.monthlyPlan?.gspMinimumAmount;
-
-      if (minimum != null) {
-        _amountController.text = minimum.toStringAsFixed(2);
-        setState(() {});
-      }
+      _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _fetchMonthlyPlan();
+      });
     });
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _amountController.dispose();
     super.dispose();
   }
 
-  void _onAmountChanged(String value) {
-    setState(() {});
-  }
-
-  void _payWithStripe() {
+  Future<void> _payWithStripe() async {
     final amount = investmentAmount;
+    final minimum = minimumInvestment;
 
-    if (amount < minimumInvestment) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              'Minimum investment is '
-              '$currencySymbol${minimumInvestment.toStringAsFixed(2)}.',
-            ),
-          ),
-        );
+    // ------------------------------------------------------------
+    // VALIDATION
+    // ------------------------------------------------------------
 
+    if (_amountController.text.trim().isEmpty) {
+      setState(() {
+        _amountError = 'Please enter an investment amount.';
+      });
       return;
     }
 
-    // TODO: Connect your existing Stripe payment flow here.
+    if (amount <= 0) {
+      setState(() {
+        _amountError = 'Please enter a valid amount.';
+      });
+      return;
+    }
+
+    if (amount < minimum) {
+      setState(() {
+        _amountError =
+            'Minimum investment is '
+            '$currencySymbol${minimum.toStringAsFixed(2)}.';
+      });
+      return;
+    }
+
+    setState(() {
+      _amountError = null;
+    });
+
+    // ------------------------------------------------------------
+    // SHOW LOADING
+    // ------------------------------------------------------------
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return const Center(
+          child: CircularProgressIndicator(color: Color(0xffA90020)),
+        );
+      },
+    );
+
+    try {
+      // ----------------------------------------------------------
+      // CALL BACKEND
+      // ----------------------------------------------------------
+
+      final response = await GspService.createMonthlyPayment(
+        amount: amount,
+        shippingAddress: 'Dubai, UAE',
+        paymentMethod: 'visa',
+      );
+
+      // ----------------------------------------------------------
+      // GET CLIENT SECRET
+      // ----------------------------------------------------------
+
+      final data = response['data'];
+
+      if (data == null) {
+        throw Exception('Stripe payment data is missing.');
+      }
+
+      final clientSecret = data['client_secret'];
+
+      if (clientSecret == null || clientSecret.toString().trim().isEmpty) {
+        throw Exception('Stripe client secret is missing.');
+      }
+
+      // Close loading
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // ----------------------------------------------------------
+      // INITIALIZE STRIPE PAYMENT SHEET
+      // ----------------------------------------------------------
+
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Junu Bullion',
+          allowsDelayedPaymentMethods: false,
+        ),
+      );
+
+      // ----------------------------------------------------------
+      // OPEN STRIPE PAYMENT SHEET
+      // ----------------------------------------------------------
+
+      await Stripe.instance.presentPaymentSheet();
+
+      // ----------------------------------------------------------
+      // PAYMENT SUCCESS
+      // ----------------------------------------------------------
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Payment completed successfully.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Refresh monthly plan/wallet if required
+      await _fetchMonthlyPlan();
+    } on StripeException catch (e) {
+      // Make sure loading dialog is closed
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      if (!mounted) return;
+
+      final message = e.error.localizedMessage ?? 'Payment was cancelled.';
+
+      log('Stripe payment error: $message');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
+      );
+    } catch (e) {
+      // Make sure loading dialog is closed
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      if (!mounted) return;
+
+      log('Stripe payment error: $e');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  String? _amountError;
+
+  void _onAmountChanged(String value) {
+    final amount = double.tryParse(value);
+    final minimum = minimumInvestment;
+
+    setState(() {
+      if (value.trim().isEmpty) {
+        _amountError = null;
+      } else if (amount == null) {
+        _amountError = 'Please enter a valid amount.';
+      } else if (amount < minimum) {
+        _amountError =
+            'Minimum investment is '
+            '$currencySymbol${minimum.toStringAsFixed(2)}.';
+      } else {
+        _amountError = null;
+      }
+    });
   }
 
   @override
@@ -327,22 +491,44 @@ class _GspMonthlyInvestmentPlanContentState
                         ),
                         filled: true,
                         fillColor: Colors.white,
+
+                        errorText: _amountError,
+
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(9),
                           borderSide: const BorderSide(
                             color: Color(0xffD5D9E0),
                           ),
                         ),
+
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(9),
-                          borderSide: const BorderSide(
-                            color: Color(0xffD5D9E0),
+                          borderSide: BorderSide(
+                            color: _amountError != null
+                                ? Colors.red
+                                : const Color(0xffD5D9E0),
                           ),
                         ),
+
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(9),
+                          borderSide: BorderSide(
+                            color: _amountError != null
+                                ? Colors.red
+                                : const Color(0xff9B001B),
+                            width: 1.2,
+                          ),
+                        ),
+
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(9),
+                          borderSide: const BorderSide(color: Colors.red),
+                        ),
+
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(9),
                           borderSide: const BorderSide(
-                            color: Color(0xff9B001B),
+                            color: Colors.red,
                             width: 1.2,
                           ),
                         ),
@@ -491,7 +677,8 @@ class _GspMonthlyInvestmentPlanContentState
 
                   _buildPlanDetailRow(
                     'Minimum investment',
-                    value: provider.monthlyPlan?.gspMinimumFormatted ?? '-',
+                    value:
+                        "$currencySymbol${minimumInvestment.toStringAsFixed(2)}",
                   ),
 
                   const Divider(color: Color(0xffF0F0F0), height: 20),

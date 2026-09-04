@@ -461,7 +461,10 @@ class _ProductCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                      child: const Text('Out of stock'),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text("Out of Stock", maxLines: 1),
+                      ),
                     );
                   }
 
@@ -654,9 +657,9 @@ class _ProductCard extends StatelessWidget {
                               color: Colors.white,
                             ),
                           )
-                        : const Text(
-                            'ADD TO CART',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                        : FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text("ADD TO CART", maxLines: 1),
                           ),
                   );
                 },
