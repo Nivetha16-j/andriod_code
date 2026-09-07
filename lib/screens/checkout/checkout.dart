@@ -1990,6 +1990,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _isPlacingOrder = false;
         });
 
+        _cancelPhysicalConversion();
+
+        log("Cancelling conversion after placing order ");
+
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(

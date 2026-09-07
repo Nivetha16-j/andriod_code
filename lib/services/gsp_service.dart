@@ -243,6 +243,7 @@ class GspService {
     required double amount,
     required String shippingAddress,
     required String paymentMethod,
+    required String currency,
   }) async {
     final token = await SessionManager.getToken();
 
@@ -257,6 +258,7 @@ class GspService {
         'amount': amount,
         'shipping_address': shippingAddress,
         'payment_method': paymentMethod,
+        "currency": currency,
       }),
     );
 

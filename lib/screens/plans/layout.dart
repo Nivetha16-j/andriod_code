@@ -80,7 +80,7 @@ class PlansLayout extends StatelessWidget {
         break;
 
       case 'Account Details':
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const AccountDetailsScreen()),
         );
@@ -135,7 +135,7 @@ class PlansLayout extends StatelessWidget {
         break;
 
       case 'Lost Password':
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const AccountDetailsScreen()),
         );

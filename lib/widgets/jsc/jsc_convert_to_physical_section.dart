@@ -234,29 +234,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
           const SizedBox(height: 9),
 
-          // if (!_isUnlocked) ...[
-          //   _convertRow(
-          //     metal: 'Gold',
-          //     available: 'Available: .... · Min: 50 g',
-          //     buttonText:
-          //         'Unlock your balances to check physical '
-          //         'conversion eligibility.',
-          //     enabled: false,
-          //     onPressed: null,
-          //   ),
-
-          //   const SizedBox(height: 8),
-
-          //   _convertRow(
-          //     metal: 'Silver',
-          //     available: 'Available: .... · Min: 1 kg',
-          //     buttonText:
-          //         'Unlock your balances to check physical '
-          //         'conversion eligibility.',
-          //     enabled: false,
-          //     onPressed: null,
-          //   ),
-          // ]
           if (!_isUnlocked) ...[
             _convertRow(
               metal: 'Gold',

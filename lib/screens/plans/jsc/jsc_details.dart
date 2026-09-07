@@ -100,7 +100,8 @@ class _JscScreenState extends State<JscScreen> {
   ];
 
   final PageController _pageController = PageController();
-  Timer? _autoScrollTimer;
+
+  final List<double> _featureHeights = [];
 
   int _currentPage = 0;
 
@@ -430,22 +431,27 @@ class _JscScreenState extends State<JscScreen> {
                 }
 
                 return Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: jscProducts.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 18,
-                          childAspectRatio: .60,
-                        ),
-                    itemBuilder: (context, index) {
-                      final product = jscProducts[index];
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 18,
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      const double spacing = 10;
 
-                      return _JscProductCard(product: product);
+                      final double cardWidth =
+                          (constraints.maxWidth - spacing) / 2;
+
+                      return Wrap(
+                        spacing: spacing,
+                        runSpacing: 12,
+                        children: jscProducts.map((product) {
+                          return SizedBox(
+                            width: cardWidth,
+                            child: _JscProductCard(product: product),
+                          );
+                        }).toList(),
+                      );
                     },
                   ),
                 );
@@ -471,33 +477,76 @@ class _JscScreenState extends State<JscScreen> {
 
                   const SizedBox(height: 22),
 
-                  SizedBox(
-                    height: 160,
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: features.length,
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentPage = index;
-                        });
-                      },
-                      itemBuilder: (context, index) {
-                        final feature = features[index];
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    child: _featureHeights.length > _currentPage
+                        ? SizedBox(
+                            height: _featureHeights[_currentPage],
+                            child: PageView.builder(
+                              controller: _pageController,
+                              itemCount: features.length,
+                              onPageChanged: (index) {
+                                setState(() {
+                                  _currentPage = index;
+                                });
+                              },
+                              itemBuilder: (context, index) {
+                                final feature = features[index];
 
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 15),
-                          child: FeatureCard(
-                            image: "assets/feature.png",
-                            title: feature["title"],
-                            descriptions: List<String>.from(
-                              feature["description"],
+                                return _MeasureSize(
+                                  onChange: (size) {
+                                    if (_featureHeights.length !=
+                                        features.length) {
+                                      setState(() {
+                                        _featureHeights.clear();
+                                        _featureHeights.addAll(
+                                          List.filled(
+                                            features.length,
+                                            size.height,
+                                          ),
+                                        );
+                                      });
+                                    } else if (_featureHeights[index] !=
+                                        size.height) {
+                                      setState(() {
+                                        _featureHeights[index] = size.height;
+                                      });
+                                    }
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(right: 15),
+                                    child: FeatureCard(
+                                      image: "assets/feature.png",
+                                      title: feature["title"],
+                                      descriptions: List<String>.from(
+                                        feature["description"],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : _MeasureSize(
+                            onChange: (size) {
+                              if (_featureHeights.isEmpty) {
+                                setState(() {
+                                  _featureHeights.add(size.height);
+                                });
+                              }
+                            },
+                            child: FeatureCard(
+                              image: "assets/feature.png",
+                              title: features[0]["title"],
+                              descriptions: List<String>.from(
+                                features[0]["description"],
+                              ),
                             ),
                           ),
-                        );
-                      },
-                    ),
                   ),
 
+                  // ),
                   const SizedBox(height: 12),
 
                   /// Page indicators
@@ -865,13 +914,13 @@ class _JscProductCard extends StatelessWidget {
       padding: const EdgeInsets.all(5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           // ==========================================================
           // IMAGE
           // ==========================================================
           ClipRRect(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(18),
             child: SizedBox(
               height: 180,
               width: double.infinity,
@@ -882,20 +931,19 @@ class _JscProductCard extends StatelessWidget {
                       errorBuilder: (_, __, ___) {
                         return const Icon(
                           Icons.image_not_supported,
-                          size: 50,
+                          size: 40,
                           color: Colors.grey,
                         );
                       },
                     )
                   : const Icon(
                       Icons.image_not_supported,
-                      size: 50,
+                      size: 40,
                       color: Colors.grey,
                     ),
             ),
           ),
-
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
           // ==========================================================
           // PRODUCT NAME
@@ -907,7 +955,7 @@ class _JscProductCard extends StatelessWidget {
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
 
-          const SizedBox(height: 5),
+          const SizedBox(height: 4),
 
           // ==========================================================
           // PRICE
@@ -919,7 +967,7 @@ class _JscProductCard extends StatelessWidget {
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
 
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
 
           // ==========================================================
           // STOCK STATUS
@@ -933,14 +981,14 @@ class _JscProductCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 5),
+          const SizedBox(height: 4),
 
           // ==========================================================
           // CART BUTTON
           // ==========================================================
           SizedBox(
             width: double.infinity,
-            height: 45,
+            height: 40,
             child: Consumer2<CartProvider, PhysicalConversionProvider>(
               builder: (context, cartProvider, physicalProvider, child) {
                 return _buildCartButton(
@@ -1163,5 +1211,39 @@ class _JscProductCard extends StatelessWidget {
               ),
             ),
     );
+  }
+}
+
+class _MeasureSize extends StatefulWidget {
+  final Widget child;
+  final ValueChanged<Size> onChange;
+
+  const _MeasureSize({required this.child, required this.onChange});
+
+  @override
+  State<_MeasureSize> createState() => _MeasureSizeState();
+}
+
+class _MeasureSizeState extends State<_MeasureSize> {
+  Size? _oldSize;
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final renderObject = context.findRenderObject();
+
+      if (renderObject is RenderBox) {
+        final newSize = renderObject.size;
+
+        if (_oldSize != newSize) {
+          _oldSize = newSize;
+          widget.onChange(newSize);
+        }
+      }
+    });
+
+    return widget.child;
   }
 }

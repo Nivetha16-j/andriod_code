@@ -12,9 +12,7 @@ import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
 import 'package:junubullion/widgets/profile/account_details.dart';
 import 'package:junubullion/widgets/profile/addresses.dart';
 import 'package:junubullion/widgets/profile/dashboard/custom_dashboard.dart';
-import 'package:junubullion/widgets/profile/downloads.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
-import 'package:junubullion/widgets/profile/payment_methods.dart';
 import 'package:junubullion/widgets/profile/recentorders.dart';
 import 'package:provider/provider.dart';
 
@@ -257,9 +255,12 @@ class OrderScreen extends StatelessWidget {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: const RecentOrdersSection(
-        showAll: true,
-      ), // Your existing RecentOrdersSection widget
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: RecentOrdersSection(showAll: true),
+        ),
+      ),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _switchToTab,

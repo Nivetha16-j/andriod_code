@@ -165,6 +165,10 @@ class _DashboardContentState extends State<_DashboardContent> {
       );
     }
 
+    // ============================================================
+    // GSP ALREADY REGISTERED
+    // ============================================================
+
     if (hasGspRegistration) {
       return SizedBox(
         width: double.infinity,
@@ -198,10 +202,20 @@ class _DashboardContentState extends State<_DashboardContent> {
       );
     }
 
+    // ============================================================
+    // GSP NOT REGISTERED
+    // ============================================================
+
     return _redButton(
-      text: 'Gsp Application Form',
-      onTap: () async {
-        await _checkGspRegistration();
+      text: 'GSP Application Form',
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                const ApplicationForm(isEdit: false, applicationType: 'GSP'),
+          ),
+        );
       },
     );
   }

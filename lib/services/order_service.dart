@@ -18,8 +18,8 @@ class OrdersService {
       final json = jsonDecode(response.body);
 
       return {
-        "orders": json["data"]["data"] ?? [],
-        "total": json["data"]["total"] ?? 0,
+        "orders": json["data"] ?? [],
+        "total": (json["data"] as List?)?.length ?? 0,
       };
     } else {
       throw Exception("Failed to fetch orders");

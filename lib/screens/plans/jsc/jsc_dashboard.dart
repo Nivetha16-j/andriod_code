@@ -152,6 +152,10 @@ class _DashboardContentState extends State<_DashboardContent> {
       );
     }
 
+    // ============================================================
+    // JSC ALREADY REGISTERED
+    // ============================================================
+
     if (hasJscRegistration) {
       return SizedBox(
         width: double.infinity,
@@ -185,10 +189,20 @@ class _DashboardContentState extends State<_DashboardContent> {
       );
     }
 
+    // ============================================================
+    // JSC NOT REGISTERED
+    // ============================================================
+
     return _redButton(
-      text: 'Jsc Application Form',
-      onTap: () async {
-        await _checkJscRegistration();
+      text: 'JSC Application Form',
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                const ApplicationForm(isEdit: false, applicationType: 'JSC'),
+          ),
+        );
       },
     );
   }

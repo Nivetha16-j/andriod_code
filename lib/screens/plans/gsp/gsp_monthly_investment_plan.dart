@@ -2,8 +2,10 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/models/plans.dart';
+import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
@@ -165,10 +167,7 @@ class _GspMonthlyInvestmentPlanContentState
     final amount = investmentAmount;
     final minimum = minimumInvestment;
 
-    // ------------------------------------------------------------
-    // VALIDATION
-    // ------------------------------------------------------------
-
+    // Validate amount
     if (_amountController.text.trim().isEmpty) {
       setState(() {
         _amountError = 'Please enter an investment amount.';
@@ -196,12 +195,35 @@ class _GspMonthlyInvestmentPlanContentState
       _amountError = null;
     });
 
-    // ------------------------------------------------------------
-    // SHOW LOADING
-    // ------------------------------------------------------------
+    if (!mounted) return;
+
+    // ----------------------------------------------------------
+    // FETCH SAVED ADDRESS
+    // ----------------------------------------------------------
+    final addressProvider = context.read<AddressProvider>();
+
+    await addressProvider.fetchAddress();
 
     if (!mounted) return;
 
+    // Check whether address exists
+    if (!addressProvider.hasAddress) {
+      Fluttertoast.showToast(
+        msg: 'Please add an address before proceeding with payment.',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+      );
+      return;
+    }
+
+    // Get the saved address
+    final shippingAddress = addressProvider.address!.trim();
+
+    log('Shipping Address: $shippingAddress');
+
+    // ----------------------------------------------------------
+    // SHOW LOADER
+    // ----------------------------------------------------------
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -214,18 +236,20 @@ class _GspMonthlyInvestmentPlanContentState
 
     try {
       // ----------------------------------------------------------
-      // CALL BACKEND
+      // CREATE MONTHLY PAYMENT
       // ----------------------------------------------------------
-
       final response = await GspService.createMonthlyPayment(
         amount: amount,
-        shippingAddress: 'Dubai, UAE',
+
+        // USE SAVED ADDRESS HERE
+        shippingAddress: shippingAddress,
+
         paymentMethod: 'visa',
+
+        currency: context.read<CurrencyProvider>().selectedCurrency,
       );
 
-      // ----------------------------------------------------------
-      // GET CLIENT SECRET
-      // ----------------------------------------------------------
+      log('Monthly payment response: $response');
 
       final data = response['data'];
 
@@ -233,21 +257,30 @@ class _GspMonthlyInvestmentPlanContentState
         throw Exception('Stripe payment data is missing.');
       }
 
-      final clientSecret = data['client_secret'];
+      final clientSecret = data['client_secret']?.toString();
+      final paymentIntentId = data['payment_intent_id']?.toString();
+      final orderId = data['order_id'];
 
-      if (clientSecret == null || clientSecret.toString().trim().isEmpty) {
+      if (clientSecret == null || clientSecret.isEmpty) {
         throw Exception('Stripe client secret is missing.');
       }
 
-      // Close loading
-      if (mounted) {
+      if (paymentIntentId == null || paymentIntentId.isEmpty) {
+        throw Exception('Stripe payment intent ID is missing.');
+      }
+
+      log('PaymentIntent ID: $paymentIntentId');
+      log('Order ID: $orderId');
+      log('Client Secret received');
+
+      // Close loading dialog
+      if (mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
 
       // ----------------------------------------------------------
-      // INITIALIZE STRIPE PAYMENT SHEET
+      // STRIPE PAYMENT SHEET
       // ----------------------------------------------------------
-
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: clientSecret,
@@ -256,17 +289,13 @@ class _GspMonthlyInvestmentPlanContentState
         ),
       );
 
-      // ----------------------------------------------------------
-      // OPEN STRIPE PAYMENT SHEET
-      // ----------------------------------------------------------
-
       await Stripe.instance.presentPaymentSheet();
 
-      // ----------------------------------------------------------
-      // PAYMENT SUCCESS
-      // ----------------------------------------------------------
-
       if (!mounted) return;
+
+      log('Stripe PaymentSheet completed');
+      log('PaymentIntent ID: $paymentIntentId');
+      log('Order ID: $orderId');
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -275,10 +304,16 @@ class _GspMonthlyInvestmentPlanContentState
         ),
       );
 
-      // Refresh monthly plan/wallet if required
       await _fetchMonthlyPlan();
+
+      if (!mounted) return;
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 0)),
+        (route) => false,
+      );
     } on StripeException catch (e) {
-      // Make sure loading dialog is closed
       if (mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
@@ -287,20 +322,19 @@ class _GspMonthlyInvestmentPlanContentState
 
       final message = e.error.localizedMessage ?? 'Payment was cancelled.';
 
-      log('Stripe payment error: $message');
+      log('StripeException: $message');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     } catch (e) {
-      // Make sure loading dialog is closed
       if (mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
 
       if (!mounted) return;
 
-      log('Stripe payment error: $e');
+      log('Monthly Stripe payment error: $e');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -464,9 +498,9 @@ class _GspMonthlyInvestmentPlanContentState
                   const SizedBox(height: 14),
 
                   // AMOUNT LABEL
-                  const Text(
-                    'Investment amount (USD)',
-                    style: TextStyle(
+                  Text(
+                    'Investment amount (${context.read<CurrencyProvider>().selectedCurrency.toUpperCase()})',
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: Color(0xff333333),

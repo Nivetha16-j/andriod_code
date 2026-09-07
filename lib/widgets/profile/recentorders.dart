@@ -1,75 +1,70 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/screens/profile/profile.dart';
 import 'package:provider/provider.dart';
 
-class RecentOrdersSection extends StatelessWidget {
+class RecentOrdersSection extends StatefulWidget {
   final bool showAll;
+  final List<dynamic>? orders;
 
-  const RecentOrdersSection({super.key, this.showAll = false});
+  const RecentOrdersSection({super.key, this.showAll = false, this.orders});
+
+  @override
+  State<RecentOrdersSection> createState() => _RecentOrdersSectionState();
+}
+
+class _RecentOrdersSectionState extends State<RecentOrdersSection> {
+  static const int ordersPerPage = 15;
+
+  int currentPage = 0;
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<OrdersProvider>();
 
-    final orders = showAll ? provider.orders : provider.orders.take(4).toList();
-    // final provider = context.watch<OrdersProvider>();
+    final allOrders =
+        widget.orders ??
+        (widget.showAll ? provider.orders : provider.orders.take(4).toList());
 
-    // // Show only the latest 4 orders
-    // final orders = provider.orders.take(4).toList();
+    final totalPages = allOrders.isEmpty
+        ? 1
+        : (allOrders.length / ordersPerPage).ceil();
+
+    if (currentPage >= totalPages) {
+      currentPage = totalPages - 1;
+    }
+
+    final startIndex = currentPage * ordersPerPage;
+
+    final endIndex = (startIndex + ordersPerPage > allOrders.length)
+        ? allOrders.length
+        : startIndex + ordersPerPage;
+
+    final displayOrders = allOrders.isEmpty
+        ? <dynamic>[]
+        : allOrders.sublist(startIndex, endIndex);
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(24),
-      // decoration: BoxDecoration(
-      //   color: Colors.white,
-      //   borderRadius: BorderRadius.circular(18),
-      //   boxShadow: [
-      //     BoxShadow(
-      //       color: Colors.black.withOpacity(.08),
-      //       blurRadius: 12,
-      //       offset: const Offset(0, 4),
-      //     ),
-      //   ],
-      // ),
       child: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Row(
-            //   children: [
-            //     const Text(
-            //       "Recent Orders",
-            //       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            //     ),
-            //     const Spacer(),
-            //     InkWell(
-            //       onTap: () {
-            //         // Navigate to all orders screen
-            //       },
-            //       child: const Text(
-            //         "View all",
-            //         style: TextStyle(
-            //           color: Colors.brown,
-            //           fontWeight: FontWeight.bold,
-            //           decoration: TextDecoration.underline,
-            //         ),
-            //       ),
-            //     ),
-            //   ],
-            // ),
             Row(
               children: [
                 Text(
-                  showAll ? "Orders" : "Recent Orders",
+                  widget.showAll ? "Orders" : "Recent Orders",
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+
                 const Spacer(),
-                if (!showAll)
+
+                if (!widget.showAll)
                   InkWell(
                     onTap: () {
                       Navigator.push(
@@ -92,11 +87,18 @@ class RecentOrdersSection extends StatelessWidget {
             const SizedBox(height: 24),
 
             if (provider.isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (orders.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Text("No orders found"),
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 30),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (allOrders.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 30),
+                  child: Text("No orders found"),
+                ),
               )
             else ...[
               Row(
@@ -111,6 +113,7 @@ class RecentOrdersSection extends StatelessWidget {
                       ),
                     ),
                   ),
+
                   Expanded(
                     flex: 3,
                     child: Text(
@@ -121,6 +124,7 @@ class RecentOrdersSection extends StatelessWidget {
                       ),
                     ),
                   ),
+
                   Expanded(
                     flex: 2,
                     child: Text(
@@ -131,6 +135,7 @@ class RecentOrdersSection extends StatelessWidget {
                       ),
                     ),
                   ),
+
                   Expanded(
                     flex: 2,
                     child: Text(
@@ -145,59 +150,177 @@ class RecentOrdersSection extends StatelessWidget {
                 ],
               ),
 
+              const SizedBox(height: 12),
+
+              const Divider(),
+
+              ...displayOrders.map((order) {
+                final orderNumber = order["order_number"]?.toString() ?? "-";
+
+                final status = order["status"]?.toString() ?? "-";
+
+                final createdAt = order["created_at"]?.toString();
+
+                String date = "-";
+
+                if (createdAt != null && createdAt.isNotEmpty) {
+                  try {
+                    date = DateFormat(
+                      "dd MMM yyyy",
+                    ).format(DateTime.parse(createdAt));
+                  } catch (_) {
+                    date = "-";
+                  }
+                }
+
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // ORDER NUMBER
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              orderNumber,
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+
+                          // DATE
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              date,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+
+                          // STATUS
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              status.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: status.toLowerCase() == "pending"
+                                    ? Colors.orange
+                                    : Colors.green,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+
+                          // TOTAL
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              order["grand_total"]?.toString() ?? "0.00",
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const Divider(height: 1, color: Color(0xffEEEEEE)),
+                  ],
+                );
+              }),
+
               const SizedBox(height: 20),
 
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: orders.length,
-                separatorBuilder: (_, __) => const Divider(),
-                itemBuilder: (context, index) {
-                  final order = orders[index];
-
-                  log("ordersss// $orders...${orders.length}");
-
-                  final date = DateFormat(
-                    "dd MMM yyyy",
-                  ).format(DateTime.parse(order["created_at"]));
-
-                  return Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          order["order_number"],
-                          style: const TextStyle(fontSize: 12),
+              if (totalPages > 1)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // PREVIOUS
+                    SizedBox(
+                      height: 38,
+                      child: OutlinedButton(
+                        onPressed: currentPage > 0
+                            ? () {
+                                setState(() {
+                                  currentPage--;
+                                });
+                              }
+                            : null,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          side: const BorderSide(color: Color(0xffA90020)),
+                        ),
+                        child: const Text(
+                          "Previous",
+                          style: TextStyle(fontSize: 12),
                         ),
                       ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(date, style: const TextStyle(fontSize: 12)),
+                    ),
+
+                    const SizedBox(width: 15),
+
+                    // PAGE NUMBER
+                    Container(
+                      height: 38,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0xffA90020),
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          order["status"].toString().toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: order["status"] == "pending"
-                                ? Colors.orange
-                                : Colors.green,
-                          ),
+                      child: Text(
+                        "${currentPage + 1} / $totalPages",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          order["grand_total"],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 12),
+                    ),
+
+                    const SizedBox(width: 15),
+
+                    // NEXT
+                    SizedBox(
+                      height: 38,
+                      child: OutlinedButton(
+                        onPressed: currentPage < totalPages - 1
+                            ? () {
+                                setState(() {
+                                  currentPage++;
+                                });
+                              }
+                            : null,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          side: const BorderSide(color: Color(0xffA90020)),
+                        ),
+                        child: const Text(
+                          "Next",
+                          style: TextStyle(fontSize: 12),
                         ),
                       ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+                  ],
+                ),
+
+              const SizedBox(height: 10),
+
+              if (totalPages > 1)
+                Center(
+                  child: Text(
+                    "Showing ${startIndex + 1}–$endIndex "
+                    "of ${allOrders.length} orders",
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xff777777),
+                    ),
+                  ),
+                ),
             ],
           ],
         ),

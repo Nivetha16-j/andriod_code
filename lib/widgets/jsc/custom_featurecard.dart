@@ -43,6 +43,7 @@ class FeatureCard extends StatelessWidget {
           /// Content
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(

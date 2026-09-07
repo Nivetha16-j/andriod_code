@@ -339,7 +339,7 @@ class _PurchaseTable extends StatelessWidget {
                     ),
 
                     SizedBox(
-                      width: 120,
+                      width: 160,
                       child: Text(
                         'MARKET STATUS',
                         style: TextStyle(
@@ -415,7 +415,17 @@ class _PurchaseTableRow extends StatelessWidget {
           '${parsedDate.year}';
     } catch (_) {}
 
-    final isUp = marketStatus.toLowerCase() == 'up';
+    final status = marketStatus.toLowerCase();
+
+    final isUp = status == 'up';
+    final isDown = status == 'down';
+    final isFlat = status == 'flat';
+
+    final statusColor = isUp
+        ? const Color(0xFF168B3A)
+        : isDown
+        ? const Color(0xFFD20D2D)
+        : const Color(0xFF777777);
 
     return Container(
       constraints: const BoxConstraints(minHeight: 95),
@@ -557,7 +567,7 @@ class _PurchaseTableRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: isUp ? const Color(0xFF168B3A) : const Color(0xFFD20D2D),
+                color: statusColor,
               ),
             ),
           ),
@@ -566,33 +576,29 @@ class _PurchaseTableRow extends StatelessWidget {
           // MARKET STATUS
           // ==========================
           SizedBox(
-            width: 120,
+            width: 160,
             child: Row(
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$priceDiff',
+                      priceDiff,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: isUp
-                            ? const Color(0xFF168B3A)
-                            : const Color(0xFFD20D2D),
+                        color: statusColor,
                       ),
                     ),
 
                     const SizedBox(height: 3),
 
                     Text(
-                      '$priceDiffPercent',
+                      priceDiffPercent,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: isUp
-                            ? const Color(0xFF168B3A)
-                            : const Color(0xFFD20D2D),
+                        color: statusColor,
                       ),
                     ),
                   ],
@@ -608,17 +614,21 @@ class _PurchaseTableRow extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isUp
                         ? const Color(0xFFE4F4EA)
-                        : const Color(0xFFFBE5E5),
+                        : isDown
+                        ? const Color(0xFFFBE5E5)
+                        : const Color(0xFFF0F0F0),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        isUp ? Icons.arrow_upward : Icons.arrow_downward,
+                        isUp
+                            ? Icons.arrow_upward
+                            : isDown
+                            ? Icons.arrow_downward
+                            : Icons.arrow_forward,
                         size: 10,
-                        color: isUp
-                            ? const Color(0xFF168B3A)
-                            : const Color(0xFFD20D2D),
+                        color: statusColor,
                       ),
 
                       const SizedBox(width: 3),
@@ -628,9 +638,7 @@ class _PurchaseTableRow extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          color: isUp
-                              ? const Color(0xFF168B3A)
-                              : const Color(0xFFD20D2D),
+                          color: statusColor,
                         ),
                       ),
                     ],
