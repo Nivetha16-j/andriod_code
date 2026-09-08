@@ -45,6 +45,9 @@ class CartProvider extends ChangeNotifier {
   bool isCourierFree = false;
   bool showTax = false;
 
+  String? fulfillment;
+  String? digitalSubtype;
+
   bool isAdding(int productId) => addingProducts.contains(productId);
 
   /// Call this whenever currency/unit changes
@@ -80,6 +83,11 @@ class CartProvider extends ChangeNotifier {
         final data = response["data"] as Map<String, dynamic>?;
 
         final summary = data?["summary"] as Map<String, dynamic>?;
+
+        if (summary is Map<String, dynamic>) {
+          fulfillment = summary["fulfillment"]?.toString();
+          digitalSubtype = summary["digital_subtype"]?.toString();
+        }
 
         if (summary == null) {
           log("⚠️ Cart response has no summary");

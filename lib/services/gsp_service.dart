@@ -1,17 +1,11 @@
 import 'dart:convert';
 import 'dart:developer';
-
 import 'package:http/http.dart' as http;
 import 'package:junubullion/services/session_manager.dart';
 
 class GspService {
   static const String baseUrl = "https://staging.junubullion.com/api";
 
-  /// Unlock GSP wallet.
-  ///
-  /// This API BOTH:
-  /// 1. Unlocks the wallet
-  /// 2. Returns gold/silver wallet values
   static Future<Map<String, dynamic>> unlockWallet({
     required String unlockPassword,
     required String currency,
