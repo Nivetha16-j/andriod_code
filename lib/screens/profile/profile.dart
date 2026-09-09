@@ -32,18 +32,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshProfileData();
+    });
+  }
+
+  Future<void> _refreshProfileData() async {
+    if (!mounted) return;
+
+    final ordersProvider = context.read<OrdersProvider>();
+    final accountProvider = context.read<AccountProvider>();
+
+    try {
+      // Always refresh orders whenever Profile is opened.
+      await ordersProvider.fetchOrders();
+
       if (!mounted) return;
 
-      final ordersProvider = context.read<OrdersProvider>();
-      final accountProvider = context.read<AccountProvider>();
-
-      if (ordersProvider.orders.isEmpty) {
-        await ordersProvider.fetchOrders();
-
-        if (!mounted) return;
-      }
-
+      // Always refresh account details.
       await accountProvider.fetchAccountDetails();
 
       if (!mounted) return;
@@ -52,7 +58,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         name = accountProvider.name;
         email = accountProvider.email;
       });
-    });
+    } catch (e) {
+      debugPrint("PROFILE REFRESH ERROR -> $e");
+    }
   }
 
   @override

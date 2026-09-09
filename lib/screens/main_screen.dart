@@ -6,6 +6,7 @@ import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
+import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/screens/cart/cartscreen.dart';
 import 'package:junubullion/screens/home/homescreen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
@@ -15,6 +16,7 @@ import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:junubullion/widgets/product/custom_productlist.dart';
 import 'package:provider/provider.dart';
+import 'package:junubullion/providers/account_provider.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
@@ -320,7 +322,7 @@ class _MainScreenState extends State<MainScreen> {
   // SWITCH TAB
   // ============================================================
 
-  void _switchToTab(int index) {
+  Future<void> _switchToTab(int index) async {
     if (!mounted) return;
 
     if (index == 0 && _homeScrollController.hasClients) {
@@ -334,6 +336,34 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _currentIndex = index;
     });
+
+    // ============================================================
+    // PROFILE TAB
+    //
+    // Refresh profile-related APIs every time Profile is opened.
+    // Profile index = 4
+    // ============================================================
+
+    if (index == 4) {
+      debugPrint('👤 PROFILE TAB OPENED - REFRESHING DATA');
+
+      final ordersProvider = context.read<OrdersProvider>();
+      final accountProvider = context.read<AccountProvider>();
+
+      try {
+        await Future.wait([
+          ordersProvider.fetchOrders(),
+          accountProvider.fetchAccountDetails(),
+        ]);
+
+        if (!mounted) return;
+
+        debugPrint('✅ PROFILE DATA REFRESHED');
+      } catch (e, stackTrace) {
+        debugPrint('❌ PROFILE REFRESH ERROR: $e');
+        debugPrint('$stackTrace');
+      }
+    }
   }
 
   // ============================================================

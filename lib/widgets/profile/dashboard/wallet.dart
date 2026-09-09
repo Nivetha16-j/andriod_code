@@ -3,7 +3,6 @@ import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
-import 'package:junubullion/widgets/profile/recentorders.dart';
 import 'package:provider/provider.dart';
 
 class WalletSection extends StatelessWidget {

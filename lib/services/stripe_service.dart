@@ -43,7 +43,7 @@ class StripeService {
 
       final Map<String, dynamic> payload = {
         "shipping_address": shippingAddress,
-        "courier_service": courierService,
+        "courier_service": courierService?.toLowerCase(),
         "currency": currency,
         "terms": terms,
         "fulfillment_type": fulfillmentType.toLowerCase(),

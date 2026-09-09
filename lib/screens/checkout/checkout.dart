@@ -29,7 +29,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String delivery = "physical";
   String payment = "Card";
   int _currentIndex = 3;
-  String digitalSubtype = "Jsc";
+  String? digitalSubtype;
   final TextEditingController addressController = TextEditingController();
   bool isTermsAccepted = false;
   bool _isPlacingOrder = false;
@@ -120,8 +120,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final String currencySymbol = currencyProvider.selectedCurrency;
     final String fulfillment =
         cartProvider.fulfillment?.toLowerCase() ?? "physical";
-
-    final String? backendDigitalSubtype = cartProvider.digitalSubtype;
 
     final bool isDigital = fulfillment == "digital";
     final double courierAmount = isDigital ? 0.0 : cartProvider.courierAmount;
@@ -401,9 +399,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final String fulfillment =
         cartProvider.fulfillment?.toLowerCase().trim() ?? "";
 
-    final String? digitalSubtype = cartProvider.digitalSubtype
-        ?.toLowerCase()
-        .trim();
+    digitalSubtype = cartProvider.digitalSubtype?.toLowerCase().trim();
 
     final bool isPhysical = fulfillment == "physical";
     final bool isDigital = fulfillment == "digital";
@@ -762,6 +758,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           selectedCard!,
         );
 
+        log(
+          "CHECKOUT -> Stripe payment method: $shippingAddress $delivery $isDigital- ${cartProvider.selectedDeliveryMethod} ${currencyProvider.selectedCurrency} ${isDigital ? digitalSubtype : null} $stripePaymentMethod",
+        );
+
         final stripeResponse = await StripeService.createStripeSession(
           shippingAddress: shippingAddress.trim(),
 
@@ -814,7 +814,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           return;
         }
 
+        // Payment successful -> clear cart
+        log("STRIPE PAYMENT SUCCESS -> Clearing cart...");
+
         cartProvider.clearCart();
+
+        // Refresh cart from backend to make sure it is empty
+        await cartProvider.fetchCart();
+
+        if (!mounted) return;
+
+        log(
+          "STRIPE PAYMENT SUCCESS -> Cart cleared. "
+          "Cart count: ${cartProvider.cartCount}",
+        );
 
         setState(() {
           _isPlacingOrder = false;
