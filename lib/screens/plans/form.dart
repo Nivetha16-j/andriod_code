@@ -6,6 +6,7 @@ import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -217,7 +218,9 @@ class _ApplicationFormState extends State<ApplicationForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Image size must be less than or equal to 2 MB."),
+              content: TranslatedText(
+                "Image size must be less than or equal to 2 MB.",
+              ),
             ),
           );
         }
@@ -242,9 +245,9 @@ class _ApplicationFormState extends State<ApplicationForm> {
           isUploadingPhoto = false;
         });
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Failed to select image: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: TranslatedText("Failed to select image: $e")),
+        );
       }
     }
   }
@@ -297,7 +300,9 @@ class _ApplicationFormState extends State<ApplicationForm> {
     if (!isDeclarationAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Please accept the declaration before submitting."),
+          content: TranslatedText(
+            "Please accept the declaration before submitting.",
+          ),
         ),
       );
       return;
@@ -305,14 +310,18 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
     if (selectedIdType == null || selectedIdType!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select an identity type.")),
+        const SnackBar(
+          content: TranslatedText("Please select an identity type."),
+        ),
       );
       return;
     }
 
     if (selectedIdentityFiles.isEmpty && existingIdentityFiles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please upload your identity document.")),
+        const SnackBar(
+          content: TranslatedText("Please upload your identity document."),
+        ),
       );
       return;
     }
@@ -355,7 +364,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
       if (response["success"] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
+            content: TranslatedText(
               "$applicationName application submitted successfully.",
             ),
           ),
@@ -375,7 +384,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
+            content: TranslatedText(
               body?["message"]?.toString() ??
                   "Failed to submit $applicationName application.",
             ),
@@ -389,7 +398,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
+          content: TranslatedText(
             "Something went wrong while submitting $applicationName application: $e",
           ),
         ),
@@ -556,7 +565,9 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Failed to load $applicationName application: $e"),
+          content: TranslatedText(
+            "Failed to load $applicationName application: $e",
+          ),
         ),
       );
     } finally {
@@ -621,7 +632,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
               children: [
                 const SizedBox(height: 10),
 
-                Text(
+                TranslatedText(
                   "$applicationName Application Form",
                   style: const TextStyle(
                     fontSize: 24,
@@ -632,7 +643,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
                 const SizedBox(height: 5),
 
-                const Text(
+                const TranslatedText(
                   "Complete your application to start investing in premium bullion.",
                   style: TextStyle(
                     fontSize: 13,
@@ -669,7 +680,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                       ),
                     ],
                   ),
-                  child: const Text(
+                  child: const TranslatedText(
                     "Your Account Details Have Been Pre-Filled.\n"
                     "Please Complete The Remaining Fields.",
                     style: TextStyle(
@@ -735,7 +746,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.only(top: 3),
-                              child: Text(
+                              child: TranslatedText(
                                 "I hereby declare that the information provided above is true and correct. I agree to the Terms & Conditions of the account.",
                                 style: const TextStyle(
                                   fontSize: 14,
@@ -780,7 +791,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                                   color: Colors.white,
                                 ),
                               )
-                            : Text(
+                            : TranslatedText(
                                 isEditMode ? "UPDATE" : "SUBMIT",
                                 style: const TextStyle(
                                   fontSize: 16,
@@ -820,72 +831,78 @@ class _ApplicationFormState extends State<ApplicationForm> {
   Widget _buildStepIndicator() {
     return SizedBox(
       height: 80,
-      child: Row(
-        children: [
-          // STEP 1
-          Expanded(
-            child: _buildStep(
-              number: "1",
-              title: "Info",
-              active: _selectedStep == 0,
-              onPressed: () {
-                setState(() {
-                  _selectedStep = 0;
-                });
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final lineWidth = ((constraints.maxWidth - 240) / 2).clamp(
+            20.0,
+            75.0,
+          );
 
-                _scrollToSection(_personalInfoKey);
-              },
-            ),
-          ),
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: _buildStep(
+                  number: "1",
+                  title: "Info",
+                  active: _selectedStep == 0,
+                  onPressed: () {
+                    setState(() {
+                      _selectedStep = 0;
+                    });
+                    _scrollToSection(_personalInfoKey);
+                  },
+                ),
+              ),
 
-          // LINE
-          Container(
-            width: 75,
-            height: 1,
-            color: const Color(0xffF0D2D2),
-            margin: const EdgeInsets.only(bottom: 25),
-          ),
+              SizedBox(
+                width: lineWidth,
+                child: Container(
+                  height: 1,
+                  color: const Color(0xffF0D2D2),
+                  margin: const EdgeInsets.only(bottom: 25),
+                ),
+              ),
 
-          // STEP 2
-          Expanded(
-            child: _buildStep(
-              number: "2",
-              title: "Verify",
-              active: _selectedStep == 1,
-              onPressed: () {
-                setState(() {
-                  _selectedStep = 1;
-                });
+              Expanded(
+                child: _buildStep(
+                  number: "2",
+                  title: "Verify",
+                  active: _selectedStep == 1,
+                  onPressed: () {
+                    setState(() {
+                      _selectedStep = 1;
+                    });
+                    _scrollToSection(_identityVerificationKey);
+                  },
+                ),
+              ),
 
-                _scrollToSection(_identityVerificationKey);
-              },
-            ),
-          ),
+              SizedBox(
+                width: lineWidth,
+                child: Container(
+                  height: 1,
+                  color: const Color(0xffF0D2D2),
+                  margin: const EdgeInsets.only(bottom: 25),
+                ),
+              ),
 
-          // LINE
-          Container(
-            width: 75,
-            height: 1,
-            color: const Color(0xffF0D2D2),
-            margin: const EdgeInsets.only(bottom: 25),
-          ),
-
-          // STEP 3
-          Expanded(
-            child: _buildStep(
-              number: "3",
-              title: "Nominee",
-              active: _selectedStep == 2,
-              onPressed: () {
-                setState(() {
-                  _selectedStep = 2;
-                });
-
-                _scrollToSection(_nomineeKey);
-              },
-            ),
-          ),
-        ],
+              Expanded(
+                child: _buildStep(
+                  number: "3",
+                  title: "Nominee",
+                  active: _selectedStep == 2,
+                  onPressed: () {
+                    setState(() {
+                      _selectedStep = 2;
+                    });
+                    _scrollToSection(_nomineeKey);
+                  },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -917,7 +934,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                 ),
               ],
             ),
-            child: Text(
+            child: TranslatedText(
               number,
               style: TextStyle(
                 fontSize: 17,
@@ -929,13 +946,12 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
           const SizedBox(height: 10),
 
-          Text(
+          TranslatedText(
             title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: active ? AppColors.primaryRed : Colors.black,
-            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -979,7 +995,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Personal Information",
                     style: TextStyle(
                       color: Color.fromRGBO(255, 186, 73, 1),
@@ -1144,7 +1160,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Identity Verification",
                     style: TextStyle(
                       color: Color.fromRGBO(255, 186, 73, 1),
@@ -1193,26 +1209,35 @@ class _ApplicationFormState extends State<ApplicationForm> {
                         ),
                       ),
                     ),
-                    hint: const Text(
+                    hint: const TranslatedText(
                       "Select Identity Type",
                       style: TextStyle(fontSize: 12),
                     ),
                     items: const [
-                      DropdownMenuItem(value: "Aadhar", child: Text("Aadhar")),
+                      DropdownMenuItem(
+                        value: "Aadhar",
+                        child: TranslatedText("Aadhar"),
+                      ),
                       DropdownMenuItem(
                         value: "PAN Card",
-                        child: Text("PAN Card"),
+                        child: TranslatedText("PAN Card"),
                       ),
                       DropdownMenuItem(
                         value: "Passport",
-                        child: Text("Passport"),
+                        child: TranslatedText("Passport"),
                       ),
                       DropdownMenuItem(
                         value: "Driving License",
-                        child: Text("Driving License"),
+                        child: TranslatedText("Driving License"),
                       ),
-                      DropdownMenuItem(value: "NRIC", child: Text("NRIC")),
-                      DropdownMenuItem(value: "FIN", child: Text("FIN")),
+                      DropdownMenuItem(
+                        value: "NRIC",
+                        child: TranslatedText("NRIC"),
+                      ),
+                      DropdownMenuItem(
+                        value: "FIN",
+                        child: TranslatedText("FIN"),
+                      ),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -1244,7 +1269,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
                     const SizedBox(height: 8),
 
-                    const Text(
+                    const TranslatedText(
                       "Please upload the Front & Back documents.",
                       style: TextStyle(
                         fontSize: 12,
@@ -1255,7 +1280,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
                     const SizedBox(height: 6),
 
-                    const Text(
+                    const TranslatedText(
                       "Upload up to 2 files (Front & Back) in JPG, JPEG or PNG format. Max 5 MB each.",
                       style: TextStyle(fontSize: 11, color: Colors.grey),
                     ),
@@ -1292,7 +1317,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                                 Icons.upload_file,
                                 color: Color(0xffA7191F),
                               ),
-                        label: Text(
+                        label: TranslatedText(
                           isUploadingIdentityFiles
                               ? "Uploading..."
                               : selectedIdentityFiles.length >= 2
@@ -1312,7 +1337,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                     if (existingIdentityFiles.isNotEmpty) ...[
                       const SizedBox(height: 10),
 
-                      const Text(
+                      const TranslatedText(
                         "Uploaded Documents",
                         style: TextStyle(
                           fontSize: 13,
@@ -1396,7 +1421,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                                     // ),
 
                                     // const SizedBox(height: 4),
-                                    Text(
+                                    TranslatedText(
                                       filePath.split('/').last,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -1408,7 +1433,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
                                     const SizedBox(height: 4),
 
-                                    const Text(
+                                    const TranslatedText(
                                       "Previously uploaded",
                                       style: TextStyle(
                                         fontSize: 10,
@@ -1499,7 +1524,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                                       // ),
 
                                       // const SizedBox(height: 4),
-                                      Text(
+                                      TranslatedText(
                                         file.name,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
@@ -1511,7 +1536,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
                                       const SizedBox(height: 4),
 
-                                      Text(
+                                      TranslatedText(
                                         "${(file.size / (1024 * 1024)).toStringAsFixed(2)} MB",
                                         style: const TextStyle(
                                           fontSize: 10,
@@ -1557,7 +1582,9 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
       if (remainingFiles <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You can upload only 2 files.")),
+          const SnackBar(
+            content: TranslatedText("You can upload only 2 files."),
+          ),
         );
         return;
       }
@@ -1577,7 +1604,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("You can upload a maximum of 2 files."),
+              content: TranslatedText("You can upload a maximum of 2 files."),
             ),
           );
         }
@@ -1590,7 +1617,9 @@ class _ApplicationFormState extends State<ApplicationForm> {
         if (file.size > maxFileSize) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("${file.name} is larger than 5 MB.")),
+              SnackBar(
+                content: TranslatedText("${file.name} is larger than 5 MB."),
+              ),
             );
           }
           return;
@@ -1599,7 +1628,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
         if (file.bytes == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Unable to read ${file.name}.")),
+              SnackBar(content: TranslatedText("Unable to read ${file.name}.")),
             );
           }
           return;
@@ -1618,9 +1647,9 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to select files: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: TranslatedText("Failed to select files: $e")),
+      );
     }
   }
 
@@ -1657,7 +1686,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Nominee Details",
                     style: TextStyle(
                       color: Color.fromRGBO(255, 186, 73, 1),
@@ -1718,7 +1747,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                         ),
                       ),
                     ),
-                    hint: const Text(
+                    hint: const TranslatedText(
                       "Select Relationship",
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
@@ -1727,21 +1756,42 @@ class _ApplicationFormState extends State<ApplicationForm> {
                       color: Colors.black,
                     ),
                     items: const [
-                      DropdownMenuItem(value: "Father", child: Text("Father")),
-                      DropdownMenuItem(value: "Mother", child: Text("Mother")),
-                      DropdownMenuItem(value: "Spouse", child: Text("Spouse")),
-                      DropdownMenuItem(value: "Son", child: Text("Son")),
+                      DropdownMenuItem(
+                        value: "Father",
+                        child: TranslatedText("Father"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Mother",
+                        child: TranslatedText("Mother"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Spouse",
+                        child: TranslatedText("Spouse"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Son",
+                        child: TranslatedText("Son"),
+                      ),
                       DropdownMenuItem(
                         value: "Daughter",
-                        child: Text("Daughter"),
+                        child: TranslatedText("Daughter"),
                       ),
                       DropdownMenuItem(
                         value: "Brother",
-                        child: Text("Brother"),
+                        child: TranslatedText("Brother"),
                       ),
-                      DropdownMenuItem(value: "Sister", child: Text("Sister")),
-                      DropdownMenuItem(value: "Friend", child: Text("Friend")),
-                      DropdownMenuItem(value: "Other", child: Text("Other")),
+                      DropdownMenuItem(
+                        value: "Sister",
+                        child: TranslatedText("Sister"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Friend",
+                        child: TranslatedText("Friend"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Other",
+                        child: TranslatedText("Other"),
+                      ),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -1894,7 +1944,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                 ),
               const SizedBox(height: 10),
 
-              const Text(
+              const TranslatedText(
                 "Passport Size Photo\n"
                 "(JPG / PNG\n"
                 "(Max 2 MB))",
@@ -1937,7 +1987,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                             color: Colors.black,
                           ),
                         )
-                      : const Text(
+                      : const TranslatedText(
                           "BROWSE FILES",
                           style: TextStyle(
                             fontSize: 11,
@@ -1960,7 +2010,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(left: 0),
-      child: Text(
+      child: TranslatedText(
         text,
         style: const TextStyle(
           fontSize: 14,
@@ -2012,7 +2062,9 @@ class _ApplicationFormState extends State<ApplicationForm> {
     if (!isDeclarationAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Please accept the declaration before updating."),
+          content: TranslatedText(
+            "Please accept the declaration before updating.",
+          ),
         ),
       );
       return;
@@ -2020,14 +2072,18 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
     if (selectedIdType == null || selectedIdType!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select an identity type.")),
+        const SnackBar(
+          content: TranslatedText("Please select an identity type."),
+        ),
       );
       return;
     }
 
     if (selectedIdentityFiles.isEmpty && existingIdentityFiles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please upload your identity document.")),
+        const SnackBar(
+          content: TranslatedText("Please upload your identity document."),
+        ),
       );
       return;
     }
@@ -2069,7 +2125,9 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
       if (response["success"] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Application updated successfully.")),
+          const SnackBar(
+            content: TranslatedText("Application updated successfully."),
+          ),
         );
 
         // Clear newly selected files
@@ -2090,7 +2148,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
+            content: TranslatedText(
               body?["message"]?.toString() ?? "Failed to update application.",
             ),
           ),
@@ -2101,9 +2159,9 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Something went wrong: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: TranslatedText("Something went wrong: $e")),
+      );
     } finally {
       if (mounted) {
         setState(() {

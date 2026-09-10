@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class FeaturesGridSection extends StatelessWidget {
   const FeaturesGridSection({super.key});
@@ -92,7 +93,7 @@ class FeaturesGridSection extends StatelessWidget {
                 const SizedBox(height: 12.0),
 
                 // Title
-                Text(
+                TranslatedText(
                   item.title,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
@@ -105,7 +106,7 @@ class FeaturesGridSection extends StatelessWidget {
                 const SizedBox(height: 8.0),
 
                 // Description
-                Text(
+                TranslatedText(
                   item.description,
                   textAlign: TextAlign.center,
                   style: TextStyle(

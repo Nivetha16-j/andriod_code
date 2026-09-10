@@ -7,6 +7,7 @@ import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
@@ -142,7 +143,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Column(
           children: [
-            const Text(
+            const TranslatedText(
               "Our Products",
               style: TextStyle(
                 fontSize: 34.0,
@@ -163,7 +164,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   final bool isSelected = _selectedCategoryIndex == index;
 
                   return ChoiceChip(
-                    label: Text(
+                    label: TranslatedText(
                       _categories[index],
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.black87,
@@ -201,7 +202,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 ? const Padding(
                     padding: EdgeInsets.symmetric(vertical: 40),
                     child: Center(
-                      child: Text(
+                      child: TranslatedText(
                         'No products found in this category.',
                         style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
@@ -249,7 +250,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 },
                 child: const Padding(
                   padding: EdgeInsets.only(bottom: 24),
-                  child: Text(
+                  child: TranslatedText(
                     'View more',
                     style: TextStyle(
                       fontSize: 16,
@@ -617,7 +618,7 @@ class _ProductGridCard extends StatelessWidget {
         ),
         child: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(
+          child: TranslatedText(
             "OUT OF STOCK",
             maxLines: 1,
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
@@ -647,7 +648,7 @@ class _ProductGridCard extends StatelessWidget {
         },
         child: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(
+          child: TranslatedText(
             "ADD TO CART",
             maxLines: 1,
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
@@ -754,7 +755,7 @@ class _ProductGridCard extends StatelessWidget {
             )
           : FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
+              child: TranslatedText(
                 "ADD TO CART",
                 maxLines: 1,
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
@@ -817,7 +818,7 @@ class _ProductGridCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            Text(
+            TranslatedText(
               name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -828,7 +829,7 @@ class _ProductGridCard extends StatelessWidget {
 
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(
+              child: TranslatedText(
                 canPurchase ? "In Stock" : "Out of Stock",
                 style: TextStyle(
                   color: canPurchase

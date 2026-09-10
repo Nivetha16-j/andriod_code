@@ -5,6 +5,7 @@ import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/jsc_services.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -102,14 +103,14 @@ class _DashboardContentState extends State<_DashboardContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           'Bullion Dashboard',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           'Your accumulated digital gold and silver holdings.',
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
@@ -171,7 +172,7 @@ class _DashboardContentState extends State<_DashboardContent> {
             );
           },
           icon: const Icon(Icons.description_outlined, size: 16),
-          label: const Text(
+          label: const TranslatedText(
             'View JSC Application',
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
@@ -222,7 +223,7 @@ class _DashboardContentState extends State<_DashboardContent> {
             borderRadius: BorderRadius.circular(13),
           ),
         ),
-        child: Text(
+        child: TranslatedText(
           text,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
         ),

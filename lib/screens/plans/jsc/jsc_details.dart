@@ -7,6 +7,7 @@ import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -101,7 +102,7 @@ class _JscScreenState extends State<JscScreen> {
 
   final PageController _pageController = PageController();
 
-  final List<double> _featureHeights = [];
+  // List<double> _featureHeights = [];
 
   int _currentPage = 0;
 
@@ -216,7 +217,7 @@ class _JscScreenState extends State<JscScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        const TranslatedText(
                           '"Save Smart.Own Gold.',
                           style: TextStyle(
                             fontSize: 20,
@@ -224,7 +225,7 @@ class _JscScreenState extends State<JscScreen> {
                             color: Color(0xffFFCC19),
                           ),
                         ),
-                        const Text(
+                        const TranslatedText(
                           'Build Your Future."',
                           style: TextStyle(
                             fontSize: 20,
@@ -238,7 +239,7 @@ class _JscScreenState extends State<JscScreen> {
 
                   const SizedBox(height: 22),
 
-                  const Text(
+                  const TranslatedText(
                     "Your Wealth, Backed by Real Gold & Silver",
                     style: TextStyle(
                       color: Colors.white,
@@ -250,7 +251,7 @@ class _JscScreenState extends State<JscScreen> {
 
                   const SizedBox(height: 10),
 
-                  const Text(
+                  const TranslatedText(
                     "Start building your future with the Junu Savings Capital — own digital gold and silver, starting from just 1 gram.",
                     style: TextStyle(
                       color: Colors.white,
@@ -293,14 +294,14 @@ class _JscScreenState extends State<JscScreen> {
                               );
                       },
                       child: hasJscRegistration
-                          ? Text(
+                          ? TranslatedText(
                               "View Your Jsc Application",
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
                               ),
                             )
-                          : Text(
+                          : TranslatedText(
                               "Open Your Jsc Account",
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
@@ -345,7 +346,7 @@ class _JscScreenState extends State<JscScreen> {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  TranslatedText(
                     "Junu Savings Capital (JSC) Plan",
                     style: TextStyle(
                       fontSize: 16,
@@ -356,14 +357,14 @@ class _JscScreenState extends State<JscScreen> {
 
                   SizedBox(height: 14),
 
-                  Text(
+                  TranslatedText(
                     "Junu Savings Capital (JSC) is a precious metals savings program offered by Junu Bullion that allows customers to accumulate gold or silver gradually through digital ownership backed by physical bullion. Investors can start with small amounts and build long-term wealth through regular savings.",
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                   ),
 
                   SizedBox(height: 20),
 
-                  Text(
+                  TranslatedText(
                     "What is JSC?",
                     style: TextStyle(
                       fontSize: 16,
@@ -374,7 +375,7 @@ class _JscScreenState extends State<JscScreen> {
 
                   SizedBox(height: 14),
 
-                  Text(
+                  TranslatedText(
                     "JSC is designed as a flexible savings and wealth-building solution where every gram purchased is backed by real physical gold or silver. Customers can buy digital grams, monitor their holdings online, and later sell, withdraw, or convert their holdings into physical bullion products.",
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                   ),
@@ -382,7 +383,7 @@ class _JscScreenState extends State<JscScreen> {
               ),
             ),
 
-            const Text(
+            const TranslatedText(
               "Start Small, Grow Big\nStart Your Wealth Journey Today",
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -422,7 +423,7 @@ class _JscScreenState extends State<JscScreen> {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 30),
                     child: Center(
-                      child: Text(
+                      child: TranslatedText(
                         "No JSC products available.",
                         style: TextStyle(color: Colors.grey, fontSize: 15),
                       ),
@@ -466,7 +467,7 @@ class _JscScreenState extends State<JscScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Key Features",
                     style: TextStyle(
                       color: AppColors.primaryRed,
@@ -477,76 +478,33 @@ class _JscScreenState extends State<JscScreen> {
 
                   const SizedBox(height: 22),
 
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOut,
-                    child: _featureHeights.length > _currentPage
-                        ? SizedBox(
-                            height: _featureHeights[_currentPage],
-                            child: PageView.builder(
-                              controller: _pageController,
-                              itemCount: features.length,
-                              onPageChanged: (index) {
-                                setState(() {
-                                  _currentPage = index;
-                                });
-                              },
-                              itemBuilder: (context, index) {
-                                final feature = features[index];
+                  SizedBox(
+                    height: 200,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: features.length,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentPage = index;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final feature = features[index];
 
-                                return _MeasureSize(
-                                  onChange: (size) {
-                                    if (_featureHeights.length !=
-                                        features.length) {
-                                      setState(() {
-                                        _featureHeights.clear();
-                                        _featureHeights.addAll(
-                                          List.filled(
-                                            features.length,
-                                            size.height,
-                                          ),
-                                        );
-                                      });
-                                    } else if (_featureHeights[index] !=
-                                        size.height) {
-                                      setState(() {
-                                        _featureHeights[index] = size.height;
-                                      });
-                                    }
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 15),
-                                    child: FeatureCard(
-                                      image: "assets/feature.png",
-                                      title: feature["title"],
-                                      descriptions: List<String>.from(
-                                        feature["description"],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          )
-                        : _MeasureSize(
-                            onChange: (size) {
-                              if (_featureHeights.isEmpty) {
-                                setState(() {
-                                  _featureHeights.add(size.height);
-                                });
-                              }
-                            },
-                            child: FeatureCard(
-                              image: "assets/feature.png",
-                              title: features[0]["title"],
-                              descriptions: List<String>.from(
-                                features[0]["description"],
-                              ),
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 15),
+                          child: FeatureCard(
+                            image: "assets/feature.png",
+                            title: feature["title"],
+                            descriptions: List<String>.from(
+                              feature["description"],
                             ),
                           ),
+                        );
+                      },
+                    ),
                   ),
 
-                  // ),
                   const SizedBox(height: 12),
 
                   /// Page indicators
@@ -603,7 +561,7 @@ class _JscScreenState extends State<JscScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      const TranslatedText(
                         "JSC Benefits for Customers",
                         // textAlign: TextAlign.center,
                         style: TextStyle(
@@ -677,7 +635,7 @@ class _JscScreenState extends State<JscScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "Your Emergency Safety Net",
           style: TextStyle(
             color: Color(0xffA51E22),
@@ -688,7 +646,7 @@ class _JscScreenState extends State<JscScreen> {
 
         const SizedBox(height: 5),
 
-        const Text(
+        const TranslatedText(
           "Gold and silver bought today grows with the market. Whether it’s for emergencies, future plans, or peace of mind — your savings are always there when you need them.",
           style: TextStyle(fontSize: 10, color: Colors.black),
         ),
@@ -702,7 +660,7 @@ class _JscScreenState extends State<JscScreen> {
             color: const Color(0xffFFF5A8),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Text(
+          child: const TranslatedText(
             "With just SGD 1 gram, you can begin building a safety net that grows while you sleep.",
             style: TextStyle(
               color: Color(0xff245C45),
@@ -727,7 +685,7 @@ class _JscScreenState extends State<JscScreen> {
 
     return Column(
       children: [
-        const Text(
+        const TranslatedText(
           "How JSC Works",
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -743,7 +701,7 @@ class _JscScreenState extends State<JscScreen> {
           children: List.generate(steps.length, (index) {
             return Column(
               children: [
-                Text(
+                TranslatedText(
                   steps[index],
                   textAlign: TextAlign.center,
                   style: const TextStyle(
@@ -793,11 +751,11 @@ class _JscScreenState extends State<JscScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Title
-          Text(
+          TranslatedText(
             title,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 22,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
               height: 1.25,
             ),
@@ -815,7 +773,7 @@ class _JscScreenState extends State<JscScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      const TranslatedText(
                         "•",
                         style: TextStyle(
                           color: Colors.white,
@@ -827,11 +785,11 @@ class _JscScreenState extends State<JscScreen> {
                       const SizedBox(width: 8),
 
                       Expanded(
-                        child: Text(
+                        child: TranslatedText(
                           point,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 14,
+                            fontSize: 12,
                             height: 1.4,
                           ),
                         ),
@@ -948,7 +906,7 @@ class _JscProductCard extends StatelessWidget {
           // ==========================================================
           // PRODUCT NAME
           // ==========================================================
-          Text(
+          TranslatedText(
             productName,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -960,7 +918,7 @@ class _JscProductCard extends StatelessWidget {
           // ==========================================================
           // PRICE
           // ==========================================================
-          Text(
+          TranslatedText(
             priceText,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -972,7 +930,7 @@ class _JscProductCard extends StatelessWidget {
           // ==========================================================
           // STOCK STATUS
           // ==========================================================
-          Text(
+          TranslatedText(
             isInStock ? "In Stock" : "Out of Stock",
             style: TextStyle(
               fontSize: 12,
@@ -1032,7 +990,7 @@ class _JscProductCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(25),
           ),
         ),
-        child: const Text(
+        child: const TranslatedText(
           "OUT OF STOCK",
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
         ),
@@ -1064,7 +1022,7 @@ class _JscProductCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(25),
           ),
         ),
-        child: const Text(
+        child: const TranslatedText(
           "ADD TO CART",
           style: TextStyle(
             color: Colors.white,
@@ -1134,7 +1092,7 @@ class _JscProductCard extends StatelessWidget {
             // --------------------------------------------------------
             // QUANTITY
             // --------------------------------------------------------
-            Text(
+            TranslatedText(
               "$cartQuantity",
               style: const TextStyle(
                 color: Colors.white,
@@ -1202,7 +1160,7 @@ class _JscProductCard extends StatelessWidget {
                 color: Colors.white,
               ),
             )
-          : const Text(
+          : const TranslatedText(
               "ADD TO CART",
               style: TextStyle(
                 color: Colors.white,

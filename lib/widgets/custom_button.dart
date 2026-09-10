@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class CustomButton extends StatelessWidget {
   final String label;
@@ -48,7 +49,7 @@ class CustomButton extends StatelessWidget {
                     color: Colors.white,
                   ),
                 )
-              : Text(
+              : TranslatedText(
                   label,
                   style: TextStyle(
                     fontSize: fontSize,

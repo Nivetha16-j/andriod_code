@@ -8,6 +8,7 @@ import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -77,7 +78,7 @@ class _GspScreenState extends State<GspScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     'Your Trusted Insurance\nConsulting Partner',
                     style: TextStyle(
                       color: Colors.white,
@@ -89,7 +90,7 @@ class _GspScreenState extends State<GspScreen> {
 
                   const SizedBox(height: 10),
 
-                  const Text(
+                  const TranslatedText(
                     'They analyze existing insurance policies or help clients select the most suitable policies for health, life, property, liability, and auto insurance.',
                     style: TextStyle(
                       color: Colors.white,
@@ -134,14 +135,14 @@ class _GspScreenState extends State<GspScreen> {
                         ),
                       ),
                       child: hasGspRegistration
-                          ? Text(
+                          ? TranslatedText(
                               "View Your Gsp Application",
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
                               ),
                             )
-                          : Text(
+                          : TranslatedText(
                               "Open Your Gsp Account",
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
@@ -200,7 +201,7 @@ class _GspScreenState extends State<GspScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     'Junu Bullion Gold Savings Plan',
                     style: TextStyle(
                       color: Color(0xFF981B1B),
@@ -211,7 +212,7 @@ class _GspScreenState extends State<GspScreen> {
 
                   const SizedBox(height: 16),
 
-                  Text(
+                  TranslatedText(
                     'The Junu Bullion Gold Savings Plan (GSP) is a smart and affordable savings program that allows customers to accumulate gold gradually through regular savings. Starting from only ₹1,475.69 (equivalent to S\$20.00), GSP helps individuals and families build long-term wealth, protect their savings from inflation, and achieve important financial goals.',
                     style: const TextStyle(
                       color: Colors.black,
@@ -222,7 +223,7 @@ class _GspScreenState extends State<GspScreen> {
 
                   const SizedBox(height: 18),
 
-                  const Text(
+                  const TranslatedText(
                     'Whether you are planning for your child\'s education, retirement, wealth preservation, or future investments, GSP provides a simple and disciplined way to own gold over time.',
                     style: TextStyle(
                       color: Colors.black,
@@ -233,7 +234,7 @@ class _GspScreenState extends State<GspScreen> {
                 ],
               ),
             ),
-            const Text(
+            const TranslatedText(
               'Start Small, Grow Big\nStart Your Gold Savings Journey Today',
               style: TextStyle(color: AppColors.primaryRed, fontSize: 20),
             ),
@@ -268,7 +269,7 @@ class _GspScreenState extends State<GspScreen> {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 30),
                     child: Center(
-                      child: Text(
+                      child: TranslatedText(
                         "No GSP products available.",
                         style: TextStyle(color: Colors.grey, fontSize: 15),
                       ),
@@ -338,7 +339,7 @@ class _GspScreenState extends State<GspScreen> {
       padding: const EdgeInsets.fromLTRB(20, 35, 20, 45),
       child: Column(
         children: [
-          const Text(
+          const TranslatedText(
             'How Your Money Converts',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -394,7 +395,7 @@ class _GspScreenState extends State<GspScreen> {
           // -------------------------------------------------------
           // INR AMOUNT
           // -------------------------------------------------------
-          Text(
+          TranslatedText(
             amount,
             textAlign: TextAlign.center,
             style: const TextStyle(
@@ -408,7 +409,7 @@ class _GspScreenState extends State<GspScreen> {
           // -------------------------------------------------------
           // SGD AMOUNT
           // -------------------------------------------------------
-          Text(
+          TranslatedText(
             sgd,
             textAlign: TextAlign.center,
             style: const TextStyle(
@@ -427,7 +428,7 @@ class _GspScreenState extends State<GspScreen> {
           // -------------------------------------------------------
           // GOLD VALUE
           // -------------------------------------------------------
-          Text(
+          TranslatedText(
             gold,
             textAlign: TextAlign.center,
             style: const TextStyle(
@@ -463,7 +464,7 @@ class _GspScreenState extends State<GspScreen> {
       padding: const EdgeInsets.fromLTRB(20, 35, 20, 45),
       child: Column(
         children: [
-          const Text(
+          const TranslatedText(
             'Plan Features at a Glance',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -595,7 +596,7 @@ class _GspScreenState extends State<GspScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             'Who It Use For',
             style: TextStyle(
               color: AppColors.primaryRed,
@@ -694,7 +695,7 @@ class _GspScreenState extends State<GspScreen> {
                 const SizedBox(width: 12),
 
                 Expanded(
-                  child: Text(
+                  child: TranslatedText(
                     title,
                     style: const TextStyle(
                       color: Colors.black,
@@ -718,7 +719,7 @@ class _GspScreenState extends State<GspScreen> {
             padding: const EdgeInsets.fromLTRB(28, 0, 10, 15),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
+              child: TranslatedText(
                 description,
                 style: const TextStyle(
                   color: Colors.black,
@@ -800,7 +801,7 @@ class _GspScreenState extends State<GspScreen> {
       padding: const EdgeInsets.fromLTRB(0, 30, 0, 45),
       child: Column(
         children: [
-          const Text(
+          const TranslatedText(
             'Customer Benefits',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -875,7 +876,7 @@ class _GspScreenState extends State<GspScreen> {
           SizedBox(
             height: 44,
             child: Center(
-              child: Text(
+              child: TranslatedText(
                 title,
                 textAlign: TextAlign.center,
                 maxLines: 2,
@@ -896,7 +897,7 @@ class _GspScreenState extends State<GspScreen> {
           // DESCRIPTION
           // -------------------------------------------------------
           Expanded(
-            child: Text(
+            child: TranslatedText(
               description,
               textAlign: TextAlign.center,
               style: const TextStyle(
@@ -927,7 +928,7 @@ class _GspScreenState extends State<GspScreen> {
           ),
         ],
       ),
-      child: Text(
+      child: TranslatedText(
         text,
         textAlign: TextAlign.left,
         style: const TextStyle(
@@ -970,7 +971,7 @@ class _GspScreenState extends State<GspScreen> {
       padding: const EdgeInsets.fromLTRB(30, 50, 30, 45),
       child: Column(
         children: [
-          const Text(
+          const TranslatedText(
             'Product Description',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -983,7 +984,7 @@ class _GspScreenState extends State<GspScreen> {
 
           const SizedBox(height: 12),
 
-          const Text(
+          const TranslatedText(
             'With Junu Bullion GSP, customers can:',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -996,7 +997,7 @@ class _GspScreenState extends State<GspScreen> {
 
           const SizedBox(height: 8),
 
-          const Text(
+          const TranslatedText(
             'GSP is designed for anyone who wants to convert small regular savings into a valuable long-term asset.',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -1076,7 +1077,7 @@ class _GspScreenState extends State<GspScreen> {
 
         const SizedBox(height: 18),
 
-        Text(
+        TranslatedText(
           title,
           textAlign: TextAlign.center,
           style: const TextStyle(
@@ -1218,7 +1219,7 @@ class _GspProductCard extends StatelessWidget {
           // ==========================================================
           // PRODUCT NAME
           // ==========================================================
-          Text(
+          TranslatedText(
             productName,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -1230,7 +1231,7 @@ class _GspProductCard extends StatelessWidget {
           // ==========================================================
           // PRICE
           // ==========================================================
-          Text(
+          TranslatedText(
             priceText,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1242,7 +1243,7 @@ class _GspProductCard extends StatelessWidget {
           // ==========================================================
           // STOCK STATUS
           // ==========================================================
-          Text(
+          TranslatedText(
             isInStock ? "In Stock" : "Out of Stock",
             style: TextStyle(
               fontSize: 12,
@@ -1298,7 +1299,7 @@ class _GspProductCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(25),
           ),
         ),
-        child: const Text(
+        child: const TranslatedText(
           "OUT OF STOCK",
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
         ),
@@ -1330,7 +1331,7 @@ class _GspProductCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(25),
           ),
         ),
-        child: const Text(
+        child: const TranslatedText(
           "ADD TO CART",
           style: TextStyle(
             color: Colors.white,
@@ -1400,7 +1401,7 @@ class _GspProductCard extends StatelessWidget {
             // --------------------------------------------------------
             // QUANTITY
             // --------------------------------------------------------
-            Text(
+            TranslatedText(
               "$cartQuantity",
               style: const TextStyle(
                 color: Colors.white,
@@ -1468,7 +1469,7 @@ class _GspProductCard extends StatelessWidget {
                 color: Colors.white,
               ),
             )
-          : const Text(
+          : const TranslatedText(
               "ADD TO CART",
               style: TextStyle(
                 color: Colors.white,

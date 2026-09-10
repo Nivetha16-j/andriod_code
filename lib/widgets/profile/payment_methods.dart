@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/checkout_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -43,7 +44,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     }
 
     if (provider.paymentMethods.isEmpty) {
-      return const Center(child: Text("No payment methods available"));
+      return const Center(
+        child: TranslatedText("No payment methods available"),
+      );
     }
 
     return Scaffold(
@@ -59,7 +62,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            const TranslatedText(
               "Available Payment Methods",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
@@ -90,7 +93,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   }
 
                   return Card(
-                    child: ListTile(leading: Icon(icon), title: Text(title)),
+                    child: ListTile(
+                      leading: Icon(icon),
+                      title: TranslatedText(title),
+                    ),
                   );
                 },
               ),

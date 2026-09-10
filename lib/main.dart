@@ -14,6 +14,7 @@ import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/providers/kyc_provider.dart';
+import 'package:junubullion/providers/language_provider.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/providers/product_detail_provider.dart';
 import 'package:junubullion/providers/review_provider.dart';
@@ -53,6 +54,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => JscBalanceProvider()),
         ChangeNotifierProvider(create: (_) => GspBalanceProvider()),
         ChangeNotifierProvider(create: (_) => GspMonthlyPlanProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ],
       child: const MyApp(),
     ),
@@ -75,25 +77,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       color: AppColors.primaryRed,
       initialRoute: AppRoutes.splash,
+      // home: TranslationTestScreen(),
       onGenerateRoute: AppRoutes.generateRoute,
       theme: ThemeData(fontFamily: 'Montserrat'),
-
-      // localizationsDelegates: const [
-      //   GlobalMaterialLocalizations.delegate,
-      //   GlobalWidgetsLocalizations.delegate,
-      //   GlobalCupertinoLocalizations.delegate,
-      // ],
-
-      // supportedLocales: const [
-      //   Locale('en'),
-      //   Locale('ar'),
-      //   Locale('de'),
-      //   Locale('hi'),
-      //   Locale('it'),
-      //   Locale('ml'),
-      //   Locale('es'),
-      //   Locale('ta'),
-      // ],
     );
   }
 }

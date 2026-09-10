@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/screens/profile/profile.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class RecentOrdersSection extends StatefulWidget {
@@ -47,40 +48,52 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: widget.showAll ? EdgeInsets.all(24) : EdgeInsets.zero,
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Text(
-                  widget.showAll ? "Orders" : "Recent Orders",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: TranslatedText(
+                    widget.showAll ? "Orders" : "Recent Orders",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
 
-                const Spacer(),
+                if (!widget.showAll) ...[
+                  const SizedBox(width: 8),
 
-                if (!widget.showAll)
-                  InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const OrderScreen()),
-                      );
-                    },
-                    child: const Text(
-                      "View all",
-                      style: TextStyle(
-                        color: Colors.brown,
-                        fontWeight: FontWeight.bold,
-                        decoration: TextDecoration.underline,
+                  Flexible(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const OrderScreen(),
+                          ),
+                        );
+                      },
+                      child: const TranslatedText(
+                        "View all",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          color: Colors.brown,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ),
+                ],
               ],
             ),
 
@@ -97,7 +110,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 30),
-                  child: Text("No orders found"),
+                  child: TranslatedText("No orders found"),
                 ),
               )
             else ...[
@@ -105,7 +118,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                 children: const [
                   Expanded(
                     flex: 3,
-                    child: Text(
+                    child: TranslatedText(
                       "Order",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -116,7 +129,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
 
                   Expanded(
                     flex: 3,
-                    child: Text(
+                    child: TranslatedText(
                       "Date",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -127,7 +140,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
 
                   Expanded(
                     flex: 2,
-                    child: Text(
+                    child: TranslatedText(
                       "Status",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -138,7 +151,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
 
                   Expanded(
                     flex: 2,
-                    child: Text(
+                    child: TranslatedText(
                       "Total",
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -183,7 +196,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                           // ORDER NUMBER
                           Expanded(
                             flex: 3,
-                            child: Text(
+                            child: TranslatedText(
                               orderNumber,
                               style: const TextStyle(fontSize: 12),
                               overflow: TextOverflow.ellipsis,
@@ -193,7 +206,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                           // DATE
                           Expanded(
                             flex: 3,
-                            child: Text(
+                            child: TranslatedText(
                               date,
                               style: const TextStyle(fontSize: 12),
                             ),
@@ -202,7 +215,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                           // STATUS
                           Expanded(
                             flex: 2,
-                            child: Text(
+                            child: TranslatedText(
                               status.toUpperCase(),
                               style: TextStyle(
                                 fontSize: 12,
@@ -217,7 +230,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                           // TOTAL
                           Expanded(
                             flex: 2,
-                            child: Text(
+                            child: TranslatedText(
                               order["grand_total"]?.toString() ?? "0.00",
                               textAlign: TextAlign.center,
                               style: const TextStyle(fontSize: 12),
@@ -254,7 +267,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           side: const BorderSide(color: Color(0xffA90020)),
                         ),
-                        child: const Text(
+                        child: const TranslatedText(
                           "Previous",
                           style: TextStyle(fontSize: 12),
                         ),
@@ -272,7 +285,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                         color: const Color(0xffA90020),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text(
+                      child: TranslatedText(
                         "${currentPage + 1} / $totalPages",
                         style: const TextStyle(
                           color: Colors.white,
@@ -299,7 +312,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           side: const BorderSide(color: Color(0xffA90020)),
                         ),
-                        child: const Text(
+                        child: const TranslatedText(
                           "Next",
                           style: TextStyle(fontSize: 12),
                         ),
@@ -312,7 +325,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
 
               if (totalPages > 1)
                 Center(
-                  child: Text(
+                  child: TranslatedText(
                     "Showing ${startIndex + 1}–$endIndex "
                     "of ${allOrders.length} orders",
                     style: const TextStyle(

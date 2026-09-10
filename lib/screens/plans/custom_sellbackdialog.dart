@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/services/sell_back_services.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/account_provider.dart';
 import 'package:junubullion/services/home_services.dart';
@@ -285,7 +286,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    const TranslatedText(
                       'Sell Back — Bank Transfer',
                       style: TextStyle(
                         color: Color(0xFFFFD700),
@@ -322,7 +323,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             alignment: Alignment.center,
-                            child: Text(
+                            child: TranslatedText(
                               '1. BANK DETAILS',
                               style: TextStyle(
                                 fontSize: 11,
@@ -345,7 +346,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             alignment: Alignment.center,
-                            child: Text(
+                            child: TranslatedText(
                               '2. AMOUNT & CONFIRM',
                               style: TextStyle(
                                 fontSize: 11,
@@ -378,7 +379,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
                               Navigator.of(context).pop();
                             }
                           },
-                          child: Text(
+                          child: TranslatedText(
                             currentStep == 2 ? 'Back' : 'Cancel',
                             style: const TextStyle(color: Colors.black87),
                           ),
@@ -415,7 +416,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
                                     ),
                                   ),
                                 )
-                              : Text(
+                              : TranslatedText(
                                   currentStep == 1
                                       ? 'Continue'
                                       : 'Submit Request',
@@ -524,7 +525,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
           ),
         ),
         const SizedBox(height: 14),
-        Text(
+        TranslatedText(
           'Amount to sell (${widget.unit})',
           style: const TextStyle(
             fontSize: 11,
@@ -572,7 +573,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
         const SizedBox(height: 12),
 
         if (isLoadingOuncePrice)
-          const Text(
+          const TranslatedText(
             'Fetching live market rates...',
             style: TextStyle(fontSize: 11, color: Colors.grey),
           )
@@ -604,12 +605,12 @@ class _SellBackDialogState extends State<SellBackDialog> {
           ),
 
         const SizedBox(height: 8),
-        const Text(
+        const TranslatedText(
           'A 2% sell-back deduction applies to JSC payouts. The estimate above shows the net amount after deduction.',
           style: TextStyle(fontSize: 10, color: Colors.grey, height: 1.3),
         ),
         const SizedBox(height: 12),
-        const Text(
+        const TranslatedText(
           'Payment will be credited to your bank account within up to 24 hours.',
           style: TextStyle(fontSize: 10, color: Colors.black87),
         ),
@@ -625,7 +626,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        TranslatedText(
           label,
           style: const TextStyle(
             fontSize: 10,

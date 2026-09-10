@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class DeliveryMethodWidget extends StatelessWidget {
@@ -21,7 +22,7 @@ class DeliveryMethodWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             "Delivery Method",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
@@ -52,7 +53,7 @@ class DeliveryMethodWidget extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          Text(
+          TranslatedText(
             "SGD/Singapore and INR/India orders have no courier charge. Other currencies show the selected courier charge converted from USD.",
             style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
           ),
@@ -130,7 +131,7 @@ class DeliveryMethodWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  TranslatedText(
                     title,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
@@ -138,7 +139,7 @@ class DeliveryMethodWidget extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
+                  TranslatedText(
                     charge,
                     style: TextStyle(
                       fontSize: 13,

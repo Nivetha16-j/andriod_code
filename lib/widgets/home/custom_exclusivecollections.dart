@@ -8,6 +8,7 @@ import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/home_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class ExclusiveCollectionsSection extends StatefulWidget {
@@ -283,18 +284,24 @@ class _ExclusiveCollectionsSectionState
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Exclusive Collections",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              Expanded(
+                child: const TranslatedText(
+                  "Exclusive Collections",
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
 
-              InkWell(
-                onTap: widget.onViewMoreTap,
-                child: const Text(
-                  "View more",
-                  style: TextStyle(
-                    color: ExclusiveCollectionsSection.accentGold,
-                    fontWeight: FontWeight.bold,
+              Flexible(
+                child: InkWell(
+                  onTap: widget.onViewMoreTap,
+                  child: const TranslatedText(
+                    "View more",
+                    style: TextStyle(
+                      color: ExclusiveCollectionsSection.accentGold,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -418,7 +425,7 @@ class _ExclusiveProductCard extends StatelessWidget {
             // ======================================================
             SizedBox(
               height: 36,
-              child: Text(
+              child: TranslatedText(
                 name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -436,7 +443,7 @@ class _ExclusiveProductCard extends StatelessWidget {
             // ======================================================
             // PRICE
             // ======================================================
-            Text(
+            TranslatedText(
               priceText,
               style: const TextStyle(
                 fontSize: 20,
@@ -507,7 +514,7 @@ class _ExclusiveProductCard extends StatelessWidget {
       },
       child: FittedBox(
         fit: BoxFit.scaleDown,
-        child: Text("ADD TO CART", maxLines: 1),
+        child: TranslatedText("ADD TO CART", maxLines: 1),
       ),
     );
   }
@@ -685,7 +692,7 @@ class _ExclusiveProductCard extends StatelessWidget {
         ),
         child: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text("OUT OF STOCK", maxLines: 1),
+          child: TranslatedText("OUT OF STOCK", maxLines: 1),
         ),
       );
     }
@@ -717,7 +724,7 @@ class _ExclusiveProductCard extends StatelessWidget {
               child: const Icon(Icons.remove, color: Colors.white, size: 18),
             ),
 
-            Text(
+            TranslatedText(
               "$cartQuantity",
               style: const TextStyle(
                 color: Colors.white,
@@ -815,7 +822,7 @@ class _ExclusiveProductCard extends StatelessWidget {
             )
           : FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text("ADD TO CART", maxLines: 1),
+              child: TranslatedText("ADD TO CART", maxLines: 1),
             ),
     );
   }

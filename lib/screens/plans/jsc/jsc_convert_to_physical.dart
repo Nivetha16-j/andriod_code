@@ -3,6 +3,7 @@ import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/layout.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -115,7 +116,7 @@ class _JscConvertToPhysicalContentState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           'Convert To Physical',
           style: TextStyle(
             fontSize: 14,
@@ -126,7 +127,7 @@ class _JscConvertToPhysicalContentState
 
         const SizedBox(height: 12),
 
-        const Text(
+        const TranslatedText(
           'Convert your digital gold or silver holdings into physical bullion products.',
           style: TextStyle(
             fontSize: 13,

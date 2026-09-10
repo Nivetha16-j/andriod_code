@@ -11,6 +11,7 @@ import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/services/gsp_service.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -299,7 +300,7 @@ class _GspMonthlyInvestmentPlanContentState
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Payment completed successfully.'),
+          content: TranslatedText('Payment completed successfully.'),
           backgroundColor: Colors.green,
         ),
       );
@@ -325,7 +326,7 @@ class _GspMonthlyInvestmentPlanContentState
       log('StripeException: $message');
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
+        SnackBar(content: TranslatedText(message), backgroundColor: Colors.red),
       );
     } catch (e) {
       if (mounted && Navigator.of(context).canPop()) {
@@ -338,7 +339,7 @@ class _GspMonthlyInvestmentPlanContentState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          content: TranslatedText(e.toString().replaceFirst('Exception: ', '')),
           backgroundColor: Colors.red,
         ),
       );
@@ -392,7 +393,7 @@ class _GspMonthlyInvestmentPlanContentState
                     size: 40,
                   ),
                   const SizedBox(height: 10),
-                  Text(
+                  TranslatedText(
                     provider.errorMessage!,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
@@ -413,7 +414,7 @@ class _GspMonthlyInvestmentPlanContentState
                       backgroundColor: const Color(0xffA90020),
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Retry'),
+                    child: const TranslatedText('Retry'),
                   ),
                 ],
               ),
@@ -426,7 +427,7 @@ class _GspMonthlyInvestmentPlanContentState
             // ============================================================
             // TITLE
             // ============================================================
-            const Text(
+            const TranslatedText(
               'Monthly Investment Plan',
               style: TextStyle(
                 fontSize: 22,
@@ -440,7 +441,7 @@ class _GspMonthlyInvestmentPlanContentState
             // ============================================================
             // DESCRIPTION
             // ============================================================
-            const Text(
+            const TranslatedText(
               'Build your GSP gold savings with optional monthly investment. '
               'Payments are not mandatory, but help you grow your holdings over time.',
               style: TextStyle(
@@ -460,7 +461,7 @@ class _GspMonthlyInvestmentPlanContentState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     'Make a Payment',
                     style: TextStyle(
                       fontSize: 18,
@@ -483,7 +484,7 @@ class _GspMonthlyInvestmentPlanContentState
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: const Color(0xffffd2d2)),
                     ),
-                    child: Text(
+                    child: TranslatedText(
                       'Enter your investment amount and pay securely with '
                       'Stripe. Minimum investment: '
                       '$currencySymbol${minimumInvestment.toStringAsFixed(2)}.',
@@ -498,7 +499,7 @@ class _GspMonthlyInvestmentPlanContentState
                   const SizedBox(height: 14),
 
                   // AMOUNT LABEL
-                  Text(
+                  TranslatedText(
                     'Investment amount (${context.read<CurrencyProvider>().selectedCurrency.toUpperCase()})',
                     style: const TextStyle(
                       fontSize: 13,
@@ -645,7 +646,7 @@ class _GspMonthlyInvestmentPlanContentState
                         ),
                       ),
                       icon: const Icon(Icons.credit_card, size: 18),
-                      label: const Text(
+                      label: const TranslatedText(
                         'Pay with Stripe',
                         style: TextStyle(
                           fontSize: 14,
@@ -667,7 +668,7 @@ class _GspMonthlyInvestmentPlanContentState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     'Your GSP Plan',
                     style: TextStyle(
                       fontSize: 18,
@@ -687,7 +688,7 @@ class _GspMonthlyInvestmentPlanContentState
                         color: const Color(0xffFFF7E6),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
+                      child: const TranslatedText(
                         'Active',
                         style: TextStyle(
                           color: Color(0xffD48806),
@@ -743,7 +744,7 @@ class _GspMonthlyInvestmentPlanContentState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     'Suggested Monthly Tiers',
                     style: TextStyle(
                       fontSize: 18,
@@ -762,7 +763,7 @@ class _GspMonthlyInvestmentPlanContentState
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: const Color(0xffFDE8E8)),
                     ),
-                    child: const Text(
+                    child: const TranslatedText(
                       'Choose any amount at or above the minimum. You can investment monthly, or whenever it suits you.',
                       style: TextStyle(
                         fontSize: 13,
@@ -783,7 +784,7 @@ class _GspMonthlyInvestmentPlanContentState
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
+                        TranslatedText(
                           'TIER (SGD)',
                           style: TextStyle(
                             fontSize: 11,
@@ -791,7 +792,7 @@ class _GspMonthlyInvestmentPlanContentState
                             color: Color(0xff666666),
                           ),
                         ),
-                        Text(
+                        TranslatedText(
                           'APPROX. AMOUNT',
                           style: TextStyle(
                             fontSize: 11,
@@ -833,7 +834,7 @@ class _GspMonthlyInvestmentPlanContentState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     'How Monthly GSP Works',
                     style: TextStyle(
                       fontSize: 18,
@@ -900,17 +901,21 @@ class _GspMonthlyInvestmentPlanContentState
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Color(0xff333333),
+        Expanded(
+          child: TranslatedText(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              // fontWeight: FontWeight.w600,
+              // color: Color(0xFF9E2424),
+            ),
           ),
         ),
         if (value != null)
           Flexible(
-            child: Text(
+            child: TranslatedText(
               value,
               textAlign: TextAlign.right,
               style: const TextStyle(fontSize: 13, color: Color(0xff555555)),
@@ -928,7 +933,7 @@ class _GspMonthlyInvestmentPlanContentState
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
+          TranslatedText(
             tier,
             style: const TextStyle(
               fontSize: 13,
@@ -937,7 +942,7 @@ class _GspMonthlyInvestmentPlanContentState
               decoration: TextDecoration.underline,
             ),
           ),
-          Text(
+          TranslatedText(
             approxAmount,
             style: const TextStyle(fontSize: 13, color: Color(0xff333333)),
           ),
@@ -953,7 +958,7 @@ class _GspMonthlyInvestmentPlanContentState
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             '• ',
             style: TextStyle(
               fontSize: 16,
@@ -962,7 +967,7 @@ class _GspMonthlyInvestmentPlanContentState
             ),
           ),
           Expanded(
-            child: Text(
+            child: TranslatedText(
               text,
               style: const TextStyle(
                 fontSize: 13,

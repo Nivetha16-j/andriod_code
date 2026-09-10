@@ -5,6 +5,7 @@ import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -173,7 +174,7 @@ class _JscWalletState extends State<JscWallet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           'My Wallet',
           style: TextStyle(
             fontSize: 14,
@@ -184,7 +185,7 @@ class _JscWalletState extends State<JscWallet> {
 
         const SizedBox(height: 14),
 
-        const Text(
+        const TranslatedText(
           'View your digital gold and silver balances and live market prices.',
           style: TextStyle(
             fontSize: 13,
@@ -254,20 +255,24 @@ class _LiveSpotPrices extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text(
-                'Live Spot Prices',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF9E2424),
+              Expanded(
+                child: TranslatedText(
+                  'Live Spot Prices',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF9E2424),
+                  ),
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(width: 8),
 
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
+                  horizontal: 12,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
@@ -287,11 +292,11 @@ class _LiveSpotPrices extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     SizedBox(width: 5),
-
-                    Text(
+                    TranslatedText(
                       'LIVE',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
@@ -320,7 +325,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const SizedBox(width: 10),
 
-              const Text(
+              const TranslatedText(
                 'Gold',
                 style: TextStyle(
                   fontSize: 16,
@@ -331,7 +336,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const Spacer(),
 
-              Text(
+              TranslatedText(
                 isLoading ? '...' : '$currencySymbol$goldPrice',
                 style: const TextStyle(
                   fontSize: 16,
@@ -342,7 +347,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const SizedBox(width: 5),
 
-              Text(
+              TranslatedText(
                 '/ $goldUnit',
                 style: const TextStyle(fontSize: 15, color: Color(0xFF9E4A4A)),
               ),
@@ -369,7 +374,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const SizedBox(width: 10),
 
-              const Text(
+              const TranslatedText(
                 'Silver',
                 style: TextStyle(
                   fontSize: 16,
@@ -380,7 +385,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const Spacer(),
 
-              Text(
+              TranslatedText(
                 isLoading ? '...' : '$currencySymbol$silverPrice',
                 style: const TextStyle(
                   fontSize: 16,
@@ -391,7 +396,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const SizedBox(width: 5),
 
-              Text(
+              TranslatedText(
                 '/ $silverUnit',
                 style: const TextStyle(fontSize: 15, color: Color(0xFF9E4A4A)),
               ),
@@ -404,7 +409,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
           const SizedBox(height: 9),
 
-          const Text(
+          const TranslatedText(
             'Updated in real time from the live market.',
             style: TextStyle(
               fontSize: 12,

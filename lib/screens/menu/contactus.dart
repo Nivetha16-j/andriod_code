@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -43,7 +44,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    const TranslatedText(
                       "Contact Us",
                       style: TextStyle(
                         fontSize: 24,
@@ -53,7 +54,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 10),
 
-                    const Text(
+                    const TranslatedText(
                       "If you have any questions about our products, shipping, or any other details, feel free to contact us.",
                       style: TextStyle(
                         fontSize: 15,
@@ -79,7 +80,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          const TranslatedText(
                             "Get in Touch",
                             style: TextStyle(
                               fontSize: 20,
@@ -89,7 +90,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                           const SizedBox(height: 5),
 
-                          const Text(
+                          const TranslatedText(
                             "You can reach us anytime",
                             style: TextStyle(
                               fontSize: 13,
@@ -131,7 +132,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                                 ),
                               ),
                               onPressed: () {},
-                              child: const Text(
+                              child: const TranslatedText(
                                 "Submit",
                                 style: TextStyle(
                                   color: Colors.white,
@@ -155,7 +156,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 30),
 
-                    const Text(
+                    const TranslatedText(
                       "Customer Support",
                       style: TextStyle(
                         fontSize: 20,
@@ -165,7 +166,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 8),
 
-                    const Text(
+                    const TranslatedText(
                       "Our support team is available around the clock to address any concerns or queries you may have.",
                       style: TextStyle(
                         fontSize: 15,
@@ -175,7 +176,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 22),
 
-                    const Text(
+                    const TranslatedText(
                       "Feedback and Suggestions",
                       style: TextStyle(
                         fontSize: 20,
@@ -185,7 +186,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 8),
 
-                    const Text(
+                    const TranslatedText(
                       "We value your feedback and are continuously working to improve Snappy.",
                       style: TextStyle(
                         fontSize: 15,
@@ -195,7 +196,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 22),
 
-                    const Text(
+                    const TranslatedText(
                       "Media Inquiries",
                       style: TextStyle(
                         fontSize: 20,
@@ -205,7 +206,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 8),
 
-                    const Text(
+                    const TranslatedText(
                       "For media-related questions or press inquiries, please contact us.",
                       style: TextStyle(
                         fontSize: 15,
@@ -218,7 +219,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
             ),
             const SizedBox(height: 30),
 
-            const Text(
+            const TranslatedText(
               "Our Location",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
@@ -248,7 +249,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 },
                 icon: const Icon(Icons.location_on, color: Colors.white),
-                label: const Text(
+                label: const TranslatedText(
                   "Open in Google Maps",
                   style: TextStyle(
                     color: Colors.white,
@@ -260,7 +261,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
             const SizedBox(height: 20),
 
-            const Text(
+            const TranslatedText(
               "Our Shopfront Your Destination for Precious Metals!!",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
@@ -326,7 +327,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
           child: Icon(icon, color: AppColors.primaryRed),
         ),
         const SizedBox(width: 14),
-        Text(
+        TranslatedText(
           text,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class PlansSidebar extends StatelessWidget {
   final Plans plans;
@@ -35,7 +36,7 @@ class PlansSidebar extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            TranslatedText(
               isJsc ? 'JSC' : 'GSP',
               style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
@@ -72,7 +73,7 @@ class PlansSidebar extends StatelessWidget {
       },
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Text(
+        child: TranslatedText(
           title,
           style: TextStyle(
             color: isSelected ? const Color(0xFFA52222) : Colors.black,

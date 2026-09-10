@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -101,7 +102,7 @@ class _FaqScreenState extends State<FaqScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TranslatedText(
                       "Frequently Asked Questions",
                       style: TextStyle(
                         fontSize: 24,
@@ -109,7 +110,7 @@ class _FaqScreenState extends State<FaqScreen> {
                       ),
                     ),
                     SizedBox(height: 10),
-                    Text(
+                    TranslatedText(
                       "We're here to help with any questions you have about plans, pricing and supported features.",
                       style: TextStyle(
                         fontSize: 15,
@@ -130,7 +131,7 @@ class _FaqScreenState extends State<FaqScreen> {
                   final isSelected = selectedCategory == index;
 
                   return ChoiceChip(
-                    label: Text(
+                    label: TranslatedText(
                       categories[index],
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.black87,
@@ -185,7 +186,7 @@ class _FaqScreenState extends State<FaqScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: Text(
+                                child: TranslatedText(
                                   item["question"]!,
                                   style: const TextStyle(
                                     fontSize: 16,
@@ -214,7 +215,7 @@ class _FaqScreenState extends State<FaqScreen> {
                             firstChild: const SizedBox.shrink(),
                             secondChild: Padding(
                               padding: const EdgeInsets.only(top: 16),
-                              child: Text(
+                              child: TranslatedText(
                                 item["answer"]!,
                                 style: const TextStyle(
                                   fontSize: 14,
@@ -236,7 +237,7 @@ class _FaqScreenState extends State<FaqScreen> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    const Text(
+                    const TranslatedText(
                       "Need More Help?",
                       style: TextStyle(
                         fontSize: 30,
@@ -244,7 +245,7 @@ class _FaqScreenState extends State<FaqScreen> {
                       ),
                     ),
                     const SizedBox(height: 15),
-                    const Text(
+                    const TranslatedText(
                       "If you have any additional questions,\nfeel free to contact us at:",
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 16),
@@ -326,7 +327,10 @@ class _ContactItem extends StatelessWidget {
       children: [
         Icon(icon, color: AppColors.primaryRed, size: 20),
         SizedBox(width: 6),
-        Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        TranslatedText(
+          text,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        ),
       ],
     );
   }

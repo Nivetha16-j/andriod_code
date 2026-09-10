@@ -7,6 +7,7 @@ import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/home_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class TrendingProductsSection extends StatefulWidget {
@@ -33,7 +34,6 @@ class TrendingProductsSection extends StatefulWidget {
 class _TrendingProductsSectionState extends State<TrendingProductsSection> {
   late final ScrollController _scrollController;
 
-  // Local state for live-updated product list
   List<dynamic>? _liveProducts;
   Timer? _refreshTimer;
   bool _isFetching = false;
@@ -66,7 +66,6 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
     super.dispose();
   }
 
-  // --- 1-Second Timer for Live Prices in Trending Products ---
   void _start1SecAutoRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
@@ -112,7 +111,6 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
 
     if (maxExtent <= 0) return;
 
-    // Already at the end → do nothing
     if (currentOffset >= maxExtent - 10) {
       return;
     }
@@ -143,56 +141,54 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- HEADER ROW (Title + See All) ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Trending Products',
-                style: TextStyle(
-                  fontSize: 22.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+              Expanded(
+                child: const TranslatedText(
+                  'Trending Products',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  _slideNext();
-                  // if (widget.onSeeAllTap != null) {
-                  //   widget.onSeeAllTap!();
-                  // }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 2.0,
-                    horizontal: 2.0,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'See All',
-                        style: TextStyle(
-                          fontSize: 15.0,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+              Flexible(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    _slideNext();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 2.0,
+                      horizontal: 2.0,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const TranslatedText(
+                          'See All',
+                          style: TextStyle(
+                            fontSize: 15.0,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6.0),
-                      Container(
-                        padding: const EdgeInsets.all(6.0),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryRed,
-                          shape: BoxShape.circle,
+                        const SizedBox(width: 6.0),
+                        Container(
+                          padding: const EdgeInsets.all(6.0),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryRed,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_forward,
+                            color: Colors.white,
+                            size: 14.0,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.arrow_forward,
-                          color: Colors.white,
-                          size: 14.0,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -201,7 +197,6 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
 
           const SizedBox(height: 16.0),
 
-          // --- HORIZONTAL PRODUCT LIST ---
           SizedBox(
             height: 290.0,
             child: ListView.builder(
@@ -255,13 +250,6 @@ class _ProductCard extends StatelessWidget {
 
     final bool canPurchase = product["stock_status"] == "in_stock";
 
-    final String brand = (product['brand'] ?? '')
-        .toString()
-        .trim()
-        .toUpperCase();
-
-    final bool isDigitalProduct = brand == "GSP" || brand == "JSC";
-
     double _getProductWeightInGrams() {
       final weight = double.tryParse('${product['weight'] ?? 0}') ?? 0;
 
@@ -302,8 +290,6 @@ class _ProductCard extends StatelessWidget {
       for (final item in cartProvider.cartItems) {
         final weight = double.tryParse('${item['weight_grams'] ?? 0}') ?? 0;
 
-        // IMPORTANT:
-        // weight_grams is already the total weight of that cart line.
         totalWeight += weight;
       }
 
@@ -420,7 +406,7 @@ class _ProductCard extends StatelessWidget {
 
             SizedBox(
               height: 34.0,
-              child: Text(
+              child: TranslatedText(
                 name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -435,7 +421,7 @@ class _ProductCard extends StatelessWidget {
 
             const SizedBox(height: 6.0),
 
-            Text(
+            TranslatedText(
               priceText,
               style: const TextStyle(
                 fontSize: 18.0,
@@ -463,7 +449,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                       child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text("Out of Stock", maxLines: 1),
+                        child: TranslatedText("Out of Stock", maxLines: 1),
                       ),
                     );
                   }
@@ -486,10 +472,6 @@ class _ProductCard extends StatelessWidget {
 
                   final int cartQuantity =
                       int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
-
-                  // ============================================================
-                  // EXISTING CART ITEM
-                  // ============================================================
 
                   if (isInCart && cartQuantity > 0) {
                     return Container(
@@ -518,7 +500,7 @@ class _ProductCard extends StatelessWidget {
                             ),
                           ),
 
-                          Text(
+                          TranslatedText(
                             '$cartQuantity',
                             style: const TextStyle(
                               color: Colors.white,
@@ -530,7 +512,6 @@ class _ProductCard extends StatelessWidget {
                           InkWell(
                             onTap: () async {
                               if (physicalProvider.isActive) {
-                                // 1. Validate metal
                                 final error = physicalProvider.validateProduct(
                                   metalType: product['metal_type']?.toString(),
                                 );
@@ -546,7 +527,6 @@ class _ProductCard extends StatelessWidget {
                                   return;
                                 }
 
-                                // 2. Validate conversion weight
                                 final weightError = _validateConversionWeight(
                                   cartProvider,
                                   quantityToAdd: 1,
@@ -564,7 +544,6 @@ class _ProductCard extends StatelessWidget {
                                 }
                               }
 
-                              // 3. Only update if validation passed
                               await cartProvider.updateCartQuantity(
                                 productId: productId,
                                 quantity: cartQuantity + 1,
@@ -640,7 +619,7 @@ class _ProductCard extends StatelessWidget {
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(
+                                content: TranslatedText(
                                   success
                                       ? 'Added to Cart'
                                       : 'Failed to add product',
@@ -659,7 +638,7 @@ class _ProductCard extends StatelessWidget {
                           )
                         : FittedBox(
                             fit: BoxFit.scaleDown,
-                            child: Text("ADD TO CART", maxLines: 1),
+                            child: TranslatedText("ADD TO CART", maxLines: 1),
                           ),
                   );
                 },

@@ -8,9 +8,10 @@ import 'package:junubullion/screens/checkout/physical_ordersuccess.dart';
 import 'package:junubullion/screens/checkout/success.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
-import 'package:junubullion/services/gsp_service.dart';
+import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -26,8 +27,9 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  String delivery = "physical";
+  String? delivery;
   String payment = "Card";
+  String? fulfillment;
   int _currentIndex = 3;
   String? digitalSubtype;
   final TextEditingController addressController = TextEditingController();
@@ -87,7 +89,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     if (address.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a shipping address")),
+        const SnackBar(
+          content: TranslatedText("Please enter a shipping address"),
+        ),
       );
       return;
     }
@@ -149,7 +153,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                const TranslatedText(
                   'Shipping address',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                 ),
@@ -217,29 +221,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     if (shippingAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please add your shipping address")),
+        const SnackBar(
+          content: TranslatedText("Please add your shipping address"),
+        ),
       );
       return;
     }
 
     if (!isTermsAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please agree to the Terms & Conditions")),
+        const SnackBar(
+          content: TranslatedText("Please agree to the Terms & Conditions"),
+        ),
       );
       return;
     }
 
     if (cartProvider.cartItems.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Your cart is empty")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: TranslatedText("Your cart is empty")),
+      );
       return;
     }
 
     if (!physicalProvider.isActive) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Physical conversion is no longer active"),
+          content: TranslatedText("Physical conversion is no longer active"),
         ),
       );
       return;
@@ -262,7 +270,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (plan.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Unable to determine the physical conversion plan.'),
+            content: TranslatedText(
+              'Unable to determine the physical conversion plan.',
+            ),
           ),
         );
         return;
@@ -279,9 +289,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!mounted) return;
 
       if (response["status"] == true) {
-        await cartProvider.fetchCart();
-        if (!mounted) return;
-
         final Map<String, dynamic> orderData = response["data"] is Map
             ? Map<String, dynamic>.from(response["data"])
             : <String, dynamic>{};
@@ -290,16 +297,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             .read<CurrencyProvider>()
             .selectedCurrency;
 
-        setState(() {
-          _isPlacingOrder = false;
-        });
+        log("PHYSICAL ORDER SUCCESS -> Order created");
+        log("PHYSICAL ORDER SUCCESS -> Cancelling physical conversion...");
 
-        await _cancelPhysicalConversion();
+        try {
+          final physicalProvider = context.read<PhysicalConversionProvider>();
+
+          final currencyProvider = context.read<CurrencyProvider>();
+
+          final success = await physicalProvider.cancelConversion(
+            cartProvider: cartProvider,
+            currencyProvider: currencyProvider,
+          );
+
+          log("PHYSICAL ORDER -> Conversion cancelled: $success");
+        } catch (e, stackTrace) {
+          log(
+            "PHYSICAL ORDER -> Error cancelling conversion after success: $e",
+            stackTrace: stackTrace,
+          );
+        }
 
         if (!mounted) return;
 
-        log("Cancelling conversion after placing order");
-
+        // Navigate directly to success screen.
+        // Do NOT set _isPlacingOrder = false before navigation.
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
@@ -319,7 +341,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
+          content: TranslatedText(
             response["message"]?.toString() ??
                 "Order could not be placed. Please try again.",
           ),
@@ -332,7 +354,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _isPlacingOrder = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst("Exception: ", ""))),
+        SnackBar(
+          content: TranslatedText(e.toString().replaceFirst("Exception: ", "")),
+        ),
       );
     }
   }
@@ -367,7 +391,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
+            content: TranslatedText(
               "Unable to cancel physical conversion. Please try again.",
             ),
           ),
@@ -388,7 +412,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _isCancellingConversion = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst("Exception: ", ""))),
+        SnackBar(
+          content: TranslatedText(e.toString().replaceFirst("Exception: ", "")),
+        ),
       );
     }
   }
@@ -396,10 +422,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildDeliverySection({bool isPhysicalConversion = false}) {
     final cartProvider = context.watch<CartProvider>();
 
-    final String fulfillment =
-        cartProvider.fulfillment?.toLowerCase().trim() ?? "";
+    fulfillment = cartProvider.fulfillment?.toLowerCase().trim() ?? "";
 
     digitalSubtype = cartProvider.digitalSubtype?.toLowerCase().trim();
+
+    log("CHECKOUT -> Cart fulfillment: $fulfillment");
 
     final bool isPhysical = fulfillment == "physical";
     final bool isDigital = fulfillment == "digital";
@@ -411,7 +438,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return _buildMixedFulfillmentInfo(digitalSubtype);
     }
 
-    final String effectiveDelivery = isPhysical
+    final effectiveDelivery = isPhysical
         ? "physical"
         : isDigital
         ? "digital"
@@ -420,7 +447,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "Delivery option",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
@@ -451,7 +478,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     },
             ),
 
-            Text(
+            TranslatedText(
               "Physical",
               // style: TextStyle(
               //   fontWeight: effectiveDelivery == "physical"
@@ -485,7 +512,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     },
             ),
 
-            Text(
+            TranslatedText(
               "Digital",
               // style: TextStyle(
               //   fontWeight: effectiveDelivery == "digital"
@@ -497,7 +524,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ],
         ),
 
-        Text(
+        TranslatedText(
           isPhysical
               ? "Physical delivery is required for the products in your cart. Digital JSC is only available for JSC plan products."
               : isDigital
@@ -559,6 +586,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final String? subtype = cartProvider.digitalSubtype;
 
+    log("CHECKOUT -> Cart digital subtype: $subtype");
+
     final String selectedSubtype = subtype?.toLowerCase() == "gsp"
         ? "Gsp"
         : "Jsc";
@@ -566,7 +595,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "Digital subtype",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
@@ -597,7 +626,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     },
             ),
 
-            const Text("JSC"),
+            const TranslatedText("JSC"),
 
             const SizedBox(width: 20),
 
@@ -623,11 +652,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     },
             ),
 
-            const Text("GSP"),
+            const TranslatedText("GSP"),
           ],
         ),
 
-        Text(
+        TranslatedText(
           subtype != null
               ? "${subtype.toUpperCase()} plan products in this cart are digital-only, so ${subtype.toUpperCase()} remains selected for this order."
               : "Choose JSC or GSP for your digital gold purchase.",
@@ -635,6 +664,40 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       ],
     );
+  }
+
+  String _getDeliveryType(CartProvider cartProvider) {
+    final items = cartProvider.cartItems;
+
+    bool hasPhysical = false;
+    bool hasDigital = false;
+
+    log("CHECKOUT -> Cart items for delivery type: $items");
+
+    for (final item in items) {
+      final fulfillment = item["fulfillment"]?.toString().toLowerCase();
+
+      log("CHECKOUT -> Item fulfillment: $item");
+
+      if (fulfillment == "physical") {
+        hasPhysical = true;
+      } else if (fulfillment == "digital") {
+        hasDigital = true;
+      } else if (fulfillment == "mixed") {
+        hasPhysical = true;
+        hasDigital = true;
+      }
+    }
+
+    if (hasPhysical && hasDigital) {
+      return "mixed";
+    }
+
+    if (hasDigital) {
+      return "digital";
+    }
+
+    return "physical";
   }
 
   Future<void> _placeNormalOrder() async {
@@ -647,28 +710,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     if (shippingAddress == null || shippingAddress.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please add your shipping address")),
+        const SnackBar(
+          content: TranslatedText("Please add your shipping address"),
+        ),
       );
       return;
     }
 
     if (!isTermsAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please agree to the Terms & Conditions")),
+        const SnackBar(
+          content: TranslatedText("Please agree to the Terms & Conditions"),
+        ),
       );
       return;
     }
 
     if (cartProvider.cartItems.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Your cart is empty")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: TranslatedText("Your cart is empty")),
+      );
       return;
     }
 
     if (payment == "Card" && selectedCard == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a payment method")),
+        const SnackBar(
+          content: TranslatedText("Please select a payment method"),
+        ),
       );
       return;
     }
@@ -689,7 +758,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       log(
         "CHECKOUT -> Placing normal order: "
         "address=$shippingAddress "
-        "delivery=$delivery "
+        "delivery=${fulfillment} "
         "digitalType=$digitalSubtype "
         "payment=$payment"
         "isDigital=$isDigital "
@@ -700,7 +769,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         final response = await CheckoutService.placeOrder(
           shippingAddress: shippingAddress.trim(),
 
-          deliveryOption: delivery,
+          deliveryOption: fulfillment!.toLowerCase().trim(),
 
           digitalType: isDigital ? digitalSubtype : null,
 
@@ -743,7 +812,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
+              content: TranslatedText(
                 response["message"] ?? "Order is not placed. Please try again.",
               ),
             ),
@@ -759,13 +828,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
 
         log(
-          "CHECKOUT -> Stripe payment method: $shippingAddress $delivery $isDigital- ${cartProvider.selectedDeliveryMethod} ${currencyProvider.selectedCurrency} ${isDigital ? digitalSubtype : null} $stripePaymentMethod",
+          "CHECKOUT -> Stripe payment method: $shippingAddress ${fulfillment} $isDigital ${currencyProvider.selectedCurrency} ${isDigital ? digitalSubtype : null} $stripePaymentMethod",
         );
 
         final stripeResponse = await StripeService.createStripeSession(
           shippingAddress: shippingAddress.trim(),
 
-          fulfillmentType: delivery,
+          fulfillmentType: fulfillment!.toLowerCase().trim(),
 
           courierService: isDigital
               ? null
@@ -808,7 +877,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Payment was not completed.")),
+            const SnackBar(
+              content: TranslatedText("Payment was not completed."),
+            ),
           );
 
           return;
@@ -853,7 +924,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst("Exception: ", ""))),
+        SnackBar(
+          content: TranslatedText(e.toString().replaceFirst("Exception: ", "")),
+        ),
       );
     }
   }
@@ -909,7 +982,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const SizedBox(width: 12),
 
                     const Expanded(
-                      child: Text(
+                      child: TranslatedText(
                         'No shipping address added',
                         style: TextStyle(
                           fontSize: 15,
@@ -938,7 +1011,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text('ADD SHIPPING ADDRESS'),
+                    child: const TranslatedText('ADD SHIPPING ADDRESS'),
                   ),
                 ),
               ],
@@ -950,7 +1023,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              const TranslatedText(
                 'Shipping address',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
               ),
@@ -990,7 +1063,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           showAddressForm = false;
                         });
                       },
-                      child: const Text('Cancel'),
+                      child: const TranslatedText('Cancel'),
                     ),
                   ),
 
@@ -1003,7 +1076,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         backgroundColor: AppColors.primaryRed,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('Save Address'),
+                      child: const TranslatedText('Save Address'),
                     ),
                   ),
                 ],
@@ -1040,7 +1113,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     if (addressProvider.hasAddress &&
                         addressProvider.name != null &&
                         addressProvider.name!.isNotEmpty)
-                      Text(
+                      TranslatedText(
                         addressProvider.name!,
                         style: const TextStyle(
                           fontSize: 14,
@@ -1050,7 +1123,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                     if (addressProvider.hasAddress) const SizedBox(height: 6),
 
-                    Text(
+                    TranslatedText(
                       displayAddress!,
                       style: const TextStyle(
                         fontSize: 13,
@@ -1069,7 +1142,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     addressController.text = displayAddress;
                   });
                 },
-                child: const Text(
+                child: const TranslatedText(
                   'Change',
                   style: TextStyle(
                     color: AppColors.primaryRed,
@@ -1088,7 +1161,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "Payment",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
@@ -1108,7 +1181,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               },
             ),
 
-            const Text("Card"),
+            const TranslatedText("Card"),
 
             Radio<String>(
               activeColor: AppColors.primaryRed,
@@ -1123,7 +1196,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               },
             ),
 
-            const Expanded(child: Text("Direct Bank Transfer")),
+            const Expanded(child: TranslatedText("Direct Bank Transfer")),
           ],
         ),
 
@@ -1152,7 +1225,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     bool isDigital,
   ) {
     if (provider.cartItems.isEmpty) {
-      return const Text("No items in cart");
+      return const TranslatedText("No items in cart");
     }
 
     final String deliveryMethod = isDigital
@@ -1171,7 +1244,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             "Order Summary",
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
@@ -1196,7 +1269,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Text(
+                    child: TranslatedText(
                       "$name × $quantity",
                       style: const TextStyle(fontSize: 14),
                     ),
@@ -1204,7 +1277,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                   const SizedBox(width: 12),
 
-                  Text(
+                  TranslatedText(
                     _formatCheckoutCurrency(productPrice, currencySymbol),
                     style: const TextStyle(
                       fontSize: 14,
@@ -1355,7 +1428,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
-          child: Text(
+          child: TranslatedText(
             title,
             style: TextStyle(
               fontSize: bold ? 15 : 14,
@@ -1366,7 +1439,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         const SizedBox(width: 12),
 
-        Text(
+        TranslatedText(
           value,
           style: TextStyle(
             fontSize: bold ? 15 : 14,
@@ -1407,7 +1480,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     color: const Color(0xFF981B1B),
                     borderRadius: BorderRadius.circular(18),
                   ),
-                  child: const Text(
+                  child: const TranslatedText(
                     '⟳  PHYSICAL CONVERSION ACTIVE',
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -1454,10 +1527,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                             SizedBox(width: 8),
-                            Text('Clearing...', style: TextStyle(fontSize: 12)),
+                            TranslatedText(
+                              'Clearing...',
+                              style: TextStyle(fontSize: 12),
+                            ),
                           ],
                         )
-                      : const Text(
+                      : const TranslatedText(
                           'Cancel conversion',
                           key: ValueKey('cancel'),
                           style: TextStyle(fontSize: 12),
@@ -1500,7 +1576,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 8),
 
-          const Text(
+          const TranslatedText(
             'No payment will be required at checkout.',
             style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
@@ -1525,7 +1601,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
 
         const Expanded(
-          child: Text(
+          child: TranslatedText(
             'I agree to the Terms & Conditions',
             style: TextStyle(fontSize: 13),
           ),
@@ -1539,7 +1615,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     String currencySymbol,
   ) {
     if (cartProvider.cartItems.isEmpty) {
-      return const Text("No items in cart");
+      return const TranslatedText("No items in cart");
     }
 
     return Container(
@@ -1552,7 +1628,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             'Order Summary',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
           ),
@@ -1571,7 +1647,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Text(
+                    child: TranslatedText(
                       "$name × $quantity",
                       style: const TextStyle(fontSize: 14),
                     ),
@@ -1581,7 +1657,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                   // Physical conversion
                   // has NO monetary charge.
-                  Text(
+                  TranslatedText(
                     "$currencySymbol 0.00",
                     style: const TextStyle(fontSize: 14),
                   ),
@@ -1653,7 +1729,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 borderRadius: BorderRadius.circular(7),
               ),
             ),
-            child: const Text('Back', style: TextStyle(fontSize: 14)),
+            child: const TranslatedText('Back', style: TextStyle(fontSize: 14)),
           ),
         ),
 
@@ -1670,9 +1746,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                       dynamic plan;
 
-                      final res = await GspService.fetchConvertPhysicalDetails(
-                        currency: currencyProvider.selectedCurrency,
-                      );
+                      // final res = await GspService.fetchConvertPhysicalDetails(
+                      //   currency: currencyProvider.selectedCurrency,
+                      // );
+
+                      // log("fetchConvertPhysicalDetails response: $res");
+
+                      // log(
+                      //   "fetchConvertPhysicalDetails data: "
+                      //   "${res['data']}",
+                      // );
+
+                      // // If you want to print individual values:
+                      // if (res['data'] != null) {
+                      //   final data = Map<String, dynamic>.from(res['data']);
+
+                      //   log("Convert Physical Data: $data");
+
+                      //   log("Golddd: ${data['wallet_section']}");
+
+                      //   plan = data['wallet_section'];
+                      // }
+
+                      final res = await JscService.fetchConvertDetails();
 
                       log("fetchConvertPhysicalDetails response: $res");
 
@@ -1687,15 +1783,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                         log("Convert Physical Data: $data");
 
-                        log("Golddd: ${data['wallet_section']}");
+                        log("Golddd: ${data['purchase_subtype']}");
 
-                        plan = data['wallet_section'];
+                        plan = data['purchase_subtype'];
                       }
 
+                      log("Plannn: $plan");
+
                       if (isPhysicalConversion) {
-                        _sendPhysicalOrder(plan: plan);
+                        await _sendPhysicalOrder(plan: plan);
                       } else {
-                        _placeNormalOrder();
+                        await _placeNormalOrder();
                       }
                     } catch (e, stackTrace) {
                       log("fetchConvertPhysicalDetails error: $e");
@@ -1722,7 +1820,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       color: Colors.white,
                     ),
                   )
-                : Text(
+                : TranslatedText(
                     isPhysicalConversion
                         ? 'Send Order $currencySymbol 0.00'
                         : 'Proceed to pay',
@@ -1755,7 +1853,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Text(title),
+        child: TranslatedText(title),
       ),
     );
   }
@@ -1771,7 +1869,7 @@ Widget _summaryRow(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
       Expanded(
-        child: Text(
+        child: TranslatedText(
           title,
           style: TextStyle(
             fontSize: bold ? 15 : 14,
@@ -1782,7 +1880,7 @@ Widget _summaryRow(
 
       const SizedBox(width: 12),
 
-      Text(
+      TranslatedText(
         value,
         style: TextStyle(
           fontSize: bold ? 15 : 14,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/services/session_manager.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
@@ -72,7 +73,7 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
             children: [
               const SizedBox(height: 24),
               Center(
-                child: const Text(
+                child: const TranslatedText(
                   "Thank you. Your order has been received.",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
@@ -205,28 +206,28 @@ Widget bankTransferCard(BuildContext context) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "How to complete Your Bank Transfer",
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "Please use the provided bank account details to complete your payment. Follow the steps below based on your location.",
           style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.5),
         ),
 
         const SizedBox(height: 20),
 
-        const Text(
+        const TranslatedText(
           "If You Are In Singapore (Domestic Transfer):",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "1. Log in to your bank's online banking or mobile app\n"
           "2. Navigate to payment transfers (depending on your bank)\n"
           "3. Enter the payment details we have provided\n"
@@ -236,14 +237,14 @@ Widget bankTransferCard(BuildContext context) {
 
         const SizedBox(height: 20),
 
-        const Text(
+        const TranslatedText(
           "If You Are Outside Singapore (International Transfer):",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "1. Log in to your bank's online banking platform\n"
           "2. Go to international transfers/wire transfers\n"
           "3. Enter the recipient account details we have shared with you.\n"
@@ -253,35 +254,35 @@ Widget bankTransferCard(BuildContext context) {
 
         const SizedBox(height: 20),
 
-        const Text(
+        const TranslatedText(
           "Processing Time",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
 
         const SizedBox(height: 8),
 
-        const Text(
+        const TranslatedText(
           "Bank transfers may take 3–5 business days depending on your bank location.",
           style: TextStyle(height: 1.5),
         ),
 
         const SizedBox(height: 20),
 
-        const Text(
+        const TranslatedText(
           "If you have any questions or need assistance, feel free to contact us.",
           style: TextStyle(height: 1.5),
         ),
 
         const SizedBox(height: 20),
 
-        const Text(
+        const TranslatedText(
           "Our Bank Details",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
 
         const SizedBox(height: 12),
 
-        const Text(
+        const TranslatedText(
           "JUNU SG PTE LTD\n"
           "Bank : CIMB BANK BERHAD\n"
           "Account Number : 2001093941\n"
@@ -290,7 +291,7 @@ Widget bankTransferCard(BuildContext context) {
         ),
         const SizedBox(height: 20),
 
-        const Text(
+        const TranslatedText(
           "After payment, please email your transfer receipt to info@junubullion.com.",
           style: TextStyle(height: 1.5),
         ),
@@ -314,7 +315,7 @@ Widget bankTransferCard(BuildContext context) {
                 (route) => false,
               );
             },
-            child: const Text(
+            child: const TranslatedText(
               "Continue Shopping",
               style: TextStyle(
                 color: Colors.white,

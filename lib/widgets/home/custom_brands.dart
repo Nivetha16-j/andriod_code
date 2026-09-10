@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class BrandsWeCarrySection extends StatelessWidget {
   const BrandsWeCarrySection({super.key});
@@ -20,7 +21,7 @@ class BrandsWeCarrySection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Section Heading
-          const Text(
+          const TranslatedText(
             'Some Brands We Carry',
             style: TextStyle(
               fontSize: 22,

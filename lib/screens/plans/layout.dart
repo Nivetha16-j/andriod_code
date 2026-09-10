@@ -18,6 +18,7 @@ import 'package:junubullion/screens/plans/jsc/jsc_wallet.dart';
 import 'package:junubullion/screens/plans/sidemenu.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/profile/account_details.dart';
 import 'package:provider/provider.dart';
 
@@ -152,16 +153,16 @@ class PlansLayout extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xffF7F7F7),
-        title: const Text("Log Out"),
-        content: const Text("Are you sure you want to Log out?"),
+        title: const TranslatedText("Log Out"),
+        content: const TranslatedText("Are you sure you want to Log out?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("No"),
+            child: const TranslatedText("No"),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text("Yes", style: TextStyle(color: AppColors.primaryRed)),
+            child: const TranslatedText("Yes"),
           ),
         ],
       ),

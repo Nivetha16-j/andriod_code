@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -53,14 +54,14 @@ class _AddressSectionState extends State<AddressSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            TranslatedText(
               "Addresses",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
             ),
 
             const SizedBox(height: 4),
 
-            const Text(
+            TranslatedText(
               "Shipping Address",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
@@ -104,7 +105,7 @@ class _AddressSectionState extends State<AddressSection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(
+                          child: TranslatedText(
                             provider.address!,
                             style: const TextStyle(fontSize: 15),
                           ),
@@ -180,7 +181,7 @@ class _AddressSectionState extends State<AddressSection> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text(
+                            : const TranslatedText(
                                 "Save Address",
                                 style: TextStyle(color: Colors.white),
                               ),

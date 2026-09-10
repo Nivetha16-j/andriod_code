@@ -3,6 +3,7 @@ import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class CartItemCard extends StatelessWidget {
@@ -162,7 +163,7 @@ class CartItemCard extends StatelessWidget {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text(
+            content: TranslatedText(
               'The selected products exceed your conversion allowance of $amountText g.',
             ),
           ),
@@ -234,7 +235,7 @@ class CartItemCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                TranslatedText(
                   item["name"] ?? "",
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -246,21 +247,24 @@ class CartItemCard extends StatelessWidget {
 
                 const SizedBox(height: 5),
 
-                const Text(
+                const TranslatedText(
                   "Free 2 - 4 days shipping",
                   style: TextStyle(fontSize: 12),
                 ),
 
                 const SizedBox(height: 5),
 
-                const Text("7 days return", style: TextStyle(fontSize: 12)),
+                const TranslatedText(
+                  "7 days return",
+                  style: TextStyle(fontSize: 12),
+                ),
 
                 const SizedBox(height: 5),
 
                 Row(
                   children: [
                     if (showDiscount) ...[
-                      Text(
+                      TranslatedText(
                         item["formatted_compare_price"],
                         style: const TextStyle(
                           decoration: TextDecoration.lineThrough,
@@ -271,7 +275,7 @@ class CartItemCard extends StatelessWidget {
                       const SizedBox(width: 8),
                     ],
 
-                    Text(
+                    TranslatedText(
                       displayPrice,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
@@ -286,7 +290,7 @@ class CartItemCard extends StatelessWidget {
                     provider.coupon != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
-                    child: Text(
+                    child: TranslatedText(
                       "Coupon ${provider.coupon!["code"]} applied",
                       style: const TextStyle(color: Colors.red, fontSize: 12),
                     ),
@@ -310,8 +314,8 @@ class CartItemCard extends StatelessWidget {
                     context: context,
                     builder: (_) => AlertDialog(
                       backgroundColor: const Color(0xffF7F7F7),
-                      title: const Text("Remove Item"),
-                      content: const Text(
+                      title: const TranslatedText("Remove Item"),
+                      content: const TranslatedText(
                         "Are you sure you want to remove this product from your cart?",
                       ),
                       actions: [
@@ -319,13 +323,13 @@ class CartItemCard extends StatelessWidget {
                           onPressed: () {
                             Navigator.pop(context, false);
                           },
-                          child: const Text("Cancel"),
+                          child: const TranslatedText("Cancel"),
                         ),
                         TextButton(
                           onPressed: () {
                             Navigator.pop(context, true);
                           },
-                          child: Text(
+                          child: const TranslatedText(
                             "Remove",
                             style: TextStyle(color: AppColors.primaryRed),
                           ),
@@ -342,7 +346,7 @@ class CartItemCard extends StatelessWidget {
                     if (success && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Product removed from cart"),
+                          content: TranslatedText("Product removed from cart"),
                         ),
                       );
                     }
@@ -385,7 +389,7 @@ class CartItemCard extends StatelessWidget {
                       icon: const Icon(Icons.remove),
                     ),
 
-                    Text(
+                    TranslatedText(
                       item["quantity"].toString(),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),

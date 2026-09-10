@@ -11,6 +11,7 @@ import 'package:junubullion/screens/plans/jsc/jsc_dashboard.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_details.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
@@ -309,7 +310,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                         children: const [
                           Icon(Icons.location_on, color: accentGold, size: 34),
                           SizedBox(height: 12),
-                          Text(
+                          TranslatedText(
                             "10 Anson Road\n"
                             "02-91A International Plaza\n"
                             "Singapore - 079903",
@@ -323,7 +324,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                           SizedBox(height: 20),
                           Icon(Icons.phone, color: accentGold),
                           SizedBox(height: 8),
-                          Text(
+                          TranslatedText(
                             "+65 83125775",
                             style: TextStyle(
                               color: Colors.white,
@@ -336,7 +337,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
                     const SizedBox(height: 30),
 
-                    const Text(
+                    const TranslatedText(
                       "Connect with Us",
                       style: TextStyle(
                         color: Colors.white,
@@ -398,7 +399,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
         leading: Icon(icon, color: accentGold),
 
-        title: Text(
+        title: TranslatedText(
           title,
           style: const TextStyle(
             color: Colors.white,
@@ -441,7 +442,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
+              child: TranslatedText(
                 title,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.9),
@@ -471,7 +472,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
       leading: Icon(icon, color: accentGold),
 
-      title: Text(
+      title: TranslatedText(
         title,
         style: const TextStyle(
           color: Colors.white,

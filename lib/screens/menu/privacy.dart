@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -32,7 +33,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            const TranslatedText(
               "Privacy Policy and Terms & Conditions",
               style: TextStyle(
                 fontSize: 24,
@@ -43,7 +44,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
 
             const SizedBox(height: 15),
 
-            const Text(
+            const TranslatedText(
               // "At JunuBullion.com, we respect your privacy and are committed to ensuring transparency in how we use cookies and handle your personal data. This document explains our use of cookies, how we collect and process your personal data, and how you can manage your privacy preferences.",
               "At JunuBullion.com, we respect your privacy and are committed to  ensuring transparency in how we use cookies and handle your personal  data.  This document explains our use of cookies, how we collect and  process personal data, and how you can manage you privacy preferences.",
               style: TextStyle(
@@ -82,7 +83,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
               color: AppColors.primaryRed,
               child: Column(
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Contact Us",
                     style: TextStyle(
                       color: Colors.white,
@@ -93,7 +94,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
 
                   const SizedBox(height: 10),
 
-                  const Text(
+                  const TranslatedText(
                     "If you have any questions about our\nCookies Policy or Data Protection Policy,\nplease contact us:",
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -145,74 +146,74 @@ class CookiePolicyContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "What Are Cookies?",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "Cookies are small text files stored on your device (computer, tablet, or mobile phone) when you visit our website. These files help improve your browsing experience by remembering your preferences, analyzing site traffic, and enabling website functionality. Cookies are not harmful and do not contain any viruses or malicious code.",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 20),
 
-        const Text(
+        const TranslatedText(
           "Types of Cookies We Use",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
 
         const SizedBox(height: 12),
 
-        const Text(
+        const TranslatedText(
           "1. Session Cookies (First-Party Cookies)",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 6),
 
-        const Text(
+        const TranslatedText(
           "These cookies are temporary and stored only while you are actively using the website. They help maintain secure logins and allow you to navigate the website without having to log in repeatedly. Once you close your browser, session cookies are automatically deleted.",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 16),
 
-        const Text(
+        const TranslatedText(
           "2. Permanent Cookies (First-Party Cookies)",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 6),
 
-        const Text(
+        const TranslatedText(
           "These cookies remain on your device for a set period to remember your preferences. They allow us to save items in your shopping cart and remember settings like language, currency, and location.",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 20),
 
-        const Text(
+        const TranslatedText(
           "3. Third-Party Cookies",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 6),
 
-        const Text(
+        const TranslatedText(
           "These cookies are placed by external services such as Google Analytics to track website traffic and analyze visitor behavior. They help us understand how users interact with our website to improve our services.",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 20),
 
-        const Text(
+        const TranslatedText(
           "Why We Use Cookies",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "We use cookies for the following purposes:",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -247,12 +248,12 @@ class DataProtectionPolicyContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "1. What Data Do We Collect?",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "When you interact with JunuBullion.com, we may collect the following personal data:",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -277,12 +278,12 @@ class DataProtectionPolicyContent extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "2. How We Collect Data",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "We collect your data through:",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -293,12 +294,12 @@ class DataProtectionPolicyContent extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "3. Why We Collect Your Data",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "We use your information to:",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -312,12 +313,12 @@ class DataProtectionPolicyContent extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "4. Third-Party Access to Data",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "We do not sell, rent, or trade your personal data. However, we may share data with:",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -330,12 +331,12 @@ class DataProtectionPolicyContent extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "5. Data Retention",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "We store your personal data only as long as necessary to:",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -343,19 +344,19 @@ class DataProtectionPolicyContent extends StatelessWidget {
         const BulletText("Provide services to you."),
         const BulletText("Comply with legal and regulatory requirements."),
         const BulletText("Prevent fraud and enforce our terms."),
-        const Text(
+        const TranslatedText(
           "When no longer needed, your data will be securely deleted.",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "6. Your Rights & Choices",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "As a user, you have the right to:",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -371,12 +372,12 @@ class DataProtectionPolicyContent extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "7. How We Protect Your Data",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "We implement strict security measures, including:",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -389,12 +390,12 @@ class DataProtectionPolicyContent extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "8. External Links",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "Our app may contain links to third-party sites. We are not responsible for their privacy policies. Please review their policies before sharing any personal data.",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -411,24 +412,24 @@ class ShippingAndDeliveryPolicy extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "1. Securely shipped. Professionally handled. Globally trusted.",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "Orders including jewellery, gold bars, silver coins, or investment-grade collectibles, our shipping process is designed to protect your investment at every stage - from our secure facility in Singapore to your doorstep",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "2. Order Processing",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "Every order is subject to thorough verification and packaging protocols to ensure safety, compliance, and confidentiality",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
@@ -445,12 +446,12 @@ class ShippingAndDeliveryPolicy extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "3. Domestic Delivery - Singapore",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "We offer secure, fully insured delivery options within Singapore",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -461,19 +462,19 @@ class ShippingAndDeliveryPolicy extends StatelessWidget {
         const BulletText(
           "Same-Day Delivery: Available Mon-Fri | Quoted individually",
         ),
-        const Text(
+        const TranslatedText(
           "All parcels are shipped in tamper-evident, unbranded packaging. Government-issued ID may be required for high-value orders. Signature is mandatory",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "4. International Shipping",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "We ship select products internationally from Singapore, subject to local laws and customs regulations",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -491,19 +492,19 @@ class ShippingAndDeliveryPolicy extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "5. Packaging & Discretion",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "All orders are packed in plain, secure, tamper-evident packaging. No external labeling indicates the package contains precious metals. Each shipment is handled under CCTV surveillance prior to dispatch",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "6. Tracking & Insurance",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
@@ -516,24 +517,24 @@ class ShippingAndDeliveryPolicy extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "7. Address Accuracy & Liability",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "Ensure your delivery details are accurate. We are not liable for incorrect addresses or unauthorized acceptance. Once a delivery is marked complete by the courier, responsibility transfers to the recipient",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "8. In-Person Pickup (Singapore Only)",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "We offer secure, appointment-based pickup from our Singapore facility",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -543,12 +544,12 @@ class ShippingAndDeliveryPolicy extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        const Text(
+        const TranslatedText(
           "Need Assistance?",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 10),
-        const Text(
+        const TranslatedText(
           "For special arrangements, courier preferences, or high-security requests, contact us info@junubullion.com. From vault to value, we ship with confidence - so you can invest with peace of mind",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
@@ -569,7 +570,7 @@ class BulletText extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             "✔ ",
             style: TextStyle(
               color: Colors.green,
@@ -578,7 +579,7 @@ class BulletText extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
+            child: TranslatedText(
               text,
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
             ),
@@ -605,7 +606,7 @@ class PolicyTile extends StatelessWidget {
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
           collapsedIconColor: const Color(0xffF4C542),
           iconColor: const Color(0xffF4C542),
-          title: Text(
+          title: TranslatedText(
             title,
             style: const TextStyle(
               color: Colors.white,
@@ -659,7 +660,7 @@ class ContactCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              TranslatedText(
                 title,
                 style: const TextStyle(
                   color: Color.fromRGBO(200, 157, 8, 1),
@@ -668,7 +669,7 @@ class ContactCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
+              TranslatedText(
                 value,
                 style: const TextStyle(
                   color: Colors.white,

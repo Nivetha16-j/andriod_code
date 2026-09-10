@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -33,12 +34,15 @@ class DownloadsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            TranslatedText(
               "Downloads",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 28),
-            Text("No downloads available yet.", style: TextStyle(fontSize: 14)),
+            TranslatedText(
+              "No downloads available yet.",
+              style: TextStyle(fontSize: 14),
+            ),
           ],
         ),
       ),

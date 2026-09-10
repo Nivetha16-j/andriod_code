@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class PhysicalOrderSuccessScreen extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -83,7 +84,7 @@ class PhysicalOrderSuccessScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    const TranslatedText(
                       'Thank you. Your order has been received.',
                       style: TextStyle(
                         fontFamily: 'serif',
@@ -150,7 +151,7 @@ class PhysicalOrderSuccessScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                         ),
-                        child: const Text(
+                        child: const TranslatedText(
                           'Continue shopping',
                           style: TextStyle(
                             fontSize: 14,

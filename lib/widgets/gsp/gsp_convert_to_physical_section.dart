@@ -7,6 +7,7 @@ import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/gsp_service.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class GspConvertPhysicalSection extends StatefulWidget {
@@ -198,7 +199,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             'Convert to Physical',
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
@@ -218,7 +219,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
                 ),
               ],
             ),
-            child: Text(
+            child: TranslatedText(
               _isUnlocked
                   ? 'Convert part or all of your digital holdings '
                         'into physical products. Minimum balance to '
@@ -410,7 +411,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
+            TranslatedText(
               metal,
               style: TextStyle(
                 fontSize: 10,
@@ -422,7 +423,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
             ),
 
             Flexible(
-              child: Text(
+              child: TranslatedText(
                 available,
                 textAlign: TextAlign.right,
                 style: const TextStyle(
@@ -488,7 +489,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
                       borderRadius: BorderRadius.circular(7),
                     ),
                   ),
-                  child: Text(
+                  child: TranslatedText(
                     isStartingOrder ? 'Starting...' : 'Start Order',
                     style: const TextStyle(fontSize: 11),
                   ),
@@ -517,7 +518,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
               ),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
+                child: TranslatedText(
                   'Reach ${isGold ? _goldThresholdLabel : _silverThresholdLabel} '
                   'to unlock physical conversion.',
                   style: const TextStyle(
@@ -578,11 +579,11 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          title: const Text(
+          title: const TranslatedText(
             'Start Physical Conversion',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
           ),
-          content: Text(
+          content: TranslatedText(
             'Start a physical conversion order with '
             '${amount.toStringAsFixed(4)} g of $metal?',
             style: const TextStyle(fontSize: 14, height: 1.4),
@@ -592,7 +593,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
               onPressed: () {
                 Navigator.pop(dialogContext, false);
               },
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              child: const TranslatedText(
+                'Cancel',
+                style: TextStyle(color: Colors.grey),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -605,7 +609,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
                   borderRadius: BorderRadius.circular(7),
                 ),
               ),
-              child: const Text('OK'),
+              child: const TranslatedText('OK'),
             ),
           ],
         );
@@ -704,7 +708,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
 
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        ).showSnackBar(SnackBar(content: TranslatedText(message)));
 
         return;
       }
@@ -729,7 +733,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
+            content: TranslatedText(
               'Conversion started, but the cart could not be moved.',
             ),
           ),
@@ -770,7 +774,9 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Something went wrong while starting the conversion.'),
+          content: TranslatedText(
+            'Something went wrong while starting the conversion.',
+          ),
         ),
       );
     } finally {

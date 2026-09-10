@@ -5,6 +5,7 @@ import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/services/jsc_services.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 import 'package:junubullion/widgets/gsp/gsp_convert_to_physical_section.dart';
 import 'package:junubullion/widgets/gsp/gsp_purchase_section.dart';
@@ -115,14 +116,14 @@ class _DashboardContentState extends State<_DashboardContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           'GSP Dashboard',
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
 
         const SizedBox(height: 10),
 
-        Text(
+        TranslatedText(
           'Your Gold Savings Plan digital gold holdings. GSP starts from $currencySymbol${minimumInvestment.toStringAsFixed(2)}. (equivalent to SGD 20).',
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
@@ -184,7 +185,7 @@ class _DashboardContentState extends State<_DashboardContent> {
             );
           },
           icon: const Icon(Icons.description_outlined, size: 16),
-          label: const Text(
+          label: const TranslatedText(
             'View GSP Application',
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
@@ -235,7 +236,7 @@ class _DashboardContentState extends State<_DashboardContent> {
             borderRadius: BorderRadius.circular(13),
           ),
         ),
-        child: Text(
+        child: TranslatedText(
           text,
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
         ),

@@ -8,6 +8,7 @@ import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/session_manager.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -262,7 +263,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
+            content: TranslatedText(
               result['message']?.toString() ??
                   'Unable to fetch sell back details.',
             ),
@@ -280,7 +281,9 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to refresh sell back details.')),
+        const SnackBar(
+          content: TranslatedText('Failed to refresh sell back details.'),
+        ),
       );
     } finally {
       if (mounted) {
@@ -296,7 +299,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           'Sell Back Request',
           style: TextStyle(
             fontSize: 14,
@@ -307,7 +310,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
         const SizedBox(height: 14),
 
-        const Text(
+        TranslatedText(
           'Sell your digital holdings and track bank transfer payouts.',
           style: TextStyle(
             fontSize: 12,
@@ -362,7 +365,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             'Sell Back for Cash',
             style: TextStyle(
               fontSize: 13,
@@ -381,7 +384,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
               border: Border.all(color: const Color(0xFFFFB52E), width: 1.2),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Text(
+            child: const TranslatedText(
               'Sell your digital holdings back to Junu Bullion at the live spot price. Enter your bank details and confirm the amount — we will transfer the payout to your account.',
               style: TextStyle(
                 fontSize: 10,
@@ -419,7 +422,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
         border: Border.all(color: const Color(0xFFFFB52E), width: 1.2),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: const Text(
+      child: const TranslatedText(
         'Unlock your balances to sell back holdings.',
         style: TextStyle(
           fontSize: 10,
@@ -508,7 +511,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  TranslatedText(
                     metal,
                     style: const TextStyle(
                       fontSize: 10,
@@ -516,7 +519,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                     ),
                   ),
 
-                  Text(
+                  TranslatedText(
                     'Available: $balance $unit',
                     style: const TextStyle(
                       fontSize: 9,
@@ -524,7 +527,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                     ),
                   ),
 
-                  Text(
+                  TranslatedText(
                     'Spot: $spotPrice / $unit',
                     style: const TextStyle(
                       fontSize: 9,
@@ -573,7 +576,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                             ..hideCurrentSnackBar()
                             ..showSnackBar(
                               const SnackBar(
-                                content: Text(
+                                content: TranslatedText(
                                   'Sell Back request submitted successfully.',
                                 ),
                               ),
@@ -592,7 +595,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
+                child: const TranslatedText(
                   'Sell Back',
                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
                 ),
@@ -612,7 +615,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           'Sell Back Requests',
           style: TextStyle(
             fontSize: 14,
@@ -623,7 +626,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
         const SizedBox(height: 4),
 
-        const Text(
+        const TranslatedText(
           'Track the status of your sell back and bank transfer requests.',
           style: TextStyle(
             fontSize: 12,
@@ -714,7 +717,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       alignment: Alignment.centerLeft,
-      child: Text(
+      child: TranslatedText(
         text,
         style: const TextStyle(
           fontSize: 9,
@@ -729,7 +732,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
       alignment: Alignment.centerLeft,
-      child: Text(
+      child: TranslatedText(
         text,
         style: const TextStyle(
           fontSize: 10,
@@ -757,7 +760,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          TranslatedText(
             firstLine,
             style: const TextStyle(
               fontSize: 10,
@@ -767,7 +770,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
           ),
 
           if (secondLine != null)
-            Text(
+            TranslatedText(
               secondLine,
               style: const TextStyle(
                 fontSize: 10,
@@ -814,7 +817,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
           color: backgroundColor,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(
+        child: TranslatedText(
           _capitalize(status),
           style: TextStyle(
             fontSize: 9,
@@ -849,7 +852,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
       alignment: Alignment.centerLeft,
-      child: Text(
+      child: TranslatedText(
         text,
         style: const TextStyle(
           fontSize: 9,
@@ -876,7 +879,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       return Container(
         padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
         alignment: Alignment.centerLeft,
-        child: Text(
+        child: TranslatedText(
           formattedDate,
           style: const TextStyle(
             fontSize: 10,
@@ -953,7 +956,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
         border: Border.all(color: const Color(0xFFFFB52E), width: 1.2),
         borderRadius: BorderRadius.circular(7),
       ),
-      child: const Text(
+      child: const TranslatedText(
         'Minimum balance required for a Sell Back request: 50 g of Gold or 1 kg of Silver. Please increase your balance to become eligible for a Sell Back request.',
         style: TextStyle(
           fontSize: 9,

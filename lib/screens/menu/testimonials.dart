@@ -3,6 +3,7 @@ import 'package:junubullion/models/testimonial.dart';
 import 'package:junubullion/providers/testimonial_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -54,14 +55,14 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// Heading
-            const Text(
+            const TranslatedText(
               "Reviews from real people",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
             ),
 
             const SizedBox(height: 6),
 
-            const Text(
+            const TranslatedText(
               "What our customers are saying",
               style: TextStyle(
                 fontSize: 18,
@@ -107,21 +108,21 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
             const SizedBox(height: 35),
 
             /// Form Heading
-            const Text(
+            const TranslatedText(
               "We'd love to hear your thoughts",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
 
             const SizedBox(height: 12),
 
-            const Text(
+            const TranslatedText(
               "Tell us about your vision: which challenges are you facing? We'd love to stay in touch with you, so we are always ready to answer any question that interests you.",
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
             ),
 
             const SizedBox(height: 25),
 
-            const Text(
+            const TranslatedText(
               "What's your name?",
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
@@ -132,7 +133,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
 
             const SizedBox(height: 20),
 
-            const Text(
+            const TranslatedText(
               "What's your email?",
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
@@ -143,7 +144,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
 
             const SizedBox(height: 20),
 
-            const Text(
+            const TranslatedText(
               "Share your thoughts",
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
@@ -190,7 +191,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                             if (success) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text(
+                                  content: TranslatedText(
                                     "Feedback submitted successfully.",
                                   ),
                                 ),
@@ -205,7 +206,9 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text("Failed to submit feedback."),
+                                  content: TranslatedText(
+                                    "Failed to submit feedback.",
+                                  ),
                                 ),
                               );
                             }
@@ -219,7 +222,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text(
+                        : const TranslatedText(
                             "SEND",
                             style: TextStyle(
                               fontSize: 17,
@@ -275,7 +278,7 @@ class ReviewCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Text(
+            child: TranslatedText(
               testimonial.description,
               maxLines: 5,
               overflow: TextOverflow.ellipsis,
@@ -307,12 +310,12 @@ class ReviewCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TranslatedText(
                       testimonial.name,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
 
-                    Text(
+                    TranslatedText(
                       testimonial.createdAt.substring(0, 10),
                       style: const TextStyle(color: Colors.grey),
                     ),

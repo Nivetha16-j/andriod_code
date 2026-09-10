@@ -5,6 +5,7 @@ import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/session_manager.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 final ValueNotifier<bool> balanceUnlockedNotifier = ValueNotifier<bool>(false);
@@ -462,7 +463,7 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
 
     if (password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your unlock password.')),
+        SnackBar(content: TranslatedText('Please enter your unlock password.')),
       );
 
       return;
@@ -491,7 +492,7 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
       if (result['status'] != true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
+            content: TranslatedText(
               result['message']?.toString() ?? 'Unable to unlock balances.',
             ),
           ),
@@ -512,7 +513,7 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
+          content: TranslatedText(
             result['message']?.toString() ?? 'Balances unlocked successfully.',
           ),
         ),
@@ -523,7 +524,9 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(
+          content: TranslatedText(e.toString().replaceFirst('Exception: ', '')),
+        ),
       );
     } finally {
       if (mounted) {
@@ -553,7 +556,7 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             'Your Gold and Silver balances are protected.',
             style: TextStyle(
               fontSize: 10,
@@ -561,7 +564,7 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
             ),
           ),
 
-          const Text(
+          const TranslatedText(
             'Please enter your unlock password (first 4 characters of your registered email ID + last 4 digits of your registered phone number) to view your balance.',
             style: TextStyle(
               fontSize: 10,
@@ -632,7 +635,7 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text(
+                  : const TranslatedText(
                       'Unlock Balances',
                       style: TextStyle(
                         fontSize: 10,
@@ -687,7 +690,7 @@ class _BalanceCard extends StatelessWidget {
           // ============================
           // TITLE
           // ============================
-          Text(
+          TranslatedText(
             title.toUpperCase(),
             softWrap: true,
             style: const TextStyle(
@@ -708,7 +711,7 @@ class _BalanceCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text(
+              TranslatedText(
                 balanceValue,
                 softWrap: true,
                 style: const TextStyle(
@@ -718,7 +721,7 @@ class _BalanceCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 3),
-              Text(
+              TranslatedText(
                 unit,
                 softWrap: true,
                 style: const TextStyle(
@@ -735,7 +738,7 @@ class _BalanceCard extends StatelessWidget {
           // ============================
           // MARKET VALUE
           // ============================
-          Text(
+          TranslatedText(
             marketValue == '...'
                 ? '... market value'
                 : '$marketValue market value',

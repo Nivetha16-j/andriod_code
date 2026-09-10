@@ -6,6 +6,7 @@ import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/services/gsp_service.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -207,7 +208,7 @@ class _GspTransactionHistoryContentState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            const TranslatedText(
               'Transaction History',
               style: TextStyle(
                 fontSize: 14,
@@ -218,7 +219,7 @@ class _GspTransactionHistoryContentState
 
             const SizedBox(height: 14),
 
-            const Text(
+            const TranslatedText(
               'Review purchases, conversions, and sell back activity on your GSP wallet.',
               style: TextStyle(
                 fontSize: 12,
@@ -230,7 +231,7 @@ class _GspTransactionHistoryContentState
 
             const SizedBox(height: 25),
 
-            const Text(
+            const TranslatedText(
               'Transaction History',
               style: TextStyle(
                 fontSize: 13,
@@ -264,7 +265,7 @@ class _GspTransactionHistoryContentState
       child: Center(
         child: Column(
           children: [
-            Text(
+            TranslatedText(
               errorMessage!,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 11, color: Colors.grey),
@@ -274,7 +275,10 @@ class _GspTransactionHistoryContentState
 
             TextButton(
               onPressed: _fetchTransactions,
-              child: const Text('Retry', style: TextStyle(fontSize: 11)),
+              child: const TranslatedText(
+                'Retry',
+                style: TextStyle(fontSize: 11),
+              ),
             ),
           ],
         ),
@@ -286,7 +290,7 @@ class _GspTransactionHistoryContentState
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 40),
       child: Center(
-        child: Text(
+        child: TranslatedText(
           'No wallet transactions yet. Buy digital gold or silver to start building your holdings.',
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -321,21 +325,24 @@ class _GspTransactionHistoryContentState
 
               child: const Row(
                 children: [
-                  SizedBox(width: 85, child: Text('DATE', style: _headerStyle)),
+                  SizedBox(
+                    width: 85,
+                    child: TranslatedText('DATE', style: _headerStyle),
+                  ),
 
                   SizedBox(
                     width: 75,
-                    child: Text('METAL', style: _headerStyle),
+                    child: TranslatedText('METAL', style: _headerStyle),
                   ),
 
                   SizedBox(
                     width: 150,
-                    child: Text('DESCRIPTION', style: _headerStyle),
+                    child: TranslatedText('DESCRIPTION', style: _headerStyle),
                   ),
 
                   SizedBox(
                     width: 100,
-                    child: Text(
+                    child: TranslatedText(
                       'AMOUNT',
                       textAlign: TextAlign.right,
                       style: _headerStyle,
@@ -344,7 +351,7 @@ class _GspTransactionHistoryContentState
 
                   SizedBox(
                     width: 100,
-                    child: Text(
+                    child: TranslatedText(
                       'VALUE',
                       textAlign: TextAlign.right,
                       style: _headerStyle,
@@ -435,7 +442,7 @@ class _TransactionRow extends StatelessWidget {
           // DATE
           SizedBox(
             width: 85,
-            child: Text(
+            child: TranslatedText(
               date,
               style: const TextStyle(
                 fontSize: 9,
@@ -458,7 +465,7 @@ class _TransactionRow extends StatelessWidget {
                       : const Color(0xFFEDEFF2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
+                child: TranslatedText(
                   _capitalize(metal),
                   style: TextStyle(
                     fontSize: 8,
@@ -475,7 +482,7 @@ class _TransactionRow extends StatelessWidget {
           // DESCRIPTION
           SizedBox(
             width: 150,
-            child: Text(
+            child: TranslatedText(
               description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -490,7 +497,7 @@ class _TransactionRow extends StatelessWidget {
           // AMOUNT
           SizedBox(
             width: 100,
-            child: Text(
+            child: TranslatedText(
               '${isCredit ? '+' : '-'}$amount $unit',
               textAlign: TextAlign.right,
               style: TextStyle(
@@ -506,7 +513,7 @@ class _TransactionRow extends StatelessWidget {
           // VALUE
           SizedBox(
             width: 100,
-            child: Text(
+            child: TranslatedText(
               _formatValue(value),
               textAlign: TextAlign.right,
               style: const TextStyle(

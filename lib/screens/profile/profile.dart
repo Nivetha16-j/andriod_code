@@ -5,6 +5,7 @@ import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -76,7 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const SizedBox(height: 25),
 
-            const Text(
+            const TranslatedText(
               "General",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
@@ -172,19 +173,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   context: context,
                   builder: (_) => AlertDialog(
                     backgroundColor: const Color(0xffF7F7F7),
-                    title: const Text("Log Out"),
-                    content: const Text("Are you sure you want to Log out?"),
+                    title: const TranslatedText("Log Out"),
+                    content: const TranslatedText(
+                      "Are you sure you want to Log out?",
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text("No"),
+                        child: const TranslatedText("No"),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: Text(
-                          "Yes",
-                          style: TextStyle(color: AppColors.primaryRed),
-                        ),
+                        child: const TranslatedText("Yes"),
                       ),
                     ],
                   ),
@@ -289,12 +289,15 @@ class ProfileHeader extends StatelessWidget {
       children: [
         const CircleAvatar(radius: 45, child: Icon(Icons.person, size: 45)),
         const SizedBox(height: 12),
-        Text(
+        TranslatedText(
           name,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 10),
-        Text(email, style: const TextStyle(fontSize: 15, color: Colors.grey)),
+        TranslatedText(
+          email,
+          style: const TextStyle(fontSize: 15, color: Colors.grey),
+        ),
       ],
     );
   }
@@ -352,7 +355,7 @@ class ProfileMenuTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         leading: Icon(icon, color: AppColors.primaryRed),
-        title: Text(title),
+        title: TranslatedText(title),
         trailing: Icon(Icons.chevron_right, color: AppColors.primaryRed),
         onTap: onTap,
       ),

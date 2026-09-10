@@ -11,6 +11,7 @@ import 'package:junubullion/screens/cart/cartscreen.dart';
 import 'package:junubullion/screens/home/homescreen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
 import 'package:junubullion/screens/search/search.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -423,7 +424,7 @@ class _MainScreenState extends State<MainScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(homeProvider.errorMessage!),
+              TranslatedText(homeProvider.errorMessage!),
 
               const SizedBox(height: 15),
 
@@ -435,7 +436,7 @@ class _MainScreenState extends State<MainScreen> {
 
                   _homeProvider.fetchHomeData(currency: currency, unit: unit);
                 },
-                child: const Text('Retry'),
+                child: const TranslatedText('Retry'),
               ),
             ],
           ),

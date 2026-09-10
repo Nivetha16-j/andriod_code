@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class SummaryWidget extends StatelessWidget {
@@ -168,7 +169,7 @@ class SummaryWidget extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
+        TranslatedText(
           title,
           style: TextStyle(
             fontSize: bold ? 15 : 14,
@@ -176,7 +177,7 @@ class SummaryWidget extends StatelessWidget {
           ),
         ),
 
-        Text(
+        TranslatedText(
           value,
           style: TextStyle(
             fontSize: bold ? 15 : 14,

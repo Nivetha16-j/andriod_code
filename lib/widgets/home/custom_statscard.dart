@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class StatsCardSection extends StatelessWidget {
   const StatsCardSection({super.key});
@@ -62,7 +63,7 @@ class StatsCardSection extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
+        TranslatedText(
           stat.value,
           textAlign: TextAlign.center,
           style: const TextStyle(
@@ -74,7 +75,7 @@ class StatsCardSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6.0),
-        Text(
+        TranslatedText(
           stat.label,
           textAlign: TextAlign.center,
           style: const TextStyle(

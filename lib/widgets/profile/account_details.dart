@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/account_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -69,8 +70,8 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(
-              child: Text(
+            Center(
+              child: TranslatedText(
                 "Account Details",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
@@ -117,7 +118,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
+                              content: TranslatedText(
                                 success
                                     ? "Account updated successfully"
                                     : "Failed to update account",
@@ -131,7 +132,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
 
             const SizedBox(height: 34),
 
-            const Text(
+            const TranslatedText(
               "Password Change",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
@@ -174,7 +175,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                               confirmPasswordController.text.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
+                                content: TranslatedText(
                                   "Please fill all password fields",
                                 ),
                               ),
@@ -186,7 +187,9 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
                               confirmPasswordController.text) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text("Passwords do not match"),
+                                content: TranslatedText(
+                                  "Passwords do not match",
+                                ),
                               ),
                             );
                             return;
@@ -203,7 +206,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(
+                                content: TranslatedText(
                                   verify["message"] ??
                                       "Current password is incorrect.",
                                 ),
@@ -225,7 +228,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
+                              content: TranslatedText(
                                 success
                                     ? "Password updated successfully"
                                     : "Failed to update password",
@@ -261,7 +264,7 @@ Widget buildButton({required String text, VoidCallback? onPressed}) {
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),
-      child: Text(
+      child: TranslatedText(
         text,
         style: const TextStyle(
           color: Colors.white,
@@ -283,7 +286,7 @@ Widget buildTextField({
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
+      TranslatedText(
         label,
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
       ),

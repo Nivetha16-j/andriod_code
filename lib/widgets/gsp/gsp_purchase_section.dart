@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/services/gsp_service.dart';
 import 'package:junubullion/services/session_manager.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 import 'package:provider/provider.dart';
 
@@ -317,7 +318,7 @@ class _GspPurchasesSectionState extends State<GspPurchasesSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             'Your Purchases',
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
@@ -337,7 +338,7 @@ class _GspPurchasesSectionState extends State<GspPurchasesSection> {
                 ),
               ],
             ),
-            child: const Text(
+            child: const TranslatedText(
               "Track each digital purchase against today's market price.",
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
             ),
@@ -350,7 +351,7 @@ class _GspPurchasesSectionState extends State<GspPurchasesSection> {
           // ======================================================
           if (!_isUnlocked)
             const Center(
-              child: Text(
+              child: TranslatedText(
                 'Unlock your balances to view your purchases.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 10, color: Colors.grey),
@@ -361,7 +362,7 @@ class _GspPurchasesSectionState extends State<GspPurchasesSection> {
           // ======================================================
           else if (purchases.isEmpty)
             const Center(
-              child: Text(
+              child: TranslatedText(
                 'No digital gold or silver purchases yet.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -414,7 +415,7 @@ class _PurchaseTable extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: 110,
-                      child: Text(
+                      child: TranslatedText(
                         'PURCHASE DATE',
                         style: TextStyle(
                           fontSize: 9,
@@ -425,7 +426,7 @@ class _PurchaseTable extends StatelessWidget {
                     ),
                     SizedBox(
                       width: 75,
-                      child: Text(
+                      child: TranslatedText(
                         'METAL',
                         style: TextStyle(
                           fontSize: 9,
@@ -436,7 +437,7 @@ class _PurchaseTable extends StatelessWidget {
                     ),
                     SizedBox(
                       width: 160,
-                      child: Text(
+                      child: TranslatedText(
                         'PRODUCT NAME',
                         style: TextStyle(
                           fontSize: 9,
@@ -447,7 +448,7 @@ class _PurchaseTable extends StatelessWidget {
                     ),
                     SizedBox(
                       width: 140,
-                      child: Text(
+                      child: TranslatedText(
                         'PURCHASED AMOUNT',
                         style: TextStyle(
                           fontSize: 9,
@@ -458,7 +459,7 @@ class _PurchaseTable extends StatelessWidget {
                     ),
                     SizedBox(
                       width: 150,
-                      child: Text(
+                      child: TranslatedText(
                         "TODAY'S MARKET PRICE",
                         style: TextStyle(
                           fontSize: 9,
@@ -469,7 +470,7 @@ class _PurchaseTable extends StatelessWidget {
                     ),
                     SizedBox(
                       width: 120,
-                      child: Text(
+                      child: TranslatedText(
                         'MARKET STATUS',
                         style: TextStyle(
                           fontSize: 9,
@@ -565,7 +566,7 @@ class _PurchaseTableRow extends StatelessWidget {
           // DATE
           SizedBox(
             width: 110,
-            child: Text(
+            child: TranslatedText(
               formattedDate,
               style: const TextStyle(
                 fontSize: 10,
@@ -591,7 +592,7 @@ class _PurchaseTableRow extends StatelessWidget {
 
                 const SizedBox(height: 3),
 
-                Text(
+                TranslatedText(
                   metal.isEmpty
                       ? ''
                       : metal[0].toUpperCase() +
@@ -612,7 +613,7 @@ class _PurchaseTableRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                TranslatedText(
                   productName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -633,7 +634,7 @@ class _PurchaseTableRow extends StatelessWidget {
                     color: const Color(0xFFF0F2F5),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
+                  child: TranslatedText(
                     purchase['purchase_subtype']?.toString().toUpperCase() ??
                         '',
                     style: const TextStyle(
@@ -654,7 +655,7 @@ class _PurchaseTableRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                TranslatedText(
                   '${double.tryParse(quantity)?.toStringAsFixed(4) ?? quantity} $unit',
                   style: const TextStyle(
                     fontSize: 11,
@@ -664,7 +665,7 @@ class _PurchaseTableRow extends StatelessWidget {
 
                 const SizedBox(height: 4),
 
-                Text(
+                TranslatedText(
                   '@ $purchasePrice/$unit',
                   style: const TextStyle(fontSize: 9, color: Color(0xFF777777)),
                 ),
@@ -675,7 +676,7 @@ class _PurchaseTableRow extends StatelessWidget {
           // TODAY PRICE
           SizedBox(
             width: 150,
-            child: Text(
+            child: TranslatedText(
               '$todayPrice/$unit',
               style: TextStyle(
                 fontSize: 11,
@@ -693,7 +694,7 @@ class _PurchaseTableRow extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TranslatedText(
                       priceDiff,
                       style: TextStyle(
                         fontSize: 10,
@@ -706,7 +707,7 @@ class _PurchaseTableRow extends StatelessWidget {
 
                     const SizedBox(height: 3),
 
-                    Text(
+                    TranslatedText(
                       priceDiffPercent,
                       style: TextStyle(
                         fontSize: 10,
@@ -744,7 +745,7 @@ class _PurchaseTableRow extends StatelessWidget {
 
                       const SizedBox(width: 3),
 
-                      Text(
+                      TranslatedText(
                         marketStatus.toUpperCase(),
                         style: TextStyle(
                           fontSize: 9,

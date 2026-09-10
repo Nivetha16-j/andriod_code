@@ -9,6 +9,7 @@ import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/cart/custom_cartitem.dart';
 import 'package:junubullion/widgets/cart/custom_summary.dart';
 import 'package:junubullion/widgets/cart/custom_deliverymethod.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class CartScreen extends StatefulWidget {
@@ -407,7 +408,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
             const SizedBox(height: 20),
           ],
 
-          const Text(
+          const TranslatedText(
             'Your cart',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
@@ -422,7 +423,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
           if (hasItems) ...[
             const SizedBox(height: 30),
 
-            const Text(
+            const TranslatedText(
               'Cart Summary',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
@@ -520,7 +521,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                       Icon(Icons.sync, size: 15, color: Colors.white),
                       SizedBox(width: 6),
                       Flexible(
-                        child: Text(
+                        child: TranslatedText(
                           'PHYSICAL CONVERSION ACTIVE',
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -564,7 +565,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                           if (!success) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
+                                content: TranslatedText(
                                   'Unable to cancel physical conversion. Please try again.',
                                 ),
                               ),
@@ -584,7 +585,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text(
+                              content: TranslatedText(
                                 'Unable to cancel physical conversion. Please try again.',
                               ),
                             ),
@@ -617,10 +618,13 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                             SizedBox(width: 8),
-                            Text('Clearing...', style: TextStyle(fontSize: 11)),
+                            TranslatedText(
+                              'Clearing...',
+                              style: TextStyle(fontSize: 11),
+                            ),
                           ],
                         )
-                      : const Text(
+                      : const TranslatedText(
                           'Cancel conversion',
                           key: ValueKey('cancel'),
                           style: TextStyle(fontSize: 11),
@@ -655,7 +659,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          const TranslatedText(
             'No payment will be required at checkout.',
             style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
@@ -672,7 +676,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
         children: [
           Image.asset('assets/no_product.png', height: 80, width: 80),
           const SizedBox(height: 20),
-          const Text(
+          const TranslatedText(
             'Your cart is empty',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 18, color: Colors.grey),
@@ -692,7 +696,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text(
+              child: const TranslatedText(
                 'CONTINUE SHOPPING',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
@@ -740,7 +744,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
               borderRadius: BorderRadius.circular(30),
             ),
           ),
-          child: const Text(
+          child: const TranslatedText(
             'CheckOut',
             style: TextStyle(
               color: Colors.white,
@@ -772,7 +776,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
               borderRadius: BorderRadius.circular(30),
             ),
           ),
-          child: const Text(
+          child: const TranslatedText(
             'Send Order',
             style: TextStyle(
               color: Colors.white,
@@ -823,7 +827,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 18),
               ),
-              child: Text(
+              child: TranslatedText(
                 couponApplied ? 'Remove' : 'Apply',
                 style: const TextStyle(
                   color: Colors.white,

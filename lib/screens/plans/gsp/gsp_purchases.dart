@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/gsp/gsp_purchase_section.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -57,7 +58,7 @@ class GspPurchasesContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           'Your Purchases',
           style: TextStyle(
             fontSize: 14,
@@ -68,7 +69,7 @@ class GspPurchasesContent extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        const Text(
+        const TranslatedText(
           "Track each digital purchase against today's market price.",
           style: TextStyle(
             fontSize: 13,

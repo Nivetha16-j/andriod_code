@@ -4,6 +4,8 @@ import 'package:junubullion/theme/app_colors.dart';
 import 'dart:developer';
 import 'dart:async';
 
+import 'package:junubullion/widgets/custom_translated_text.dart';
+
 class LiveSpotPriceCard extends StatefulWidget {
   final Map<String, dynamic>? spotPricesData;
 
@@ -197,7 +199,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            const TranslatedText(
               'Live spot price',
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -255,7 +257,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
               alignment: Alignment.centerRight,
               child: GestureDetector(
                 onTap: () {},
-                child: const Text(
+                child: const TranslatedText(
                   'Marketing Trend',
                   style: TextStyle(
                     color: lightGoldText,
@@ -278,7 +280,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        TranslatedText(
           metalName,
           style: const TextStyle(
             color: Colors.white,

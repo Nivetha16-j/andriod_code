@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class FeatureCard extends StatelessWidget {
   final String image;
@@ -15,6 +16,7 @@ class FeatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xffFFFDF8),
@@ -28,68 +30,79 @@ class FeatureCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// Image
-          SizedBox(
-            width: 72,
-            // height: 72,
-            child: Image.asset(image, fit: BoxFit.contain),
-          ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            /// Image
+            SizedBox(
+              width: 72,
+              child: Center(
+                child: Image.asset(image, width: 72, fit: BoxFit.contain),
+              ),
+            ),
 
-          const SizedBox(width: 15),
+            const SizedBox(width: 15),
 
-          /// Content
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                ...descriptions.map(
-                  (description) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "• ",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            description,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ],
+            /// Content
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// Title
+                  TranslatedText(
+                    title,
+                    maxLines: null,
+                    softWrap: true,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
                     ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 10),
+
+                  /// Descriptions
+                  ...descriptions.map(
+                    (description) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const TranslatedText(
+                            "•",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          const SizedBox(width: 4),
+
+                          Expanded(
+                            child: TranslatedText(
+                              description,
+                              maxLines: null,
+                              softWrap: true,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

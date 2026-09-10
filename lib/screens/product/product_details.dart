@@ -12,6 +12,7 @@ import 'package:junubullion/providers/review_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -62,7 +63,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(SnackBar(content: TranslatedText(message)));
   }
 
   // ============================================================
@@ -500,7 +501,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 15),
 
-              Text(
+              TranslatedText(
                 metalType,
                 style: const TextStyle(
                   color: Colors.brown,
@@ -511,7 +512,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 8),
 
-              Text(
+              TranslatedText(
                 name,
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
@@ -521,7 +522,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 12),
 
-              Text(
+              TranslatedText(
                 price,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
@@ -531,7 +532,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 4),
 
-              Text(
+              TranslatedText(
                 canPurchase ? "In Stock" : "Out of Stock",
                 style: TextStyle(
                   color: canPurchase ? Colors.green : Colors.red,
@@ -541,7 +542,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 10),
 
-              Text(
+              TranslatedText(
                 shortDescription,
                 style: const TextStyle(color: Colors.black87, height: 1.6),
               ),
@@ -619,7 +620,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               // --------------------------------------------------
                               // QUANTITY
                               // --------------------------------------------------
-                              Text(
+                              TranslatedText(
                                 '$displayQuantity',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -795,7 +796,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : Text(
+                                : TranslatedText(
                                     isInCart ? "GO TO CART" : "ADD TO CART",
                                     maxLines: 1,
                                     style: const TextStyle(
@@ -855,7 +856,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     const SizedBox(height: 18),
 
                     if (selectedTab == 0)
-                      Text(
+                      TranslatedText(
                         description,
                         style: const TextStyle(
                           height: 1.8,
@@ -867,7 +868,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          const TranslatedText(
                             "Reviews",
                             style: TextStyle(
                               fontSize: 22,
@@ -878,7 +879,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           const SizedBox(height: 15),
 
                           if (reviews.isEmpty)
-                            const Text(
+                            const TranslatedText(
                               "No reviews available for this product.",
                               style: TextStyle(color: Colors.grey),
                             )
@@ -917,7 +918,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                           Row(
                                             children: [
                                               Flexible(
-                                                child: Text(
+                                                child: TranslatedText(
                                                   customer["name"] ??
                                                       "Anonymous",
                                                   style: const TextStyle(
@@ -927,7 +928,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                                 ),
                                               ),
                                               const SizedBox(width: 5),
-                                              Text(
+                                              TranslatedText(
                                                 formattedDate,
                                                 style: TextStyle(
                                                   color: Colors.grey.shade600,
@@ -956,7 +957,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                                           const SizedBox(height: 8),
 
-                                          Text(
+                                          TranslatedText(
                                             review["description"] ?? "",
                                             style: const TextStyle(
                                               fontSize: 15,
@@ -972,7 +973,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                           const SizedBox(height: 20),
 
-                          const Text(
+                          const TranslatedText(
                             "Add a review",
                             style: TextStyle(
                               fontSize: 20,
@@ -990,13 +991,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Text(
+                                  const TranslatedText(
                                     "Your rating ",
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  const Text(
+                                  const TranslatedText(
                                     "*",
                                     style: TextStyle(color: Colors.red),
                                   ),
@@ -1034,11 +1035,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           const SizedBox(height: 10),
                           Row(
                             children: [
-                              const Text(
+                              const TranslatedText(
                                 "Your review ",
                                 style: TextStyle(fontWeight: FontWeight.w600),
                               ),
-                              const Text(
+                              const TranslatedText(
                                 "*",
                                 style: TextStyle(color: Colors.red),
                               ),
@@ -1077,7 +1078,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                         color: Colors.black,
                                       ),
                                     )
-                                  : const Text("Submit"),
+                                  : const TranslatedText("Submit"),
                             ),
                           ),
                         ],
@@ -1085,7 +1086,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     else
                       Padding(
                         padding: const EdgeInsets.only(left: 10),
-                        child: Text(
+                        child: TranslatedText(
                           brand,
                           style: const TextStyle(
                             color: Colors.black87,
@@ -1105,7 +1106,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Related Products",
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
@@ -1120,7 +1121,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
+                          const TranslatedText(
                             'See All',
                             style: TextStyle(
                               fontSize: 15,
@@ -1212,7 +1213,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                               const SizedBox(height: 8),
 
-                              Text(
+                              TranslatedText(
                                 relatedName,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -1220,7 +1221,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                               const SizedBox(height: 6),
 
-                              Text(
+                              TranslatedText(
                                 relatedCanPurchase
                                     ? "In Stock"
                                     : "Out of Stock",
@@ -1234,7 +1235,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                               const SizedBox(height: 4),
 
-                              Text(
+                              TranslatedText(
                                 livePrice,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -1268,7 +1269,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                         ),
                                         child: const FittedBox(
                                           fit: BoxFit.scaleDown,
-                                          child: Text(
+                                          child: TranslatedText(
                                             "Out of Stock",
                                             maxLines: 1,
                                           ),
@@ -1351,7 +1352,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                             // ------------------------------------------------------
                                             // QUANTITY
                                             // ------------------------------------------------------
-                                            Text(
+                                            TranslatedText(
                                               '$cartQuantity',
                                               style: const TextStyle(
                                                 color: Colors.white,
@@ -1506,7 +1507,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                             )
                                           : const FittedBox(
                                               fit: BoxFit.scaleDown,
-                                              child: Text(
+                                              child: TranslatedText(
                                                 "ADD TO CART",
                                                 maxLines: 1,
                                               ),
@@ -1557,7 +1558,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             borderRadius: BorderRadius.circular(8),
           ),
           alignment: Alignment.center,
-          child: Text(
+          child: TranslatedText(
             title,
             style: TextStyle(color: isSelected ? Colors.white : Colors.black87),
           ),
