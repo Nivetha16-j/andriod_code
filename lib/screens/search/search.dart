@@ -110,7 +110,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 });
               },
               decoration: InputDecoration(
-                hintText: "Search products",
+                hint: const TranslatedText('Search products'),
                 suffixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -191,29 +191,38 @@ class _SearchScreenState extends State<SearchScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const TranslatedText(
-                    "Recently Viewed",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: const TranslatedText(
+                      "Recently Viewed",
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
 
-                  InkWell(
-                    onTap: () {
-                      if (!_recentlyViewedController.hasClients) {
-                        return;
-                      }
+                  Flexible(
+                    child: InkWell(
+                      onTap: () {
+                        if (!_recentlyViewedController.hasClients) {
+                          return;
+                        }
 
-                      _recentlyViewedController.animateTo(
-                        _recentlyViewedController.position.maxScrollExtent,
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    child: const TranslatedText(
-                      "See All",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                        _recentlyViewedController.animateTo(
+                          _recentlyViewedController.position.maxScrollExtent,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      child: const TranslatedText(
+                        "See All",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
                       ),
                     ),
                   ),

@@ -409,7 +409,9 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                     controller: notesController,
                     maxLines: 5,
                     decoration: InputDecoration(
-                      hintText: "Optional Information For The Reviewer...",
+                      hint: const TranslatedText(
+                        "Optional Information For The Reviewer...",
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),

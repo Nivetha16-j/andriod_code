@@ -817,17 +817,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               // ========================================================
               // CATEGORIES
               // ========================================================
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(color: Colors.black, fontSize: 15),
-                  children: [
-                    const TextSpan(
-                      text: "Categories: ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const TranslatedText(
+                    'Categories: ',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
                     ),
-                    TextSpan(text: categories),
-                  ],
-                ),
+                  ),
+                  TranslatedText(
+                    categories,
+                    style: const TextStyle(color: Colors.black, fontSize: 15),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 20),

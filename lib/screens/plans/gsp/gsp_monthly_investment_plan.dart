@@ -588,42 +588,53 @@ class _GspMonthlyInvestmentPlanContentState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        RichText(
-                          text: TextSpan(
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xff333333),
-                            ),
-                            children: [
-                              const TextSpan(text: 'Gold price: '),
-                              TextSpan(
-                                text:
-                                    '$currencySymbol${goldPricePerGram.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const TranslatedText(
+                              'Gold price: ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xff333333),
                               ),
-                              const TextSpan(text: ' / g'),
-                            ],
-                          ),
+                            ),
+                            Text(
+                              '$currencySymbol${goldPricePerGram.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xff333333),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const TranslatedText(
+                              ' / g',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xff333333),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 6),
-                        RichText(
-                          text: TextSpan(
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xff333333),
-                            ),
-                            children: [
-                              const TextSpan(text: 'Estimated gold: '),
-                              TextSpan(
-                                text: '${estimatedGold.toStringAsFixed(4)} g',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const TranslatedText(
+                              'Estimated gold: ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xff333333),
                               ),
-                            ],
-                          ),
+                            ),
+                            TranslatedText(
+                              '${estimatedGold.toStringAsFixed(4)} g',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xff333333),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

@@ -118,79 +118,55 @@ Widget orderDetailsCard({
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 14, color: Colors.black),
-            children: [
-              const TextSpan(
-                text: "Order number : ",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              TextSpan(text: order_no),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 18),
-        RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 14, color: Colors.black),
-            children: [
-              const TextSpan(
-                text: "Date : ",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              TextSpan(text: date),
-            ],
-          ),
-        ),
+        _orderInfoRow('Order number', order_no),
 
         const SizedBox(height: 18),
 
-        RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 14, color: Colors.black),
-            children: [
-              const TextSpan(
-                text: "Email : ",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              TextSpan(text: email),
-            ],
-          ),
-        ),
+        _orderInfoRow('Date', date, translateValue: true),
 
         const SizedBox(height: 18),
 
-        RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 14, color: Colors.black),
-            children: [
-              const TextSpan(
-                text: "Total : ",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              TextSpan(text: total),
-            ],
-          ),
-        ),
+        _orderInfoRow('Email', email),
 
         const SizedBox(height: 18),
 
-        RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 14, color: Colors.black),
-            children: [
-              const TextSpan(
-                text: "Payment method : ",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              TextSpan(text: paymentMethod),
-            ],
-          ),
-        ),
+        _orderInfoRow('Total', total),
+
+        const SizedBox(height: 18),
+
+        _orderInfoRow('Payment method', paymentMethod, translateValue: true),
       ],
     ),
+  );
+}
+
+Widget _orderInfoRow(
+  String label,
+  String value, {
+  bool translateValue = false,
+}) {
+  return Wrap(
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      TranslatedText(
+        '$label : ',
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+
+      translateValue
+          ? TranslatedText(
+              value,
+              style: const TextStyle(fontSize: 14, color: Colors.black),
+            )
+          : Text(
+              value,
+              style: const TextStyle(fontSize: 14, color: Colors.black),
+            ),
+    ],
   );
 }
 

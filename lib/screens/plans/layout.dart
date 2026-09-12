@@ -17,7 +17,6 @@ import 'package:junubullion/screens/plans/jsc/jsc_transaction.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_wallet.dart';
 import 'package:junubullion/screens/plans/sidemenu.dart';
 import 'package:junubullion/services/session_manager.dart';
-import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/profile/account_details.dart';
 import 'package:provider/provider.dart';

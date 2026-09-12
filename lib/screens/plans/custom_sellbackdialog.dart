@@ -507,22 +507,34 @@ class _SellBackDialogState extends State<SellBackDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RichText(
-          text: TextSpan(
-            style: const TextStyle(fontSize: 12, color: Colors.black87),
-            children: [
-              const TextSpan(text: 'Selling: '),
-              TextSpan(
-                text: widget.metal,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            const TranslatedText(
+              'Selling: ',
+              style: TextStyle(fontSize: 12, color: Colors.black87),
+            ),
+            TranslatedText(
+              widget.metal,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
               ),
-              const TextSpan(text: ' · Available: '),
-              TextSpan(
-                text: '${widget.balance} ${widget.unit}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const TranslatedText(
+              ' · Available: ',
+              style: TextStyle(fontSize: 12, color: Colors.black87),
+            ),
+            Text(
+              '${widget.balance} ${widget.unit}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
         const SizedBox(height: 14),
         TranslatedText(
@@ -580,20 +592,22 @@ class _SellBackDialogState extends State<SellBackDialog> {
         else
           Row(
             children: [
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(fontSize: 11, color: Colors.black87),
-                  children: [
-                    const TextSpan(text: 'Estimated payout: '),
-                    TextSpan(
-                      text: '$symbol${estimatedPayout.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFD20D2D),
-                      ),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const TranslatedText(
+                    'Estimated payout: ',
+                    style: TextStyle(fontSize: 11, color: Colors.black87),
+                  ),
+                  Text(
+                    '$symbol${estimatedPayout.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFD20D2D),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               const SizedBox(width: 6),
               const Icon(

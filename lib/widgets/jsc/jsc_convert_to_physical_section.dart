@@ -428,8 +428,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                   ),
                   style: const TextStyle(fontSize: 11),
                   decoration: InputDecoration(
-                    labelText: 'AMOUNT TO CONVERT (G)',
-                    labelStyle: const TextStyle(fontSize: 10),
+                    label: const TranslatedText(
+                      'AMOUNT TO CONVERT (g)',
+                      style: TextStyle(fontSize: 10),
+                    ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 8,

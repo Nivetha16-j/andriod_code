@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
@@ -33,32 +35,34 @@ class PlansSidebar extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.only(left: 8, right: 6, top: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TranslatedText(
-              isJsc ? 'JSC' : 'GSP',
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-            ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TranslatedText(
+                isJsc ? 'JSC' : 'GSP',
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              ),
 
-            const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-            _menuItem('Dashboard'),
-            _menuItem('My Wallet'),
-            _menuItem('Your Purchases'),
+              _menuItem('Dashboard'),
+              _menuItem('My Wallet'),
+              _menuItem('Your Purchases'),
 
-            // Only GSP
-            if (isGsp) _menuItem('Monthly Investment Plan'),
+              // Only GSP
+              if (isGsp) _menuItem('Monthly Investment Plan'),
 
-            _menuItem('Account Details'),
-            _menuItem('Transaction History'),
+              _menuItem('Account Details'),
+              _menuItem('Transaction History'),
 
-            _menuItem('Convert to Physical'),
+              _menuItem('Convert to Physical'),
 
-            _menuItem('Sell Back Request'),
-            _menuItem('Lost Password'),
-            _menuItem('Logout'),
-          ],
+              _menuItem('Sell Back Request'),
+              _menuItem('Lost Password'),
+              _menuItem('Logout'),
+            ],
+          ),
         ),
       ),
     );
@@ -70,6 +74,7 @@ class PlansSidebar extends StatelessWidget {
     return InkWell(
       onTap: () {
         onMenuTap(title);
+        log("Menu tapped: $title, $selectedMenu");
       },
       child: Padding(
         padding: const EdgeInsets.all(8.0),

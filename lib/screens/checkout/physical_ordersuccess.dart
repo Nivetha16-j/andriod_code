@@ -171,17 +171,22 @@ class PhysicalOrderSuccessScreen extends StatelessWidget {
   }
 
   Widget _infoRow(String label, String value) {
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(fontSize: 14, color: Colors.black87),
-        children: [
-          TextSpan(
-            text: '$label ',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        TranslatedText(
+          '$label ',
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
           ),
-          TextSpan(text: value),
-        ],
-      ),
+        ),
+        TranslatedText(
+          value,
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
+        ),
+      ],
     );
   }
 }

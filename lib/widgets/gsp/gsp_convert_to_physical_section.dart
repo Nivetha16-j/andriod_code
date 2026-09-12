@@ -450,8 +450,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
                   ),
                   style: const TextStyle(fontSize: 11),
                   decoration: InputDecoration(
-                    labelText: 'AMOUNT TO CONVERT (G)',
-                    labelStyle: const TextStyle(fontSize: 10),
+                    label: const TranslatedText(
+                      'AMOUNT TO CONVERT (G)',
+                      style: TextStyle(fontSize: 10),
+                    ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 8,

@@ -1545,33 +1545,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 14),
 
-          RichText(
-            text: TextSpan(
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-              children: [
-                const TextSpan(text: 'Add '),
-
-                TextSpan(
-                  text: metal,
-                  style: const TextStyle(
-                    color: Color(0xFF981B1B),
-                    fontWeight: FontWeight.bold,
-                  ),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const TranslatedText(
+                'Add ',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(width: 5),
+              TranslatedText(
+                metal,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF981B1B),
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+              const SizedBox(width: 5),
 
-                const TextSpan(text: ' products up to '),
+              const TranslatedText(
+                ' products up to ',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(width: 5),
 
-                TextSpan(
-                  text: '$amount g',
-                  style: const TextStyle(
-                    color: Color(0xFF981B1B),
-                    fontWeight: FontWeight.bold,
-                  ),
+              TranslatedText(
+                '$amount g.',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF981B1B),
+                  fontWeight: FontWeight.bold,
                 ),
-
-                const TextSpan(text: '.'),
-              ],
-            ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 8),

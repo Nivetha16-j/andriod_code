@@ -54,6 +54,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: TranslatedText(

@@ -296,7 +296,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
             color: accentGold,
             borderRadius: BorderRadius.circular(8.0),
           ),
-          child: Text(
+          child: TranslatedText(
             priceText,
             textAlign: TextAlign.center,
             style: const TextStyle(
@@ -339,7 +339,14 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
           items: items.map<DropdownMenuItem<String>>((String itemValue) {
             return DropdownMenuItem<String>(
               value: itemValue,
-              child: Text(itemValue),
+              child: TranslatedText(
+                itemValue,
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 15.0,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             );
           }).toList(),
         ),

@@ -25,8 +25,8 @@ class LanguageProvider extends ChangeNotifier {
         return 'Hindi';
       case TranslateLanguage.italian:
         return 'Italian';
-      case TranslateLanguage.malay:
-        return 'Malay';
+      // case TranslateLanguage.malayalam:
+      //   return 'Malayalam';
       case TranslateLanguage.spanish:
         return 'Spanish';
       case TranslateLanguage.tamil:

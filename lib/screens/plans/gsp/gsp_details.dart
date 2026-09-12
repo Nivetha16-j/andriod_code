@@ -525,29 +525,28 @@ class _GspScreenState extends State<GspScreen> {
           // TEXT
           // -------------------------------------------------------
           Expanded(
-            child: RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$title: ',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      height: 1.3,
-                    ),
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                TranslatedText(
+                  '$title: ',
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
                   ),
-                  TextSpan(
-                    text: value,
-                    style: const TextStyle(
-                      color: AppColors.primaryRed,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      height: 1.3,
-                    ),
+                ),
+                TranslatedText(
+                  value,
+                  style: const TextStyle(
+                    color: AppColors.primaryRed,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    height: 1.3,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],

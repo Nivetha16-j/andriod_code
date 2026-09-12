@@ -634,29 +634,39 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
             ],
           ),
           const SizedBox(height: 16),
-          RichText(
-            text: TextSpan(
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-              children: [
-                const TextSpan(text: 'Add '),
-                TextSpan(
-                  text: metal,
-                  style: const TextStyle(
-                    color: Color(0xFF981B1B),
-                    fontWeight: FontWeight.bold,
-                  ),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const TranslatedText(
+                'Add ',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(width: 5),
+              TranslatedText(
+                metal,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF981B1B),
+                  fontWeight: FontWeight.bold,
                 ),
-                const TextSpan(text: ' products up to '),
-                TextSpan(
-                  text: '$amount g',
-                  style: const TextStyle(
-                    color: Color(0xFF981B1B),
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              const SizedBox(width: 5),
+
+              const TranslatedText(
+                ' products up to ',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(width: 5),
+
+              TranslatedText(
+                '$amount g.',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF981B1B),
+                  fontWeight: FontWeight.bold,
                 ),
-                const TextSpan(text: '.'),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           const TranslatedText(
