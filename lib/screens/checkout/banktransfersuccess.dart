@@ -33,11 +33,6 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
   void initState() {
     super.initState();
     log("widdddddddddd ${widget.order}");
-    // loadUser();
-    // total = widget.order["grand_total"]?.toString() ?? "";
-    // paymentMethod = widget.order["payment_method"]?.toString() ?? "";
-    // address = widget.order["shipping_address"]?.toString() ?? "";
-    // createdAt = widget.order["created_at"]?.toString() ?? "";
   }
 
   Future<void> loadUser() async {
@@ -56,7 +51,6 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
             "MMMM dd, yyyy",
           ).format(DateTime.parse(widget.order['created_at']))
         : "";
-    final cartProvider = context.watch<CartProvider>();
     final total = widget.order['grand_total'];
 
     return Scaffold(
@@ -268,14 +262,14 @@ Widget bankTransferCard(BuildContext context) {
         const SizedBox(height: 20),
 
         const TranslatedText(
-          "After payment, please email your transfer receipt to info@junubullion.com.",
+          "After payment, please email your transfer receipt to customer@junubullion.com.",
           style: TextStyle(height: 1.5),
         ),
 
         const SizedBox(height: 30),
 
         SizedBox(
-          width: 180,
+          // width: 180,
           height: 48,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -300,6 +294,8 @@ Widget bankTransferCard(BuildContext context) {
             ),
           ),
         ),
+
+        const SizedBox(height: 30),
       ],
     ),
   );

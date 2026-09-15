@@ -57,17 +57,13 @@ class JscBalanceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Reset all JSC unlock state during logout.
   Future<void> resetBalancesUnlocked() async {
-    // Reset provider state
     isBalancesUnlocked = false;
 
-    // Reset global in-memory state
     if (balanceUnlockedNotifier.value) {
       balanceUnlockedNotifier.value = false;
     }
 
-    // Clear persisted JSC balance data
     await SessionManager.clearBalanceUnlocked();
 
     notifyListeners();
@@ -75,7 +71,6 @@ class JscBalanceProvider extends ChangeNotifier {
     debugPrint('JSC BalanceProvider -> balances reset successfully.');
   }
 
-  // Keep this if other screens already use it.
   void clearUnlockStatus() {
     isBalancesUnlocked = false;
 

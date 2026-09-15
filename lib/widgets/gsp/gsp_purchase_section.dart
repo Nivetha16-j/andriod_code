@@ -404,7 +404,7 @@ class _PurchaseTable extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         child: SizedBox(
-          width: 820,
+          width: 870,
           child: Column(
             children: [
               Container(
@@ -469,9 +469,10 @@ class _PurchaseTable extends StatelessWidget {
                       ),
                     ),
                     SizedBox(
-                      width: 120,
+                      width: 160,
                       child: TranslatedText(
                         'MARKET STATUS',
+
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
@@ -549,10 +550,20 @@ class _PurchaseTableRow extends StatelessWidget {
     // MARKET STATUS
     // ============================================================
 
-    final isUp = marketStatus.toLowerCase() == 'up';
+    final status = marketStatus.trim().toLowerCase();
+
+    final isUp = status == 'up';
+    final isDown = status == 'down';
+    final isFlat = status == 'flat';
+
+    final statusColor = isUp
+        ? const Color(0xFF168B3A)
+        : isDown
+        ? const Color(0xFFD20D2D)
+        : const Color(0xFF777777);
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 95),
+      constraints: const BoxConstraints(minHeight: 120),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: const BoxDecoration(
         color: Color(0xFFFFFEFF),
@@ -678,69 +689,79 @@ class _PurchaseTableRow extends StatelessWidget {
             width: 150,
             child: TranslatedText(
               '$todayPrice/$unit',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: isUp ? const Color(0xFF168B3A) : const Color(0xFFD20D2D),
-              ),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
             ),
           ),
-
+          // ============================================================
           // MARKET STATUS
+          // ============================================================
           SizedBox(
-            width: 120,
+            width: 150,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TranslatedText(
-                      priceDiff,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: isUp
-                            ? const Color(0xFF168B3A)
-                            : const Color(0xFFD20D2D),
-                      ),
-                    ),
+                // ======================================================
+                // GRAPH + DIFFERENCE
+                // ======================================================
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _MarketTrendGraph(status: status, color: statusColor),
 
-                    const SizedBox(height: 3),
+                      const SizedBox(height: 4),
 
-                    TranslatedText(
-                      priceDiffPercent,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: isUp
-                            ? const Color(0xFF168B3A)
-                            : const Color(0xFFD20D2D),
+                      TranslatedText(
+                        priceDiff,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 2),
+
+                      TranslatedText(
+                        priceDiffPercent,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
-                const SizedBox(width: 10),
-
+                // ======================================================
+                // STATUS BADGE
+                // ======================================================
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
+                    horizontal: 10,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: isUp
                         ? const Color(0xFFE4F4EA)
-                        : const Color(0xFFFBE5E5),
+                        : isDown
+                        ? const Color(0xFFFBE5E5)
+                        : const Color(0xFFF0F0F0),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isUp ? Icons.arrow_upward : Icons.arrow_downward,
+                        isUp
+                            ? Icons.arrow_upward
+                            : isDown
+                            ? Icons.arrow_downward
+                            : Icons.arrow_forward,
                         size: 10,
-                        color: isUp
-                            ? const Color(0xFF168B3A)
-                            : const Color(0xFFD20D2D),
+                        color: statusColor,
                       ),
 
                       const SizedBox(width: 3),
@@ -750,9 +771,7 @@ class _PurchaseTableRow extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          color: isUp
-                              ? const Color(0xFF168B3A)
-                              : const Color(0xFFD20D2D),
+                          color: statusColor,
                         ),
                       ),
                     ],
@@ -784,5 +803,93 @@ class _PurchaseTableRow extends StatelessWidget {
     ];
 
     return months[month];
+  }
+}
+
+// ============================================================================
+// MARKET TREND GRAPH
+// ============================================================================
+
+class _MarketTrendGraph extends StatelessWidget {
+  final String status;
+  final Color color;
+
+  const _MarketTrendGraph({required this.status, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 62,
+      height: 30,
+      child: CustomPaint(
+        painter: _MarketTrendPainter(status: status, color: color),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// MARKET TREND PAINTER
+// ============================================================================
+
+class _MarketTrendPainter extends CustomPainter {
+  final String status;
+  final Color color;
+
+  _MarketTrendPainter({required this.status, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final normalizedStatus = status.trim().toLowerCase();
+
+    final paint = Paint()
+      ..color = normalizedStatus == 'flat' ? const Color(0xFF999999) : color
+      ..strokeWidth = 2.8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path();
+
+    // ==========================================================
+    // UP
+    // ==========================================================
+    if (normalizedStatus == 'up') {
+      path.moveTo(2, 23);
+
+      path.lineTo(14, 17);
+      path.lineTo(25, 19);
+      path.lineTo(36, 12);
+      path.lineTo(48, 14);
+      path.lineTo(60, 5);
+    }
+    // ==========================================================
+    // DOWN
+    // ==========================================================
+    else if (normalizedStatus == 'down') {
+      path.moveTo(2, 5);
+
+      path.lineTo(14, 11);
+      path.lineTo(25, 9);
+      path.lineTo(36, 16);
+      path.lineTo(48, 18);
+      path.lineTo(60, 25);
+    }
+    // ==========================================================
+    // FLAT
+    // ==========================================================
+    else {
+      final y = size.height / 2;
+
+      path.moveTo(2, y);
+      path.lineTo(size.width - 2, y);
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MarketTrendPainter oldDelegate) {
+    return oldDelegate.status != status || oldDelegate.color != color;
   }
 }

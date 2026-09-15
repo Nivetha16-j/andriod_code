@@ -223,11 +223,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
                               Navigator.pushNamed(context, AppRoutes.register);
-                              // Navigator.pushNamedAndRemoveUntil(
-                              //   context,
-                              //   '/home',
-                              //   (route) => false,
-                              // );
                             },
 
                           style: const TextStyle(

@@ -45,7 +45,6 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
             const SizedBox(height: 15),
 
             const TranslatedText(
-              // "At JunuBullion.com, we respect your privacy and are committed to ensuring transparency in how we use cookies and handle your personal data. This document explains our use of cookies, how we collect and process your personal data, and how you can manage your privacy preferences.",
               "At JunuBullion.com, we respect your privacy and are committed to  ensuring transparency in how we use cookies and handle your personal  data.  This document explains our use of cookies, how we collect and  process personal data, and how you can manage you privacy preferences.",
               style: TextStyle(
                 fontSize: 15,
@@ -110,7 +109,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                   ContactCard(
                     icon: Icons.email,
                     title: "Mail",
-                    value: "info@junubullion.com",
+                    value: "customer@junubullion.com",
                   ),
 
                   const SizedBox(height: 15),
@@ -550,7 +549,7 @@ class ShippingAndDeliveryPolicy extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         const TranslatedText(
-          "For special arrangements, courier preferences, or high-security requests, contact us info@junubullion.com. From vault to value, we ship with confidence - so you can invest with peace of mind",
+          "For special arrangements, courier preferences, or high-security requests, contact us customer@junubullion.com. From vault to value, we ship with confidence - so you can invest with peace of mind",
           style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
       ],

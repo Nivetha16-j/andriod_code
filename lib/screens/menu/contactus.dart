@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/services/contact_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
-import 'package:junubullion/widgets/menu/googlemap.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContactUsScreen extends StatefulWidget {
@@ -23,9 +24,90 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
   final TextEditingController email = TextEditingController();
 
   final TextEditingController message = TextEditingController();
+  bool _isSubmitting = false;
 
   int _currentIndex = 0;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void dispose() {
+    firstName.dispose();
+    lastName.dispose();
+    email.dispose();
+    message.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitContactForm() async {
+    FocusScope.of(context).unfocus();
+
+    final firstNameText = firstName.text.trim();
+    final lastNameText = lastName.text.trim();
+    final emailText = email.text.trim();
+    final description = message.text.trim();
+
+    if (firstNameText.isEmpty) {
+      Fluttertoast.showToast(msg: "Please enter your first name");
+      return;
+    }
+
+    if (lastNameText.isEmpty) {
+      Fluttertoast.showToast(msg: "Please enter your last name");
+      return;
+    }
+
+    if (emailText.isEmpty) {
+      Fluttertoast.showToast(msg: "Please enter your email");
+      return;
+    }
+
+    if (description.isEmpty) {
+      Fluttertoast.showToast(msg: "Please enter your message");
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final response = await ContactService.submitContact(
+        firstName: firstNameText,
+        lastName: lastNameText,
+        email: emailText,
+        description: description,
+      );
+
+      debugPrint("Contact API Response: $response");
+
+      if (response['success'] == true) {
+        Fluttertoast.showToast(
+          msg: response['message'] ?? "Message sent successfully.",
+        );
+
+        // Clear form after successful submission
+        firstName.clear();
+        lastName.clear();
+        email.clear();
+        message.clear();
+      } else {
+        Fluttertoast.showToast(
+          msg: response['message'] ?? "Failed to send message.",
+        );
+      }
+    } catch (e) {
+      debugPrint("Contact API Error: $e");
+
+      Fluttertoast.showToast(msg: "Something went wrong. Please try again.");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,7 +116,6 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: SingleChildScrollView(
-        // padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Container(
@@ -131,7 +212,9 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                               ),
-                              onPressed: () {},
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : _submitContactForm,
                               child: const TranslatedText(
                                 "Submit",
                                 style: TextStyle(
@@ -148,7 +231,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 24),
 
-                    _contactRow(Icons.email, "info@junubullion.com"),
+                    _contactRow(Icons.email, "customer@junubullion.com"),
 
                     const SizedBox(height: 18),
 
@@ -226,7 +309,6 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
             const SizedBox(height: 15),
 
-            // const GoogleMapWidget(),
             Image.asset("assets/map.png"),
             Padding(
               padding: const EdgeInsets.all(8.0),

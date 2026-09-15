@@ -39,7 +39,6 @@ class _SellBackDialogState extends State<SellBackDialog> {
 
   bool isSubmitting = false;
 
-  // Controllers
   final nameController = TextEditingController();
   final bankNameController = TextEditingController();
   final accountNumberController = TextEditingController();
@@ -48,7 +47,6 @@ class _SellBackDialogState extends State<SellBackDialog> {
   final branchController = TextEditingController();
   final quantityController = TextEditingController();
 
-  // Price & Timer state
   double? ouncePrice;
   bool isLoadingOuncePrice = false;
   Timer? _priceTimer;
@@ -65,10 +63,8 @@ class _SellBackDialogState extends State<SellBackDialog> {
       setState(() {});
     });
 
-    // Fetch immediately on open
     _fetchOuncePrice();
 
-    // Setup periodic polling every 1 second for live updates
     _priceTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       _fetchOuncePrice(isBackgroundRefresh: true);
     });
@@ -128,13 +124,11 @@ class _SellBackDialogState extends State<SellBackDialog> {
 
     final quantity = double.tryParse(quantityController.text.trim());
 
-    // Validate quantity
     if (quantity == null || quantity <= 0) {
       _showToast('Please enter a valid amount to sell.');
       return;
     }
 
-    // Validate against available balance
     final availableBalance = double.tryParse(widget.balance) ?? 0.0;
 
     if (quantity > availableBalance) {
@@ -145,7 +139,6 @@ class _SellBackDialogState extends State<SellBackDialog> {
       return;
     }
 
-    // Validate bank details
     if (nameController.text.trim().isEmpty) {
       _showToast('Please enter account holder name.');
       return;
@@ -252,7 +245,6 @@ class _SellBackDialogState extends State<SellBackDialog> {
 
   @override
   void dispose() {
-    // Always cancel the periodic timer when the dialog closes
     _priceTimer?.cancel();
     nameController.dispose();
     bankNameController.dispose();
@@ -276,7 +268,6 @@ class _SellBackDialogState extends State<SellBackDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Dialog Header
               Container(
                 color: const Color(0xFFB00D28),
                 padding: const EdgeInsets.symmetric(
@@ -310,7 +301,6 @@ class _SellBackDialogState extends State<SellBackDialog> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // Step Indicators
                     Row(
                       children: [
                         Expanded(
@@ -367,7 +357,6 @@ class _SellBackDialogState extends State<SellBackDialog> {
 
                     const SizedBox(height: 20),
 
-                    // Actions
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -489,10 +478,8 @@ class _SellBackDialogState extends State<SellBackDialog> {
 
     final double rawPayout = quantity * effectiveRate;
 
-    // 2% sell-back fee
     final double sellBackFee = rawPayout * 0.02;
 
-    // Net payout after 2% deduction
     final double estimatedPayout = rawPayout - sellBackFee;
     log(
       'quantity:-- $quantity | '

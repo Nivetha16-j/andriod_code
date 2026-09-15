@@ -267,7 +267,7 @@ class _PurchaseTable extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         child: SizedBox(
-          width: 820, // keeps the table readable
+          width: 870,
           child: Column(
             children: [
               // ================================
@@ -429,7 +429,7 @@ class _PurchaseTableRow extends StatelessWidget {
         : const Color(0xFF777777);
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 95),
+      constraints: const BoxConstraints(minHeight: 120),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: const BoxDecoration(
         color: Color(0xFFFFFEFF),
@@ -572,44 +572,60 @@ class _PurchaseTableRow extends StatelessWidget {
               ),
             ),
           ),
-
           // ==========================
           // MARKET STATUS
           // ==========================
           SizedBox(
-            width: 160,
+            width: 150,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TranslatedText(
-                      priceDiff,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
+                // ======================================================
+                // GRAPH + PRICE DIFFERENCE
+                // ======================================================
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _MarketTrendGraph(
+                        status: marketStatus,
                         color: statusColor,
                       ),
-                    ),
 
-                    const SizedBox(height: 3),
+                      const SizedBox(height: 4),
 
-                    TranslatedText(
-                      priceDiffPercent,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: statusColor,
+                      TranslatedText(
+                        priceDiff,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 2),
+
+                      TranslatedText(
+                        priceDiffPercent,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
-                const SizedBox(width: 10),
+                // const SizedBox(width: 4),
 
+                // ======================================================
+                // STATUS BADGE
+                // ======================================================
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
+                    horizontal: 10,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
@@ -621,6 +637,7 @@ class _PurchaseTableRow extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         isUp
@@ -671,6 +688,84 @@ class _PurchaseTableRow extends StatelessWidget {
     ];
 
     return months[month];
+  }
+}
+
+// ============================================================================
+// MARKET TREND GRAPH
+// ============================================================================
+
+class _MarketTrendGraph extends StatelessWidget {
+  final String status;
+  final Color color;
+
+  const _MarketTrendGraph({required this.status, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 62,
+      height: 30,
+      child: CustomPaint(
+        painter: _MarketTrendPainter(status: status, color: color),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// MARKET TREND PAINTER
+// ============================================================================
+
+class _MarketTrendPainter extends CustomPainter {
+  final String status;
+  final Color color;
+
+  _MarketTrendPainter({required this.status, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final normalizedStatus = status.trim().toLowerCase();
+
+    final paint = Paint()
+      ..color = normalizedStatus == 'flat' ? const Color(0xFF999999) : color
+      ..strokeWidth = 2.8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path();
+
+    if (normalizedStatus == 'up') {
+      // Rising green trend
+      path.moveTo(2, 23);
+      path.lineTo(14, 17);
+      path.lineTo(25, 19);
+      path.lineTo(36, 12);
+      path.lineTo(48, 14);
+      path.lineTo(60, 5);
+    } else if (normalizedStatus == 'down') {
+      // Falling red trend
+      path.moveTo(2, 5);
+      path.lineTo(14, 11);
+      path.lineTo(25, 9);
+      path.lineTo(36, 16);
+      path.lineTo(48, 18);
+      path.lineTo(60, 25);
+    } else {
+      // Flat grey trend
+      final y = size.height / 2;
+
+      path.moveTo(2, y);
+      path.lineTo(size.width - 2, y);
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MarketTrendPainter oldDelegate) {
+    return oldDelegate.status != status || oldDelegate.color != color;
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/menu/aboutus.dart';
 import 'package:junubullion/screens/menu/contactus.dart';
 import 'package:junubullion/screens/menu/faq.dart';
@@ -12,6 +13,7 @@ import 'package:junubullion/screens/plans/jsc/jsc_details.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
+import 'package:provider/provider.dart';
 
 class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
@@ -295,6 +297,13 @@ class _CustomDrawerState extends State<CustomDrawer> {
                       },
                     ),
 
+                    // const SizedBox(height: 15),
+
+                    // =========================
+                    // CURRENCY
+                    // =========================
+                    _buildCurrencySelector(context),
+
                     const SizedBox(height: 30),
 
                     // =========================
@@ -382,6 +391,88 @@ class _CustomDrawerState extends State<CustomDrawer> {
   // ============================================================
   // EXPANSION TILE - JSC / GSP
   // ============================================================
+
+  Widget _buildCurrencySelector(BuildContext context) {
+    const List<String> currencies = [
+      'USD',
+      'SGD',
+      'CAD',
+      'INR',
+      'EUR',
+      'AED',
+      'CNY',
+    ];
+
+    return Consumer<CurrencyProvider>(
+      builder: (context, currencyProvider, child) {
+        return Padding(
+          padding: const EdgeInsets.only(left: 6.0),
+          child: Row(
+            children: [
+              const Icon(Icons.currency_exchange, color: accentGold, size: 20),
+
+              const SizedBox(width: 15),
+
+              const Expanded(
+                child: TranslatedText(
+                  'Currency',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+
+              Container(
+                height: 38,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value:
+                        currencies.contains(currencyProvider.selectedCurrency)
+                        ? currencyProvider.selectedCurrency
+                        : currencies.first,
+
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
+
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+
+                    onChanged: (String? value) {
+                      if (value != null) {
+                        currencyProvider.changeCurrency(value);
+
+                        debugPrint('Currency changed to: $value');
+                      }
+                    },
+
+                    items: currencies.map((currency) {
+                      return DropdownMenuItem<String>(
+                        value: currency,
+                        child: Text(currency),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _drawerExpansionTile({
     required IconData icon,

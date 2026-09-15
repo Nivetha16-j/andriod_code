@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: SingleChildScrollView(
-        controller: widget.scrollController, // Attached controller
+        controller: widget.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 12.0),
         child: Column(
@@ -95,7 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
             BannerSlider(bannerData: bannerData),
             const SizedBox(height: 5),
 
-            // Pass the API spot_prices object here
             LiveSpotPriceCard(
               spotPricesData: homeProvider.homeData?['data']?['spot_prices'],
               selectedCurrency: currencyProvider.selectedCurrency,
@@ -167,8 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
               products:
                   homeProvider.homeData?['data']?['trending_products']
                       as List<dynamic>?,
-              onSeeAllTap:
-                  widget.onViewMoreTap, // Navigates to 4th tab (Product List)
+              onSeeAllTap: widget.onViewMoreTap,
               currency: currencyProvider.selectedCurrency,
               unit: currencyProvider.selectedUnit,
             ),

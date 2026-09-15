@@ -706,33 +706,33 @@ class _BalanceCard extends StatelessWidget {
           // ============================
           // BALANCE + UNIT
           // ============================
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              TranslatedText(
-                balanceValue,
-                softWrap: true,
-                style: const TextStyle(
-                  fontSize: 16,
-                  height: 1.15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(width: 3),
-              TranslatedText(
-                unit,
-                softWrap: true,
-                style: const TextStyle(
-                  fontSize: 10,
-                  height: 1.2,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          // Row(
+          //   mainAxisSize: MainAxisSize.min,
+          //   crossAxisAlignment: CrossAxisAlignment.baseline,
+          //   textBaseline: TextBaseline.alphabetic,
+          // children: [
+          TranslatedText(
+            "$balanceValue $unit",
+            softWrap: true,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.15,
+              fontWeight: FontWeight.w700,
+            ),
           ),
 
+          // const SizedBox(width: 3),
+          // TranslatedText(
+          //   unit,
+          //   softWrap: true,
+          //   style: const TextStyle(
+          //     fontSize: 10,
+          //     height: 1.2,
+          //     fontWeight: FontWeight.w600,
+          //   ),
+          //     // ),
+          //   ],
+          // ),
           const SizedBox(height: 6),
 
           // ============================

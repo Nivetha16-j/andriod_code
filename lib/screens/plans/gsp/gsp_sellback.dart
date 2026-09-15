@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
@@ -80,13 +79,6 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
 
   String? errorMessage;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-
-  //   _checkUnlockStatus();
-  // }
-
   @override
   void initState() {
     super.initState();
@@ -107,8 +99,6 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
 
   Future<void> _fetchSellBackData({bool isRefresh = false}) async {
     try {
-      // Only show loader for the first fetch.
-      // Do NOT show loader every second.
       if (!isRefresh && mounted) {
         setState(() {
           isLoading = true;
@@ -141,8 +131,6 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
           errorMessage = null;
         });
       } else {
-        // Don't destroy already displayed live data
-        // during a temporary refresh failure.
         if (!isRefresh) {
           setState(() {
             sellBackData = {};
@@ -158,8 +146,6 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
 
       if (!mounted) return;
 
-      // During background refresh, keep the previous
-      // values visible instead of showing a loader/error.
       if (!isRefresh) {
         setState(() {
           sellBackData = {};
@@ -170,28 +156,9 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
     }
   }
 
-  Future<void> _checkUnlockStatus() async {
-    final provider = context.read<GspBalanceProvider>();
-
-    await provider.loadUnlockStatus();
-
-    if (!mounted) return;
-
-    final unlocked = provider.isBalancesUnlocked;
-
-    setState(() {
-      isBalancesUnlocked = unlocked;
-    });
-
-    if (unlocked) {
-      await _fetchSellBackDetails();
-    }
-  }
-
   Future<void> _fetchSellBackDetails() async {
     if (!mounted) return;
 
-    // Always verify session unlock state before making the request.
     final unlocked = await SessionManager.isGspBalanceUnlocked();
 
     if (!mounted) return;
@@ -235,7 +202,6 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
             ? Map<String, dynamic>.from(data)
             : <String, dynamic>{};
 
-        // Verify unlock state again before storing data.
         final stillUnlocked = await SessionManager.isGspBalanceUnlocked();
 
         if (!mounted) return;
@@ -286,7 +252,6 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
 
       if (!mounted) return;
 
-      // Do not keep stale data after an API/session error.
       setState(() {
         sellBackData = null;
       });
@@ -336,7 +301,6 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
         GspBalanceSection(
           showBalances: false,
 
-          /// Called after successful wallet unlock.
           onUnlocked: () async {
             if (!mounted) return;
 
@@ -347,7 +311,6 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
               sellBackData = null;
             });
 
-            // Fetch latest balances and sell-back requests.
             await _fetchSellBackDetails();
           },
         ),
@@ -446,19 +409,6 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
   }
 
   Widget _buildSellBackDetails() {
-    // API structure:
-    //
-    // data
-    //   └── summary
-    //        ├── gold
-    //        │    ├── balance
-    //        │    ├── unit
-    //        │    └── formatted_spot_price
-    //        └── silver
-    //             ├── balance
-    //             ├── unit
-    //             └── formatted_spot_price
-
     final summary = sellBackData?['summary'] as Map<String, dynamic>? ?? {};
 
     final gold = summary['gold'] as Map<String, dynamic>? ?? {};
@@ -480,14 +430,12 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
     final silverSpotPrice =
         silver['formatted_spot_price']?.toString() ?? '\$0.00';
 
-    // Sell-back requests
     final List<dynamic> sellBacks =
         sellBackData?['sellBackRequests'] as List<dynamic>? ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // GOLD
         _buildSellBackMetalRow(
           metal: 'Gold',
           balance: goldBalance,
@@ -498,7 +446,6 @@ class _GspSellBackContentState extends State<GspSellBackContent> {
 
         const SizedBox(height: 8),
 
-        // SILVER
         _buildSellBackMetalRow(
           metal: 'Silver',
           balance: silverBalance,

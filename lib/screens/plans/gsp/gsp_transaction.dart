@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
@@ -113,10 +112,6 @@ class _GspTransactionHistoryContentState
       if (result['status'] == true) {
         final data = result['data'];
 
-        // API structure:
-        // data
-        //   -> wallet
-        //       -> transactions
         final wallet = data is Map ? data['wallet'] : null;
 
         final transactionList = wallet is Map ? wallet['transactions'] : null;
@@ -362,6 +357,7 @@ class _GspTransactionHistoryContentState
             ),
 
             ...transactions.map((transaction) {
+              log("Transsssssss $transaction");
               return _TransactionRow(
                 transaction: transaction,
                 currencySymbol: currencySymbol,
@@ -430,6 +426,11 @@ class _TransactionRow extends StatelessWidget {
 
     final isCredit = transactionType == 'credit';
 
+    // IMPORTANT:
+    // Sell back transactions have:
+    // type: sell_back
+    final isSellBack = transactionType == 'sell_back';
+
     return Container(
       width: 560,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
@@ -439,7 +440,9 @@ class _TransactionRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // =========================
           // DATE
+          // =========================
           SizedBox(
             width: 85,
             child: TranslatedText(
@@ -452,34 +455,72 @@ class _TransactionRow extends StatelessWidget {
             ),
           ),
 
-          // METAL
+          // =========================
+          // METAL + SELL BACK
+          // =========================
           SizedBox(
             width: 75,
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isGold
-                      ? const Color(0xFFFFF1C9)
-                      : const Color(0xFFEDEFF2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TranslatedText(
-                  _capitalize(metal),
-                  style: TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w600,
-                    color: isGold
-                        ? const Color(0xFF9A7400)
-                        : const Color(0xFF62666B),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // METAL BADGE
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isGold
+                          ? const Color(0xFFFFF1C9)
+                          : const Color(0xFFEDEFF2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TranslatedText(
+                      _capitalize(metal),
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+                        color: isGold
+                            ? const Color(0xFF9A7400)
+                            : const Color(0xFF62666B),
+                      ),
+                    ),
                   ),
-                ),
+
+                  // SELL BACK BADGE
+                  if (isSellBack) ...[
+                    const SizedBox(height: 4),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFE1E6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const TranslatedText(
+                        'Sell Back',
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFB3261E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
 
+          // =========================
           // DESCRIPTION
+          // =========================
           SizedBox(
             width: 150,
             child: TranslatedText(
@@ -494,23 +535,25 @@ class _TransactionRow extends StatelessWidget {
             ),
           ),
 
+          // =========================
           // AMOUNT
+          // =========================
           SizedBox(
             width: 100,
             child: TranslatedText(
               '${isCredit ? '+' : '-'}$amount $unit',
               textAlign: TextAlign.right,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w500,
-                color: isCredit
-                    ? const Color(0xFF222222)
-                    : const Color(0xFFB3261E),
+                color: Color(0xFF222222),
               ),
             ),
           ),
 
+          // =========================
           // VALUE
+          // =========================
           SizedBox(
             width: 100,
             child: TranslatedText(
@@ -535,9 +578,6 @@ class _TransactionRow extends StatelessWidget {
       return value.toString();
     }
 
-    // 10.0000 -> 10
-    // 1.5000 -> 1.5
-    // 0.1000 -> 0.1
     if (number == number.roundToDouble()) {
       return number.toInt().toString();
     }
@@ -581,7 +621,6 @@ class _TransactionRow extends StatelessWidget {
       return '';
     }
 
-    // Backend may already return formatted value.
     if (value.startsWith('\$') ||
         value.startsWith('₹') ||
         value.startsWith('€') ||

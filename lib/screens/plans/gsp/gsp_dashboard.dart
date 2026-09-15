@@ -166,10 +166,6 @@ class _DashboardContentState extends State<_DashboardContent> {
       );
     }
 
-    // ============================================================
-    // GSP ALREADY REGISTERED
-    // ============================================================
-
     if (hasGspRegistration) {
       return SizedBox(
         width: double.infinity,
@@ -202,10 +198,6 @@ class _DashboardContentState extends State<_DashboardContent> {
         ),
       );
     }
-
-    // ============================================================
-    // GSP NOT REGISTERED
-    // ============================================================
 
     return _redButton(
       text: 'GSP Application Form',

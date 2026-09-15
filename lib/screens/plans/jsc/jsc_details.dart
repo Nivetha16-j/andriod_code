@@ -102,8 +102,6 @@ class _JscScreenState extends State<JscScreen> {
 
   final PageController _pageController = PageController();
 
-  // List<double> _featureHeights = [];
-
   int _currentPage = 0;
 
   String? _lastCurrency;
@@ -264,7 +262,6 @@ class _JscScreenState extends State<JscScreen> {
                   const SizedBox(height: 10),
 
                   SizedBox(
-                    // width: MediaQuery.of(context).size.width * 0.5,
                     height: 54,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -313,7 +310,6 @@ class _JscScreenState extends State<JscScreen> {
 
                   const SizedBox(height: 30),
 
-                  /// Images
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -328,7 +324,6 @@ class _JscScreenState extends State<JscScreen> {
 
             const SizedBox(height: 18),
 
-            /// White Card
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(18),
@@ -507,7 +502,6 @@ class _JscScreenState extends State<JscScreen> {
 
                   const SizedBox(height: 12),
 
-                  /// Page indicators
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(features.length, (index) {
@@ -533,10 +527,6 @@ class _JscScreenState extends State<JscScreen> {
                   Container(
                     width: double.infinity,
                     color: const Color(0xffF8F6F0),
-                    // padding: const EdgeInsets.symmetric(
-                    //   horizontal: 30,
-                    //   vertical: 30,
-                    // ),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         return Row(
@@ -563,7 +553,6 @@ class _JscScreenState extends State<JscScreen> {
                     children: [
                       const TranslatedText(
                         "JSC Benefits for Customers",
-                        // textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Color(0xffB00000),
                           fontSize: 22,
@@ -577,7 +566,6 @@ class _JscScreenState extends State<JscScreen> {
                         height: 450,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          // padding: const EdgeInsets.symmetric(horizontal: 20),
                           itemCount: benefits.length,
                           separatorBuilder: (context, index) {
                             return const SizedBox(width: 18);
@@ -763,7 +751,6 @@ class _JscScreenState extends State<JscScreen> {
 
           const SizedBox(height: 18),
 
-          /// Bullet points
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -801,7 +788,6 @@ class _JscScreenState extends State<JscScreen> {
             ),
           ),
 
-          /// Image
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Image.asset(
@@ -874,9 +860,6 @@ class _JscProductCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          // ==========================================================
-          // IMAGE
-          // ==========================================================
           ClipRRect(
             borderRadius: BorderRadius.circular(18),
             child: SizedBox(
@@ -903,9 +886,6 @@ class _JscProductCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
 
-          // ==========================================================
-          // PRODUCT NAME
-          // ==========================================================
           TranslatedText(
             productName,
             maxLines: 2,
@@ -915,9 +895,6 @@ class _JscProductCard extends StatelessWidget {
 
           const SizedBox(height: 4),
 
-          // ==========================================================
-          // PRICE
-          // ==========================================================
           TranslatedText(
             priceText,
             maxLines: 1,
@@ -927,9 +904,6 @@ class _JscProductCard extends StatelessWidget {
 
           const SizedBox(height: 3),
 
-          // ==========================================================
-          // STOCK STATUS
-          // ==========================================================
           TranslatedText(
             isInStock ? "In Stock" : "Out of Stock",
             style: TextStyle(
@@ -941,9 +915,6 @@ class _JscProductCard extends StatelessWidget {
 
           const SizedBox(height: 4),
 
-          // ==========================================================
-          // CART BUTTON
-          // ==========================================================
           SizedBox(
             width: double.infinity,
             height: 40,
@@ -964,10 +935,6 @@ class _JscProductCard extends StatelessWidget {
     );
   }
 
-  // ==================================================================
-  // CART BUTTON
-  // ==================================================================
-
   Widget _buildCartButton({
     required BuildContext context,
     required CartProvider cartProvider,
@@ -975,10 +942,6 @@ class _JscProductCard extends StatelessWidget {
     required int productId,
     required bool isInStock,
   }) {
-    // ================================================================
-    // OUT OF STOCK
-    // ================================================================
-
     if (!isInStock) {
       return ElevatedButton(
         onPressed: null,
@@ -996,16 +959,6 @@ class _JscProductCard extends StatelessWidget {
         ),
       );
     }
-
-    // ================================================================
-    // PHYSICAL CONVERSION ACTIVE
-    //
-    // JSC products are digital products.
-    // They must NOT be added while physical conversion is active.
-    //
-    // IMPORTANT:
-    // We are NOT using physicalCart here.
-    // ================================================================
 
     if (physicalProvider.isActive) {
       return ElevatedButton(
@@ -1033,10 +986,6 @@ class _JscProductCard extends StatelessWidget {
       );
     }
 
-    // ================================================================
-    // NORMAL CART
-    // ================================================================
-
     final bool isInCart = cartProvider.isProductInCart(productId);
 
     Map<String, dynamic>? cartItem;
@@ -1053,10 +1002,6 @@ class _JscProductCard extends StatelessWidget {
 
     final int cartQuantity = int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
 
-    // ================================================================
-    // ALREADY IN NORMAL CART
-    // ================================================================
-
     if (isInCart && cartQuantity > 0) {
       return Container(
         decoration: BoxDecoration(
@@ -1066,9 +1011,6 @@ class _JscProductCard extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // --------------------------------------------------------
-            // MINUS
-            // --------------------------------------------------------
             InkWell(
               onTap: () async {
                 if (cartQuantity <= 1) {
@@ -1089,9 +1031,6 @@ class _JscProductCard extends StatelessWidget {
               ),
             ),
 
-            // --------------------------------------------------------
-            // QUANTITY
-            // --------------------------------------------------------
             TranslatedText(
               "$cartQuantity",
               style: const TextStyle(
@@ -1101,9 +1040,6 @@ class _JscProductCard extends StatelessWidget {
               ),
             ),
 
-            // --------------------------------------------------------
-            // PLUS
-            // --------------------------------------------------------
             InkWell(
               onTap: () async {
                 await cartProvider.updateCartQuantity(
@@ -1123,10 +1059,6 @@ class _JscProductCard extends StatelessWidget {
         ),
       );
     }
-
-    // ================================================================
-    // ADD TO NORMAL CART
-    // ================================================================
 
     final bool isAdding = cartProvider.isAdding(productId);
 

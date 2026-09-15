@@ -7,50 +7,37 @@ import 'package:junubullion/services/session_manager.dart';
 
 class CartProvider extends ChangeNotifier {
   List<dynamic> cartItems = [];
-
   bool isLoading = false;
   final Set<int> addingProducts = {};
-
   int get cartCount => cartItems.length;
   String selectedDeliveryMethod = "Standard";
-
   bool isCouponRemoved = false;
-
   String subTotal = "";
   String formattedSubtotal = "";
   String formattedOrderTotal = "";
   String formattedTransactionFee = "";
   String formattedCourierFee = "";
-
   Map<String, dynamic>? coupon;
-
   String formattedDiscount = "";
   String formattedDiscountPrice = "";
-
   String _currency = "USD";
   String _unit = "gram";
-
   String get currency => _currency;
   String get unit => _unit;
-
   double subtotalAmount = 0;
   double courierAmount = 0;
   double transactionFeeAmount = 0;
   double gstAmount = 0;
   double totalAmount = 0;
-
   String currencySymbol = "";
   String formattedGST = "";
-
   bool isCourierFree = false;
   bool showTax = false;
-
   String? fulfillment;
   String? digitalSubtype;
 
   bool isAdding(int productId) => addingProducts.contains(productId);
 
-  /// Call this whenever currency/unit changes
   void updateSelection({required String currency, required String unit}) {
     _currency = currency;
     _unit = unit;
@@ -75,10 +62,6 @@ class CartProvider extends ChangeNotifier {
         "$_currency / $_unit / $selectedDeliveryMethod / $response",
       );
 
-      // ==========================================================
-      // BACKEND SUCCESS
-      // ==========================================================
-
       if (response["status"] == true) {
         final data = response["data"] as Map<String, dynamic>?;
 
@@ -92,16 +75,11 @@ class CartProvider extends ChangeNotifier {
         if (summary == null) {
           log("⚠️ Cart response has no summary");
 
-          // Clear stale local cart if backend did not return summary.
           cartItems = [];
 
           notifyListeners();
           return;
         }
-
-        // ========================================================
-        // CART ITEMS
-        // ========================================================
 
         final items = summary["items"];
 
@@ -109,27 +87,15 @@ class CartProvider extends ChangeNotifier {
 
         log("🛒 BACKEND CART ITEMS -> ${cartItems.length}");
 
-        // ========================================================
-        // CURRENCY
-        // ========================================================
-
         final symbol = summary["symbol"]?.toString() ?? "";
 
         currencySymbol = symbol;
-
-        // ========================================================
-        // SUBTOTAL
-        // ========================================================
 
         subtotalAmount = (summary["subtotal"] as num?)?.toDouble() ?? 0.0;
 
         formattedSubtotal =
             summary["formatted_subtotal"] ??
             "$symbol${NumberFormat('#,##0.00').format(subtotalAmount)}";
-
-        // ========================================================
-        // COURIER
-        // ========================================================
 
         final courier = summary["courier"] as Map<String, dynamic>?;
 
@@ -144,20 +110,12 @@ class CartProvider extends ChangeNotifier {
             : courier?["formatted_amount"]?.toString() ??
                   "$symbol${NumberFormat('#,##0.00').format(courierAmount)}";
 
-        // ========================================================
-        // TRANSACTION FEE
-        // ========================================================
-
         transactionFeeAmount =
             (summary["transaction_fee"] as num?)?.toDouble() ?? 0.0;
 
         formattedTransactionFee =
             summary["formatted_transaction_fee"]?.toString() ??
             "$symbol${NumberFormat('#,##0.00').format(transactionFeeAmount)}";
-
-        // ========================================================
-        // GST / TAX
-        // ========================================================
 
         gstAmount = (summary["tax"] as num?)?.toDouble() ?? 0.0;
 
@@ -167,19 +125,11 @@ class CartProvider extends ChangeNotifier {
 
         showTax = summary["show_tax"] == true;
 
-        // ========================================================
-        // TOTAL
-        // ========================================================
-
         totalAmount = (summary["total"] as num?)?.toDouble() ?? 0.0;
 
         formattedOrderTotal =
             summary["formatted_total"]?.toString() ??
             "$symbol${NumberFormat('#,##0.00').format(totalAmount)}";
-
-        // ========================================================
-        // COUPON
-        // ========================================================
 
         if (isCouponRemoved) {
           coupon = null;
@@ -201,13 +151,6 @@ class CartProvider extends ChangeNotifier {
           }
         }
 
-        // ========================================================
-        // IMPORTANT
-        //
-        // Notify AFTER the complete backend state has been applied.
-        // This causes CartScreen to rebuild with the latest items.
-        // ========================================================
-
         notifyListeners();
 
         log(
@@ -217,13 +160,6 @@ class CartProvider extends ChangeNotifier {
           "total=$totalAmount",
         );
       } else {
-        // ==========================================================
-        // BACKEND EXPLICITLY SAYS REQUEST FAILED
-        //
-        // Do NOT blindly keep stale cart data if the backend
-        // explicitly says the cart is unavailable/empty.
-        // ==========================================================
-
         log(
           "⚠️ CART API FAILED -> "
           "${response["message"] ?? "Unknown error"}",
@@ -277,24 +213,6 @@ class CartProvider extends ChangeNotifier {
     return cartItems.any((item) => item["product_id"] == productId);
   }
 
-  // Future<bool> removeFromCart(int productId) async {
-  //   try {
-  //     final response = await CartService.removeFromCart(productId: productId);
-
-  //     if (response["status"] == true) {
-  //       await fetchCart();
-  //       if (cartItems.isEmpty) {
-  //         isCouponRemoved = false;
-  //       }
-  //       return true;
-  //     }
-
-  //     return false;
-  //   } catch (e) {
-  //     debugPrint("Remove Cart Error: $e");
-  //     return false;
-  //   }
-  // }
   Future<bool> removeFromCart(int productId) async {
     try {
       log('🗑️ Removing product from cart -> productId=$productId');
@@ -304,7 +222,6 @@ class CartProvider extends ChangeNotifier {
       log('🗑️ REMOVE PRODUCT RESPONSE -> $response');
 
       if (response["status"] == true) {
-        // Remove immediately from local UI.
         cartItems.removeWhere((item) => item["product_id"] == productId);
 
         log(
@@ -314,7 +231,6 @@ class CartProvider extends ChangeNotifier {
 
         notifyListeners();
 
-        // Then sync everything with backend.
         await fetchCart();
 
         if (cartItems.isEmpty) {
@@ -341,31 +257,6 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
-  // Future<bool> updateCartQuantity({
-  //   required int productId,
-  //   required int quantity,
-  // }) async {
-  //   try {
-  //     final token = await SessionManager.getToken();
-
-  //     final response = await CartService.updateCart(
-  //       productId: productId,
-  //       quantity: quantity,
-  //       token: token!,
-  //     );
-
-  //     if (response["status"] == true) {
-  //       await fetchCart();
-  //       return true;
-  //     }
-
-  //     return false;
-  //   } catch (e) {
-  //     debugPrint("Update Cart Error: $e");
-  //     return false;
-  //   }
-  // }
-
   Future<bool> updateCartQuantity({
     required int productId,
     required int quantity,
@@ -376,10 +267,6 @@ class CartProvider extends ChangeNotifier {
         'productId=$productId '
         'quantity=$quantity',
       );
-
-      // ============================================================
-      // QUANTITY 0 = REMOVE PRODUCT
-      // ============================================================
 
       if (quantity <= 0) {
         return await removeFromCart(productId);
@@ -414,40 +301,6 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
-  // Future<void> updateCourier({
-  //   required String currency,
-  //   required String service,
-  // }) async {
-  //   log("✅ updateCourier() called");
-  //   final response = await CartService.updateCourierCharge(
-  //     currency: currency,
-  //     courierService: service,
-  //   );
-
-  //   log("Courier Response: $response");
-
-  //   if (response["status"] == true) {
-  //     final summary = response["data"]["cart"];
-
-  //     formattedCourierFee = summary["courier"]["formatted_amount"];
-
-  //     formattedTransactionFee =
-  //         "${summary["symbol"]}${summary["transaction_fee"].toStringAsFixed(2)}";
-
-  //     formattedOrderTotal =
-  //         "${summary["symbol"]}${summary["total"].toStringAsFixed(2)}";
-
-  //     selectedDeliveryMethod = service;
-  //     await fetchCart();
-
-  //     log(
-  //       "Courier Updated: $formattedCourierFee, $formattedTransactionFee, $formattedOrderTotal",
-  //     );
-
-  //     notifyListeners();
-  //   }
-  // }
-
   double get subtotal {
     double total = 0;
 
@@ -472,7 +325,6 @@ class CartProvider extends ChangeNotifier {
 
   void clearCart() {
     cartItems.clear();
-    // subtotal = 0;
     notifyListeners();
   }
 
@@ -495,17 +347,6 @@ class CartProvider extends ChangeNotifier {
 
   Future<bool> moveCartToPhysicalOrder() async {
     try {
-      // ============================================================
-      // CASE 1: CART IS EMPTY
-      // ============================================================
-      // Do NOT:
-      // - call account details API
-      // - remove backend cart
-      // - save products to SharedPreferences
-      //
-      // Just allow the physical order flow to start directly.
-      // ============================================================
-
       if (cartItems.isEmpty) {
         log('🟢 Normal cart is empty.');
         log('➡️ Skipping account API');
@@ -516,10 +357,6 @@ class CartProvider extends ChangeNotifier {
         return true;
       }
 
-      // ============================================================
-      // CASE 2: CART HAS PRODUCTS
-      // ============================================================
-
       final products = cartItems
           .map((item) => Map<String, dynamic>.from(item))
           .toList();
@@ -529,14 +366,9 @@ class CartProvider extends ChangeNotifier {
         'for physical order',
       );
 
-      // Save normal cart products temporarily
       await SessionManager.savePhysicalOrderProducts(products);
 
       log('✅ Products saved locally');
-
-      // ============================================================
-      // GET ACCOUNT DETAILS
-      // ============================================================
 
       final accountService = AccountService();
 
@@ -558,10 +390,6 @@ class CartProvider extends ChangeNotifier {
 
       log('👤 Account ID: $accountId');
 
-      // ============================================================
-      // REMOVE NORMAL CART FROM BACKEND
-      // ============================================================
-
       final removeResponse = await CartService.removeCart();
 
       log('🗑️ Remove Cart Response: $removeResponse');
@@ -576,10 +404,6 @@ class CartProvider extends ChangeNotifier {
 
       log('✅ Backend cart removed');
 
-      // ============================================================
-      // CLEAR LOCAL NORMAL CART
-      // ============================================================
-
       cartItems.clear();
 
       notifyListeners();
@@ -590,7 +414,6 @@ class CartProvider extends ChangeNotifier {
     } catch (e, stackTrace) {
       log('❌ moveCartToPhysicalOrder error: $e', stackTrace: stackTrace);
 
-      // Only clear saved products if we actually saved them.
       if (cartItems.isNotEmpty) {
         await SessionManager.clearPhysicalOrderProducts();
       }
@@ -647,7 +470,6 @@ class CartProvider extends ChangeNotifier {
         }
       }
 
-      // Only clear secure storage if EVERYTHING was restored.
       if (allRestored) {
         await SessionManager.clearPhysicalOrderProducts();
 
@@ -659,7 +481,6 @@ class CartProvider extends ChangeNotifier {
         );
       }
 
-      // Fetch the actual backend cart once.
       await fetchCart();
 
       log(

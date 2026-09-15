@@ -26,39 +26,81 @@ import 'package:provider/provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Stripe.publishableKey =
-  //     "pk_test_xxxxxxxxxxxxxxxxx";
+  // ------------------------------------------------------------
+  // ENVIRONMENT
+  // ------------------------------------------------------------
 
-  // await Stripe.instance.applySettings();
   await dotenv.load(fileName: ".env");
 
+  // ------------------------------------------------------------
+  // STRIPE
+  // ------------------------------------------------------------
+
   Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY']!;
+
   await Stripe.instance.applySettings();
+
+  // ------------------------------------------------------------
+  // LANGUAGE PROVIDER
+  // Restore previously selected language BEFORE runApp()
+  // ------------------------------------------------------------
+
+  final languageProvider = LanguageProvider();
+
+  await languageProvider.initializeLanguage();
+
+  // ------------------------------------------------------------
+  // APP
+  // ------------------------------------------------------------
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CurrencyProvider()),
+
         ChangeNotifierProvider(create: (_) => HomeProvider()),
+
         ChangeNotifierProvider(create: (_) => ExclusiveProductProvider()),
+
         ChangeNotifierProvider(create: (_) => ProductDetailsProvider()),
+
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
+
         ChangeNotifierProvider(create: (_) => CartProvider()),
+
         ChangeNotifierProvider(create: (_) => AddressProvider()),
+
         ChangeNotifierProvider(create: (_) => OrdersProvider()),
+
         ChangeNotifierProvider(create: (_) => AccountProvider()),
+
         ChangeNotifierProvider(create: (_) => KycProvider()),
+
         ChangeNotifierProvider(create: (_) => CheckoutProvider()),
+
         ChangeNotifierProvider(create: (_) => TestimonialProvider()),
+
         ChangeNotifierProvider(create: (_) => PhysicalConversionProvider()),
+
         ChangeNotifierProvider(create: (_) => JscBalanceProvider()),
+
         ChangeNotifierProvider(create: (_) => GspBalanceProvider()),
+
         ChangeNotifierProvider(create: (_) => GspMonthlyPlanProvider()),
-        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+
+        // --------------------------------------------------------
+        // LANGUAGE PROVIDER
+        // Already initialized above
+        // --------------------------------------------------------
+        ChangeNotifierProvider<LanguageProvider>.value(value: languageProvider),
       ],
       child: const MyApp(),
     ),
   );
+
+  // ------------------------------------------------------------
+  // FIREBASE
+  // ------------------------------------------------------------
 
   try {
     await Firebase.initializeApp();
@@ -77,7 +119,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       color: AppColors.primaryRed,
       initialRoute: AppRoutes.splash,
-      // home: TranslationTestScreen(),
       onGenerateRoute: AppRoutes.generateRoute,
       theme: ThemeData(fontFamily: 'Montserrat'),
     );

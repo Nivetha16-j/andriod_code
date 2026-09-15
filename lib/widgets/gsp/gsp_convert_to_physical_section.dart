@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 
 class GspConvertPhysicalSection extends StatefulWidget {
   final bool? isUnlocked;
+
   const GspConvertPhysicalSection({super.key, this.isUnlocked});
 
   @override
@@ -26,10 +27,15 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
   Map<String, dynamic>? silver;
 
   bool isLoading = false;
-  bool isStartingOrder = false;
+
+  // Stores which metal is currently starting.
+  // Example: "Gold" or "Silver"
+  String? _startingMetal;
+
   bool _isUnlocked = false;
 
   final TextEditingController _goldAmountController = TextEditingController();
+
   final TextEditingController _silverAmountController = TextEditingController();
 
   String? _goldAmountError;
@@ -76,6 +82,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
         setState(() {
           gold = null;
           silver = null;
+          _startingMetal = null;
         });
       }
     }
@@ -84,8 +91,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
   @override
   void dispose() {
     _timer?.cancel();
+
     _goldAmountController.dispose();
     _silverAmountController.dispose();
+
     super.dispose();
   }
 
@@ -94,10 +103,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
 
     debugPrint('🚀 STARTING CONVERT PHYSICAL REFRESH');
 
-    // First call immediately
+    // First API call immediately.
     fetchConvertPhysical();
 
-    // Then every second
+    // Then every second.
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       fetchConvertPhysical();
     });
@@ -111,7 +120,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
   Future<void> fetchConvertPhysical() async {
     if (!_isUnlocked) return;
 
-    // Prevent overlapping API calls
+    // Prevent overlapping API calls.
     if (isLoading) return;
 
     try {
@@ -155,7 +164,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
         silver = fetchedSilver;
       });
 
-      // Set default conversion amounts
+      // ----------------------------------------------------------
+      // DEFAULT CONVERSION AMOUNTS
+      // ----------------------------------------------------------
+
       final goldBalance =
           double.tryParse('${fetchedGold?['balance'] ?? 0}') ?? 0;
 
@@ -234,29 +246,9 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
 
           const SizedBox(height: 9),
 
-          // if (!_isUnlocked) ...[
-          //   _convertRow(
-          //     metal: 'Gold',
-          //     available: 'Available: .... · Min: 50 g',
-          //     buttonText:
-          //         'Unlock your balances to check physical '
-          //         'conversion eligibility.',
-          //     enabled: false,
-          //     onPressed: null,
-          //   ),
-
-          //   const SizedBox(height: 8),
-
-          //   _convertRow(
-          //     metal: 'Silver',
-          //     available: 'Available: .... · Min: 1 kg',
-          //     buttonText:
-          //         'Unlock your balances to check physical '
-          //         'conversion eligibility.',
-          //     enabled: false,
-          //     onPressed: null,
-          //   ),
-          // ]
+          // ------------------------------------------------------
+          // NOT UNLOCKED
+          // ------------------------------------------------------
           if (!_isUnlocked) ...[
             _convertRow(
               metal: 'Gold',
@@ -279,7 +271,11 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
               onAmountChanged: (_) {},
               onPressed: null,
             ),
-          ] else if (isLoading && gold == null && silver == null)
+          ]
+          // ------------------------------------------------------
+          // INITIAL LOADING
+          // ------------------------------------------------------
+          else if (isLoading && gold == null && silver == null)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Center(
@@ -290,6 +286,9 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
                 ),
               ),
             )
+          // ------------------------------------------------------
+          // UNLOCKED
+          // ------------------------------------------------------
           else ...[
             _convertRow(
               metal: 'Gold',
@@ -322,6 +321,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
     );
   }
 
+  // ============================================================
+  // AVAILABLE BALANCES
+  // ============================================================
+
   String get _goldAvailableText {
     final value = gold?['balance'];
 
@@ -341,6 +344,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
 
     return '$value g';
   }
+
+  // ============================================================
+  // MINIMUM THRESHOLDS
+  // ============================================================
 
   String get _goldThresholdLabel {
     final value = gold?['minimum_balance'];
@@ -362,6 +369,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
     return '$value g';
   }
 
+  // ============================================================
+  // CAN CONVERT
+  // ============================================================
+
   bool get _canConvertGold {
     final balance = double.tryParse('${gold?['balance'] ?? 0}') ?? 0;
 
@@ -379,6 +390,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
     return balance >= minimum;
   }
 
+  // ============================================================
+  // MAIN CONTAINER
+  // ============================================================
+
   Widget _buildContainer({required Widget child}) {
     return Container(
       width: double.infinity,
@@ -394,6 +409,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
     );
   }
 
+  // ============================================================
+  // CONVERSION ROW
+  // ============================================================
+
   Widget _convertRow({
     required String metal,
     required String available,
@@ -404,6 +423,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
     VoidCallback? onPressed,
   }) {
     final bool isGold = metal == 'Gold';
+
+    // IMPORTANT:
+    // Only this metal is considered loading.
+    final bool isThisMetalStarting = _startingMetal == metal;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,7 +501,8 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
               SizedBox(
                 height: 40,
                 child: ElevatedButton(
-                  onPressed: isStartingOrder
+                  // Only the clicked metal gets disabled.
+                  onPressed: isThisMetalStarting
                       ? null
                       : errorText == null
                       ? onPressed
@@ -492,7 +516,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
                     ),
                   ),
                   child: TranslatedText(
-                    isStartingOrder ? 'Starting...' : 'Start Order',
+                    isThisMetalStarting ? 'Starting...' : 'Start Order',
                     style: const TextStyle(fontSize: 11),
                   ),
                 ),
@@ -536,6 +560,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
     );
   }
 
+  // ============================================================
+  // GOLD
+  // ============================================================
+
   Future<void> _openGoldConversion() async {
     final amount = double.tryParse(_goldAmountController.text);
 
@@ -550,6 +578,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
     await _showStartConversionDialog(metal: 'Gold', amount: amount);
   }
 
+  // ============================================================
+  // SILVER
+  // ============================================================
+
   Future<void> _openSilverConversion() async {
     final amount = double.tryParse(_silverAmountController.text);
 
@@ -563,6 +595,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
 
     await _showStartConversionDialog(metal: 'Silver', amount: amount);
   }
+
+  // ============================================================
+  // CONFIRMATION DIALOG
+  // ============================================================
 
   Future<void> _showStartConversionDialog({
     required String metal,
@@ -600,6 +636,7 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
                 style: TextStyle(color: Colors.grey),
               ),
             ),
+
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(dialogContext, true);
@@ -629,6 +666,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
     );
   }
 
+  // ============================================================
+  // START PHYSICAL CONVERSION
+  // ============================================================
+
   Future<void> _startPhysicalConversion({
     required String metal,
     required double amount,
@@ -636,8 +677,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
   }) async {
     if (!mounted) return;
 
+    // IMPORTANT:
+    // Store the metal that is currently starting.
     setState(() {
-      isStartingOrder = true;
+      _startingMetal = metal;
     });
 
     try {
@@ -648,9 +691,9 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
         'currency=$currency',
       );
 
-      // ============================================================
+      // ========================================================
       // STEP 1: CALL CONVERT API
-      // ============================================================
+      // ========================================================
 
       final convertResponse = await GspService.convertToPhysical(
         metal: metal,
@@ -662,9 +705,9 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
 
       if (!mounted) return;
 
-      // ============================================================
+      // ========================================================
       // STEP 2: READ API RESPONSE
-      // ============================================================
+      // ========================================================
 
       final bool apiStatus = convertResponse['status'] == true;
 
@@ -697,9 +740,9 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
         'amount=$responseAmount',
       );
 
-      // ============================================================
+      // ========================================================
       // STEP 3: CONVERSION MUST BE ACTIVE
-      // ============================================================
+      // ========================================================
 
       if (!apiStatus || conversionStatus != 'active') {
         log(
@@ -716,11 +759,12 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
       }
 
       log('✅ PHYSICAL CONVERSION API SUCCESS');
+
       log('✅ Conversion status = ACTIVE');
 
-      // ============================================================
-      // STEP 4: MOVE NORMAL CART TO PHYSICAL ORDER
-      // ============================================================
+      // ========================================================
+      // STEP 4: MOVE NORMAL CART TO PHYSICAL
+      // ========================================================
 
       log('➡️ Moving normal cart to physical order');
 
@@ -746,6 +790,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
 
       log('✅ NORMAL CART MOVED SUCCESSFULLY');
 
+      // ========================================================
+      // STEP 5: UPDATE PHYSICAL PROVIDER
+      // ========================================================
+
       final physicalProvider = context.read<PhysicalConversionProvider>();
 
       physicalProvider.setConversionPlan('gsp');
@@ -761,9 +809,9 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
 
       if (!mounted) return;
 
-      // ============================================================
+      // ========================================================
       // STEP 6: NAVIGATE TO CART
-      // ============================================================
+      // ========================================================
 
       Navigator.pushReplacement(
         context,
@@ -783,12 +831,17 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
       );
     } finally {
       if (mounted) {
+        // Reset only the metal loading state.
         setState(() {
-          isStartingOrder = false;
+          _startingMetal = null;
         });
       }
     }
   }
+
+  // ============================================================
+  // GOLD AMOUNT VALIDATION
+  // ============================================================
 
   void _onGoldAmountChanged(String value) {
     final entered = double.tryParse(value);
@@ -802,7 +855,8 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
         _goldAmountError = 'Enter a valid amount.';
       } else if (entered < minimum) {
         _goldAmountError =
-            'Value must be at least ${minimum.toStringAsFixed(4)} g.';
+            'Value must be at least '
+            '${minimum.toStringAsFixed(4)} g.';
       } else if (entered > balance) {
         _goldAmountError =
             'Value must be less than or equal to '
@@ -812,6 +866,10 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
       }
     });
   }
+
+  // ============================================================
+  // SILVER AMOUNT VALIDATION
+  // ============================================================
 
   void _onSilverAmountChanged(String value) {
     final entered = double.tryParse(value);
@@ -826,7 +884,8 @@ class _GspConvertPhysicalSectionState extends State<GspConvertPhysicalSection> {
         _silverAmountError = 'Enter a valid amount.';
       } else if (entered < minimum) {
         _silverAmountError =
-            'Value must be at least ${minimum.toStringAsFixed(4)} g.';
+            'Value must be at least '
+            '${minimum.toStringAsFixed(4)} g.';
       } else if (entered > balance) {
         _silverAmountError =
             'Value must be less than or equal to '

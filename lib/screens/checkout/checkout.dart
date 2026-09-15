@@ -36,10 +36,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool isTermsAccepted = false;
   bool _isPlacingOrder = false;
   bool showAddressForm = false;
-  String? localAddress;
+  // String? localAddress;
   String? selectedCard;
   bool _isCancellingConversion = false;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  // bool _initialAddressLoaded = false;
 
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
@@ -49,6 +50,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  // @override
+  // void initState() {
+  //   super.initState();
+
+  //   Future.microtask(() async {
+  //     if (!mounted) return;
+
+  //     await context.read<AddressProvider>().fetchAddress();
+
+  //     if (!mounted) return;
+
+  //     final cartProvider = context.read<CartProvider>();
+
+  //     await cartProvider.fetchCart();
+  //   });
+
+  //   _loadLocalAddress();
+  // }
+
   @override
   void initState() {
     super.initState();
@@ -56,57 +76,64 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     Future.microtask(() async {
       if (!mounted) return;
 
-      await context.read<AddressProvider>().fetchAddress();
+      final addressProvider = context.read<AddressProvider>();
+
+      // Fetch the latest address from API.
+      await addressProvider.fetchAddress();
 
       if (!mounted) return;
 
-      final cartProvider = context.read<CartProvider>();
+      // Put API address into the editable field once.
+      if (addressProvider.hasAddress &&
+          addressProvider.address != null &&
+          addressProvider.address!.trim().isNotEmpty) {
+        addressController.text = addressProvider.address!.trim();
+      }
 
+      final cartProvider = context.read<CartProvider>();
       await cartProvider.fetchCart();
     });
-
-    _loadLocalAddress();
   }
 
-  Future<void> _loadLocalAddress() async {
-    final prefs = await SharedPreferences.getInstance();
+  // Future<void> _loadLocalAddress() async {
+  //   final prefs = await SharedPreferences.getInstance();
 
-    final savedAddress = prefs.getString("checkout_address");
+  //   final savedAddress = prefs.getString("checkout_address");
 
-    if (!mounted) return;
+  //   if (!mounted) return;
 
-    setState(() {
-      localAddress = savedAddress;
+  //   setState(() {
+  //     localAddress = savedAddress;
 
-      if (savedAddress != null) {
-        addressController.text = savedAddress;
-      }
-    });
-  }
+  //     if (savedAddress != null) {
+  //       addressController.text = savedAddress;
+  //     }
+  //   });
+  // }
 
-  Future<void> _saveAddress() async {
-    final address = addressController.text.trim();
+  // Future<void> _saveAddress() async {
+  //   final address = addressController.text.trim();
 
-    if (address.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: TranslatedText("Please enter a shipping address"),
-        ),
-      );
-      return;
-    }
+  //   if (address.isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: TranslatedText("Please enter a shipping address"),
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    final prefs = await SharedPreferences.getInstance();
+  //   final prefs = await SharedPreferences.getInstance();
 
-    await prefs.setString("checkout_address", address);
+  //   await prefs.setString("checkout_address", address);
 
-    if (!mounted) return;
+  //   if (!mounted) return;
 
-    setState(() {
-      localAddress = address;
-      showAddressForm = false;
-    });
-  }
+  //   setState(() {
+  //     localAddress = address;
+  //     showAddressForm = false;
+  //   });
+  // }
 
   @override
   void dispose() {
@@ -211,12 +238,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final addressProvider = context.read<AddressProvider>();
     final cartProvider = context.read<CartProvider>();
     final physicalProvider = context.read<PhysicalConversionProvider>();
-    final String shippingAddress =
-        addressProvider.hasAddress &&
-            addressProvider.address != null &&
-            addressProvider.address!.trim().isNotEmpty
-        ? addressProvider.address!.trim()
-        : (localAddress ?? '').trim();
+    final String shippingAddress = addressController.text.trim();
     log("CHECKOUT SHIPPING ADDRESS -> $shippingAddress");
 
     if (shippingAddress.isEmpty) {
@@ -320,8 +342,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         if (!mounted) return;
 
-        // Navigate directly to success screen.
-        // Do NOT set _isPlacingOrder = false before navigation.
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
@@ -426,14 +446,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     digitalSubtype = cartProvider.digitalSubtype?.toLowerCase().trim();
 
-    log("CHECKOUT -> Cart fulfillment: $fulfillment");
+    log("CHECKOUT -> Cart fulfillment: $cartProvider");
 
     final bool isPhysical = fulfillment == "physical";
     final bool isDigital = fulfillment == "digital";
     final bool isMixed = fulfillment == "mixed";
 
-    // Mixed cart:
-    // Do not show Physical/Digital radio buttons.
     if (isMixed) {
       return _buildMixedFulfillmentInfo(digitalSubtype);
     }
@@ -478,15 +496,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     },
             ),
 
-            TranslatedText(
-              "Physical",
-              // style: TextStyle(
-              //   fontWeight: effectiveDelivery == "physical"
-              //       ? FontWeight.w600
-              //       : FontWeight.normal,
-              //   color: isDigital ? Colors.grey : Colors.black87,
-              // ),
-            ),
+            TranslatedText("Physical"),
 
             const SizedBox(width: 20),
 
@@ -512,15 +522,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     },
             ),
 
-            TranslatedText(
-              "Digital",
-              // style: TextStyle(
-              //   fontWeight: effectiveDelivery == "digital"
-              //       ? FontWeight.w600
-              //       : FontWeight.normal,
-              //   color: isPhysical ? Colors.grey : Colors.black87,
-              // ),
-            ),
+            TranslatedText("Digital"),
           ],
         ),
 
@@ -534,6 +536,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       ],
     );
+  }
+
+  bool _shouldShowDeliveryMethod(CartProvider cartProvider) {
+    if (cartProvider.cartItems.isEmpty) {
+      return false;
+    }
+
+    // If ALL products are digital plans (JSC/GSP),
+    // hide delivery-related details.
+    final bool allDigitalPlans = cartProvider.cartItems.every((item) {
+      return item["is_digital_plan"] == true;
+    });
+
+    // Show delivery details when at least one physical
+    // product exists in the cart.
+    return !allDigitalPlans;
   }
 
   Widget _buildMixedFulfillmentInfo(String? digitalSubtype) {
@@ -666,49 +684,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  String _getDeliveryType(CartProvider cartProvider) {
-    final items = cartProvider.cartItems;
-
-    bool hasPhysical = false;
-    bool hasDigital = false;
-
-    log("CHECKOUT -> Cart items for delivery type: $items");
-
-    for (final item in items) {
-      final fulfillment = item["fulfillment"]?.toString().toLowerCase();
-
-      log("CHECKOUT -> Item fulfillment: $item");
-
-      if (fulfillment == "physical") {
-        hasPhysical = true;
-      } else if (fulfillment == "digital") {
-        hasDigital = true;
-      } else if (fulfillment == "mixed") {
-        hasPhysical = true;
-        hasDigital = true;
-      }
-    }
-
-    if (hasPhysical && hasDigital) {
-      return "mixed";
-    }
-
-    if (hasDigital) {
-      return "digital";
-    }
-
-    return "physical";
-  }
-
   Future<void> _placeNormalOrder() async {
-    final addressProvider = context.read<AddressProvider>();
+    // final addressProvider = context.read<AddressProvider>();
     final cartProvider = context.read<CartProvider>();
     final currencyProvider = context.read<CurrencyProvider>();
-    final String? shippingAddress = addressProvider.hasAddress
-        ? addressProvider.address
-        : localAddress;
+    final String shippingAddress = addressController.text.trim();
 
-    if (shippingAddress == null || shippingAddress.trim().isEmpty) {
+    log("CHECKOUT SHIPPING ADDRESS -> $shippingAddress");
+
+    if (shippingAddress.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: TranslatedText("Please add your shipping address"),
@@ -885,12 +869,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           return;
         }
 
-        // Payment successful -> clear cart
         log("STRIPE PAYMENT SUCCESS -> Clearing cart...");
 
         cartProvider.clearCart();
 
-        // Refresh cart from backend to make sure it is empty
         await cartProvider.fetchCart();
 
         if (!mounted) return;
@@ -932,226 +914,77 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildShippingAddress() {
-    BoxDecoration cardDecoration() {
-      return BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2)),
-        ],
-      );
-    }
-
     return Consumer<AddressProvider>(
       builder: (context, addressProvider, child) {
         if (addressProvider.isLoading) {
-          return Container(
-            padding: const EdgeInsets.all(20),
-            decoration: cardDecoration(),
-            child: const Center(child: CircularProgressIndicator()),
+          return const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 48,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ],
           );
         }
 
-        final String? displayAddress = addressProvider.hasAddress
-            ? addressProvider.address
-            : localAddress;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // const TranslatedText(
+            //   'Shipping address',
+            //   style: TextStyle(
+            //     fontSize: 20,
+            //     fontWeight: FontWeight.w400,
+            //     color: Colors.black,
+            //   ),
+            // ),
 
-        if (displayAddress == null && !showAddressForm) {
-          return Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(18),
-            decoration: cardDecoration(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF3F3),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.location_on_outlined,
-                        color: AppColors.primaryRed,
-                      ),
-                    ),
+            // const SizedBox(height: 10),
+            TextField(
+              controller: addressController,
 
-                    const SizedBox(width: 12),
+              // User can edit the API address.
+              maxLines: 3,
+              minLines: 1,
 
-                    const Expanded(
-                      child: TranslatedText(
-                        'No shipping address added',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
+              style: const TextStyle(fontSize: 14, color: Colors.black),
+
+              decoration: InputDecoration(
+                hintText: 'Enter your shipping address',
+
+                hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 13,
                 ),
 
-                const SizedBox(height: 15),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      setState(() {
-                        showAddressForm = true;
-                      });
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primaryRed,
-                      side: const BorderSide(color: AppColors.primaryRed),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const TranslatedText('ADD SHIPPING ADDRESS'),
-                  ),
+                suffixIcon: const Icon(
+                  Icons.edit,
+                  color: Colors.grey,
+                  size: 20,
                 ),
-              ],
+
+                filled: false,
+
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                ),
+
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                ),
+
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                ),
+              ),
             ),
-          );
-        }
-
-        if (showAddressForm) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const TranslatedText(
-                'Shipping address',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-              ),
-
-              const SizedBox(height: 12),
-
-              TextField(
-                controller: addressController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Enter your complete shipping address',
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.primaryRed),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        setState(() {
-                          showAddressForm = false;
-                        });
-                      },
-                      child: const TranslatedText('Cancel'),
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _saveAddress,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryRed,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const TranslatedText('Save Address'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          );
-        }
-
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: cardDecoration(),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3F3),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.location_on_outlined,
-                  color: AppColors.primaryRed,
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (addressProvider.hasAddress &&
-                        addressProvider.name != null &&
-                        addressProvider.name!.isNotEmpty)
-                      TranslatedText(
-                        addressProvider.name!,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                    if (addressProvider.hasAddress) const SizedBox(height: 6),
-
-                    TranslatedText(
-                      displayAddress!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        height: 1.4,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    showAddressForm = true;
-                    addressController.text = displayAddress;
-                  });
-                },
-                child: const TranslatedText(
-                  'Change',
-                  style: TextStyle(
-                    color: AppColors.primaryRed,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          ],
         );
       },
     );
@@ -1234,6 +1067,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final Map<String, dynamic>? coupon = provider.coupon;
 
+    final bool showDeliveryDetails = _shouldShowDeliveryMethod(provider);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -1252,15 +1087,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 15),
 
           ...provider.cartItems.map((item) {
+            log("itemmmmmmmm/ $item");
             final String name = item["name"]?.toString() ?? "Product";
 
             final int quantity =
                 int.tryParse(item["quantity"]?.toString() ?? "1") ?? 1;
 
             final String productPrice =
-                item["formatted_effective_unit_price"]?.toString() ??
-                item["formatted_unit_price"]?.toString() ??
-                item["formatted_compare_price"]?.toString() ??
+                item["formatted_line_total"]?.toString() ??
+                item["line_total"]?.toString() ??
                 "0.00";
 
             return Padding(
@@ -1298,46 +1133,47 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 15),
 
-          _checkoutSummaryRow(
-            "Courier charge (${deliveryMethod} delivery)",
-            "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedCourierFee, currencySymbol)}",
-          ),
-
-          if (coupon != null) ...[
-            const SizedBox(height: 15),
-
+          if (showDeliveryDetails) ...[
             _checkoutSummaryRow(
-              "Discount (${coupon["code"] ?? ""})",
-              "- ${_formatCheckoutCurrency(provider.formattedDiscount, currencySymbol)}",
+              "Courier charge (${deliveryMethod} delivery)",
+              "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedCourierFee, currencySymbol)}",
             ),
 
-            const SizedBox(height: 15),
+            if (coupon != null) ...[
+              const SizedBox(height: 15),
 
-            _checkoutSummaryRow(
-              "Discount Price",
-              _formatCheckoutCurrency(
-                provider.formattedDiscountPrice,
-                currencySymbol,
+              _checkoutSummaryRow(
+                "Discount (${coupon["code"] ?? ""})",
+                "- ${_formatCheckoutCurrency(provider.formattedDiscount, currencySymbol)}",
               ),
-            ),
-          ],
 
-          const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-          _checkoutSummaryRow(
-            "Transaction fee (4%)",
-            "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedTransactionFee, currencySymbol)}",
-          ),
+              _checkoutSummaryRow(
+                "Discount Price",
+                _formatCheckoutCurrency(
+                  provider.formattedDiscountPrice,
+                  currencySymbol,
+                ),
+              ),
+            ],
 
-          if (provider.showTax) ...[
             const SizedBox(height: 15),
 
             _checkoutSummaryRow(
-              "GST (21%)",
-              "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedGST, currencySymbol)}",
+              "Transaction fee (4%)",
+              "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedTransactionFee, currencySymbol)}",
             ),
-          ],
 
+            if (provider.showTax) ...[
+              const SizedBox(height: 15),
+
+              _checkoutSummaryRow(
+                "GST (21%)",
+                "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedGST, currencySymbol)}",
+              ),
+            ],
+          ],
           const Divider(height: 35),
 
           _checkoutSummaryRow(
@@ -1748,31 +1584,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ? null
                 : () async {
                     try {
-                      final currencyProvider = context.read<CurrencyProvider>();
-
                       dynamic plan;
-
-                      // final res = await GspService.fetchConvertPhysicalDetails(
-                      //   currency: currencyProvider.selectedCurrency,
-                      // );
-
-                      // log("fetchConvertPhysicalDetails response: $res");
-
-                      // log(
-                      //   "fetchConvertPhysicalDetails data: "
-                      //   "${res['data']}",
-                      // );
-
-                      // // If you want to print individual values:
-                      // if (res['data'] != null) {
-                      //   final data = Map<String, dynamic>.from(res['data']);
-
-                      //   log("Convert Physical Data: $data");
-
-                      //   log("Golddd: ${data['wallet_section']}");
-
-                      //   plan = data['wallet_section'];
-                      // }
 
                       final res = await JscService.fetchConvertDetails();
 
@@ -1783,7 +1595,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         "${res['data']}",
                       );
 
-                      // If you want to print individual values:
                       if (res['data'] != null) {
                         final data = Map<String, dynamic>.from(res['data']);
 

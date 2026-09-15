@@ -61,7 +61,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
     ) async {
       if (!mounted) return;
 
-      // Only poll while Cart tab is active.
       if (!widget.isActiveTab) {
         return;
       }
@@ -75,7 +74,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
 
     final physicalProvider = context.read<PhysicalConversionProvider>();
 
-    // Don't start another request while one is already running.
     if (physicalProvider.isFetchingStatus) {
       return;
     }
@@ -96,11 +94,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
         'wasActive=$wasActive '
         'isActive=$isActive',
       );
-
-      // ----------------------------------------------------------
-      // Conversion was active before but website/mobile elsewhere
-      // cancelled it.
-      // ----------------------------------------------------------
 
       if (wasActive && !isActive) {
         log(
@@ -206,10 +199,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
       );
       log('================================================');
 
-      // ==========================================================
-      // ALWAYS ASK BACKEND
-      // ==========================================================
-
       await physicalProvider.fetchConversionStatus();
 
       if (!mounted) return;
@@ -222,10 +211,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
         'amount=${physicalProvider.amount}',
       );
       log('================================================');
-
-      // ==========================================================
-      // REFRESH NORMAL CART
-      // ==========================================================
 
       cartProvider.updateSelection(
         currency: currencyProvider.selectedCurrency,
@@ -250,84 +235,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
     }
   }
 
-  // ============================================================
-  // REFRESH CART STATE
-  // ============================================================
-
-  Future<void> _refreshCartState() async {
-    if (!mounted) return;
-
-    if (_isFetchingConversionStatus) {
-      return;
-    }
-
-    _isFetchingConversionStatus = true;
-
-    try {
-      final physicalProvider = context.read<PhysicalConversionProvider>();
-
-      final currencyProvider = context.read<CurrencyProvider>();
-
-      final cartProvider = context.read<CartProvider>();
-
-      final currency = currencyProvider.selectedCurrency;
-
-      final unit = currencyProvider.selectedUnit;
-
-      log(
-        '🛒 REFRESH CART STATE -> '
-        'currency=$currency '
-        'unit=$unit',
-      );
-
-      // --------------------------------------------------------
-      // STEP 1
-      // Get actual conversion status from backend.
-      // --------------------------------------------------------
-
-      log('🛒 FETCHING BACKEND CONVERSION STATUS...');
-
-      await physicalProvider.fetchConversionStatus();
-
-      if (!mounted) return;
-
-      log(
-        '🛒 BACKEND CONVERSION STATUS -> '
-        'active=${physicalProvider.isActive}, '
-        'metal=${physicalProvider.metal}, '
-        'amount=${physicalProvider.amount}',
-      );
-
-      // --------------------------------------------------------
-      // STEP 2
-      // Update cart selection.
-      // --------------------------------------------------------
-
-      cartProvider.updateSelection(currency: currency, unit: unit);
-
-      // --------------------------------------------------------
-      // STEP 3
-      // Fetch backend cart.
-      //
-      // IMPORTANT:
-      // This is done AFTER conversion status is known.
-      // --------------------------------------------------------
-
-      await cartProvider.fetchCart();
-
-      if (!mounted) return;
-
-      log(
-        '🛒 CART FETCH COMPLETE -> '
-        'items=${cartProvider.cartItems.length}',
-      );
-    } catch (e, stackTrace) {
-      log('❌ _refreshCartState ERROR: $e', stackTrace: stackTrace);
-    } finally {
-      _isFetchingConversionStatus = false;
-    }
-  }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -339,10 +246,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
 
     super.dispose();
   }
-
-  // ============================================================
-  // CURRENCY / UNIT CHANGES
-  // ============================================================
 
   @override
   void didChangeDependencies() {
@@ -396,7 +299,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
   ) {
     final bool isPhysicalActive = physicalProvider.isActive;
 
-    // Both normal cart and physical conversion use CartProvider.cartItems.
     final bool hasItems = cartProvider.cartItems.isNotEmpty;
 
     return SafeArea(
@@ -432,10 +334,11 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
 
             _buildCouponSection(provider: cartProvider),
 
-            const SizedBox(height: 20),
+            if (_shouldShowDeliveryMethod(cartProvider)) ...[
+              const SizedBox(height: 20),
 
-            const DeliveryMethodWidget(),
-
+              const DeliveryMethodWidget(),
+            ],
             const SizedBox(height: 20),
 
             SummaryWidget(
@@ -715,6 +618,20 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
         ],
       ),
     );
+  }
+
+  bool _shouldShowDeliveryMethod(CartProvider cartProvider) {
+    if (cartProvider.cartItems.isEmpty) {
+      return false;
+    }
+
+    // Hide delivery method when ALL cart items are digital plans
+    final bool allDigitalPlans = cartProvider.cartItems.every((item) {
+      return item["is_digital_plan"] == true;
+    });
+
+    // Show delivery method if there is at least one physical product
+    return !allDigitalPlans;
   }
 
   Widget _buildCartProducts(CartProvider provider, bool isPhysicalConversion) {

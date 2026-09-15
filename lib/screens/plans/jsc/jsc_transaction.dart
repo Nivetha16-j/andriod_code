@@ -100,14 +100,13 @@ class _JscTransactionHistoryContentState
       );
 
       currency = currencyProvider.selectedCurrency;
-
       currencySymbol = _getCurrencySymbol(currency);
 
-      log('Fetching transactions with currency: $currency');
+      log('Fetching JSC transactions with currency: $currency');
 
       final result = await JscService.getTransactions(currency: currency);
 
-      log('Transaction History Response: $result');
+      log('JSC Transaction History Response: $result');
 
       if (!mounted) return;
 
@@ -117,6 +116,7 @@ class _JscTransactionHistoryContentState
         setState(() {
           transactions = data is List
               ? data
+                    .whereType<Map>()
                     .map<Map<String, dynamic>>(
                       (item) => Map<String, dynamic>.from(item),
                     )
@@ -125,6 +125,8 @@ class _JscTransactionHistoryContentState
 
           isLoading = false;
         });
+
+        log('Parsed JSC transactions: $transactions');
       } else {
         setState(() {
           transactions = [];
@@ -135,16 +137,14 @@ class _JscTransactionHistoryContentState
           isLoading = false;
         });
       }
-    } catch (e) {
-      log('Transaction history error: $e');
+    } catch (e, stackTrace) {
+      log('JSC transaction history error: $e', stackTrace: stackTrace);
 
       if (!mounted) return;
 
       setState(() {
         transactions = [];
-
         errorMessage = 'Unable to load transaction history.';
-
         isLoading = false;
       });
     }
@@ -354,6 +354,8 @@ class _JscTransactionHistoryContentState
             ),
 
             ...transactions.map((transaction) {
+              log('transactionsssss $transaction');
+
               return _TransactionRow(
                 transaction: transaction,
                 currencySymbol: currencySymbol,
@@ -390,14 +392,13 @@ class _TransactionRow extends StatelessWidget {
         '';
 
     final unit =
-        transaction['unit']?.toString() ??
         transaction['unit_short']?.toString() ??
+        transaction['unit']?.toString() ??
         '';
 
-    final amount =
-        transaction['amount']?.toString() ??
-        transaction['quantity']?.toString() ??
-        '0';
+    final amount = _formatAmount(
+      transaction['amount'] ?? transaction['quantity'] ?? 0,
+    );
 
     final value =
         transaction['value']?.toString() ??
@@ -419,6 +420,15 @@ class _TransactionRow extends StatelessWidget {
 
     final isGold = metal == 'gold';
 
+    final transactionType =
+        transaction['type']?.toString().toLowerCase() ?? 'credit';
+
+    final isCredit = transactionType == 'credit';
+
+    // JSC sell-back transactions use:
+    // type: sell_back
+    final isSellBack = transactionType == 'sell_back';
+
     return Container(
       width: 560,
 
@@ -432,6 +442,9 @@ class _TransactionRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
 
         children: [
+          // =========================
+          // DATE
+          // =========================
           SizedBox(
             width: 85,
 
@@ -445,39 +458,85 @@ class _TransactionRow extends StatelessWidget {
               ),
             ),
           ),
+
+          // =========================
+          // METAL + SELL BACK
+          // =========================
           SizedBox(
             width: 75,
 
             child: Align(
               alignment: Alignment.centerLeft,
 
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
 
-                decoration: BoxDecoration(
-                  color: isGold
-                      ? const Color(0xFFFFF1C9)
-                      : const Color(0xFFEDEFF2),
+                crossAxisAlignment: CrossAxisAlignment.start,
 
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                children: [
+                  // METAL BADGE
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
 
-                child: TranslatedText(
-                  _capitalize(metal),
+                    decoration: BoxDecoration(
+                      color: isGold
+                          ? const Color(0xFFFFF1C9)
+                          : const Color(0xFFEDEFF2),
 
-                  style: TextStyle(
-                    fontSize: 8,
-                    fontWeight: FontWeight.w600,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
 
-                    color: isGold
-                        ? const Color(0xFF9A7400)
-                        : const Color(0xFF62666B),
+                    child: TranslatedText(
+                      _capitalize(metal),
+
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w600,
+
+                        color: isGold
+                            ? const Color(0xFF9A7400)
+                            : const Color(0xFF62666B),
+                      ),
+                    ),
                   ),
-                ),
+
+                  // SELL BACK BADGE
+                  if (isSellBack) ...[
+                    const SizedBox(height: 4),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
+
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFE1E6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+
+                      child: const TranslatedText(
+                        'Sell Back',
+
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFB3261E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
 
+          // =========================
+          // DESCRIPTION
+          // =========================
           SizedBox(
             width: 150,
 
@@ -496,11 +555,14 @@ class _TransactionRow extends StatelessWidget {
             ),
           ),
 
+          // =========================
+          // AMOUNT
+          // =========================
           SizedBox(
             width: 100,
 
             child: TranslatedText(
-              '+$amount $unit',
+              '${isCredit ? '+' : '-'}$amount $unit',
 
               textAlign: TextAlign.right,
 
@@ -512,6 +574,9 @@ class _TransactionRow extends StatelessWidget {
             ),
           ),
 
+          // =========================
+          // VALUE
+          // =========================
           SizedBox(
             width: 100,
 
@@ -532,6 +597,26 @@ class _TransactionRow extends StatelessWidget {
     );
   }
 
+  // =========================
+  // AMOUNT FORMAT
+  // =========================
+  static String _formatAmount(dynamic value) {
+    final number = double.tryParse(value.toString());
+
+    if (number == null) {
+      return value.toString();
+    }
+
+    if (number == number.roundToDouble()) {
+      return number.toInt().toString();
+    }
+
+    return number.toStringAsFixed(4).replaceFirst(RegExp(r'0+$'), '');
+  }
+
+  // =========================
+  // DATE FORMAT
+  // =========================
   static String _formatDate(String value) {
     if (value.isEmpty) {
       return '';
@@ -563,26 +648,38 @@ class _TransactionRow extends StatelessWidget {
     }
   }
 
+  // =========================
+  // VALUE FORMAT
+  // =========================
   String _formatValue(String value) {
     if (value.isEmpty) {
       return '';
     }
 
-    // Avoid adding another symbol if backend
-    // already returned one.
     if (value.startsWith('\$') ||
         value.startsWith('₹') ||
         value.startsWith('€') ||
         value.startsWith('£') ||
         value.startsWith('S\$') ||
         value.startsWith('A\$') ||
-        value.startsWith('C\$')) {
+        value.startsWith('C\$') ||
+        value.startsWith('د.إ') ||
+        value.startsWith('¥')) {
       return value;
+    }
+
+    final number = double.tryParse(value);
+
+    if (number != null) {
+      return '$currencySymbol${number.toStringAsFixed(2)}';
     }
 
     return '$currencySymbol$value';
   }
 
+  // =========================
+  // CAPITALIZE
+  // =========================
   static String _capitalize(String value) {
     if (value.isEmpty) {
       return '';

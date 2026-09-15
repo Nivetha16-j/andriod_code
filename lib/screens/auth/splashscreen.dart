@@ -1,8 +1,6 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:junubullion/routes/app_routes.dart';
-import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/services/session_manager.dart';
 
@@ -38,7 +36,6 @@ class _SplashScreenState extends State<SplashScreen>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
-    // Start animation
     _controller.forward();
 
     checkLogin();
@@ -65,9 +62,6 @@ class _SplashScreenState extends State<SplashScreen>
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else {
       Navigator.pushReplacementNamed(context, AppRoutes.login);
-      // Navigator.of(
-      //   context,
-      // ).push(MaterialPageRoute(builder: (_) => JscApplicationForm()));
     }
   }
 
@@ -85,7 +79,6 @@ class _SplashScreenState extends State<SplashScreen>
               height: 180,
               fit: BoxFit.contain,
             ),
-            // SizedBox(height: 20),
             FadeTransition(
               opacity: _fadeAnimation,
               child: ScaleTransition(

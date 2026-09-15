@@ -483,7 +483,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (_) =>
-                                          MainScreen(initialIndex: 3),
+                                          MainScreen(initialIndex: 4),
                                     ),
                                   );
                                 } else {

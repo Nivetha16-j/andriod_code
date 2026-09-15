@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
@@ -68,9 +67,6 @@ class _GspScreenState extends State<GspScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ---------------------------------------------------------
-            // HERO SECTION
-            // ---------------------------------------------------------
             Container(
               width: double.infinity,
               color: const Color(0xFF790000),
@@ -102,7 +98,6 @@ class _GspScreenState extends State<GspScreen> {
 
                   const SizedBox(height: 18),
 
-                  // Open GSP Account Button
                   SizedBox(
                     width: double.infinity,
                     height: 44,
@@ -154,25 +149,16 @@ class _GspScreenState extends State<GspScreen> {
 
                   const SizedBox(height: 16),
 
-                  // ---------------------------------------------------
-                  // QUOTE BOX 1
-                  // ---------------------------------------------------
                   _quoteBox('"Start with ₹1,475.69. Build a Golden Future"'),
 
                   const SizedBox(height: 12),
 
-                  // ---------------------------------------------------
-                  // QUOTE BOX 2
-                  // ---------------------------------------------------
                   _quoteBox(
                     '"Small Savings Today, Golden Opportunities Tomorrow."',
                   ),
 
                   const SizedBox(height: 12),
 
-                  // ---------------------------------------------------
-                  // QUOTE BOX 3
-                  // ---------------------------------------------------
                   _quoteBox(
                     '"Junu Bullion GSP – Making Gold Ownership Simple and Affordable."',
                   ),
@@ -180,9 +166,6 @@ class _GspScreenState extends State<GspScreen> {
               ),
             ),
 
-            // ---------------------------------------------------------
-            // GSP INFORMATION CARD
-            // ---------------------------------------------------------
             Container(
               width: double.infinity,
               margin: const EdgeInsets.fromLTRB(14, 16, 14, 20),
@@ -351,9 +334,6 @@ class _GspScreenState extends State<GspScreen> {
 
           const SizedBox(height: 25),
 
-          // -------------------------------------------------------
-          // CONVERSION CARDS
-          // -------------------------------------------------------
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -392,9 +372,6 @@ class _GspScreenState extends State<GspScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // -------------------------------------------------------
-          // INR AMOUNT
-          // -------------------------------------------------------
           TranslatedText(
             amount,
             textAlign: TextAlign.center,
@@ -406,9 +383,6 @@ class _GspScreenState extends State<GspScreen> {
             ),
           ),
 
-          // -------------------------------------------------------
-          // SGD AMOUNT
-          // -------------------------------------------------------
           TranslatedText(
             sgd,
             textAlign: TextAlign.center,
@@ -420,14 +394,8 @@ class _GspScreenState extends State<GspScreen> {
             ),
           ),
 
-          // -------------------------------------------------------
-          // DOWN ARROW
-          // -------------------------------------------------------
           const Icon(Icons.arrow_downward, color: Color(0xFFFFD33D), size: 23),
 
-          // -------------------------------------------------------
-          // GOLD VALUE
-          // -------------------------------------------------------
           TranslatedText(
             gold,
             textAlign: TextAlign.center,
@@ -476,9 +444,6 @@ class _GspScreenState extends State<GspScreen> {
 
           const SizedBox(height: 25),
 
-          // -------------------------------------------------------
-          // FEATURES - ONE BY ONE
-          // -------------------------------------------------------
           Column(
             children: [
               for (int i = 0; i < features.length; i++) ...[
@@ -507,9 +472,6 @@ class _GspScreenState extends State<GspScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // -------------------------------------------------------
-          // GOLD DOT
-          // -------------------------------------------------------
           Container(
             width: 13,
             height: 13,
@@ -521,9 +483,6 @@ class _GspScreenState extends State<GspScreen> {
 
           const SizedBox(width: 12),
 
-          // -------------------------------------------------------
-          // TEXT
-          // -------------------------------------------------------
           Expanded(
             child: Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -608,7 +567,6 @@ class _GspScreenState extends State<GspScreen> {
 
           LayoutBuilder(
             builder: (context, constraints) {
-              // Desktop/tablet: two columns
               if (constraints.maxWidth >= 700) {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -644,7 +602,6 @@ class _GspScreenState extends State<GspScreen> {
                 );
               }
 
-              // Mobile: one column
               return Column(
                 children: [
                   for (int i = 0; i < users.length; i++)
@@ -674,9 +631,6 @@ class _GspScreenState extends State<GspScreen> {
         InkWell(
           onTap: () {
             setState(() {
-              // Clicking the currently open item closes it.
-              // Clicking another item closes the previous one
-              // and opens the new one.
               _selectedUserType = isSelected ? null : index;
             });
           },
@@ -709,9 +663,6 @@ class _GspScreenState extends State<GspScreen> {
           ),
         ),
 
-        // ---------------------------------------------------------
-        // DESCRIPTION
-        // ---------------------------------------------------------
         AnimatedCrossFade(
           firstChild: const SizedBox.shrink(),
           secondChild: Padding(
@@ -734,9 +685,6 @@ class _GspScreenState extends State<GspScreen> {
           duration: const Duration(milliseconds: 250),
         ),
 
-        // ---------------------------------------------------------
-        // DIVIDER
-        // ---------------------------------------------------------
         Container(height: 1, color: Colors.grey.shade300),
       ],
     );
@@ -854,9 +802,6 @@ class _GspScreenState extends State<GspScreen> {
       ),
       child: Column(
         children: [
-          // -------------------------------------------------------
-          // ICON CIRCLE
-          // -------------------------------------------------------
           Container(
             width: 80,
             height: 80,
@@ -869,9 +814,6 @@ class _GspScreenState extends State<GspScreen> {
 
           const SizedBox(height: 18),
 
-          // -------------------------------------------------------
-          // TITLE
-          // -------------------------------------------------------
           SizedBox(
             height: 44,
             child: Center(
@@ -892,9 +834,6 @@ class _GspScreenState extends State<GspScreen> {
 
           const SizedBox(height: 8),
 
-          // -------------------------------------------------------
-          // DESCRIPTION
-          // -------------------------------------------------------
           Expanded(
             child: TranslatedText(
               description,
@@ -1009,9 +948,6 @@ class _GspScreenState extends State<GspScreen> {
 
           const SizedBox(height: 12),
 
-          // -------------------------------------------------------
-          // HORIZONTAL SCROLLABLE FEATURES
-          // -------------------------------------------------------
           SizedBox(
             height: 250,
             child: SingleChildScrollView(
@@ -1185,9 +1121,6 @@ class _GspProductCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // ==========================================================
-          // IMAGE
-          // ==========================================================
           ClipRRect(
             borderRadius: BorderRadius.circular(22),
             child: SizedBox(
@@ -1215,9 +1148,6 @@ class _GspProductCard extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          // ==========================================================
-          // PRODUCT NAME
-          // ==========================================================
           TranslatedText(
             productName,
             maxLines: 2,
@@ -1227,9 +1157,6 @@ class _GspProductCard extends StatelessWidget {
 
           const SizedBox(height: 5),
 
-          // ==========================================================
-          // PRICE
-          // ==========================================================
           TranslatedText(
             priceText,
             maxLines: 1,
@@ -1239,9 +1166,6 @@ class _GspProductCard extends StatelessWidget {
 
           const SizedBox(height: 4),
 
-          // ==========================================================
-          // STOCK STATUS
-          // ==========================================================
           TranslatedText(
             isInStock ? "In Stock" : "Out of Stock",
             style: TextStyle(
@@ -1253,9 +1177,6 @@ class _GspProductCard extends StatelessWidget {
 
           const SizedBox(height: 5),
 
-          // ==========================================================
-          // CART BUTTON
-          // ==========================================================
           SizedBox(
             width: double.infinity,
             height: 45,
@@ -1283,10 +1204,6 @@ class _GspProductCard extends StatelessWidget {
     required int productId,
     required bool isInStock,
   }) {
-    // ================================================================
-    // OUT OF STOCK
-    // ================================================================
-
     if (!isInStock) {
       return ElevatedButton(
         onPressed: null,
@@ -1304,16 +1221,6 @@ class _GspProductCard extends StatelessWidget {
         ),
       );
     }
-
-    // ================================================================
-    // PHYSICAL CONVERSION ACTIVE
-    //
-    // JSC products are digital products.
-    // They must NOT be added while physical conversion is active.
-    //
-    // IMPORTANT:
-    // We are NOT using physicalCart here.
-    // ================================================================
 
     if (physicalProvider.isActive) {
       return ElevatedButton(
@@ -1341,10 +1248,6 @@ class _GspProductCard extends StatelessWidget {
       );
     }
 
-    // ================================================================
-    // NORMAL CART
-    // ================================================================
-
     final bool isInCart = cartProvider.isProductInCart(productId);
 
     Map<String, dynamic>? cartItem;
@@ -1361,10 +1264,6 @@ class _GspProductCard extends StatelessWidget {
 
     final int cartQuantity = int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
 
-    // ================================================================
-    // ALREADY IN NORMAL CART
-    // ================================================================
-
     if (isInCart && cartQuantity > 0) {
       return Container(
         decoration: BoxDecoration(
@@ -1374,9 +1273,6 @@ class _GspProductCard extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // --------------------------------------------------------
-            // MINUS
-            // --------------------------------------------------------
             InkWell(
               onTap: () async {
                 if (cartQuantity <= 1) {
@@ -1397,9 +1293,6 @@ class _GspProductCard extends StatelessWidget {
               ),
             ),
 
-            // --------------------------------------------------------
-            // QUANTITY
-            // --------------------------------------------------------
             TranslatedText(
               "$cartQuantity",
               style: const TextStyle(
@@ -1409,9 +1302,6 @@ class _GspProductCard extends StatelessWidget {
               ),
             ),
 
-            // --------------------------------------------------------
-            // PLUS
-            // --------------------------------------------------------
             InkWell(
               onTap: () async {
                 await cartProvider.updateCartQuantity(
@@ -1431,10 +1321,6 @@ class _GspProductCard extends StatelessWidget {
         ),
       );
     }
-
-    // ================================================================
-    // ADD TO NORMAL CART
-    // ================================================================
 
     final bool isAdding = cartProvider.isAdding(productId);
 

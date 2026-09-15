@@ -54,7 +54,6 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// Heading
             const TranslatedText(
               "Reviews from real people",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
@@ -73,16 +72,6 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
 
             const SizedBox(height: 25),
 
-            /// Review Cards
-            // SizedBox(
-            //   height: 260,
-            //   child: ListView.separated(
-            //     scrollDirection: Axis.horizontal,
-            //     itemBuilder: (context, index) => const ReviewCard(),
-            //     separatorBuilder: (_, __) => const SizedBox(width: 18),
-            //     itemCount: 5,
-            //   ),
-            // ),
             Consumer<TestimonialProvider>(
               builder: (context, provider, child) {
                 if (provider.isLoading) {
@@ -107,7 +96,6 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
 
             const SizedBox(height: 35),
 
-            /// Form Heading
             const TranslatedText(
               "We'd love to hear your thoughts",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),

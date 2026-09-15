@@ -14,9 +14,8 @@ class FaqScreen extends StatefulWidget {
 }
 
 class _FaqScreenState extends State<FaqScreen> {
-  int expandedIndex = 0; // First item opened initially
+  int expandedIndex = 0;
   final List<List<Map<String, String>>> faqData = [
-    // General Questions
     [
       {
         "question": "What types of gold and silver products do you sell?",
@@ -34,8 +33,6 @@ class _FaqScreenState extends State<FaqScreen> {
             "We source our metals from reliable mints such as PAMP, Perth Mint, and the Royal Canadian Mint. Each product comes with proper markings, including weight, purity, and a serial number . Additionally, our experts verify authenticity before shipping.",
       },
     ],
-
-    // Ordering & Payment
     [
       {
         "question": "How can I place an order?",
@@ -53,16 +50,12 @@ class _FaqScreenState extends State<FaqScreen> {
             "There is no minimum order requirement. However, for large orders above a certain threshold, additional verification may be required for security purposes.",
       },
     ],
-
-    // Shipping
     [
       {
         "question": "How do creators earn money?",
         "answer": "Creators earn through subscriptions and sales.",
       },
     ],
-
-    // Investing
     [
       {
         "question": "Which payment methods are accepted?",
@@ -277,10 +270,9 @@ class _FaqScreenState extends State<FaqScreen> {
                               text: "+65 83125775",
                             ),
                             SizedBox(height: 5),
-                            // SizedBox(height: 5,),
                             _ContactItem(
                               icon: Icons.email,
-                              text: "info@junubullion.com",
+                              text: "customer@junubullion.com",
                             ),
                             SizedBox(height: 5),
                             _ContactItem(

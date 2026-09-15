@@ -1064,7 +1064,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           const SizedBox(height: 20),
 
                           SizedBox(
-                            width: 100,
+                            // width: 100,
                             height: 42,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -1083,7 +1083,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                         color: Colors.black,
                                       ),
                                     )
-                                  : const TranslatedText("Submit"),
+                                  : TranslatedText(
+                                      "Submit",
+                                      // style: TextStyle(fontSize: 20),
+                                    ),
                             ),
                           ),
                         ],

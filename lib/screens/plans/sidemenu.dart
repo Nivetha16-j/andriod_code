@@ -59,7 +59,7 @@ class PlansSidebar extends StatelessWidget {
               _menuItem('Convert to Physical'),
 
               _menuItem('Sell Back Request'),
-              _menuItem('Lost Password'),
+              // _menuItem('Lost Password'),
               _menuItem('Logout'),
             ],
           ),

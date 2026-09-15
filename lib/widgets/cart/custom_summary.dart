@@ -34,45 +34,78 @@ class SummaryWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<CartProvider>();
 
+    // Show delivery-related charges only when the cart
+    // contains at least one physical product.
+    final bool showDeliveryDetails = _shouldShowDeliveryMethod(provider);
+
     return Column(
       children: [
         _row("Subtotal Product", _formatCurrency(subtotal)),
 
         const SizedBox(height: 15),
 
-        _row(
-          "Courier charge (${deliveryMethod} delivery)",
-          "+ ${_formatCurrency(courier_fee)}",
-        ),
-
-        if (coupon != null) ...[
-          const SizedBox(height: 15),
-
+        // ============================================================
+        // DELIVERY / PHYSICAL PRODUCT CHARGES
+        // ============================================================
+        if (showDeliveryDetails) ...[
           _row(
-            "Discount (${coupon!["code"]})",
-            "- ${_formatCurrency(discount)}",
+            "Courier charge (${deliveryMethod} delivery)",
+            "+ ${_formatCurrency(courier_fee)}",
           ),
 
+          // Coupon
+          if (coupon != null) ...[
+            const SizedBox(height: 15),
+
+            _row(
+              "Discount (${coupon!["code"]})",
+              "- ${_formatCurrency(discount)}",
+            ),
+
+            const SizedBox(height: 15),
+
+            _row("Discount Price", _formatCurrency(discountPrice)),
+          ],
+
           const SizedBox(height: 15),
 
-          _row("Discount Price", _formatCurrency(discountPrice)),
+          _row("Transaction fee (4%)", "+ ${_formatCurrency(transaction_fee)}"),
+
+          if (provider.showTax) ...[
+            const SizedBox(height: 15),
+
+            _row("GST (21%)", "+ ${_formatCurrency(gst)}"),
+          ],
         ],
 
-        const SizedBox(height: 15),
-
-        _row("Transaction fee (4%)", "+ ${_formatCurrency(transaction_fee)}"),
-
-        if (provider.showTax) ...[
-          const SizedBox(height: 15),
-
-          _row("GST (21%)", "+ ${_formatCurrency(gst)}"),
-        ],
-
+        // ============================================================
+        // TOTAL
+        // ============================================================
         const Divider(height: 35),
 
         _row("Total", _formatCurrency(total), bold: true),
       ],
     );
+  }
+
+  // ============================================================
+  // DELIVERY METHOD VISIBILITY
+  // ============================================================
+
+  bool _shouldShowDeliveryMethod(CartProvider cartProvider) {
+    if (cartProvider.cartItems.isEmpty) {
+      return false;
+    }
+
+    // If ALL products are digital plans (JSC/GSP),
+    // hide delivery-related details.
+    final bool allDigitalPlans = cartProvider.cartItems.every((item) {
+      return item["is_digital_plan"] == true;
+    });
+
+    // Show delivery details when at least one physical
+    // product exists in the cart.
+    return !allDigitalPlans;
   }
 
   // ============================================================
@@ -169,11 +202,15 @@ class SummaryWidget extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        TranslatedText(
-          title,
-          style: TextStyle(
-            fontSize: bold ? 15 : 14,
-            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+        Expanded(
+          child: TranslatedText(
+            title,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: bold ? 15 : 14,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
         ),
 

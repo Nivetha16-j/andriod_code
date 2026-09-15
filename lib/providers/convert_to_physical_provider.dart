@@ -5,10 +5,6 @@ import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/services/jsc_services.dart';
 
 class PhysicalConversionProvider extends ChangeNotifier {
-  // ============================================================
-  // BACKEND-SOURCED STATE ONLY
-  // ============================================================
-
   bool _isActive = false;
   String? _metal;
   double _amount = 0;
@@ -18,10 +14,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
   String? _plan;
 
   String? get plan => _plan;
-
-  // ============================================================
-  // GETTERS
-  // ============================================================
 
   bool get isActive => _isActive;
 
@@ -34,15 +26,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
   String get formattedAmount {
     return _amount.toStringAsFixed(4);
   }
-
-  // ============================================================
-  // SET STATE FROM BACKEND
-  //
-  // IMPORTANT:
-  // Nothing is saved to SharedPreferences.
-  //
-  // Backend is the ONLY source of truth.
-  // ============================================================
 
   void _setInactive() {
     _isActive = false;
@@ -103,27 +86,9 @@ class PhysicalConversionProvider extends ChangeNotifier {
 
       log('📦 CONVERSION STATUS RESPONSE: $response');
 
-      // ============================================================
-      // BACKEND RESPONSE STATUS
-      // ============================================================
-
       final apiStatus = response['status'] == true;
 
       final data = response['data'];
-
-      // ============================================================
-      // IMPORTANT:
-      //
-      // Backend can return:
-      //
-      // {
-      //   "status": false,
-      //   "message": "No active physical conversion found.",
-      //   "data": null
-      // }
-      //
-      // This means conversion is NOT ACTIVE.
-      // ============================================================
 
       if (!apiStatus || data == null) {
         log(
@@ -136,10 +101,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
         return;
       }
 
-      // ============================================================
-      // VALIDATE DATA
-      // ============================================================
-
       if (data is! Map<String, dynamic>) {
         log(
           '⚠️ INVALID CONVERSION DATA '
@@ -150,10 +111,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
 
         return;
       }
-
-      // ============================================================
-      // READ BACKEND STATUS
-      // ============================================================
 
       final status = data['status']?.toString().trim().toLowerCase() ?? '';
 
@@ -170,19 +127,11 @@ class PhysicalConversionProvider extends ChangeNotifier {
         'amount=$amount',
       );
 
-      // ============================================================
-      // ACTIVE
-      // ============================================================
-
       if (status == 'active' && amount > 0) {
         _setActive(metal: metal, amount: amount, plan: plan);
 
         return;
       }
-
-      // ============================================================
-      // ANY NON-ACTIVE STATE
-      // ============================================================
 
       log(
         '🛑 BACKEND CONVERSION IS NOT ACTIVE '
@@ -192,16 +141,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
       _setInactive();
     } catch (e, stackTrace) {
       log('❌ fetchConversionStatus ERROR: $e', stackTrace: stackTrace);
-
-      // ============================================================
-      // IMPORTANT
-      //
-      // Real network/server exception:
-      // KEEP EXISTING STATE.
-      //
-      // But the 404 "No active conversion" response will NOT reach
-      // this catch anymore because JscService now returns its JSON.
-      // ============================================================
     } finally {
       _isFetchingStatus = false;
 
@@ -225,15 +164,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
 
     notifyListeners();
   }
-
-  // ============================================================
-  // START CONVERSION
-  //
-  // DO NOT manually say "active" here.
-  //
-  // The API has already created the conversion.
-  // So immediately fetch the backend state.
-  // ============================================================
 
   Future<bool> startConversion({
     required String metal,
@@ -267,16 +197,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
         return false;
       }
 
-      // ========================================================
-      // IMPORTANT
-      //
-      // Do NOT do:
-      //
-      // _isActive = true;
-      //
-      // Instead ask backend what the actual state is.
-      // ========================================================
-
       await fetchConversionStatus();
 
       return _isActive;
@@ -287,20 +207,12 @@ class PhysicalConversionProvider extends ChangeNotifier {
     }
   }
 
-  // ============================================================
-  // CANCEL CONVERSION
-  // ============================================================
-
   Future<bool> cancelConversion({
     required CartProvider cartProvider,
     required CurrencyProvider currencyProvider,
   }) async {
     try {
       log('🛑 CANCEL PHYSICAL CONVERSION');
-
-      // ========================================================
-      // GET CURRENT STATE
-      // ========================================================
 
       final currentMetal = _metal;
       final currentAmount = _amount;
@@ -327,10 +239,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
         'currency=$currency',
       );
 
-      // ========================================================
-      // STEP 1: CANCEL BACKEND CONVERSION
-      // ========================================================
-
       final response = await JscService.cancelPhysicalConversion(
         metal: currentMetal,
         amount: currentAmount,
@@ -346,9 +254,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
           '❌ CANCEL API FAILED -> '
           '${response['message'] ?? 'Unknown error'}',
         );
-
-        // Backend did not confirm cancellation.
-        // Keep current frontend state and refresh it.
         await fetchConversionStatus();
 
         return false;
@@ -356,27 +261,17 @@ class PhysicalConversionProvider extends ChangeNotifier {
 
       log('✅ BACKEND CONVERSION CANCELLED');
 
-      // ========================================================
-      // STEP 2: REMOVE PHYSICAL CART
-      // ========================================================
-
       final cartRemoved = await cartProvider.removeCurrentBackendCart();
 
       if (!cartRemoved) {
         log('❌ Physical cart could not be removed');
 
-        // Backend conversion is already cancelled.
-        // We should still refresh backend state.
         await fetchConversionStatus();
 
         return false;
       }
 
       log('✅ PHYSICAL CART REMOVED');
-
-      // ========================================================
-      // STEP 3: RESTORE ORIGINAL NORMAL CART
-      // ========================================================
 
       final restored = await cartProvider.restorePhysicalOrderProducts();
 
@@ -390,15 +285,7 @@ class PhysicalConversionProvider extends ChangeNotifier {
 
       log('✅ ORIGINAL NORMAL CART RESTORED');
 
-      // ========================================================
-      // STEP 4: CLEAR FRONTEND CONVERSION STATE IMMEDIATELY
-      // ========================================================
-
       clearActiveConversion();
-
-      // ========================================================
-      // STEP 5: FETCH NORMAL CART
-      // ========================================================
 
       await cartProvider.fetchCart();
 
@@ -407,10 +294,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
         'items=${cartProvider.cartItems.length}',
       );
 
-      // ========================================================
-      // STEP 6: SUCCESS
-      // ========================================================
-
       return true;
     } catch (e, stackTrace) {
       log('❌ cancelConversion ERROR: $e', stackTrace: stackTrace);
@@ -418,10 +301,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
       return false;
     }
   }
-
-  // ============================================================
-  // VALIDATE PRODUCT
-  // ============================================================
 
   String? validateProduct({String? metalType}) {
     if (!_isActive) {
@@ -445,10 +324,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
     return null;
   }
 
-  // ============================================================
-  // DIGITAL PRODUCTS
-  // ============================================================
-
   final Set<dynamic> digitalProductIds = {};
 
   void setDigitalProductIds(List<dynamic> products) {
@@ -469,16 +344,6 @@ class PhysicalConversionProvider extends ChangeNotifier {
   bool isDigitalProduct(dynamic productId) {
     return digitalProductIds.contains(productId);
   }
-
-  // void reset() {
-  //   _isActive = false;
-  //   _metal = null;
-  //   _amount = 0;
-
-  //   log('🧹 PHYSICAL CONVERSION PROVIDER RESET');
-
-  //   notifyListeners();
-  // }
 
   void clearActiveConversion() {
     _isActive = false;

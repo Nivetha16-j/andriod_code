@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
@@ -100,7 +99,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
   Future<void> _fetchSellBackData({bool isRefresh = false}) async {
     try {
-      // Loader only for initial API call
       if (!isRefresh && mounted) {
         setState(() {
           isLoading = true;
@@ -133,7 +131,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
           errorMessage = null;
         });
       } else {
-        // During 1-second refresh, don't clear existing data
         if (!isRefresh) {
           setState(() {
             errorMessage =
@@ -149,7 +146,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
       if (!mounted) return;
 
-      // Keep existing data during background refresh
       if (!isRefresh) {
         setState(() {
           errorMessage = 'Unable to load sell back details.';
@@ -159,28 +155,9 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     }
   }
 
-  Future<void> _checkUnlockStatus() async {
-    final provider = context.read<JscBalanceProvider>();
-
-    await provider.loadUnlockStatus();
-
-    if (!mounted) return;
-
-    final unlocked = provider.isBalancesUnlocked;
-
-    setState(() {
-      isBalancesUnlocked = unlocked;
-    });
-
-    if (unlocked) {
-      await _fetchSellBackDetails();
-    }
-  }
-
   Future<void> _fetchSellBackDetails() async {
     if (!mounted) return;
 
-    // Always verify session unlock state before making the request.
     final unlocked = await SessionManager.isJscBalanceUnlocked();
 
     if (!mounted) return;
@@ -224,7 +201,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
             ? Map<String, dynamic>.from(data)
             : <String, dynamic>{};
 
-        // Verify unlock state again before storing data.
         final stillUnlocked = await SessionManager.isJscBalanceUnlocked();
 
         if (!mounted) return;
@@ -275,7 +251,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
       if (!mounted) return;
 
-      // Do not keep stale data after an API/session error.
       setState(() {
         sellBackData = null;
       });
@@ -325,7 +300,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
         JscBalanceSection(
           showBalances: false,
 
-          /// Called after successful wallet unlock.
           onUnlocked: () async {
             if (!mounted) return;
 
@@ -336,7 +310,6 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
               sellBackData = null;
             });
 
-            // Fetch latest balances and sell-back requests.
             await _fetchSellBackDetails();
           },
         ),

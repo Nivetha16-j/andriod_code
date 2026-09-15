@@ -153,7 +153,19 @@ class _MainScreenState extends State<MainScreen> {
       // EXCLUSIVE PRODUCTS
       // --------------------------------------------------------
 
+      const productEndpoints = [
+        "exclusive-products",
+        "gold-coins",
+        "gold-bars",
+        "silver-coins",
+        "silver-bars",
+      ];
+
+      final selectedEndpoint =
+          productEndpoints[widget.productCategoryIndex.clamp(0, 4)];
+
       await _exclusiveProductProvider.fetchProducts(
+        endpoint: selectedEndpoint,
         currency: currency,
         unit: unit,
       );
@@ -494,10 +506,13 @@ class _MainScreenState extends State<MainScreen> {
 
         onRefresh: () {
           final currency = _currencyProvider.selectedCurrency;
-
           final unit = _currencyProvider.selectedUnit;
 
-          return _homeProvider.fetchHomeData(currency: currency, unit: unit);
+          return _exclusiveProductProvider.fetchProducts(
+            endpoint: _exclusiveProductProvider.currentEndpoint,
+            currency: currency,
+            unit: unit,
+          );
         },
       ),
 

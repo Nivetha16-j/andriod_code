@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -168,7 +167,6 @@ class _GspMonthlyInvestmentPlanContentState
     final amount = investmentAmount;
     final minimum = minimumInvestment;
 
-    // Validate amount
     if (_amountController.text.trim().isEmpty) {
       setState(() {
         _amountError = 'Please enter an investment amount.';
@@ -198,16 +196,12 @@ class _GspMonthlyInvestmentPlanContentState
 
     if (!mounted) return;
 
-    // ----------------------------------------------------------
-    // FETCH SAVED ADDRESS
-    // ----------------------------------------------------------
     final addressProvider = context.read<AddressProvider>();
 
     await addressProvider.fetchAddress();
 
     if (!mounted) return;
 
-    // Check whether address exists
     if (!addressProvider.hasAddress) {
       Fluttertoast.showToast(
         msg: 'Please add an address before proceeding with payment.',
@@ -217,14 +211,10 @@ class _GspMonthlyInvestmentPlanContentState
       return;
     }
 
-    // Get the saved address
     final shippingAddress = addressProvider.address!.trim();
 
     log('Shipping Address: $shippingAddress');
 
-    // ----------------------------------------------------------
-    // SHOW LOADER
-    // ----------------------------------------------------------
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -236,13 +226,9 @@ class _GspMonthlyInvestmentPlanContentState
     );
 
     try {
-      // ----------------------------------------------------------
-      // CREATE MONTHLY PAYMENT
-      // ----------------------------------------------------------
       final response = await GspService.createMonthlyPayment(
         amount: amount,
 
-        // USE SAVED ADDRESS HERE
         shippingAddress: shippingAddress,
 
         paymentMethod: 'visa',
@@ -274,14 +260,10 @@ class _GspMonthlyInvestmentPlanContentState
       log('Order ID: $orderId');
       log('Client Secret received');
 
-      // Close loading dialog
       if (mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
 
-      // ----------------------------------------------------------
-      // STRIPE PAYMENT SHEET
-      // ----------------------------------------------------------
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: clientSecret,
@@ -424,9 +406,6 @@ class _GspMonthlyInvestmentPlanContentState
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ============================================================
-            // TITLE
-            // ============================================================
             const TranslatedText(
               'Monthly Investment Plan',
               style: TextStyle(
@@ -438,9 +417,6 @@ class _GspMonthlyInvestmentPlanContentState
 
             const SizedBox(height: 4),
 
-            // ============================================================
-            // DESCRIPTION
-            // ============================================================
             const TranslatedText(
               'Build your GSP gold savings with optional monthly investment. '
               'Payments are not mandatory, but help you grow your holdings over time.',
@@ -454,9 +430,6 @@ class _GspMonthlyInvestmentPlanContentState
 
             const SizedBox(height: 12),
 
-            // ============================================================
-            // PAYMENT CARD
-            // ============================================================
             _buildCardWrapper(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,7 +445,6 @@ class _GspMonthlyInvestmentPlanContentState
 
                   const SizedBox(height: 8),
 
-                  // INFO MESSAGE
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
@@ -498,7 +470,6 @@ class _GspMonthlyInvestmentPlanContentState
 
                   const SizedBox(height: 14),
 
-                  // AMOUNT LABEL
                   TranslatedText(
                     'Investment amount (${context.read<CurrencyProvider>().selectedCurrency.toUpperCase()})',
                     style: const TextStyle(
@@ -510,7 +481,6 @@ class _GspMonthlyInvestmentPlanContentState
 
                   const SizedBox(height: 7),
 
-                  // AMOUNT INPUT
                   SizedBox(
                     height: 48,
                     child: TextField(
@@ -573,7 +543,6 @@ class _GspMonthlyInvestmentPlanContentState
 
                   const SizedBox(height: 13),
 
-                  // GOLD CALCULATION
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
@@ -642,7 +611,6 @@ class _GspMonthlyInvestmentPlanContentState
 
                   const SizedBox(height: 13),
 
-                  // PAY WITH STRIPE BUTTON
                   SizedBox(
                     height: 46,
                     child: ElevatedButton.icon(
@@ -672,9 +640,6 @@ class _GspMonthlyInvestmentPlanContentState
 
             const SizedBox(height: 16),
 
-            // ============================================================
-            // 1. YOUR GSP PLAN CARD
-            // ============================================================
             _buildCardWrapper(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,9 +713,6 @@ class _GspMonthlyInvestmentPlanContentState
 
             const SizedBox(height: 16),
 
-            // ============================================================
-            // 2. SUGGESTED MONTHLY TIERS CARD
-            // ============================================================
             _buildCardWrapper(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -765,7 +727,6 @@ class _GspMonthlyInvestmentPlanContentState
                   ),
                   const SizedBox(height: 10),
 
-                  // Banner box
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
@@ -785,7 +746,6 @@ class _GspMonthlyInvestmentPlanContentState
                   ),
                   const SizedBox(height: 14),
 
-                  // Table header
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -838,9 +798,6 @@ class _GspMonthlyInvestmentPlanContentState
 
             const SizedBox(height: 16),
 
-            // ============================================================
-            // 3. HOW MONTHLY GSP WORKS CARD
-            // ============================================================
             _buildCardWrapper(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -877,7 +834,6 @@ class _GspMonthlyInvestmentPlanContentState
     );
   }
 
-  // Card Container Wrapper with the Gold/Red top bar indicator
   Widget _buildCardWrapper({required Widget child}) {
     return Container(
       width: double.infinity,
@@ -907,7 +863,6 @@ class _GspMonthlyInvestmentPlanContentState
     );
   }
 
-  // Row layout helper for GSP Details
   Widget _buildPlanDetailRow(String label, {String? value, Widget? widget}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -917,11 +872,7 @@ class _GspMonthlyInvestmentPlanContentState
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              // fontWeight: FontWeight.w600,
-              // color: Color(0xFF9E2424),
-            ),
+            style: const TextStyle(fontSize: 12),
           ),
         ),
         if (value != null)
@@ -937,7 +888,6 @@ class _GspMonthlyInvestmentPlanContentState
     );
   }
 
-  // Row layout helper for Tiers Table
   Widget _buildTierRow(String tier, String approxAmount) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -962,7 +912,6 @@ class _GspMonthlyInvestmentPlanContentState
     );
   }
 
-  // Bullet point list item builder
   Widget _buildBulletPoint(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),

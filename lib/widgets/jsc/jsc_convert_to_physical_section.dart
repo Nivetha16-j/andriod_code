@@ -30,7 +30,11 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
   bool isStartingOrder = false;
   bool _isUnlocked = false;
 
+  // Keeps track of which metal is currently being converted.
+  String? _startingMetal;
+
   final TextEditingController _goldAmountController = TextEditingController();
+
   final TextEditingController _silverAmountController = TextEditingController();
 
   String? _goldAmountError;
@@ -39,7 +43,6 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
   @override
   void initState() {
     super.initState();
-
     _initializeConvert();
   }
 
@@ -77,6 +80,12 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
         setState(() {
           gold = null;
           silver = null;
+
+          _goldAmountError = null;
+          _silverAmountError = null;
+
+          _startingMetal = null;
+          isStartingOrder = false;
         });
       }
     }
@@ -85,20 +94,26 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
   @override
   void dispose() {
     _timer?.cancel();
+
     _goldAmountController.dispose();
     _silverAmountController.dispose();
+
     super.dispose();
   }
+
+  // ============================================================
+  // REFRESH
+  // ============================================================
 
   void _startConvertRefresh() {
     _stopConvertRefresh();
 
     debugPrint('🚀 STARTING CONVERT PHYSICAL REFRESH');
 
-    // First call immediately
+    // Fetch immediately.
     fetchConvertPhysical();
 
-    // Then every second
+    // Refresh every second.
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       fetchConvertPhysical();
     });
@@ -112,7 +127,7 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
   Future<void> fetchConvertPhysical() async {
     if (!_isUnlocked) return;
 
-    // Prevent overlapping API calls
+    // Prevent overlapping API calls.
     if (isLoading) return;
 
     try {
@@ -123,7 +138,7 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
       final currency = currencyProvider.selectedCurrency;
 
-      log('Fetching convert physical with currency: $currency');
+      log('Fetching JSC convert physical with currency: $currency');
 
       if (mounted) {
         setState(() {
@@ -135,7 +150,7 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
         currency: currency,
       );
 
-      debugPrint('🔥 CONVERT API RESPONSE = $response');
+      debugPrint('🔥 JSC CONVERT API RESPONSE = $response');
 
       final data = response['data'] as Map<String, dynamic>?;
 
@@ -145,9 +160,9 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
       final fetchedSilver = summary?['silver'] as Map<String, dynamic>?;
 
-      debugPrint('🔥 GOLD = $fetchedGold');
+      debugPrint('🔥 JSC GOLD = $fetchedGold');
 
-      debugPrint('🔥 SILVER = $fetchedSilver');
+      debugPrint('🔥 JSC SILVER = $fetchedSilver');
 
       if (!mounted) return;
 
@@ -156,12 +171,19 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
         silver = fetchedSilver;
       });
 
-      // Set default conversion amounts
+      // ============================================================
+      // DEFAULT GOLD AMOUNT
+      // ============================================================
+
       final goldBalance =
           double.tryParse('${fetchedGold?['balance'] ?? 0}') ?? 0;
 
       final goldMinimum =
           double.tryParse('${fetchedGold?['minimum_balance'] ?? 50}') ?? 50;
+
+      // ============================================================
+      // DEFAULT SILVER AMOUNT
+      // ============================================================
 
       final silverBalance =
           double.tryParse('${fetchedSilver?['balance'] ?? 0}') ?? 0;
@@ -170,21 +192,27 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
           double.tryParse('${fetchedSilver?['minimum_balance'] ?? 1000}') ??
           1000;
 
-      // Gold
+      // ============================================================
+      // SET DEFAULT GOLD VALUE
+      // ============================================================
+
       if (_goldAmountController.text.isEmpty) {
         if (goldBalance >= goldMinimum) {
           _goldAmountController.text = goldMinimum.toStringAsFixed(4);
         }
       }
 
-      // Silver
+      // ============================================================
+      // SET DEFAULT SILVER VALUE
+      // ============================================================
+
       if (_silverAmountController.text.isEmpty) {
         if (silverBalance >= silverMinimum) {
           _silverAmountController.text = silverMinimum.toStringAsFixed(4);
         }
       }
     } catch (e) {
-      debugPrint('❌ Convert Physical Error: $e');
+      debugPrint('❌ JSC Convert Physical Error: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -193,6 +221,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       }
     }
   }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -235,6 +267,9 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
           const SizedBox(height: 9),
 
+          // ========================================================
+          // LOCKED
+          // ========================================================
           if (!_isUnlocked) ...[
             _convertRow(
               metal: 'Gold',
@@ -257,7 +292,11 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
               onAmountChanged: (_) {},
               onPressed: null,
             ),
-          ] else if (isLoading && gold == null && silver == null)
+          ]
+          // ========================================================
+          // FIRST LOAD
+          // ========================================================
+          else if (isLoading && gold == null && silver == null)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Center(
@@ -268,6 +307,9 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                 ),
               ),
             )
+          // ========================================================
+          // UNLOCKED
+          // ========================================================
           else ...[
             _convertRow(
               metal: 'Gold',
@@ -300,6 +342,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     );
   }
 
+  // ============================================================
+  // AVAILABLE BALANCES
+  // ============================================================
+
   String get _goldAvailableText {
     final value = gold?['balance'];
 
@@ -319,6 +365,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
     return '$value g';
   }
+
+  // ============================================================
+  // MINIMUM THRESHOLDS
+  // ============================================================
 
   String get _goldThresholdLabel {
     final value = gold?['minimum_balance'];
@@ -340,6 +390,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     return '$value g';
   }
 
+  // ============================================================
+  // ELIGIBILITY
+  // ============================================================
+
   bool get _canConvertGold {
     final balance = double.tryParse('${gold?['balance'] ?? 0}') ?? 0;
 
@@ -357,6 +411,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     return balance >= minimum;
   }
 
+  // ============================================================
+  // MAIN CONTAINER
+  // ============================================================
+
   Widget _buildContainer({required Widget child}) {
     return Container(
       width: double.infinity,
@@ -372,6 +430,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     );
   }
 
+  // ============================================================
+  // CONVERSION ROW
+  // ============================================================
+
   Widget _convertRow({
     required String metal,
     required String available,
@@ -382,6 +444,9 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     VoidCallback? onPressed,
   }) {
     final bool isGold = metal == 'Gold';
+
+    // Only the currently selected metal shows Starting...
+    final bool isThisMetalStarting = _startingMetal == metal;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -416,6 +481,9 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
         const SizedBox(height: 4),
 
+        // ========================================================
+        // ENABLED
+        // ========================================================
         if (enabled)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -456,7 +524,7 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
               SizedBox(
                 height: 40,
                 child: ElevatedButton(
-                  onPressed: isStartingOrder
+                  onPressed: isThisMetalStarting
                       ? null
                       : errorText == null
                       ? onPressed
@@ -470,13 +538,16 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                     ),
                   ),
                   child: TranslatedText(
-                    isStartingOrder ? 'Starting...' : 'Start Order',
+                    isThisMetalStarting ? 'Starting...' : 'Start Order',
                     style: const TextStyle(fontSize: 11),
                   ),
                 ),
               ),
             ],
           )
+        // ========================================================
+        // NOT ELIGIBLE
+        // ========================================================
         else
           SizedBox(
             width: double.infinity,
@@ -499,7 +570,8 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: TranslatedText(
-                  'Reach ${isGold ? _goldThresholdLabel : _silverThresholdLabel} '
+                  'Reach '
+                  '${isGold ? _goldThresholdLabel : _silverThresholdLabel} '
                   'to unlock physical conversion.',
                   style: const TextStyle(
                     fontSize: 10,
@@ -513,6 +585,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       ],
     );
   }
+
+  // ============================================================
+  // GOLD
+  // ============================================================
 
   Future<void> _openGoldConversion() async {
     final amount = double.tryParse(_goldAmountController.text);
@@ -528,6 +604,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     await _showStartConversionDialog(metal: 'Gold', amount: amount);
   }
 
+  // ============================================================
+  // SILVER
+  // ============================================================
+
   Future<void> _openSilverConversion() async {
     final amount = double.tryParse(_silverAmountController.text);
 
@@ -541,6 +621,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
     await _showStartConversionDialog(metal: 'Silver', amount: amount);
   }
+
+  // ============================================================
+  // CONFIRMATION DIALOG
+  // ============================================================
 
   Future<void> _showStartConversionDialog({
     required String metal,
@@ -578,6 +662,7 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                 style: TextStyle(color: Colors.grey),
               ),
             ),
+
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(dialogContext, true);
@@ -607,6 +692,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     );
   }
 
+  // ============================================================
+  // START PHYSICAL CONVERSION
+  // ============================================================
+
   Future<void> _startPhysicalConversion({
     required String metal,
     required double amount,
@@ -616,6 +705,7 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
     setState(() {
       isStartingOrder = true;
+      _startingMetal = metal;
     });
 
     try {
@@ -626,9 +716,9 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
         'currency=$currency',
       );
 
-      // ============================================================
+      // ==========================================================
       // STEP 1: CALL CONVERT API
-      // ============================================================
+      // ==========================================================
 
       final convertResponse = await JscService.convertToPhysical(
         metal: metal,
@@ -636,13 +726,16 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
         currency: currency,
       );
 
-      log('🔥 CONVERT RESPONSE: $convertResponse');
+      log(
+        '🔥 JSC CONVERT RESPONSE: '
+        '$convertResponse',
+      );
 
       if (!mounted) return;
 
-      // ============================================================
+      // ==========================================================
       // STEP 2: READ API RESPONSE
-      // ============================================================
+      // ==========================================================
 
       final bool apiStatus = convertResponse['status'] == true;
 
@@ -675,9 +768,9 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
         'amount=$responseAmount',
       );
 
-      // ============================================================
+      // ==========================================================
       // STEP 3: CONVERSION MUST BE ACTIVE
-      // ============================================================
+      // ==========================================================
 
       if (!apiStatus || conversionStatus != 'active') {
         log(
@@ -694,11 +787,12 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       }
 
       log('✅ PHYSICAL CONVERSION API SUCCESS');
+
       log('✅ Conversion status = ACTIVE');
 
-      // ============================================================
-      // STEP 4: MOVE NORMAL CART TO PHYSICAL ORDER
-      // ============================================================
+      // ==========================================================
+      // STEP 4: MOVE NORMAL CART TO PHYSICAL
+      // ==========================================================
 
       log('➡️ Moving normal cart to physical order');
 
@@ -724,6 +818,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
       log('✅ NORMAL CART MOVED SUCCESSFULLY');
 
+      // ==========================================================
+      // STEP 5: UPDATE PHYSICAL PROVIDER
+      // ==========================================================
+
       final physicalProvider = context.read<PhysicalConversionProvider>();
 
       physicalProvider.setConversionPlan('jsc');
@@ -739,9 +837,9 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
 
       if (!mounted) return;
 
-      // ============================================================
+      // ==========================================================
       // STEP 6: NAVIGATE TO CART
-      // ============================================================
+      // ==========================================================
 
       Navigator.pushReplacement(
         context,
@@ -763,10 +861,15 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       if (mounted) {
         setState(() {
           isStartingOrder = false;
+          _startingMetal = null;
         });
       }
     }
   }
+
+  // ============================================================
+  // GOLD AMOUNT VALIDATION
+  // ============================================================
 
   void _onGoldAmountChanged(String value) {
     final entered = double.tryParse(value);
@@ -780,7 +883,8 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
         _goldAmountError = 'Enter a valid amount.';
       } else if (entered < minimum) {
         _goldAmountError =
-            'Value must be at least ${minimum.toStringAsFixed(4)} g.';
+            'Value must be at least '
+            '${minimum.toStringAsFixed(4)} g.';
       } else if (entered > balance) {
         _goldAmountError =
             'Value must be less than or equal to '
@@ -790,6 +894,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       }
     });
   }
+
+  // ============================================================
+  // SILVER AMOUNT VALIDATION
+  // ============================================================
 
   void _onSilverAmountChanged(String value) {
     final entered = double.tryParse(value);
@@ -804,7 +912,8 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
         _silverAmountError = 'Enter a valid amount.';
       } else if (entered < minimum) {
         _silverAmountError =
-            'Value must be at least ${minimum.toStringAsFixed(4)} g.';
+            'Value must be at least '
+            '${minimum.toStringAsFixed(4)} g.';
       } else if (entered > balance) {
         _silverAmountError =
             'Value must be less than or equal to '

@@ -153,10 +153,6 @@ class _DashboardContentState extends State<_DashboardContent> {
       );
     }
 
-    // ============================================================
-    // JSC ALREADY REGISTERED
-    // ============================================================
-
     if (hasJscRegistration) {
       return SizedBox(
         width: double.infinity,
@@ -189,10 +185,6 @@ class _DashboardContentState extends State<_DashboardContent> {
         ),
       );
     }
-
-    // ============================================================
-    // JSC NOT REGISTERED
-    // ============================================================
 
     return _redButton(
       text: 'JSC Application Form',

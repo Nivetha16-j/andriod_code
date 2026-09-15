@@ -96,7 +96,6 @@ class _GspConvertToPhysicalContentState
 
     final provider = context.read<GspBalanceProvider>();
 
-    // Reload the persisted unlock state.
     await provider.loadUnlockStatus();
 
     if (!mounted) return;
@@ -137,9 +136,6 @@ class _GspConvertToPhysicalContentState
 
         const SizedBox(height: 25),
 
-        // ------------------------------------------------------------
-        // GSP BALANCE UNLOCK SECTION
-        // ------------------------------------------------------------
         GspBalanceSection(
           showBalances: false,
           onUnlocked: () async {
@@ -149,9 +145,6 @@ class _GspConvertToPhysicalContentState
 
         const SizedBox(height: 20),
 
-        // ------------------------------------------------------------
-        // CONVERT TO PHYSICAL
-        // ------------------------------------------------------------
         GspConvertPhysicalSection(isUnlocked: isUnlocked),
       ],
     );

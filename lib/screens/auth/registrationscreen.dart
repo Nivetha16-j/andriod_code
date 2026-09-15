@@ -26,17 +26,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   final countryController = TextEditingController();
-  final passwordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
+  // final passwordController = TextEditingController();
+  // final confirmPasswordController = TextEditingController();
 
-  // Selected Country ID variable
   dynamic selectedCountryId;
 
-  // Future to hold the API request
   late Future<List<Country>> _countriesFuture;
 
-  bool obscurePassword = true;
-  bool obscureConfirmPassword = true;
+  // bool obscurePassword = true;
+  // bool obscureConfirmPassword = true;
 
   @override
   void initState() {
@@ -47,20 +45,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void _fetchCountries() {
     _countriesFuture = CountryService.fetchCountries();
   }
-
-  // @override
-  // void dispose() {
-  //   firstNameController.dispose();
-  //   lastNameController.dispose();
-  //   emailController.dispose();
-  //   phoneController.dispose();
-  //   countryController.dispose();
-  //   passwordController.dispose();
-  //   confirmPasswordController.dispose();
-  //   super.dispose();
-  // }
-
-  // --- Validation Methods ---
 
   String? _validateName(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) {
@@ -98,25 +82,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return null;
   }
 
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    // if (value.length < 6) {
-    //   return 'Password must be at least 6 characters';
-    // }
-    return null;
-  }
+  // String? _validatePassword(String? value) {
+  //   if (value == null || value.isEmpty) {
+  //     return 'Password is required';
+  //   }
+  //   return null;
+  // }
 
-  String? _validateConfirmPassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please confirm your password';
-    }
-    if (value != passwordController.text) {
-      return 'Passwords do not match';
-    }
-    return null;
-  }
+  // String? _validateConfirmPassword(String? value) {
+  //   if (value == null || value.isEmpty) {
+  //     return 'Please confirm your password';
+  //   }
+  //   if (value != passwordController.text) {
+  //     return 'Passwords do not match';
+  //   }
+  //   return null;
+  // }
 
   void _showToast(String message, {bool isError = false}) {
     Fluttertoast.showToast(
@@ -128,8 +109,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       fontSize: 16.0,
     );
   }
-
-  // --- Submission Handler ---
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
@@ -144,7 +123,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     log("Submitting registration pre-check.");
 
     try {
-      // STEP 1: Dry run/validation request to check if email or phone exists
       final url = Uri.parse("https://staging.junubullion.com/api/register");
 
       final response = await http.post(
@@ -160,8 +138,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           "phone_number": fullPhoneNumber,
           "country_id": selectedCountryId,
           "address": countryController.text,
-          "password": passwordController.text,
-          "password_confirmation": confirmPasswordController.text,
+          // "password": passwordController.text,
+          // "password_confirmation": confirmPasswordController.text,
         }),
       );
 
@@ -169,7 +147,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       final Map<String, dynamic> responseData = jsonDecode(response.body);
 
-      // Check if email or phone already exists
       if (responseData.containsKey('errors') && responseData['errors'] is Map) {
         final errors = responseData['errors'] as Map<String, dynamic>;
 
@@ -212,7 +189,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         }
       }
 
-      // 4. If user does NOT exist, send OTP via Firebase
       await FirebaseAuth.instance.verifyPhoneNumber(
         phoneNumber: fullPhoneNumber,
         verificationCompleted: (PhoneAuthCredential credential) {},
@@ -232,27 +208,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           if (mounted) {
             setState(() => _isLoading = false);
 
-            // Toast: "OTP sent"
             _showToast("OTP sent");
 
             log("Navigating to OTP verification.");
 
-            // Navigate to OTP screen
-            // Navigator.pushNamed(
-            //   context,
-            //   '/otp',
-            //   arguments: {
-            //     'phoneNumber': fullPhoneNumber,
-            //     'verificationId': verificationId,
-            //     'email': email,
-            //     'countryId': selectedCountryId,
-            //     'firstName': firstNameController.text.trim(),
-            //     'lastName': lastNameController.text.trim(),
-            //     'password': passwordController.text,
-            //     'confirmPassword': confirmPasswordController.text,
-            //     'address': countryController.text,
-            //   },
-            // );
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -263,8 +222,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   countryId: selectedCountryId,
                   fname: firstNameController.text.trim(),
                   lname: lastNameController.text.trim(),
-                  password: passwordController.text,
-                  passwordConfirmation: confirmPasswordController.text,
+                  // password: passwordController.text,
+                  // passwordConfirmation: confirmPasswordController.text,
                 ),
               ),
             );
@@ -284,8 +243,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       }
     }
   }
-
-  // --- Dropdown Field Widget ---
 
   Widget _buildCountryDropdown() {
     return FutureBuilder<List<Country>>(
@@ -423,7 +380,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  // Helper method to create the exact top label with red asterisk
   Widget _buildFieldLabel(String label) {
     return RichText(
       text: TextSpan(
@@ -473,7 +429,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                   const SizedBox(height: 20),
 
-                  // First Name
                   CustomTextField(
                     label: "First Name",
                     hintText: "Enter First Name",
@@ -483,7 +438,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Last Name
                   CustomTextField(
                     label: "Last Name",
                     hintText: "Enter Last Name",
@@ -493,7 +447,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Email
                   CustomTextField(
                     label: "Email",
                     hintText: "Enter Email",
@@ -504,7 +457,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Phone Number
                   CustomTextField(
                     label: "Phone Number",
                     hintText: "+6570903029",
@@ -516,60 +468,55 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Country Dropdown
                   _buildCountryDropdown(),
 
-                  const SizedBox(height: 20),
+                  // const SizedBox(height: 20),
 
-                  // Password
-                  CustomTextField(
-                    label: "Password",
-                    hintText: "Enter Password",
-                    controller: passwordController,
-                    validator: _validatePassword,
-                    obscureText: obscurePassword,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          obscurePassword = !obscurePassword;
-                        });
-                      },
-                    ),
-                  ),
+                  // CustomTextField(
+                  //   label: "Password",
+                  //   hintText: "Enter Password",
+                  //   controller: passwordController,
+                  //   validator: _validatePassword,
+                  //   obscureText: obscurePassword,
+                  //   suffixIcon: IconButton(
+                  //     icon: Icon(
+                  //       obscurePassword
+                  //           ? Icons.visibility_off
+                  //           : Icons.visibility,
+                  //       size: 20,
+                  //     ),
+                  //     onPressed: () {
+                  //       setState(() {
+                  //         obscurePassword = !obscurePassword;
+                  //       });
+                  //     },
+                  //   ),
+                  // ),
 
-                  const SizedBox(height: 15),
+                  // const SizedBox(height: 15),
 
-                  // Confirm Password
-                  CustomTextField(
-                    label: "Confirm Password",
-                    hintText: "Confirm Password",
-                    controller: confirmPasswordController,
-                    validator: _validateConfirmPassword,
-                    obscureText: obscureConfirmPassword,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        obscureConfirmPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          obscureConfirmPassword = !obscureConfirmPassword;
-                        });
-                      },
-                    ),
-                  ),
-
+                  // CustomTextField(
+                  //   label: "Confirm Password",
+                  //   hintText: "Confirm Password",
+                  //   controller: confirmPasswordController,
+                  //   validator: _validateConfirmPassword,
+                  //   obscureText: obscureConfirmPassword,
+                  //   suffixIcon: IconButton(
+                  //     icon: Icon(
+                  //       obscureConfirmPassword
+                  //           ? Icons.visibility_off
+                  //           : Icons.visibility,
+                  //       size: 20,
+                  //     ),
+                  //     onPressed: () {
+                  //       setState(() {
+                  //         obscureConfirmPassword = !obscureConfirmPassword;
+                  //       });
+                  //     },
+                  //   ),
+                  // ),
                   const SizedBox(height: 25),
 
-                  // Submit Button
                   CustomButton(
                     label: "Submit",
                     isLoading: _isLoading,

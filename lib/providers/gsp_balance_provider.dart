@@ -3,17 +3,9 @@ import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 
 class GspBalanceProvider extends ChangeNotifier {
-  // ============================================================
-  // UNLOCK STATE
-  // ============================================================
-
   bool isBalancesUnlocked = false;
 
   bool isLoading = false;
-
-  // ============================================================
-  // WALLET DATA
-  // ============================================================
 
   String? goldBalance;
   String? goldUnit;
@@ -31,10 +23,6 @@ class GspBalanceProvider extends ChangeNotifier {
     loadUnlockStatus();
   }
 
-  // ============================================================
-  // GLOBAL UNLOCK LISTENER
-  // ============================================================
-
   void _onGlobalUnlockChanged() {
     final bool value = balanceUnlockedNotifier.value;
 
@@ -51,10 +39,6 @@ class GspBalanceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================
-  // LOAD SAVED UNLOCK STATE
-  // ============================================================
-
   Future<void> loadUnlockStatus() async {
     try {
       isLoading = true;
@@ -68,9 +52,6 @@ class GspBalanceProvider extends ChangeNotifier {
         balanceUnlockedNotifier.value = unlocked;
       }
 
-      // IMPORTANT:
-      // Do not load wallet values from SharedPreferences.
-      // Wallet values must come from backend.
       if (!unlocked) {
         clearWalletData();
       }
@@ -90,10 +71,6 @@ class GspBalanceProvider extends ChangeNotifier {
     }
   }
 
-  // ============================================================
-  // SET UNLOCKED
-  // ============================================================
-
   void setUnlocked(bool value) {
     isBalancesUnlocked = value;
 
@@ -107,10 +84,6 @@ class GspBalanceProvider extends ChangeNotifier {
 
     notifyListeners();
   }
-
-  // ============================================================
-  // SET WALLET DATA
-  // ============================================================
 
   void setWalletData(Map<String, dynamic> data) {
     goldBalance = data['goldBalance']?.toString();
@@ -127,10 +100,6 @@ class GspBalanceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================
-  // CLEAR WALLET DATA
-  // ============================================================
-
   void clearWalletData() {
     goldBalance = null;
     goldUnit = null;
@@ -145,10 +114,6 @@ class GspBalanceProvider extends ChangeNotifier {
 
     notifyListeners();
   }
-
-  // ============================================================
-  // RESET EVERYTHING
-  // ============================================================
 
   Future<void> resetBalancesUnlocked() async {
     isBalancesUnlocked = false;
@@ -165,10 +130,6 @@ class GspBalanceProvider extends ChangeNotifier {
 
     debugPrint('Gsp BalanceProvider -> balances reset successfully.');
   }
-
-  // ============================================================
-  // CLEAR UNLOCK STATUS
-  // ============================================================
 
   void clearUnlockStatus() {
     isBalancesUnlocked = false;

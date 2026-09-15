@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:junubullion/screens/main_screen.dart';
@@ -46,8 +45,6 @@ class _ApplicationFormState extends State<ApplicationForm> {
   int _selectedStep = 0;
 
   bool isUploadingPhoto = false;
-
-  // String? selectedIdType;
 
   List<PlatformFile> selectedIdentityFiles = [];
 
@@ -1214,27 +1211,27 @@ class _ApplicationFormState extends State<ApplicationForm> {
                       style: TextStyle(fontSize: 12),
                     ),
                     items: const [
-                      DropdownMenuItem(
-                        value: "Aadhar",
-                        child: TranslatedText("Aadhar"),
+                      DropdownMenuItem<String>(
+                        value: "Aadhaar",
+                        child: TranslatedText("Aadhaar"),
                       ),
-                      DropdownMenuItem(
+                      DropdownMenuItem<String>(
                         value: "PAN Card",
                         child: TranslatedText("PAN Card"),
                       ),
-                      DropdownMenuItem(
+                      DropdownMenuItem<String>(
                         value: "Passport",
                         child: TranslatedText("Passport"),
                       ),
-                      DropdownMenuItem(
-                        value: "Driving License",
-                        child: TranslatedText("Driving License"),
+                      DropdownMenuItem<String>(
+                        value: "Driving Licence",
+                        child: TranslatedText("Driving Licence"),
                       ),
-                      DropdownMenuItem(
+                      DropdownMenuItem<String>(
                         value: "NRIC",
                         child: TranslatedText("NRIC"),
                       ),
-                      DropdownMenuItem(
+                      DropdownMenuItem<String>(
                         value: "FIN",
                         child: TranslatedText("FIN"),
                       ),

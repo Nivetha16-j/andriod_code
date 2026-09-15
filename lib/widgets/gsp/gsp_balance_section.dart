@@ -937,7 +937,7 @@ class _BalanceCard extends StatelessWidget {
             children: [
               Flexible(
                 child: TranslatedText(
-                  balanceValue,
+                  "$balanceValue $unit",
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 16,

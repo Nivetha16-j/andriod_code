@@ -202,7 +202,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       },
       child: Container(
         height: 28,
-        width: 145,
+        width: 120,
         padding: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -210,17 +210,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
         ),
         child: Row(
           children: [
-            const Text(
-              'G',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF4285F4),
-              ),
-            ),
-
-            const SizedBox(width: 5),
-
             Expanded(
               child: Text(
                 languageProvider.selectedLanguageName,

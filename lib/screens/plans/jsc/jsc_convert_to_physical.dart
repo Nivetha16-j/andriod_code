@@ -4,7 +4,6 @@ import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
-import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -97,7 +96,6 @@ class _JscConvertToPhysicalContentState
 
     final provider = context.read<JscBalanceProvider>();
 
-    // Reload the persisted unlock state after successful unlock.
     await provider.loadUnlockStatus();
 
     if (!mounted) return;
@@ -138,13 +136,9 @@ class _JscConvertToPhysicalContentState
 
         const SizedBox(height: 25),
 
-        // ------------------------------------------------------------
-        // JSC BALANCE UNLOCK SECTION
-        // ------------------------------------------------------------
         JscBalanceSection(
           showBalances: false,
 
-          /// Called after successful wallet unlock.
           onUnlocked: () async {
             await _handleUnlocked();
           },
@@ -152,9 +146,6 @@ class _JscConvertToPhysicalContentState
 
         const SizedBox(height: 20),
 
-        // ------------------------------------------------------------
-        // CONVERT TO PHYSICAL
-        // ------------------------------------------------------------
         JscConvertPhysicalSection(isUnlocked: isUnlocked),
       ],
     );

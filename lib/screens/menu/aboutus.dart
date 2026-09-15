@@ -56,37 +56,31 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
         child: Column(
           children: [
             // Top Yellow Section
-            Padding(
-              padding: const EdgeInsets.only(top: 14.0),
-              child: Container(
-                width: double.infinity,
-                color: const Color(0xFFFDF1C8),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 24,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    TranslatedText(
-                      "About Us",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.black,
-                      ),
+            Container(
+              width: double.infinity,
+              color: const Color(0xFFFDF1C8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  TranslatedText(
+                    "About Us",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
                     ),
-                    SizedBox(height: 16),
-                    TranslatedText(
-                      "Junu Bullion is a precious metals trading company specializing in gold, silver, and other bullion products.",
-                      style: TextStyle(
-                        fontSize: 15,
-                        height: 1.6,
-                        color: Colors.black,
-                      ),
+                  ),
+                  SizedBox(height: 16),
+                  TranslatedText(
+                    "Junu Bullion is a precious metals trading company specializing in gold, silver, and other bullion products.",
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.6,
+                      color: Colors.black,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
@@ -130,7 +124,6 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
               color: AppColors.sandal,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
-                // crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TranslatedText(
                     "Our Core Values",
@@ -141,95 +134,7 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
-                  // Wrap(
-                  //   spacing: 20,
-                  //   runSpacing: 20,
-                  //   children: List.generate(values.length, (index) {
-                  //     final bool isExpanded = expandedIndex == index;
 
-                  //     return SizedBox(
-                  //       width: (MediaQuery.of(context).size.width - 60) / 2,
-                  //       child: AnimatedSize(
-                  //         duration: const Duration(milliseconds: 300),
-                  //         curve: Curves.easeInOut,
-                  //         child: Container(
-                  //           padding: const EdgeInsets.all(14),
-                  //           decoration: BoxDecoration(
-                  //             color: AppColors.primaryRed,
-                  //             borderRadius: BorderRadius.circular(16),
-                  //             boxShadow: [
-                  //               BoxShadow(
-                  //                 color: Colors.black.withOpacity(.08),
-                  //                 blurRadius: 10,
-                  //                 offset: const Offset(0, 4),
-                  //               ),
-                  //             ],
-                  //           ),
-                  //           child: Column(
-                  //             mainAxisSize: MainAxisSize.min,
-                  //             children: [
-                  //               TranslatedText(
-                  //                 values[index]["title"],
-                  //                 textAlign: TextAlign.center,
-                  //                 style: const TextStyle(
-                  //                   fontSize: 18,
-                  //                   fontWeight: FontWeight.w600,
-                  //                   color: Colors.white,
-                  //                 ),
-                  //               ),
-
-                  //               const SizedBox(height: 12),
-
-                  //               TranslatedText(
-                  //                 values[index]["description"],
-                  //                 textAlign: TextAlign.center,
-                  //                 style: const TextStyle(
-                  //                   fontSize: 12,
-                  //                   height: 1.5,
-                  //                   color: Colors.white,
-                  //                 ),
-                  //               ),
-
-                  //               if (isExpanded) ...[
-                  //                 const SizedBox(height: 12),
-
-                  //                 TranslatedText(
-                  //                   values[index]["hidden_text"],
-                  //                   textAlign: TextAlign.center,
-                  //                   style: const TextStyle(
-                  //                     fontSize: 12,
-                  //                     height: 1.5,
-                  //                     color: Colors.white,
-                  //                   ),
-                  //                 ),
-                  //               ],
-
-                  //               const SizedBox(height: 16),
-
-                  //               InkWell(
-                  //                 onTap: () {
-                  //                   setState(() {
-                  //                     expandedIndex = expandedIndex == index
-                  //                         ? -1
-                  //                         : index;
-                  //                   });
-                  //                 },
-                  //                 child: TranslatedText(
-                  //                   isExpanded ? "View Less" : "View More",
-                  //                   style: const TextStyle(
-                  //                     color: AppColors.yellow,
-                  //                     fontWeight: FontWeight.bold,
-                  //                     fontSize: 12,
-                  //                   ),
-                  //                 ),
-                  //               ),
-                  //             ],
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     );
-                  //   }),
-                  // ),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final double cardWidth = (constraints.maxWidth - 20) / 2;

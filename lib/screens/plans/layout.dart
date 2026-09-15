@@ -134,12 +134,12 @@ class PlansLayout extends StatelessWidget {
         );
         break;
 
-      case 'Lost Password':
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AccountDetailsScreen()),
-        );
-        break;
+      // case 'Lost Password':
+      //   Navigator.push(
+      //     context,
+      //     MaterialPageRoute(builder: (_) => const AccountDetailsScreen()),
+      //   );
+      //   break;
 
       case 'Logout':
         await _logout(context);

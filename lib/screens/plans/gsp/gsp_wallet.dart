@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
@@ -82,7 +81,6 @@ class _GspWalletState extends State<GspWallet> {
 
     _fetchWallet();
 
-    // Refresh live spot prices every 10 seconds.
     _walletTimer = Timer.periodic(
       const Duration(seconds: 10),
       (_) => _fetchWallet(),
@@ -116,12 +114,6 @@ class _GspWalletState extends State<GspWallet> {
         return;
       }
 
-      // ==========================================================
-      // data
-      //   └── wallet
-      //       └── summary
-      // ==========================================================
-
       final Map<String, dynamic> data = result['data'] is Map
           ? Map<String, dynamic>.from(result['data'])
           : <String, dynamic>{};
@@ -134,15 +126,7 @@ class _GspWalletState extends State<GspWallet> {
           ? Map<String, dynamic>.from(wallet['summary'])
           : <String, dynamic>{};
 
-      // ==========================================================
-      // CURRENCY
-      // ==========================================================
-
       final String symbol = summary['symbol']?.toString() ?? '';
-
-      // ==========================================================
-      // METALS
-      // ==========================================================
 
       final Map<String, dynamic> metals = summary['metals'] is Map
           ? Map<String, dynamic>.from(summary['metals'])
@@ -156,45 +140,25 @@ class _GspWalletState extends State<GspWallet> {
           ? Map<String, dynamic>.from(metals['gold'])
           : <String, dynamic>{};
 
-      // IMPORTANT:
-      // Live Spot Price comes from:
-      // wallet.summary.metals.gold.spot_price
-
       final String newGoldPrice = _formatPrice(gold['spot_price']);
 
       final String newGoldUnit =
           gold['unit_short']?.toString() ?? gold['unit']?.toString() ?? 'g';
 
-      // ==========================================================
-      // SILVER
-      // ==========================================================
-
       final Map<String, dynamic> silver = metals['silver'] is Map
           ? Map<String, dynamic>.from(metals['silver'])
           : <String, dynamic>{};
-
-      // IMPORTANT:
-      // Live Spot Price comes from:
-      // wallet.summary.metals.silver.spot_price
 
       final String newSilverPrice = _formatPrice(silver['spot_price']);
 
       final String newSilverUnit =
           silver['unit_short']?.toString() ?? silver['unit']?.toString() ?? 'g';
 
-      // ==========================================================
-      // LOG
-      // ==========================================================
-
       debugPrint(
         'GSP LIVE SPOT -> '
         'Gold: $symbol$newGoldPrice / $newGoldUnit | '
         'Silver: $symbol$newSilverPrice / $newSilverUnit',
       );
-
-      // ==========================================================
-      // UPDATE UI
-      // ==========================================================
 
       setState(() {
         currencySymbol = symbol;
@@ -374,7 +338,6 @@ class _LiveSpotPrices extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // GOLD
           Row(
             children: [
               Container(
@@ -388,12 +351,14 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const SizedBox(width: 10),
 
-              const TranslatedText(
-                'Gold',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
+              Expanded(
+                child: const TranslatedText(
+                  'Gold',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
                 ),
               ),
 
@@ -402,7 +367,7 @@ class _LiveSpotPrices extends StatelessWidget {
               TranslatedText(
                 isLoading ? '...' : '$currencySymbol$goldPrice',
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFFA52525),
                 ),
@@ -412,7 +377,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
               TranslatedText(
                 '/ $goldUnit',
-                style: const TextStyle(fontSize: 15, color: Color(0xFF9E4A4A)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF9E4A4A)),
               ),
             ],
           ),
@@ -423,7 +388,6 @@ class _LiveSpotPrices extends StatelessWidget {
 
           const SizedBox(height: 11),
 
-          // SILVER
           Row(
             children: [
               Container(
@@ -437,12 +401,14 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const SizedBox(width: 10),
 
-              const TranslatedText(
-                'Silver',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
+              Expanded(
+                child: const TranslatedText(
+                  'Silver',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
                 ),
               ),
 
@@ -451,7 +417,7 @@ class _LiveSpotPrices extends StatelessWidget {
               TranslatedText(
                 isLoading ? '...' : '$currencySymbol$silverPrice',
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFFA52525),
                 ),
@@ -461,7 +427,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
               TranslatedText(
                 '/ $silverUnit',
-                style: const TextStyle(fontSize: 15, color: Color(0xFF9E4A4A)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF9E4A4A)),
               ),
             ],
           ),
