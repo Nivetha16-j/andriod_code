@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/account_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -69,8 +70,8 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(
-              child: Text(
+            Center(
+              child: TranslatedText(
                 "Account Details",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
@@ -117,7 +118,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
+                              content: TranslatedText(
                                 success
                                     ? "Account updated successfully"
                                     : "Failed to update account",
@@ -129,119 +130,121 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
               },
             ),
 
-            const SizedBox(height: 34),
+            // const SizedBox(height: 34),
 
-            const Text(
-              "Password Change",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            // const TranslatedText(
+            //   "Password Change",
+            //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // ),
 
-            const SizedBox(height: 20),
+            // const SizedBox(height: 20),
 
-            buildTextField(
-              label: "Current Password",
-              controller: currentPasswordController,
-              obscure: true,
-            ),
+            // buildTextField(
+            //   label: "Current Password",
+            //   controller: currentPasswordController,
+            //   obscure: true,
+            // ),
 
-            const SizedBox(height: 18),
+            // const SizedBox(height: 18),
 
-            buildTextField(
-              label: "New Password",
-              controller: newPasswordController,
-              obscure: true,
-            ),
+            // buildTextField(
+            //   label: "New Password",
+            //   controller: newPasswordController,
+            //   obscure: true,
+            // ),
 
-            const SizedBox(height: 18),
+            // const SizedBox(height: 18),
 
-            buildTextField(
-              label: "Confirm New Password",
-              controller: confirmPasswordController,
-              obscure: true,
-            ),
+            // buildTextField(
+            //   label: "Confirm New Password",
+            //   controller: confirmPasswordController,
+            //   obscure: true,
+            // ),
 
-            const SizedBox(height: 22),
+            // const SizedBox(height: 22),
 
-            Consumer<AccountProvider>(
-              builder: (context, provider, child) {
-                return buildButton(
-                  text: provider.isLoading ? "Updating..." : "Update Password",
-                  onPressed: provider.isLoading
-                      ? null
-                      : () async {
-                          if (currentPasswordController.text.isEmpty ||
-                              newPasswordController.text.isEmpty ||
-                              confirmPasswordController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Please fill all password fields",
-                                ),
-                              ),
-                            );
-                            return;
-                          }
+            // Consumer<AccountProvider>(
+            //   builder: (context, provider, child) {
+            //     return buildButton(
+            //       text: provider.isLoading ? "Updating..." : "Update Password",
+            //       onPressed: provider.isLoading
+            //           ? null
+            //           : () async {
+            //               if (currentPasswordController.text.isEmpty ||
+            //                   newPasswordController.text.isEmpty ||
+            //                   confirmPasswordController.text.isEmpty) {
+            //                 ScaffoldMessenger.of(context).showSnackBar(
+            //                   const SnackBar(
+            //                     content: TranslatedText(
+            //                       "Please fill all password fields",
+            //                     ),
+            //                   ),
+            //                 );
+            //                 return;
+            //               }
 
-                          if (newPasswordController.text !=
-                              confirmPasswordController.text) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Passwords do not match"),
-                              ),
-                            );
-                            return;
-                          }
+            //               if (newPasswordController.text !=
+            //                   confirmPasswordController.text) {
+            //                 ScaffoldMessenger.of(context).showSnackBar(
+            //                   const SnackBar(
+            //                     content: TranslatedText(
+            //                       "Passwords do not match",
+            //                     ),
+            //                   ),
+            //                 );
+            //                 return;
+            //               }
 
-                          // Verify current password
-                          final verify = await provider.verifyPassword(
-                            currentPasswordController.text.trim(),
-                          );
+            //               // Verify current password
+            //               final verify = await provider.verifyPassword(
+            //                 currentPasswordController.text.trim(),
+            //               );
 
-                          if (verify["status"] != true ||
-                              verify["valid"] != true) {
-                            if (!mounted) return;
+            //               if (verify["status"] != true ||
+            //                   verify["valid"] != true) {
+            //                 if (!mounted) return;
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  verify["message"] ??
-                                      "Current password is incorrect.",
-                                ),
-                              ),
-                            );
-                            return;
-                          }
+            //                 ScaffoldMessenger.of(context).showSnackBar(
+            //                   SnackBar(
+            //                     content: TranslatedText(
+            //                       verify["message"] ??
+            //                           "Current password is incorrect.",
+            //                     ),
+            //                   ),
+            //                 );
+            //                 return;
+            //               }
 
-                          // Update password
-                          final success = await provider.updatePassword(
-                            currentPassword: currentPasswordController.text
-                                .trim(),
-                            password: newPasswordController.text.trim(),
-                            passwordConfirmation: confirmPasswordController.text
-                                .trim(),
-                          );
+            //               // Update password
+            //               final success = await provider.updatePassword(
+            //                 currentPassword: currentPasswordController.text
+            //                     .trim(),
+            //                 password: newPasswordController.text.trim(),
+            //                 passwordConfirmation: confirmPasswordController.text
+            //                     .trim(),
+            //               );
 
-                          if (!mounted) return;
+            //               if (!mounted) return;
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                success
-                                    ? "Password updated successfully"
-                                    : "Failed to update password",
-                              ),
-                            ),
-                          );
+            //               ScaffoldMessenger.of(context).showSnackBar(
+            //                 SnackBar(
+            //                   content: TranslatedText(
+            //                     success
+            //                         ? "Password updated successfully"
+            //                         : "Failed to update password",
+            //                   ),
+            //                 ),
+            //               );
 
-                          if (success) {
-                            currentPasswordController.clear();
-                            newPasswordController.clear();
-                            confirmPasswordController.clear();
-                          }
-                        },
-                );
-              },
-            ),
+            //               if (success) {
+            //                 currentPasswordController.clear();
+            //                 newPasswordController.clear();
+            //                 confirmPasswordController.clear();
+            //               }
+            //             },
+            //     );
+            //   },
+            // ),
           ],
         ),
       ),
@@ -261,7 +264,7 @@ Widget buildButton({required String text, VoidCallback? onPressed}) {
         elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),
-      child: Text(
+      child: TranslatedText(
         text,
         style: const TextStyle(
           color: Colors.white,
@@ -283,7 +286,7 @@ Widget buildTextField({
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
+      TranslatedText(
         label,
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
       ),

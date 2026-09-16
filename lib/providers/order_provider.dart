@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/services/order_service.dart';
 
@@ -18,11 +20,15 @@ class OrdersProvider extends ChangeNotifier {
     try {
       final result = await _service.fetchOrders();
 
-      //  orders = result["orders"];
-      orders = result["orders"];
-      totalOrders = result["total"];
+      log("Fetched orders: ${result["orders"]}");
+
+      orders = List<dynamic>.from(result["orders"] ?? []);
+      totalOrders = result["total"] ?? orders.length;
     } catch (e) {
+      log("Fetch orders error: $e");
       error = e.toString();
+      orders = [];
+      totalOrders = 0;
     }
 
     isLoading = false;

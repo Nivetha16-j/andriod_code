@@ -1,22 +1,16 @@
 import 'dart:convert';
 import 'dart:developer';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionManager {
-  // ============================================================
-  // LOGIN
-  // ============================================================
+  static const String physicalOrderProductsKey = 'physicalOrderProducts';
 
   static const String isLoggedInKey = "isLoggedIn";
   static const String userKey = "user";
   static const String tokenKey = "token";
 
-  // ============================================================
-  // JSC BALANCE
-  // ============================================================
-
   static const String balanceUnlockedKey = 'balanceUnlocked';
+  static const String gspBalanceUnlockedKey = 'gspBalanceUnlocked';
 
   static const String goldBalanceKey = 'goldBalance';
   static const String goldUnitKey = 'goldUnit';
@@ -28,10 +22,6 @@ class SessionManager {
 
   static const String currencySymbolKey = 'currencySymbol';
 
-  // ============================================================
-  // SAVE BALANCE UNLOCK STATUS
-  // ============================================================
-
   static Future<void> saveBalanceUnlocked() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -40,14 +30,24 @@ class SessionManager {
     log("JSC balance unlocked status saved.");
   }
 
-  // ============================================================
-  // CHECK BALANCE UNLOCK STATUS
-  // ============================================================
-
-  static Future<bool> isBalanceUnlocked() async {
+  static Future<bool> isJscBalanceUnlocked() async {
     final prefs = await SharedPreferences.getInstance();
 
     return prefs.getBool(balanceUnlockedKey) ?? false;
+  }
+
+  static Future<void> saveGspBalanceUnlocked() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool(gspBalanceUnlockedKey, true);
+
+    log("GSP balance unlocked status saved.");
+  }
+
+  static Future<bool> isGspBalanceUnlocked() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    return prefs.getBool(gspBalanceUnlockedKey) ?? false;
   }
 
   // ============================================================
@@ -91,9 +91,15 @@ class SessionManager {
 
     log("JSC balance data saved.");
     log("Gold: $goldBalance $goldUnit");
-    log("Gold market value: $currencySymbol$goldMarketValue");
+    log(
+      "Gold market value: "
+      "$currencySymbol$goldMarketValue",
+    );
     log("Silver: $silverBalance $silverUnit");
-    log("Silver market value: $currencySymbol$silverMarketValue");
+    log(
+      "Silver market value: "
+      "$currencySymbol$silverMarketValue",
+    );
   }
 
   // ============================================================
@@ -143,6 +149,68 @@ class SessionManager {
     log("JSC balance data cleared.");
   }
 
+  static Future<void> clearGspBalanceUnlocked() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove(gspBalanceUnlockedKey);
+
+    log("GSP balance unlock state cleared.");
+  }
+
+  // ============================================================
+  // PHYSICAL ORDER PRODUCTS
+  // ============================================================
+
+  static Future<void> savePhysicalOrderProducts(
+    List<Map<String, dynamic>> products,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString(physicalOrderProductsKey, jsonEncode(products));
+
+    log('Physical order products saved: ${products.length} items');
+  }
+
+  static Future<List<Map<String, dynamic>>> getPhysicalOrderProducts() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final storedData = prefs.getString(physicalOrderProductsKey);
+
+    if (storedData == null || storedData.isEmpty) {
+      return [];
+    }
+
+    try {
+      final decoded = jsonDecode(storedData);
+
+      if (decoded is List) {
+        return decoded
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .toList();
+      }
+
+      return [];
+    } catch (e) {
+      log('Error reading physical order products: $e');
+
+      return [];
+    }
+  }
+
+  static Future<void> clearPhysicalOrderProducts() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove(physicalOrderProductsKey);
+
+    log('Physical order products cleared.');
+  }
+
+  static Future<bool> hasPhysicalOrderProducts() async {
+    final products = await getPhysicalOrderProducts();
+
+    return products.isNotEmpty;
+  }
+
   // ============================================================
   // SAVE LOGIN
   // ============================================================
@@ -163,7 +231,10 @@ class SessionManager {
 
     await prefs.setString(tokenKey, token);
 
-    log("isLoggedIn: ${await prefs.getBool(isLoggedInKey)}");
+    log(
+      "isLoggedIn: "
+      "${await prefs.getBool(isLoggedInKey)}",
+    );
   }
 
   // ============================================================
@@ -209,17 +280,15 @@ class SessionManager {
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Clear everything including:
-    // - login
-    // - token
-    // - user
-    // - JSC unlock status
-    // - Gold balance
-    // - Silver balance
-    // - currency symbol
-
+    // Clear SharedPreferences
     await prefs.clear();
 
-    log("User logged out. Session and JSC balance data cleared.");
+    // Clear secure physical-order data
+    await clearPhysicalOrderProducts();
+
+    log(
+      "User logged out. "
+      "Session, JSC balance and physical order data cleared.",
+    );
   }
 }

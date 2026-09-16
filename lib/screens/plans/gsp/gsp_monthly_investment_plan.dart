@@ -1,0 +1,943 @@
+import 'dart:developer';
+import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
+import 'package:junubullion/models/plans.dart';
+import 'package:junubullion/providers/address_provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
+import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/plans/layout.dart';
+import 'package:junubullion/services/gsp_service.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
+import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
+import 'package:junubullion/widgets/home/custom_drawer.dart';
+import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:provider/provider.dart';
+import 'dart:async';
+
+class GspMonthlyInvestmentPlan extends StatefulWidget {
+  const GspMonthlyInvestmentPlan({super.key});
+
+  @override
+  State<GspMonthlyInvestmentPlan> createState() =>
+      _GspMonthlyInvestmentPlanState();
+}
+
+class _GspMonthlyInvestmentPlanState extends State<GspMonthlyInvestmentPlan> {
+  @override
+  Widget build(BuildContext context) {
+    int currentIndex = 0;
+
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+    return Scaffold(
+      backgroundColor: const Color(0xffFAFAF8),
+      key: scaffoldKey,
+      drawer: const CustomDrawer(),
+      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
+      body: PlansLayout(
+        plans: Plans.gsp,
+        selectedMenu: 'Monthly Investment Plan',
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+          child: const GspMonthlyInvestmentPlanContent(),
+        ),
+      ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: _switchToTab,
+      ),
+    );
+  }
+
+  void _switchToTab(int index) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => MainScreen(initialIndex: index)),
+      (route) => false,
+    );
+  }
+}
+
+class GspMonthlyInvestmentPlanContent extends StatefulWidget {
+  const GspMonthlyInvestmentPlanContent({super.key});
+
+  @override
+  State<GspMonthlyInvestmentPlanContent> createState() =>
+      _GspMonthlyInvestmentPlanContentState();
+}
+
+class _GspMonthlyInvestmentPlanContentState
+    extends State<GspMonthlyInvestmentPlanContent> {
+  final TextEditingController _amountController = TextEditingController();
+
+  Timer? _refreshTimer;
+
+  double get minimumInvestment {
+    return context
+            .read<GspMonthlyPlanProvider>()
+            .monthlyPlan
+            ?.gspMinimumAmount ??
+        0;
+  }
+
+  String get currencySymbol {
+    return context.read<GspMonthlyPlanProvider>().monthlyPlan?.currencySymbol ??
+        '\$';
+  }
+
+  double get goldPricePerGram {
+    return context.read<GspMonthlyPlanProvider>().monthlyPlan?.pricePerGram ??
+        0;
+  }
+
+  double get investmentAmount {
+    return double.tryParse(_amountController.text) ?? 0;
+  }
+
+  double get estimatedGold {
+    if (goldPricePerGram <= 0) {
+      return 0;
+    }
+
+    return investmentAmount / goldPricePerGram;
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) {
+      return '-';
+    }
+
+    return DateFormat('MMM dd, yyyy').format(date);
+  }
+
+  String _formatNumber(double value) {
+    if (value == value.roundToDouble()) {
+      return value.toInt().toString();
+    }
+
+    return value.toStringAsFixed(2);
+  }
+
+  Future<void> _fetchMonthlyPlan() async {
+    if (!mounted) return;
+
+    final provider = context.read<GspMonthlyPlanProvider>();
+    final currencyProvider = context.read<CurrencyProvider>();
+
+    await provider.fetchMonthlyPlan(
+      currency: currencyProvider.selectedCurrency,
+    );
+
+    final minimum = provider.monthlyPlan?.gspMinimumAmount;
+
+    if (minimum != null &&
+        (_amountController.text.isEmpty ||
+            double.tryParse(_amountController.text) == 0)) {
+      _amountController.text = minimum.toStringAsFixed(2);
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _fetchMonthlyPlan();
+
+      _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        _fetchMonthlyPlan();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _payWithStripe() async {
+    final amount = investmentAmount;
+    final minimum = minimumInvestment;
+
+    if (_amountController.text.trim().isEmpty) {
+      setState(() {
+        _amountError = 'Please enter an investment amount.';
+      });
+      return;
+    }
+
+    if (amount <= 0) {
+      setState(() {
+        _amountError = 'Please enter a valid amount.';
+      });
+      return;
+    }
+
+    if (amount < minimum) {
+      setState(() {
+        _amountError =
+            'Minimum investment is '
+            '$currencySymbol${minimum.toStringAsFixed(2)}.';
+      });
+      return;
+    }
+
+    setState(() {
+      _amountError = null;
+    });
+
+    if (!mounted) return;
+
+    final addressProvider = context.read<AddressProvider>();
+
+    await addressProvider.fetchAddress();
+
+    if (!mounted) return;
+
+    if (!addressProvider.hasAddress) {
+      Fluttertoast.showToast(
+        msg: 'Please add an address before proceeding with payment.',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+      );
+      return;
+    }
+
+    final shippingAddress = addressProvider.address!.trim();
+
+    log('Shipping Address: $shippingAddress');
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return const Center(
+          child: CircularProgressIndicator(color: Color(0xffA90020)),
+        );
+      },
+    );
+
+    try {
+      final response = await GspService.createMonthlyPayment(
+        amount: amount,
+
+        shippingAddress: shippingAddress,
+
+        paymentMethod: 'visa',
+
+        currency: context.read<CurrencyProvider>().selectedCurrency,
+      );
+
+      log('Monthly payment response: $response');
+
+      final data = response['data'];
+
+      if (data == null) {
+        throw Exception('Stripe payment data is missing.');
+      }
+
+      final clientSecret = data['client_secret']?.toString();
+      final paymentIntentId = data['payment_intent_id']?.toString();
+      final orderId = data['order_id'];
+
+      if (clientSecret == null || clientSecret.isEmpty) {
+        throw Exception('Stripe client secret is missing.');
+      }
+
+      if (paymentIntentId == null || paymentIntentId.isEmpty) {
+        throw Exception('Stripe payment intent ID is missing.');
+      }
+
+      log('PaymentIntent ID: $paymentIntentId');
+      log('Order ID: $orderId');
+      log('Client Secret received');
+
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Junu Bullion',
+          allowsDelayedPaymentMethods: false,
+        ),
+      );
+
+      await Stripe.instance.presentPaymentSheet();
+
+      if (!mounted) return;
+
+      log('Stripe PaymentSheet completed');
+      log('PaymentIntent ID: $paymentIntentId');
+      log('Order ID: $orderId');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TranslatedText('Payment completed successfully.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      await _fetchMonthlyPlan();
+
+      if (!mounted) return;
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 0)),
+        (route) => false,
+      );
+    } on StripeException catch (e) {
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      if (!mounted) return;
+
+      final message = e.error.localizedMessage ?? 'Payment was cancelled.';
+
+      log('StripeException: $message');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: TranslatedText(message), backgroundColor: Colors.red),
+      );
+    } catch (e) {
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+
+      if (!mounted) return;
+
+      log('Monthly Stripe payment error: $e');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: TranslatedText(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  String? _amountError;
+
+  void _onAmountChanged(String value) {
+    final amount = double.tryParse(value);
+    final minimum = minimumInvestment;
+
+    setState(() {
+      if (value.trim().isEmpty) {
+        _amountError = null;
+      } else if (amount == null) {
+        _amountError = 'Please enter a valid amount.';
+      } else if (amount < minimum) {
+        _amountError =
+            'Minimum investment is '
+            '$currencySymbol${minimum.toStringAsFixed(2)}.';
+      } else {
+        _amountError = null;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<GspMonthlyPlanProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading && provider.monthlyPlan == null) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(40),
+              child: CircularProgressIndicator(color: Color(0xffA90020)),
+            ),
+          );
+        }
+
+        if (provider.errorMessage != null && provider.monthlyPlan == null) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Color(0xffA90020),
+                    size: 40,
+                  ),
+                  const SizedBox(height: 10),
+                  TranslatedText(
+                    provider.errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xff555555),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  ElevatedButton(
+                    onPressed: () {
+                      final currencyProvider = context.read<CurrencyProvider>();
+
+                      provider.fetchMonthlyPlan(
+                        currency: currencyProvider.selectedCurrency,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xffA90020),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const TranslatedText('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const TranslatedText(
+              'Monthly Investment Plan',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+
+            const SizedBox(height: 4),
+
+            const TranslatedText(
+              'Build your GSP gold savings with optional monthly investment. '
+              'Payments are not mandatory, but help you grow your holdings over time.',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: Color(0xff555555),
+                height: 1.4,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            _buildCardWrapper(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const TranslatedText(
+                    'Make a Payment',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff9B001B),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xfffff3f3),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xffffd2d2)),
+                    ),
+                    child: TranslatedText(
+                      'Enter your investment amount and pay securely with '
+                      'Stripe. Minimum investment: '
+                      '$currencySymbol${minimumInvestment.toStringAsFixed(2)}.',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xff4A1D1D),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  TranslatedText(
+                    'Investment amount (${context.read<CurrencyProvider>().selectedCurrency.toUpperCase()})',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xff333333),
+                    ),
+                  ),
+
+                  const SizedBox(height: 7),
+
+                  SizedBox(
+                    height: 48,
+                    child: TextField(
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      onChanged: _onAmountChanged,
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 13,
+                          vertical: 12,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+
+                        errorText: _amountError,
+
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(9),
+                          borderSide: const BorderSide(
+                            color: Color(0xffD5D9E0),
+                          ),
+                        ),
+
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(9),
+                          borderSide: BorderSide(
+                            color: _amountError != null
+                                ? Colors.red
+                                : const Color(0xffD5D9E0),
+                          ),
+                        ),
+
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(9),
+                          borderSide: BorderSide(
+                            color: _amountError != null
+                                ? Colors.red
+                                : const Color(0xff9B001B),
+                            width: 1.2,
+                          ),
+                        ),
+
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(9),
+                          borderSide: const BorderSide(color: Colors.red),
+                        ),
+
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(9),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 1.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 13),
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 13,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffF8F9FA),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xffE0E3E7)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const TranslatedText(
+                              'Gold price: ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xff333333),
+                              ),
+                            ),
+                            Text(
+                              '$currencySymbol${goldPricePerGram.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xff333333),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const TranslatedText(
+                              ' / g',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xff333333),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const TranslatedText(
+                              'Estimated gold: ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xff333333),
+                              ),
+                            ),
+                            TranslatedText(
+                              '${estimatedGold.toStringAsFixed(4)} g',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xff333333),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 13),
+
+                  SizedBox(
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: _payWithStripe,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffA90020),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(Icons.credit_card, size: 18),
+                      label: const TranslatedText(
+                        'Pay with Stripe',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            _buildCardWrapper(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const TranslatedText(
+                    'Your GSP Plan',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff9B001B),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPlanDetailRow(
+                    'Plan status',
+                    widget: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffFFF7E6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const TranslatedText(
+                        'Active',
+                        style: TextStyle(
+                          color: Color(0xffD48806),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Divider(color: Color(0xffF0F0F0), height: 20),
+                  _buildPlanDetailRow(
+                    'Plan activated',
+                    value: _formatDate(provider.monthlyPlan?.planActivatedAt),
+                  ),
+
+                  const Divider(color: Color(0xffF0F0F0), height: 20),
+
+                  _buildPlanDetailRow('Monthly payment', value: 'Optional'),
+
+                  const Divider(color: Color(0xffF0F0F0), height: 20),
+
+                  _buildPlanDetailRow(
+                    'Minimum investment',
+                    value:
+                        "$currencySymbol${minimumInvestment.toStringAsFixed(2)}",
+                  ),
+
+                  const Divider(color: Color(0xffF0F0F0), height: 20),
+
+                  _buildPlanDetailRow(
+                    'Next reminder',
+                    value: _formatDate(provider.monthlyPlan?.nextReminderDate),
+                  ),
+
+                  const Divider(color: Color(0xffF0F0F0), height: 20),
+
+                  _buildPlanDetailRow(
+                    'Email reminders',
+                    value: provider.monthlyPlan?.remindersEnabled == true
+                        ? 'Enabled'
+                        : 'Disabled',
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            _buildCardWrapper(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const TranslatedText(
+                    'Suggested Monthly Tiers',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff9B001B),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffFFF5F5),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xffFDE8E8)),
+                    ),
+                    child: const TranslatedText(
+                      'Choose any amount at or above the minimum. You can investment monthly, or whenever it suits you.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xff4A1D1D),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    color: const Color(0xffF8F9FA),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TranslatedText(
+                          'TIER (SGD)',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xff666666),
+                          ),
+                        ),
+                        TranslatedText(
+                          'APPROX. AMOUNT',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xff666666),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  ...List.generate(provider.monthlyPlan?.gspTiers.length ?? 0, (
+                    index,
+                  ) {
+                    final tier = provider.monthlyPlan!.gspTiers[index];
+
+                    return Column(
+                      children: [
+                        _buildTierRow(
+                          'S\$ ${_formatNumber(tier.sgd)}',
+                          tier.formatted,
+                        ),
+
+                        if (index < provider.monthlyPlan!.gspTiers.length - 1)
+                          const Divider(color: Color(0xffF0F0F0), height: 1),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            _buildCardWrapper(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const TranslatedText(
+                    'How Monthly GSP Works',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff9B001B),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildBulletPoint(
+                    'Start with a one-time GSP purchase of at least $currencySymbol${minimumInvestment.toStringAsFixed(2)}.',
+                  ),
+                  _buildBulletPoint(
+                    'Each month on your plan anniversary date, we email a reminder to make an optional payment.',
+                  ),
+                  _buildBulletPoint(
+                    'There is no automatic charge — you decide when to investment.',
+                  ),
+                  _buildBulletPoint(
+                    'Every payment adds digital gold to your GSP wallet.',
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 25),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCardWrapper({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xffF0CFCF), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 4,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xffB00020), Color(0xffF4B400)],
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+          ),
+          Padding(padding: const EdgeInsets.all(16.0), child: child),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanDetailRow(String label, {String? value, Widget? widget}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: TranslatedText(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+        if (value != null)
+          Flexible(
+            child: TranslatedText(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontSize: 13, color: Color(0xff555555)),
+            ),
+          ),
+        if (widget != null) widget,
+      ],
+    );
+  }
+
+  Widget _buildTierRow(String tier, String approxAmount) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          TranslatedText(
+            tier,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Color(0xff9B001B),
+              decoration: TextDecoration.underline,
+            ),
+          ),
+          TranslatedText(
+            approxAmount,
+            style: const TextStyle(fontSize: 13, color: Color(0xff333333)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBulletPoint(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const TranslatedText(
+            '• ',
+            style: TextStyle(
+              fontSize: 16,
+              color: Color(0xff555555),
+              height: 1.2,
+            ),
+          ),
+          Expanded(
+            child: TranslatedText(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xff555555),
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

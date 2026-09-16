@@ -9,8 +9,12 @@ import 'package:junubullion/providers/checkout_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
+import 'package:junubullion/providers/gsp_balance_provider.dart';
+import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
+import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/providers/kyc_provider.dart';
+import 'package:junubullion/providers/language_provider.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/providers/product_detail_provider.dart';
 import 'package:junubullion/providers/review_provider.dart';
@@ -22,35 +26,81 @@ import 'package:provider/provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Stripe.publishableKey =
-  //     "pk_test_xxxxxxxxxxxxxxxxx";
+  // ------------------------------------------------------------
+  // ENVIRONMENT
+  // ------------------------------------------------------------
 
-  // await Stripe.instance.applySettings();
   await dotenv.load(fileName: ".env");
 
+  // ------------------------------------------------------------
+  // STRIPE
+  // ------------------------------------------------------------
+
   Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY']!;
+
   await Stripe.instance.applySettings();
+
+  // ------------------------------------------------------------
+  // LANGUAGE PROVIDER
+  // Restore previously selected language BEFORE runApp()
+  // ------------------------------------------------------------
+
+  final languageProvider = LanguageProvider();
+
+  await languageProvider.initializeLanguage();
+
+  // ------------------------------------------------------------
+  // APP
+  // ------------------------------------------------------------
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CurrencyProvider()),
+
         ChangeNotifierProvider(create: (_) => HomeProvider()),
+
         ChangeNotifierProvider(create: (_) => ExclusiveProductProvider()),
+
         ChangeNotifierProvider(create: (_) => ProductDetailsProvider()),
+
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
+
         ChangeNotifierProvider(create: (_) => CartProvider()),
+
         ChangeNotifierProvider(create: (_) => AddressProvider()),
+
         ChangeNotifierProvider(create: (_) => OrdersProvider()),
+
         ChangeNotifierProvider(create: (_) => AccountProvider()),
+
         ChangeNotifierProvider(create: (_) => KycProvider()),
+
         ChangeNotifierProvider(create: (_) => CheckoutProvider()),
+
         ChangeNotifierProvider(create: (_) => TestimonialProvider()),
+
         ChangeNotifierProvider(create: (_) => PhysicalConversionProvider()),
+
+        ChangeNotifierProvider(create: (_) => JscBalanceProvider()),
+
+        ChangeNotifierProvider(create: (_) => GspBalanceProvider()),
+
+        ChangeNotifierProvider(create: (_) => GspMonthlyPlanProvider()),
+
+        // --------------------------------------------------------
+        // LANGUAGE PROVIDER
+        // Already initialized above
+        // --------------------------------------------------------
+        ChangeNotifierProvider<LanguageProvider>.value(value: languageProvider),
       ],
       child: const MyApp(),
     ),
   );
+
+  // ------------------------------------------------------------
+  // FIREBASE
+  // ------------------------------------------------------------
 
   try {
     await Firebase.initializeApp();
@@ -71,23 +121,6 @@ class MyApp extends StatelessWidget {
       initialRoute: AppRoutes.splash,
       onGenerateRoute: AppRoutes.generateRoute,
       theme: ThemeData(fontFamily: 'Montserrat'),
-
-      // localizationsDelegates: const [
-      //   GlobalMaterialLocalizations.delegate,
-      //   GlobalWidgetsLocalizations.delegate,
-      //   GlobalCupertinoLocalizations.delegate,
-      // ],
-
-      // supportedLocales: const [
-      //   Locale('en'),
-      //   Locale('ar'),
-      //   Locale('de'),
-      //   Locale('hi'),
-      //   Locale('it'),
-      //   Locale('ml'),
-      //   Locale('es'),
-      //   Locale('ta'),
-      // ],
     );
   }
 }

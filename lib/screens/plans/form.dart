@@ -1,25 +1,30 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 
-class JscApplicationForm extends StatefulWidget {
+class ApplicationForm extends StatefulWidget {
   final bool isEdit;
+  final String applicationType;
 
-  const JscApplicationForm({super.key, this.isEdit = false});
+  const ApplicationForm({
+    super.key,
+    this.isEdit = false,
+    required this.applicationType,
+  });
 
   @override
-  State<JscApplicationForm> createState() => _JscApplicationFormState();
+  State<ApplicationForm> createState() => _ApplicationFormState();
 }
 
-class _JscApplicationFormState extends State<JscApplicationForm> {
+class _ApplicationFormState extends State<ApplicationForm> {
   bool isPersonalInfoExpanded = true;
   bool isIdentityExpanded = true;
   bool isNomineeExpanded = true;
@@ -40,8 +45,6 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
   int _selectedStep = 0;
 
   bool isUploadingPhoto = false;
-
-  // String? selectedIdType;
 
   List<PlatformFile> selectedIdentityFiles = [];
 
@@ -86,6 +89,12 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
   List<String> _originalIdentityFiles = [];
 
+  bool get isGsp => widget.applicationType.toUpperCase() == 'GSP';
+
+  String get applicationName => isGsp ? 'GSP' : 'JSC';
+
+  String get applicationType => widget.applicationType.toUpperCase();
+
   @override
   void initState() {
     super.initState();
@@ -93,7 +102,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     loadUser();
 
     if (widget.isEdit) {
-      loadJscApplication();
+      loadApplication();
     }
   }
 
@@ -116,14 +125,21 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
   }
 
   Future<void> loadUser() async {
-    final user = await SessionManager.getUser();
-    log("uuuuuuu $user");
+    try {
+      final user = await SessionManager.getUser();
 
-    setState(() {
-      fullNameController.text = user?["name"] ?? "";
-      emailController.text = user?["email"] ?? "";
-      mobileController.text = user?["phone_number"] ?? "";
-    });
+      log("USER: $user");
+
+      if (!mounted) return;
+
+      setState(() {
+        fullNameController.text = user?["name"]?.toString() ?? "";
+        emailController.text = user?["email"]?.toString() ?? "";
+        mobileController.text = user?["phone_number"]?.toString() ?? "";
+      });
+    } catch (e, stackTrace) {
+      log("LOAD USER ERROR: $e", stackTrace: stackTrace);
+    }
   }
 
   void _checkForChanges() {
@@ -149,7 +165,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         selectedIdentityFiles.isNotEmpty ||
         !_listEquals(currentIdentityFiles, _originalIdentityFiles);
 
-    if (hasChanges != changed) {
+    if (mounted && hasChanges != changed) {
       setState(() {
         hasChanges = changed;
       });
@@ -199,7 +215,9 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Image size must be less than or equal to 2 MB."),
+              content: TranslatedText(
+                "Image size must be less than or equal to 2 MB.",
+              ),
             ),
           );
         }
@@ -224,9 +242,9 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
           isUploadingPhoto = false;
         });
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Failed to select image: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: TranslatedText("Failed to select image: $e")),
+        );
       }
     }
   }
@@ -275,11 +293,13 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     }
   }
 
-  Future<void> submitJscApplication() async {
+  Future<void> submitApplication() async {
     if (!isDeclarationAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Please accept the declaration before submitting."),
+          content: TranslatedText(
+            "Please accept the declaration before submitting.",
+          ),
         ),
       );
       return;
@@ -287,14 +307,18 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
     if (selectedIdType == null || selectedIdType!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select an identity type.")),
+        const SnackBar(
+          content: TranslatedText("Please select an identity type."),
+        ),
       );
       return;
     }
 
     if (selectedIdentityFiles.isEmpty && existingIdentityFiles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please upload your identity document.")),
+        const SnackBar(
+          content: TranslatedText("Please upload your identity document."),
+        ),
       );
       return;
     }
@@ -304,7 +328,9 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     });
 
     try {
-      final response = await JscService.submitJscApplication(
+      final response = await JscService.submitApplication(
+        applicationType: applicationType,
+
         name: fullNameController.text.trim(),
         email: emailController.text.trim(),
         dob: _formatDateForApi(dobController.text.trim()),
@@ -324,10 +350,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
         declarationAccepted: isDeclarationAccepted,
 
-        // PHOTO
         photo: selectedPhoto,
-
-        // IDENTITY DOCUMENTS
         identityFiles: selectedIdentityFiles,
       );
 
@@ -337,8 +360,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
       if (response["success"] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("JSC application submitted successfully."),
+          SnackBar(
+            content: TranslatedText(
+              "$applicationName application submitted successfully.",
+            ),
           ),
         );
 
@@ -351,29 +376,30 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
           MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 0)),
           (route) => false,
         );
-
-        // Optional:
-        // Navigator.pop(context);
       } else {
         final body = response["body"];
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
+            content: TranslatedText(
               body?["message"]?.toString() ??
-                  "Failed to submit JSC application.",
+                  "Failed to submit $applicationName application.",
             ),
           ),
         );
       }
     } catch (e) {
-      log("JSC SUBMIT ERROR: $e");
+      log("SUBMIT ERROR: $e");
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Something went wrong: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: TranslatedText(
+            "Something went wrong while submitting $applicationName application: $e",
+          ),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -401,15 +427,17 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     return value;
   }
 
-  Future<void> loadJscApplication() async {
+  Future<void> loadApplication() async {
     setState(() {
       isLoadingApplication = true;
     });
 
     try {
-      final response = await JscService.getJscApplication();
+      final response = await JscService.getApplication(
+        applicationType: applicationType,
+      );
 
-      log("JSC APPLICATION RESPONSE: $response");
+      log("$applicationName APPLICATION RESPONSE: $response");
 
       if (!mounted) return;
 
@@ -528,12 +556,16 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         }
       }
     } catch (e, stackTrace) {
-      log("JSC LOAD ERROR: $e", stackTrace: stackTrace);
+      log("$applicationName LOAD ERROR: $e", stackTrace: stackTrace);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load JSC application: $e")),
+        SnackBar(
+          content: TranslatedText(
+            "Failed to load $applicationName application: $e",
+          ),
+        ),
       );
     } finally {
       if (mounted) {
@@ -597,12 +629,9 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
               children: [
                 const SizedBox(height: 10),
 
-                // ------------------------------------------------
-                // TITLE
-                // ------------------------------------------------
-                const Text(
-                  "JSC Application Form",
-                  style: TextStyle(
+                TranslatedText(
+                  "$applicationName Application Form",
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
                     color: Colors.black,
@@ -611,7 +640,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
                 const SizedBox(height: 5),
 
-                const Text(
+                const TranslatedText(
                   "Complete your application to start investing in premium bullion.",
                   style: TextStyle(
                     fontSize: 13,
@@ -648,7 +677,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                       ),
                     ],
                   ),
-                  child: const Text(
+                  child: const TranslatedText(
                     "Your Account Details Have Been Pre-Filled.\n"
                     "Please Complete The Remaining Fields.",
                     style: TextStyle(
@@ -714,7 +743,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.only(top: 3),
-                              child: Text(
+                              child: TranslatedText(
                                 "I hereby declare that the information provided above is true and correct. I agree to the Terms & Conditions of the account.",
                                 style: const TextStyle(
                                   fontSize: 14,
@@ -739,7 +768,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                             ? null
                             : isEditMode
                             ? (hasChanges ? updateJscApplication : null)
-                            : submitJscApplication,
+                            : submitApplication,
 
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xff941A1D),
@@ -759,7 +788,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                                   color: Colors.white,
                                 ),
                               )
-                            : Text(
+                            : TranslatedText(
                                 isEditMode ? "UPDATE" : "SUBMIT",
                                 style: const TextStyle(
                                   fontSize: 16,
@@ -799,72 +828,78 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
   Widget _buildStepIndicator() {
     return SizedBox(
       height: 80,
-      child: Row(
-        children: [
-          // STEP 1
-          Expanded(
-            child: _buildStep(
-              number: "1",
-              title: "Info",
-              active: _selectedStep == 0,
-              onPressed: () {
-                setState(() {
-                  _selectedStep = 0;
-                });
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final lineWidth = ((constraints.maxWidth - 240) / 2).clamp(
+            20.0,
+            75.0,
+          );
 
-                _scrollToSection(_personalInfoKey);
-              },
-            ),
-          ),
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: _buildStep(
+                  number: "1",
+                  title: "Info",
+                  active: _selectedStep == 0,
+                  onPressed: () {
+                    setState(() {
+                      _selectedStep = 0;
+                    });
+                    _scrollToSection(_personalInfoKey);
+                  },
+                ),
+              ),
 
-          // LINE
-          Container(
-            width: 75,
-            height: 1,
-            color: const Color(0xffF0D2D2),
-            margin: const EdgeInsets.only(bottom: 25),
-          ),
+              SizedBox(
+                width: lineWidth,
+                child: Container(
+                  height: 1,
+                  color: const Color(0xffF0D2D2),
+                  margin: const EdgeInsets.only(bottom: 25),
+                ),
+              ),
 
-          // STEP 2
-          Expanded(
-            child: _buildStep(
-              number: "2",
-              title: "Verify",
-              active: _selectedStep == 1,
-              onPressed: () {
-                setState(() {
-                  _selectedStep = 1;
-                });
+              Expanded(
+                child: _buildStep(
+                  number: "2",
+                  title: "Verify",
+                  active: _selectedStep == 1,
+                  onPressed: () {
+                    setState(() {
+                      _selectedStep = 1;
+                    });
+                    _scrollToSection(_identityVerificationKey);
+                  },
+                ),
+              ),
 
-                _scrollToSection(_identityVerificationKey);
-              },
-            ),
-          ),
+              SizedBox(
+                width: lineWidth,
+                child: Container(
+                  height: 1,
+                  color: const Color(0xffF0D2D2),
+                  margin: const EdgeInsets.only(bottom: 25),
+                ),
+              ),
 
-          // LINE
-          Container(
-            width: 75,
-            height: 1,
-            color: const Color(0xffF0D2D2),
-            margin: const EdgeInsets.only(bottom: 25),
-          ),
-
-          // STEP 3
-          Expanded(
-            child: _buildStep(
-              number: "3",
-              title: "Nominee",
-              active: _selectedStep == 2,
-              onPressed: () {
-                setState(() {
-                  _selectedStep = 2;
-                });
-
-                _scrollToSection(_nomineeKey);
-              },
-            ),
-          ),
-        ],
+              Expanded(
+                child: _buildStep(
+                  number: "3",
+                  title: "Nominee",
+                  active: _selectedStep == 2,
+                  onPressed: () {
+                    setState(() {
+                      _selectedStep = 2;
+                    });
+                    _scrollToSection(_nomineeKey);
+                  },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -896,7 +931,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                 ),
               ],
             ),
-            child: Text(
+            child: TranslatedText(
               number,
               style: TextStyle(
                 fontSize: 17,
@@ -908,13 +943,12 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
           const SizedBox(height: 10),
 
-          Text(
+          TranslatedText(
             title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: active ? AppColors.primaryRed : Colors.black,
-            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -958,7 +992,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Personal Information",
                     style: TextStyle(
                       color: Color.fromRGBO(255, 186, 73, 1),
@@ -1123,7 +1157,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Identity Verification",
                     style: TextStyle(
                       color: Color.fromRGBO(255, 186, 73, 1),
@@ -1172,31 +1206,39 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                         ),
                       ),
                     ),
-                    hint: const Text(
+                    hint: const TranslatedText(
                       "Select Identity Type",
                       style: TextStyle(fontSize: 12),
                     ),
                     items: const [
-                      DropdownMenuItem(value: "Aadhar", child: Text("Aadhar")),
-                      DropdownMenuItem(
+                      DropdownMenuItem<String>(
+                        value: "Aadhaar",
+                        child: TranslatedText("Aadhaar"),
+                      ),
+                      DropdownMenuItem<String>(
                         value: "PAN Card",
-                        child: Text("PAN Card"),
+                        child: TranslatedText("PAN Card"),
                       ),
-                      DropdownMenuItem(
+                      DropdownMenuItem<String>(
                         value: "Passport",
-                        child: Text("Passport"),
+                        child: TranslatedText("Passport"),
                       ),
-                      DropdownMenuItem(
-                        value: "Driving License",
-                        child: Text("Driving License"),
+                      DropdownMenuItem<String>(
+                        value: "Driving Licence",
+                        child: TranslatedText("Driving Licence"),
                       ),
-                      DropdownMenuItem(value: "NRIC", child: Text("NRIC")),
-                      DropdownMenuItem(value: "FIN", child: Text("FIN")),
+                      DropdownMenuItem<String>(
+                        value: "NRIC",
+                        child: TranslatedText("NRIC"),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: "FIN",
+                        child: TranslatedText("FIN"),
+                      ),
                     ],
                     onChanged: (value) {
                       setState(() {
                         selectedIdType = value;
-
                         selectedIdentityFiles.clear();
                       });
 
@@ -1224,7 +1266,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
                     const SizedBox(height: 8),
 
-                    const Text(
+                    const TranslatedText(
                       "Please upload the Front & Back documents.",
                       style: TextStyle(
                         fontSize: 12,
@@ -1235,7 +1277,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
                     const SizedBox(height: 6),
 
-                    const Text(
+                    const TranslatedText(
                       "Upload up to 2 files (Front & Back) in JPG, JPEG or PNG format. Max 5 MB each.",
                       style: TextStyle(fontSize: 11, color: Colors.grey),
                     ),
@@ -1272,7 +1314,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                                 Icons.upload_file,
                                 color: Color(0xffA7191F),
                               ),
-                        label: Text(
+                        label: TranslatedText(
                           isUploadingIdentityFiles
                               ? "Uploading..."
                               : selectedIdentityFiles.length >= 2
@@ -1292,7 +1334,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                     if (existingIdentityFiles.isNotEmpty) ...[
                       const SizedBox(height: 10),
 
-                      const Text(
+                      const TranslatedText(
                         "Uploaded Documents",
                         style: TextStyle(
                           fontSize: 13,
@@ -1376,7 +1418,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                                     // ),
 
                                     // const SizedBox(height: 4),
-                                    Text(
+                                    TranslatedText(
                                       filePath.split('/').last,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
@@ -1388,7 +1430,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
                                     const SizedBox(height: 4),
 
-                                    const Text(
+                                    const TranslatedText(
                                       "Previously uploaded",
                                       style: TextStyle(
                                         fontSize: 10,
@@ -1479,7 +1521,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                                       // ),
 
                                       // const SizedBox(height: 4),
-                                      Text(
+                                      TranslatedText(
                                         file.name,
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
@@ -1491,7 +1533,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
                                       const SizedBox(height: 4),
 
-                                      Text(
+                                      TranslatedText(
                                         "${(file.size / (1024 * 1024)).toStringAsFixed(2)} MB",
                                         style: const TextStyle(
                                           fontSize: 10,
@@ -1507,6 +1549,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                                     setState(() {
                                       selectedIdentityFiles.removeAt(index);
                                     });
+
+                                    if (isEditMode) {
+                                      _checkForChanges();
+                                    }
                                   },
                                   icon: const Icon(
                                     Icons.delete_outline,
@@ -1529,12 +1575,13 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
   Future<void> pickIdentityFiles() async {
     try {
-      // How many more files can be selected
       final remainingFiles = 2 - selectedIdentityFiles.length;
 
       if (remainingFiles <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You can upload only 2 files.")),
+          const SnackBar(
+            content: TranslatedText("You can upload only 2 files."),
+          ),
         );
         return;
       }
@@ -1554,31 +1601,31 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("You can upload a maximum of 2 files."),
+              content: TranslatedText("You can upload a maximum of 2 files."),
             ),
           );
         }
         return;
       }
 
-      // 5 MB per file
       const maxFileSize = 5 * 1024 * 1024;
 
       for (final file in result.files) {
         if (file.size > maxFileSize) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("${file.name} is larger than 5 MB.")),
+              SnackBar(
+                content: TranslatedText("${file.name} is larger than 5 MB."),
+              ),
             );
           }
           return;
         }
 
-        // Make sure bytes are available for preview
         if (file.bytes == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Unable to read ${file.name}.")),
+              SnackBar(content: TranslatedText("Unable to read ${file.name}.")),
             );
           }
           return;
@@ -1586,28 +1633,20 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
       }
 
       setState(() {
-        isUploadingIdentityFiles = true;
-      });
-
-      // Add instead of replacing
-      setState(() {
         selectedIdentityFiles.addAll(result.files);
-        isUploadingIdentityFiles = false;
       });
 
       if (isEditMode) {
         _checkForChanges();
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          isUploadingIdentityFiles = false;
-        });
+    } catch (e, stackTrace) {
+      log("IDENTITY FILE PICK ERROR: $e", stackTrace: stackTrace);
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Failed to select files: $e")));
-      }
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: TranslatedText("Failed to select files: $e")),
+      );
     }
   }
 
@@ -1644,7 +1683,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Nominee Details",
                     style: TextStyle(
                       color: Color.fromRGBO(255, 186, 73, 1),
@@ -1705,7 +1744,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                         ),
                       ),
                     ),
-                    hint: const Text(
+                    hint: const TranslatedText(
                       "Select Relationship",
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
@@ -1714,21 +1753,42 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                       color: Colors.black,
                     ),
                     items: const [
-                      DropdownMenuItem(value: "Father", child: Text("Father")),
-                      DropdownMenuItem(value: "Mother", child: Text("Mother")),
-                      DropdownMenuItem(value: "Spouse", child: Text("Spouse")),
-                      DropdownMenuItem(value: "Son", child: Text("Son")),
+                      DropdownMenuItem(
+                        value: "Father",
+                        child: TranslatedText("Father"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Mother",
+                        child: TranslatedText("Mother"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Spouse",
+                        child: TranslatedText("Spouse"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Son",
+                        child: TranslatedText("Son"),
+                      ),
                       DropdownMenuItem(
                         value: "Daughter",
-                        child: Text("Daughter"),
+                        child: TranslatedText("Daughter"),
                       ),
                       DropdownMenuItem(
                         value: "Brother",
-                        child: Text("Brother"),
+                        child: TranslatedText("Brother"),
                       ),
-                      DropdownMenuItem(value: "Sister", child: Text("Sister")),
-                      DropdownMenuItem(value: "Friend", child: Text("Friend")),
-                      DropdownMenuItem(value: "Other", child: Text("Other")),
+                      DropdownMenuItem(
+                        value: "Sister",
+                        child: TranslatedText("Sister"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Friend",
+                        child: TranslatedText("Friend"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Other",
+                        child: TranslatedText("Other"),
+                      ),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -1881,7 +1941,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                 ),
               const SizedBox(height: 10),
 
-              const Text(
+              const TranslatedText(
                 "Passport Size Photo\n"
                 "(JPG / PNG\n"
                 "(Max 2 MB))",
@@ -1924,7 +1984,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
                             color: Colors.black,
                           ),
                         )
-                      : const Text(
+                      : const TranslatedText(
                           "BROWSE FILES",
                           style: TextStyle(
                             fontSize: 11,
@@ -1947,7 +2007,7 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(left: 0),
-      child: Text(
+      child: TranslatedText(
         text,
         style: const TextStyle(
           fontSize: 14,
@@ -1998,8 +2058,10 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
     if (!isDeclarationAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please accept the declaration before updating."),
+        SnackBar(
+          content: TranslatedText(
+            "Please accept the declaration before updating.",
+          ),
         ),
       );
       return;
@@ -2007,14 +2069,18 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
     if (selectedIdType == null || selectedIdType!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select an identity type.")),
+        const SnackBar(
+          content: TranslatedText("Please select an identity type."),
+        ),
       );
       return;
     }
 
     if (selectedIdentityFiles.isEmpty && existingIdentityFiles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please upload your identity document.")),
+        const SnackBar(
+          content: TranslatedText("Please upload your identity document."),
+        ),
       );
       return;
     }
@@ -2024,7 +2090,9 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
     });
 
     try {
-      final response = await JscService.submitJscApplication(
+      final response = await JscService.submitApplication(
+        applicationType: applicationType,
+
         name: fullNameController.text.trim(),
         email: emailController.text.trim(),
         dob: _formatDateForApi(dobController.text.trim()),
@@ -2045,18 +2113,17 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         declarationAccepted: isDeclarationAccepted,
 
         photo: selectedPhoto,
-
         identityFiles: selectedIdentityFiles,
       );
 
-      log("JSC UPDATE RESPONSE: $response");
+      log(" UPDATE RESPONSE: $response");
 
       if (!mounted) return;
 
       if (response["success"] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("JSC application updated successfully."),
+            content: TranslatedText("Application updated successfully."),
           ),
         );
 
@@ -2064,17 +2131,22 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
         selectedIdentityFiles.clear();
         selectedPhoto = null;
 
-        // Reload the application so the current values
-        // become the new original values.
-        await loadJscApplication();
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        if (!mounted) return;
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 0)),
+          (route) => false,
+        );
       } else {
         final body = response["body"];
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              body?["message"]?.toString() ??
-                  "Failed to update JSC application.",
+            content: TranslatedText(
+              body?["message"]?.toString() ?? "Failed to update application.",
             ),
           ),
         );
@@ -2084,9 +2156,9 @@ class _JscApplicationFormState extends State<JscApplicationForm> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Something went wrong: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: TranslatedText("Something went wrong: $e")),
+      );
     } finally {
       if (mounted) {
         setState(() {

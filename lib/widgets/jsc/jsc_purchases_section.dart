@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/session_manager.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class JscPurchasesSection extends StatefulWidget {
@@ -57,7 +58,7 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
     // Otherwise check saved unlock status
     // from SessionManager.
     try {
-      final unlocked = await SessionManager.isBalanceUnlocked();
+      final unlocked = await SessionManager.isJscBalanceUnlocked();
 
       if (!mounted) return;
 
@@ -180,7 +181,7 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          const TranslatedText(
             'Your Purchases',
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
@@ -200,7 +201,7 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
                 ),
               ],
             ),
-            child: const Text(
+            child: const TranslatedText(
               "Track each digital purchase against today's market price.",
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
             ),
@@ -213,7 +214,7 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
           // ======================================================
           if (!_isUnlocked)
             const Center(
-              child: Text(
+              child: TranslatedText(
                 'Unlock your balances to view your purchases.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 10, color: Colors.grey),
@@ -224,7 +225,7 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
           // ======================================================
           else if (purchases.isEmpty)
             const Center(
-              child: Text(
+              child: TranslatedText(
                 'No digital gold or silver purchases yet.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -266,7 +267,7 @@ class _PurchaseTable extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         child: SizedBox(
-          width: 820, // keeps the table readable
+          width: 870,
           child: Column(
             children: [
               // ================================
@@ -280,7 +281,7 @@ class _PurchaseTable extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: 110,
-                      child: Text(
+                      child: TranslatedText(
                         'PURCHASE DATE',
                         style: TextStyle(
                           fontSize: 9,
@@ -292,7 +293,7 @@ class _PurchaseTable extends StatelessWidget {
 
                     SizedBox(
                       width: 75,
-                      child: Text(
+                      child: TranslatedText(
                         'METAL',
                         style: TextStyle(
                           fontSize: 9,
@@ -304,7 +305,7 @@ class _PurchaseTable extends StatelessWidget {
 
                     SizedBox(
                       width: 160,
-                      child: Text(
+                      child: TranslatedText(
                         'PRODUCT NAME',
                         style: TextStyle(
                           fontSize: 9,
@@ -316,7 +317,7 @@ class _PurchaseTable extends StatelessWidget {
 
                     SizedBox(
                       width: 140,
-                      child: Text(
+                      child: TranslatedText(
                         'PURCHASED AMOUNT',
                         style: TextStyle(
                           fontSize: 9,
@@ -328,7 +329,7 @@ class _PurchaseTable extends StatelessWidget {
 
                     SizedBox(
                       width: 150,
-                      child: Text(
+                      child: TranslatedText(
                         "TODAY'S MARKET PRICE",
                         style: TextStyle(
                           fontSize: 9,
@@ -339,8 +340,8 @@ class _PurchaseTable extends StatelessWidget {
                     ),
 
                     SizedBox(
-                      width: 120,
-                      child: Text(
+                      width: 160,
+                      child: TranslatedText(
                         'MARKET STATUS',
                         style: TextStyle(
                           fontSize: 9,
@@ -415,10 +416,20 @@ class _PurchaseTableRow extends StatelessWidget {
           '${parsedDate.year}';
     } catch (_) {}
 
-    final isUp = marketStatus.toLowerCase() == 'up';
+    final status = marketStatus.toLowerCase();
+
+    final isUp = status == 'up';
+    final isDown = status == 'down';
+    final isFlat = status == 'flat';
+
+    final statusColor = isUp
+        ? const Color(0xFF168B3A)
+        : isDown
+        ? const Color(0xFFD20D2D)
+        : const Color(0xFF777777);
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 95),
+      constraints: const BoxConstraints(minHeight: 120),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: const BoxDecoration(
         color: Color(0xFFFFFEFF),
@@ -434,7 +445,7 @@ class _PurchaseTableRow extends StatelessWidget {
           // ==========================
           SizedBox(
             width: 110,
-            child: Text(
+            child: TranslatedText(
               formattedDate,
               style: const TextStyle(
                 fontSize: 10,
@@ -462,7 +473,7 @@ class _PurchaseTableRow extends StatelessWidget {
 
                 const SizedBox(height: 3),
 
-                Text(
+                TranslatedText(
                   metal.isEmpty
                       ? ''
                       : metal[0].toUpperCase() +
@@ -485,7 +496,7 @@ class _PurchaseTableRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                TranslatedText(
                   productName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -506,7 +517,7 @@ class _PurchaseTableRow extends StatelessWidget {
                     color: const Color(0xFFF0F2F5),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
+                  child: TranslatedText(
                     purchase['purchase_subtype']?.toString().toUpperCase() ??
                         '',
                     style: const TextStyle(
@@ -529,7 +540,7 @@ class _PurchaseTableRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
+                TranslatedText(
                   '${double.tryParse(quantity)?.toStringAsFixed(4) ?? quantity} $unit',
                   style: const TextStyle(
                     fontSize: 11,
@@ -539,7 +550,7 @@ class _PurchaseTableRow extends StatelessWidget {
 
                 const SizedBox(height: 4),
 
-                Text(
+                TranslatedText(
                   '@ $purchasePrice/$unit',
                   style: const TextStyle(fontSize: 9, color: Color(0xFF777777)),
                 ),
@@ -552,85 +563,100 @@ class _PurchaseTableRow extends StatelessWidget {
           // ==========================
           SizedBox(
             width: 150,
-            child: Text(
+            child: TranslatedText(
               '$todayPrice/$unit',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: isUp ? const Color(0xFF168B3A) : const Color(0xFFD20D2D),
+                color: statusColor,
               ),
             ),
           ),
-
           // ==========================
           // MARKET STATUS
           // ==========================
           SizedBox(
-            width: 120,
+            width: 150,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$priceDiff',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: isUp
-                            ? const Color(0xFF168B3A)
-                            : const Color(0xFFD20D2D),
+                // ======================================================
+                // GRAPH + PRICE DIFFERENCE
+                // ======================================================
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _MarketTrendGraph(
+                        status: marketStatus,
+                        color: statusColor,
                       ),
-                    ),
 
-                    const SizedBox(height: 3),
+                      const SizedBox(height: 4),
 
-                    Text(
-                      '$priceDiffPercent',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: isUp
-                            ? const Color(0xFF168B3A)
-                            : const Color(0xFFD20D2D),
+                      TranslatedText(
+                        priceDiff,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 2),
+
+                      TranslatedText(
+                        priceDiffPercent,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
-                const SizedBox(width: 10),
+                // const SizedBox(width: 4),
 
+                // ======================================================
+                // STATUS BADGE
+                // ======================================================
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
+                    horizontal: 10,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: isUp
                         ? const Color(0xFFE4F4EA)
-                        : const Color(0xFFFBE5E5),
+                        : isDown
+                        ? const Color(0xFFFBE5E5)
+                        : const Color(0xFFF0F0F0),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isUp ? Icons.arrow_upward : Icons.arrow_downward,
+                        isUp
+                            ? Icons.arrow_upward
+                            : isDown
+                            ? Icons.arrow_downward
+                            : Icons.arrow_forward,
                         size: 10,
-                        color: isUp
-                            ? const Color(0xFF168B3A)
-                            : const Color(0xFFD20D2D),
+                        color: statusColor,
                       ),
 
                       const SizedBox(width: 3),
 
-                      Text(
+                      TranslatedText(
                         marketStatus.toUpperCase(),
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          color: isUp
-                              ? const Color(0xFF168B3A)
-                              : const Color(0xFFD20D2D),
+                          color: statusColor,
                         ),
                       ),
                     ],
@@ -662,6 +688,84 @@ class _PurchaseTableRow extends StatelessWidget {
     ];
 
     return months[month];
+  }
+}
+
+// ============================================================================
+// MARKET TREND GRAPH
+// ============================================================================
+
+class _MarketTrendGraph extends StatelessWidget {
+  final String status;
+  final Color color;
+
+  const _MarketTrendGraph({required this.status, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 62,
+      height: 30,
+      child: CustomPaint(
+        painter: _MarketTrendPainter(status: status, color: color),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// MARKET TREND PAINTER
+// ============================================================================
+
+class _MarketTrendPainter extends CustomPainter {
+  final String status;
+  final Color color;
+
+  _MarketTrendPainter({required this.status, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final normalizedStatus = status.trim().toLowerCase();
+
+    final paint = Paint()
+      ..color = normalizedStatus == 'flat' ? const Color(0xFF999999) : color
+      ..strokeWidth = 2.8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path();
+
+    if (normalizedStatus == 'up') {
+      // Rising green trend
+      path.moveTo(2, 23);
+      path.lineTo(14, 17);
+      path.lineTo(25, 19);
+      path.lineTo(36, 12);
+      path.lineTo(48, 14);
+      path.lineTo(60, 5);
+    } else if (normalizedStatus == 'down') {
+      // Falling red trend
+      path.moveTo(2, 5);
+      path.lineTo(14, 11);
+      path.lineTo(25, 9);
+      path.lineTo(36, 16);
+      path.lineTo(48, 18);
+      path.lineTo(60, 25);
+    } else {
+      // Flat grey trend
+      final y = size.height / 2;
+
+      path.moveTo(2, y);
+      path.lineTo(size.width - 2, y);
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MarketTrendPainter oldDelegate) {
+    return oldDelegate.status != status || oldDelegate.color != color;
   }
 }
 

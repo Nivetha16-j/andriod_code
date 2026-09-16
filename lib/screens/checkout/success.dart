@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   const OrderSuccessScreen({super.key});
@@ -20,7 +21,7 @@ class OrderSuccessScreen extends StatelessWidget {
                 const SizedBox(height: 30),
 
                 /// Title
-                const Text(
+                const TranslatedText(
                   "Success!",
                   style: TextStyle(
                     fontSize: 32,
@@ -32,7 +33,7 @@ class OrderSuccessScreen extends StatelessWidget {
                 const SizedBox(height: 18),
 
                 /// Subtitle
-                const Text(
+                const TranslatedText(
                   "Your order will be delivered soon.\nThank you for choosing our app!",
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -65,7 +66,7 @@ class OrderSuccessScreen extends StatelessWidget {
                         (route) => false,
                       );
                     },
-                    child: const Text(
+                    child: const TranslatedText(
                       "CONTINUE SHOPPING",
                       style: TextStyle(
                         fontSize: 16,

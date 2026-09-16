@@ -1,75 +1,358 @@
 import 'dart:developer';
-
 import 'package:flutter/foundation.dart';
+import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/services/jsc_services.dart';
 
 class PhysicalConversionProvider extends ChangeNotifier {
   bool _isActive = false;
   String? _metal;
-  double? _amount;
+  double _amount = 0;
+
+  bool _isFetchingStatus = false;
+
+  String? _plan;
+
+  String? get plan => _plan;
 
   bool get isActive => _isActive;
+
   String? get metal => _metal;
-  double? get amount => _amount;
+
+  double get amount => _amount;
+
+  bool get isFetchingStatus => _isFetchingStatus;
 
   String get formattedAmount {
-    if (_amount == null) return '0';
-    return _amount!.toStringAsFixed(4);
+    return _amount.toStringAsFixed(4);
   }
 
-  void startConversion({required String metal, required double amount}) {
-    log("convvvv $metal $amount");
+  void _setInactive() {
+    _isActive = false;
+    _metal = null;
+    _amount = 0;
 
+    log(
+      '🛑 PHYSICAL CONVERSION STATE -> '
+      'INACTIVE',
+    );
+
+    notifyListeners();
+  }
+
+  void _setActive({
+    required String? metal,
+    required double amount,
+    String? plan,
+  }) {
     _isActive = true;
     _metal = metal;
     _amount = amount;
 
+    if (plan != null && plan.isNotEmpty) {
+      _plan = plan.toLowerCase();
+    }
+
+    log(
+      '✅ PHYSICAL CONVERSION STATE -> '
+      'ACTIVE '
+      'plan=$_plan '
+      'metal=$_metal '
+      'amount=$_amount',
+    );
+
     notifyListeners();
   }
 
-  void cancelConversion() {
-    _isActive = false;
-    _metal = null;
-    _amount = null;
+  Future<void> fetchConversionStatus({
+    bool showLoader = false,
+    String? plan,
+  }) async {
+    if (_isFetchingStatus) {
+      log('⏭️ fetchConversionStatus already running');
+      return;
+    }
+
+    _isFetchingStatus = true;
+
+    if (showLoader) {
+      notifyListeners();
+    }
+
+    try {
+      log('🌐 FETCHING PHYSICAL CONVERSION STATUS FROM BACKEND');
+
+      final response = await JscService.fetchConvertDetails();
+
+      log('📦 CONVERSION STATUS RESPONSE: $response');
+
+      final apiStatus = response['status'] == true;
+
+      final data = response['data'];
+
+      if (!apiStatus || data == null) {
+        log(
+          '🛑 NO ACTIVE PHYSICAL CONVERSION FROM BACKEND '
+          '-> clearing provider state',
+        );
+
+        _setInactive();
+
+        return;
+      }
+
+      if (data is! Map<String, dynamic>) {
+        log(
+          '⚠️ INVALID CONVERSION DATA '
+          '-> clearing provider state',
+        );
+
+        _setInactive();
+
+        return;
+      }
+
+      final status = data['status']?.toString().trim().toLowerCase() ?? '';
+
+      final metal = data['metal']?.toString();
+
+      final amount =
+          double.tryParse('${data['amount_grams'] ?? data['amount'] ?? 0}') ??
+          0;
+
+      log(
+        '🔎 BACKEND CONVERSION STATUS -> '
+        'status=$status '
+        'metal=$metal '
+        'amount=$amount',
+      );
+
+      if (status == 'active' && amount > 0) {
+        _setActive(metal: metal, amount: amount, plan: plan);
+
+        return;
+      }
+
+      log(
+        '🛑 BACKEND CONVERSION IS NOT ACTIVE '
+        '-> status=$status',
+      );
+
+      _setInactive();
+    } catch (e, stackTrace) {
+      log('❌ fetchConversionStatus ERROR: $e', stackTrace: stackTrace);
+    } finally {
+      _isFetchingStatus = false;
+
+      if (showLoader) {
+        notifyListeners();
+      }
+    }
+  }
+
+  void setConversionPlan(String plan) {
+    final normalizedPlan = plan.trim().toLowerCase();
+
+    if (normalizedPlan != 'jsc' && normalizedPlan != 'gsp') {
+      log('⚠️ Invalid physical conversion plan: $plan');
+      return;
+    }
+
+    _plan = normalizedPlan;
+
+    log('📌 PHYSICAL CONVERSION PLAN -> $_plan');
 
     notifyListeners();
   }
 
-  String? validateProduct({
-    required String? brand,
-    required String? metalType,
-  }) {
-    // ----------------------------------------------------------
-    // NORMAL CART
-    // ----------------------------------------------------------
+  Future<bool> startConversion({
+    required String metal,
+    required double amount,
+    required String currency,
+  }) async {
+    try {
+      log(
+        '🚀 START CONVERSION -> '
+        'metal=$metal '
+        'amount=$amount '
+        'currency=$currency',
+      );
+
+      final response = await JscService.convertToPhysical(
+        metal: metal,
+        amount: amount,
+        currency: currency,
+      );
+
+      log('🔥 START CONVERSION RESPONSE: $response');
+
+      final success = response['status'] == true;
+
+      if (!success) {
+        log(
+          '❌ START CONVERSION FAILED -> '
+          '${response['message'] ?? 'Unknown error'}',
+        );
+
+        return false;
+      }
+
+      await fetchConversionStatus();
+
+      return _isActive;
+    } catch (e, stackTrace) {
+      log('❌ startConversion ERROR: $e', stackTrace: stackTrace);
+
+      return false;
+    }
+  }
+
+  Future<bool> cancelConversion({
+    required CartProvider cartProvider,
+    required CurrencyProvider currencyProvider,
+  }) async {
+    try {
+      log('🛑 CANCEL PHYSICAL CONVERSION');
+
+      final currentMetal = _metal;
+      final currentAmount = _amount;
+      final currency = currencyProvider.selectedCurrency;
+
+      if (!_isActive ||
+          currentMetal == null ||
+          currentMetal.trim().isEmpty ||
+          currentAmount <= 0) {
+        log(
+          '❌ Cannot cancel -> '
+          'no active backend conversion available',
+        );
+
+        await fetchConversionStatus();
+
+        return false;
+      }
+
+      log(
+        '🚀 CANCEL API -> '
+        'metal=$currentMetal '
+        'amount=$currentAmount '
+        'currency=$currency',
+      );
+
+      final response = await JscService.cancelPhysicalConversion(
+        metal: currentMetal,
+        amount: currentAmount,
+        currency: currency,
+      );
+
+      log('🔥 CANCEL RESPONSE: $response');
+
+      final success = response['status'] == true;
+
+      if (!success) {
+        log(
+          '❌ CANCEL API FAILED -> '
+          '${response['message'] ?? 'Unknown error'}',
+        );
+        await fetchConversionStatus();
+
+        return false;
+      }
+
+      log('✅ BACKEND CONVERSION CANCELLED');
+
+      final cartRemoved = await cartProvider.removeCurrentBackendCart();
+
+      if (!cartRemoved) {
+        log('❌ Physical cart could not be removed');
+
+        await fetchConversionStatus();
+
+        return false;
+      }
+
+      log('✅ PHYSICAL CART REMOVED');
+
+      final restored = await cartProvider.restorePhysicalOrderProducts();
+
+      if (!restored) {
+        log('❌ ORIGINAL NORMAL CART COULD NOT BE RESTORED');
+
+        await fetchConversionStatus();
+
+        return false;
+      }
+
+      log('✅ ORIGINAL NORMAL CART RESTORED');
+
+      clearActiveConversion();
+
+      await cartProvider.fetchCart();
+
+      log(
+        '✅ NORMAL CART FETCHED -> '
+        'items=${cartProvider.cartItems.length}',
+      );
+
+      return true;
+    } catch (e, stackTrace) {
+      log('❌ cancelConversion ERROR: $e', stackTrace: stackTrace);
+
+      return false;
+    }
+  }
+
+  String? validateProduct({String? metalType}) {
     if (!_isActive) {
       return null;
     }
 
-    final normalizedBrand = brand?.trim().toLowerCase() ?? '';
+    final normalizedProductMetal = metalType?.trim().toLowerCase();
 
-    final normalizedMetal = metalType?.trim().toLowerCase() ?? '';
+    final normalizedConversionMetal = _metal?.trim().toLowerCase();
 
-    final requiredMetal = _metal?.trim().toLowerCase() ?? '';
+    log(
+      'validateProduct -> '
+      'productMetal=$normalizedProductMetal '
+      'conversionMetal=$normalizedConversionMetal',
+    );
 
-    // ----------------------------------------------------------
-    // BRAND VALIDATION
-    // ----------------------------------------------------------
-    // Only JSC products are allowed during physical conversion.
-    if (normalizedBrand != 'jsc') {
-      return 'Only JSC products can be added during physical conversion.';
-    }
-
-    // ----------------------------------------------------------
-    // METAL VALIDATION
-    // ----------------------------------------------------------
-    if (normalizedMetal != requiredMetal) {
-      final displayMetal = requiredMetal.isNotEmpty
-          ? requiredMetal[0].toUpperCase() + requiredMetal.substring(1)
-          : 'selected metal';
-
-      return 'Only $displayMetal products can be added to this physical conversion.';
+    if (normalizedConversionMetal != normalizedProductMetal) {
+      return 'Only $_metal products can be added during this conversion.';
     }
 
     return null;
+  }
+
+  final Set<dynamic> digitalProductIds = {};
+
+  void setDigitalProductIds(List<dynamic> products) {
+    digitalProductIds
+      ..clear()
+      ..addAll(
+        products
+            .take(4)
+            .map((product) => product['id'])
+            .where((id) => id != null),
+      );
+
+    log('DIGITAL PRODUCT IDS: $digitalProductIds');
+
+    notifyListeners();
+  }
+
+  bool isDigitalProduct(dynamic productId) {
+    return digitalProductIds.contains(productId);
+  }
+
+  void clearActiveConversion() {
+    _isActive = false;
+    _metal = null;
+    _amount = 0;
+    _plan = null;
+
+    log('🧹 PHYSICAL CONVERSION CLEARED FROM PROVIDER');
+
+    notifyListeners();
   }
 }

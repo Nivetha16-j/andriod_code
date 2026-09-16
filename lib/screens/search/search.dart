@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:developer';
+
+import 'package:flutter/material.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/recently_viewed_service.dart';
 import 'package:junubullion/services/search_service.dart';
-import 'package:flutter/material.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class SearchScreen extends StatefulWidget {
-  SearchScreen({super.key});
+  const SearchScreen({super.key});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -15,8 +17,8 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController searchController = TextEditingController();
   final ScrollController _recentlyViewedController = ScrollController();
-  List<dynamic> searchResults = [];
 
+  List<dynamic> searchResults = [];
   List<Map<String, dynamic>> recentlyViewed = [];
 
   bool isLoading = false;
@@ -32,6 +34,8 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> loadRecentlyViewed() async {
     recentlyViewed = await RecentlyViewedService.getProducts();
 
+    if (!mounted) return;
+
     setState(() {});
   }
 
@@ -45,12 +49,17 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> searchProducts(String keyword) async {
     if (keyword.trim().isEmpty) {
+      if (!mounted) return;
+
       setState(() {
         searchResults = [];
         isLoading = false;
       });
+
       return;
     }
+
+    if (!mounted) return;
 
     setState(() {
       isLoading = true;
@@ -59,12 +68,16 @@ class _SearchScreenState extends State<SearchScreen> {
     try {
       final products = await SearchService.searchProducts(keyword);
 
+      if (!mounted) return;
+
       setState(() {
         searchResults = products;
       });
     } catch (e) {
       debugPrint("Search Error: $e");
     } finally {
+      if (!mounted) return;
+
       setState(() {
         isLoading = false;
       });
@@ -73,9 +86,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isSearching = searchController.text.isNotEmpty;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,7 +99,7 @@ class _SearchScreenState extends State<SearchScreen> {
             TextField(
               controller: searchController,
               onChanged: (value) {
-                setState(() {}); // Updates UI when text changes
+                setState(() {});
 
                 if (_debounce?.isActive ?? false) {
                   _debounce!.cancel();
@@ -95,7 +110,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 });
               },
               decoration: InputDecoration(
-                hintText: "Search products",
+                hint: const TranslatedText('Search products'),
                 suffixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -105,72 +120,109 @@ class _SearchScreenState extends State<SearchScreen> {
 
             const SizedBox(height: 30),
 
-            if (searchController.text.isNotEmpty) ...[
-              Expanded(
-                child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView.builder(
-                        itemCount: searchResults.length,
-                        itemBuilder: (context, index) {
-                          final product = searchResults[index];
+            if (isSearching) ...[
+              /// SEARCH RESULTS
+              if (isLoading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 40),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (searchResults.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(top: 40),
+                  child: Center(
+                    child: TranslatedText(
+                      "No products found",
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: searchResults.length,
+                  itemBuilder: (context, index) {
+                    final product = searchResults[index];
 
-                          log("searchResults $searchResults");
+                    log("searchResults $searchResults");
 
-                          return Column(
-                            children: [
-                              ListTile(
-                                onTap: () async {
-                                  await RecentlyViewedService.addProduct(
-                                    product,
-                                  );
+                    return Column(
+                      children: [
+                        ListTile(
+                          onTap: () async {
+                            await RecentlyViewedService.addProduct(product);
 
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ProductDetailsScreen(
-                                        productId: product["id"],
-                                      ),
-                                    ),
-                                  ).then((_) {
-                                    loadRecentlyViewed();
-                                  });
-                                },
-                                leading: Image.network(
-                                  "https://staging.junubullion.com/storage/${product['image_path']}",
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
+                            if (!context.mounted) return;
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProductDetailsScreen(
+                                  productId: product["id"],
                                 ),
-                                title: Text(product["name"]),
                               ),
-                              const Divider(height: 1),
-                            ],
-                          );
-                        },
-                      ),
-              ),
+                            ).then((_) {
+                              loadRecentlyViewed();
+                            });
+                          },
+                          leading: Image.network(
+                            "https://staging.junubullion.com/storage/${product['image_path']}",
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) {
+                              return const Icon(Icons.image);
+                            },
+                          ),
+
+                          // API data - keep normal Text for now
+                          title: TranslatedText(
+                            product["name"]?.toString() ?? "",
+                          ),
+                        ),
+                        const Divider(height: 1),
+                      ],
+                    );
+                  },
+                ),
             ] else ...[
+              /// RECENTLY VIEWED HEADER
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    "Recently Viewed",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      _recentlyViewedController.animateTo(
-                        _recentlyViewedController.position.maxScrollExtent,
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    child: Text(
-                      "See All",
-                      style: const TextStyle(
-                        fontSize: 14,
+                  Expanded(
+                    child: const TranslatedText(
+                      "Recently Viewed",
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                      ),
+                    ),
+                  ),
+
+                  Flexible(
+                    child: InkWell(
+                      onTap: () {
+                        if (!_recentlyViewedController.hasClients) {
+                          return;
+                        }
+
+                        _recentlyViewedController.animateTo(
+                          _recentlyViewedController.position.maxScrollExtent,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      child: const TranslatedText(
+                        "See All",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
                       ),
                     ),
                   ),
@@ -179,6 +231,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
               const SizedBox(height: 10),
 
+              /// RECENTLY VIEWED PRODUCTS
               SizedBox(
                 height: 140,
                 child: ListView.builder(
@@ -187,6 +240,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   itemCount: recentlyViewed.length,
                   itemBuilder: (context, index) {
                     final product = recentlyViewed[index];
+
                     log("PPPPPP ---- $product");
 
                     return Stack(
@@ -204,60 +258,46 @@ class _SearchScreenState extends State<SearchScreen> {
                           },
                           child: Container(
                             width: 110,
-                            // height: 170,
                             margin: const EdgeInsets.only(right: 12, top: 8),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.grey.shade300),
-                              // borderRadius: BorderRadius.circular(12),
-                              // color: Colors.white,
                             ),
                             child: Column(
                               children: [
-                                Container(
+                                /// Product Image
+                                SizedBox(
                                   height: 85,
                                   width: 110,
-                                  // decoration: BoxDecoration(
-                                  // color: Colors.grey.shade200,
-                                  //   borderRadius: const BorderRadius.vertical(
-                                  //     top: Radius.circular(12),
-                                  //   ),
-                                  // ),
                                   child: ClipRRect(
                                     borderRadius: const BorderRadius.vertical(
                                       top: Radius.circular(12),
                                     ),
                                     child: Image.network(
                                       "https://staging.junubullion.com/storage/${product["image_path"]}",
-                                      fit: BoxFit
-                                          .contain, // Keeps entire product visible
-                                      errorBuilder: (_, __, ___) =>
-                                          const Icon(Icons.image),
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, __, ___) {
+                                        return const Icon(Icons.image);
+                                      },
                                     ),
                                   ),
                                 ),
-                                // Divider(),
+
+                                /// Product Name
                                 Expanded(
-                                  child: Text(
-                                    product["name"],
+                                  child: TranslatedText(
+                                    product["name"]?.toString() ?? "",
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                 ),
-                                // Text(
-                                //   product["live_price"],
-                                //   maxLines: 2,
-                                //   overflow: TextOverflow.ellipsis,
-                                //   textAlign: TextAlign.center,
-                                //   style: const TextStyle(fontSize: 12),
-                                // ),
                               ],
                             ),
                           ),
                         ),
 
-                        /// Close button
+                        /// Close Button
                         Positioned(
                           top: 0,
                           right: 4,
@@ -266,6 +306,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               await RecentlyViewedService.removeProduct(
                                 product["id"],
                               );
+
                               await loadRecentlyViewed();
                             },
                             child: Container(
@@ -289,128 +330,6 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             ],
-
-            //             Expanded(
-            //   child: isLoading
-            //       ? const Center(child: CircularProgressIndicator())
-            //       : searchController.text.isEmpty
-            //           ? GridView.builder(
-            //   itemCount: recentlyViewed.length,
-            //   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            //     crossAxisCount: 2,
-            //     crossAxisSpacing: 16,
-            //     mainAxisSpacing: 16,
-            //     childAspectRatio: 0.8,
-            //   ),
-            //   itemBuilder: (context, index) {
-            //     final product = recentlyViewed[index];
-
-            //     return Container(
-            //       decoration: BoxDecoration(
-            //         border: Border.all(color: Colors.grey.shade300),
-            //         borderRadius: BorderRadius.circular(12),
-            //       ),
-            //       child: Column(
-            //         children: [
-            //           Expanded(
-            //             child: ClipRRect(
-            //               borderRadius: const BorderRadius.vertical(
-            //                 top: Radius.circular(12),
-            //               ),
-            //               child: Image.network(
-            //                 product["image"]!,
-            //                 fit: BoxFit.cover,
-            //                 width: double.infinity,
-            //               ),
-            //             ),
-            //           ),
-            //           Padding(
-            //             padding: const EdgeInsets.all(8),
-            //             child: Text(
-            //               product["name"]!,
-            //               maxLines: 2,
-            //               overflow: TextOverflow.ellipsis,
-            //               textAlign: TextAlign.center,
-            //             ),
-            //           ),
-            //         ],
-            //       ),
-            //     );
-            //   },
-            // )
-            //           : Expanded(
-            //   child: ListView.separated(
-            //     itemCount: searchResults.length,
-            //     separatorBuilder: (_, __) => const Divider(height: 1),
-            //     itemBuilder: (context, index) {
-            //       final product = searchResults[index];
-
-            //       return InkWell(
-            //         onTap: () {
-            //           // Navigate to Product Details
-            //         },
-            //         child: Padding(
-            //           padding: const EdgeInsets.symmetric(
-            //             horizontal: 12,
-            //             vertical: 12,
-            //           ),
-            //           child: Row(
-            //             children: [
-            //               /// Product Image
-            //               ClipRRect(
-            //                 borderRadius: BorderRadius.circular(8),
-            //                 child: Image.network(
-            //                   "https://staging.junubullion.com/${product["image_path"]}",
-            //                   width: 70,
-            //                   height: 70,
-            //                   fit: BoxFit.cover,
-            //                   errorBuilder: (_, __, ___) => Container(
-            //                     width: 70,
-            //                     height: 70,
-            //                     color: Colors.grey.shade200,
-            //                     child: const Icon(Icons.image),
-            //                   ),
-            //                 ),
-            //               ),
-
-            //               const SizedBox(width: 12),
-
-            //               /// Name & Price
-            //               Expanded(
-            //                 child: Column(
-            //                   crossAxisAlignment: CrossAxisAlignment.start,
-            //                   children: [
-            //                     Text(
-            //                       product["name"] ?? "",
-            //                       maxLines: 2,
-            //                       overflow: TextOverflow.ellipsis,
-            //                       style: const TextStyle(
-            //                         fontSize: 16,
-            //                         fontWeight: FontWeight.w600,
-            //                       ),
-            //                     ),
-
-            //                     const SizedBox(height: 8),
-
-            //                     Text(
-            //                       product["live_price"] ?? "",
-            //                       style: const TextStyle(
-            //                         fontSize: 18,
-            //                         fontWeight: FontWeight.bold,
-            //                         color: Colors.black,
-            //                       ),
-            //                     ),
-            //                   ],
-            //                 ),
-            //               ),
-            //             ],
-            //           ),
-            //         ),
-            //       );
-            //     },
-            //   ),
-            // )
-            // )
           ],
         ),
       ),

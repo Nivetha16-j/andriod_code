@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/testimonial.dart';
-import 'package:junubullion/services/testimonial_provider.dart';
+import 'package:junubullion/services/testimonial_service.dart';
 
 class TestimonialProvider extends ChangeNotifier {
   final TestimonialService _service = TestimonialService();

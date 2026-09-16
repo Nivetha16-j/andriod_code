@@ -57,6 +57,8 @@ dependencies:
   webview_flutter: ^4.14.1
   url_launcher: ^6.3.2
 
+  google_mlkit_translation: ^0.14.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

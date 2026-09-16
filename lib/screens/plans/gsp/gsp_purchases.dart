@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:junubullion/screens/jsc/jsc_layout.dart';
+import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
+import 'package:junubullion/widgets/gsp/gsp_purchase_section.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
-import 'package:junubullion/widgets/jsc/jsc_convert_to_physical_section.dart';
+import '../layout.dart';
 
-class JscConvertToPhysicalScreen extends StatefulWidget {
-  const JscConvertToPhysicalScreen({super.key});
+class GspPurchasesScreen extends StatefulWidget {
+  const GspPurchasesScreen({super.key});
 
   @override
-  State<JscConvertToPhysicalScreen> createState() =>
-      _JscConvertToPhysicalScreenState();
+  State<GspPurchasesScreen> createState() => _GspPurchasesScreenState();
 }
 
-class _JscConvertToPhysicalScreenState
-    extends State<JscConvertToPhysicalScreen> {
+class _GspPurchasesScreenState extends State<GspPurchasesScreen> {
   @override
   Widget build(BuildContext context) {
     int currentIndex = 0;
@@ -26,11 +26,12 @@ class _JscConvertToPhysicalScreenState
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: JscLayout(
-        selectedMenu: 'Convert To Physical',
+      body: PlansLayout(
+        plans: Plans.gsp,
+        selectedMenu: 'Your Purchases',
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
-          child: const JscConvertToPhysicalContent(),
+          child: const GspPurchasesContent(),
         ),
       ),
       bottomNavigationBar: CustomBottomNavigationBar(
@@ -49,16 +50,16 @@ class _JscConvertToPhysicalScreenState
   }
 }
 
-class JscConvertToPhysicalContent extends StatelessWidget {
-  const JscConvertToPhysicalContent({super.key});
+class GspPurchasesContent extends StatelessWidget {
+  const GspPurchasesContent({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Convert To Physical',
+        const TranslatedText(
+          'Your Purchases',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -68,8 +69,8 @@ class JscConvertToPhysicalContent extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        const Text(
-          "Convert your digital gold or silver holdings into physical bullion products.",
+        const TranslatedText(
+          "Track each digital purchase against today's market price.",
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w400,
@@ -79,7 +80,7 @@ class JscConvertToPhysicalContent extends StatelessWidget {
 
         const SizedBox(height: 25),
 
-        const JscConvertPhysicalSection(),
+        const GspPurchasesSection(),
       ],
     );
   }

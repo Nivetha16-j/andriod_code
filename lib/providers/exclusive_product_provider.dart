@@ -11,20 +11,7 @@ class ExclusiveProductProvider extends ChangeNotifier {
   String _currentEndpoint = "exclusive-products";
 
   String get currentEndpoint => _currentEndpoint;
-
-  // Future<void> fetchProducts({String endpoint = "exclusive-products"}) async {
-  //   _currentEndpoint = endpoint;
-
-  //   isLoading = true;
-  //   notifyListeners();
-
-  //   try {
-  //     products = await _service.getProducts(endpoint);
-  //   } finally {
-  //     isLoading = false;
-  //     notifyListeners();
-  //   }
-  // }
+  int _productRequestId = 0;
 
   Future<void> fetchProducts({
     String endpoint = "exclusive-products",
@@ -32,25 +19,52 @@ class ExclusiveProductProvider extends ChangeNotifier {
     required String unit,
     bool showLoader = true,
   }) async {
+    final int requestId = ++_productRequestId;
+
     _currentEndpoint = endpoint;
 
     if (showLoader) {
       isLoading = true;
-      products = []; // Clear previous products
+      products = [];
       notifyListeners();
     }
 
     try {
-      products = await _service.getProducts(
+      final newProducts = await _service.getProducts(
         endpoint: endpoint,
         currency: currency,
         unit: unit,
       );
-    } finally {
-      if (showLoader) {
-        isLoading = false;
+
+      // Ignore an older request if a newer category request
+      // has already started.
+      if (requestId != _productRequestId) {
+        return;
       }
-      notifyListeners();
+
+      products = newProducts;
+    } catch (e) {
+      debugPrint(
+        '❌ fetchProducts error '
+        'endpoint=$endpoint: $e',
+      );
+
+      if (requestId == _productRequestId) {
+        products = [];
+      }
+    } finally {
+      if (requestId == _productRequestId) {
+        if (showLoader) {
+          isLoading = false;
+        }
+
+        notifyListeners();
+      }
     }
+  }
+
+  void clearProducts() {
+    products = [];
+    notifyListeners();
   }
 }

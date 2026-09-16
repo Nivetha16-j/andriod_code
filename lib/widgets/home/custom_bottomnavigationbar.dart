@@ -54,6 +54,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
               // Index 2: Cart
               // Index 2: Cart
+              // Index 2: Cart
               Consumer<CartProvider>(
                 builder: (context, cartProvider, child) {
                   final count = cartProvider.cartItems.length;
@@ -82,7 +83,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                               ),
                               child: Center(
                                 child: Text(
-                                  count > 99 ? "99+" : count.toString(),
+                                  count > 99 ? '99+' : count.toString(),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,

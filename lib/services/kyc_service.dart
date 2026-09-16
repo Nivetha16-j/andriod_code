@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -9,7 +10,6 @@ class KycService {
 
   Future<Map<String, dynamic>> fetchKycDetails() async {
     final token = await SessionManager.getToken();
-    // final token = user?["token"];
 
     final response = await http.get(
       Uri.parse("$baseUrl/my-account/kyc"),
@@ -24,55 +24,50 @@ class KycService {
     File? addressDocument,
     String customerNotes = "",
   }) async {
-    try {
-      final token = await SessionManager.getToken();
+    final token = await SessionManager.getToken();
 
-      final request = http.MultipartRequest(
-        "POST",
-        Uri.parse("$baseUrl/my-account/kyc"),
-      );
+    final request = http.MultipartRequest(
+      "POST",
+      Uri.parse("$baseUrl/my-account/kyc"),
+    );
 
-      request.headers.addAll({
-        "Accept": "application/json",
-        "Authorization": "Bearer $token",
-      });
+    request.headers.addAll({
+      "Accept": "application/json",
+      "Authorization": "Bearer $token",
+    });
 
-      // Required file
+    request.fields["customer_notes"] = customerNotes;
+
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        "identity_document",
+        identityDocument.path,
+      ),
+    );
+
+    if (addressDocument != null) {
       request.files.add(
         await http.MultipartFile.fromPath(
-          "identity_document",
-          identityDocument.path,
+          "address_document",
+          addressDocument.path,
         ),
       );
-
-      // Optional file
-      if (addressDocument != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            "address_document",
-            addressDocument.path,
-          ),
-        );
-      }
-
-      request.fields["customer_notes"] = customerNotes;
-
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      final body = jsonDecode(response.body);
-
-      return {
-        "success": response.statusCode == 200 || response.statusCode == 201,
-        "statusCode": response.statusCode,
-        "body": body,
-      };
-    } catch (e) {
-      return {
-        "success": false,
-        "statusCode": 500,
-        "body": {"message": e.toString()},
-      };
     }
+
+    final response = await request.send();
+
+    log("responseresponse $response");
+
+    final responseBody = await response.stream.bytesToString();
+
+    final responseData = jsonDecode(responseBody);
+
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300 &&
+        responseData["status"] == true) {
+      return responseData;
+    }
+
+    throw Exception(responseData["message"] ?? "Unable to submit KYC.");
   }
 }

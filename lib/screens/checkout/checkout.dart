@@ -1,22 +1,22 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/checkout/banktransfersuccess.dart';
+import 'package:junubullion/screens/checkout/physical_ordersuccess.dart';
 import 'package:junubullion/screens/checkout/success.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
+import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
-import 'package:junubullion/widgets/cart/custom_summary.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -26,19 +26,20 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  String delivery = "physical";
+  String? delivery;
   String payment = "Card";
+  String? fulfillment;
   int _currentIndex = 3;
-  String digitalSubtype = "Jsc";
+  String? digitalSubtype;
   final TextEditingController addressController = TextEditingController();
   bool isTermsAccepted = false;
   bool _isPlacingOrder = false;
-
   bool showAddressForm = false;
-  String? localAddress;
+  // String? localAddress;
   String? selectedCard;
-
+  bool _isCancellingConversion = false;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  // bool _initialAddressLoaded = false;
 
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
@@ -52,50 +53,92 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
 
-    Future.microtask(() {
-      context.read<AddressProvider>().fetchAddress();
-    });
+    Future.microtask(() async {
+      if (!mounted) return;
 
-    _loadLocalAddress();
+      final addressProvider = context.read<AddressProvider>();
+
+      // Fetch the latest address from API.
+      await addressProvider.fetchAddress();
+
+      if (!mounted) return;
+
+      // Put API address into the editable field once.
+      if (addressProvider.hasAddress &&
+          addressProvider.address != null &&
+          addressProvider.address!.trim().isNotEmpty) {
+        addressController.text = addressProvider.address!.trim();
+      }
+
+      final cartProvider = context.read<CartProvider>();
+      await cartProvider.fetchCart();
+    });
   }
 
-  Future<void> _loadLocalAddress() async {
-    final prefs = await SharedPreferences.getInstance();
+  // Future<void> _loadLocalAddress() async {
+  //   final prefs = await SharedPreferences.getInstance();
 
-    localAddress = prefs.getString("checkout_address");
+  //   final savedAddress = prefs.getString("checkout_address");
 
-    if (localAddress != null) {
-      addressController.text = localAddress!;
-    }
+  //   if (!mounted) return;
 
-    setState(() {});
-  }
+  //   setState(() {
+  //     localAddress = savedAddress;
 
-  Future<void> _saveAddress() async {
-    final prefs = await SharedPreferences.getInstance();
+  //     if (savedAddress != null) {
+  //       addressController.text = savedAddress;
+  //     }
+  //   });
+  // }
 
-    await prefs.setString("checkout_address", addressController.text.trim());
+  // Future<void> _saveAddress() async {
+  //   final address = addressController.text.trim();
 
-    setState(() {
-      localAddress = addressController.text.trim();
-      showAddressForm = false;
-    });
+  //   if (address.isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: TranslatedText("Please enter a shipping address"),
+  //       ),
+  //     );
+  //     return;
+  //   }
+
+  //   final prefs = await SharedPreferences.getInstance();
+
+  //   await prefs.setString("checkout_address", address);
+
+  //   if (!mounted) return;
+
+  //   setState(() {
+  //     localAddress = address;
+  //     showAddressForm = false;
+  //   });
+  // }
+
+  @override
+  void dispose() {
+    addressController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final cartProvider = Provider.of<CartProvider>(context);
-    final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final cartProvider = context.watch<CartProvider>();
+    final currencyProvider = context.watch<CurrencyProvider>();
+    final physicalProvider = context.watch<PhysicalConversionProvider>();
 
-    final isDigital = delivery.toLowerCase() == "digital";
+    final bool isPhysicalConversion = physicalProvider.isActive;
+    final String currencySymbol = currencyProvider.selectedCurrency;
+    final String fulfillment =
+        cartProvider.fulfillment?.toLowerCase() ?? "physical";
 
-    final courierAmount = isDigital ? 0.0 : cartProvider.courierAmount;
-    final transactionAmount = isDigital
+    final bool isDigital = fulfillment == "digital";
+    final double courierAmount = isDigital ? 0.0 : cartProvider.courierAmount;
+    final double transactionAmount = isDigital
         ? 0.0
         : cartProvider.transactionFeeAmount;
-    final gstAmount = isDigital ? 0.0 : cartProvider.gstAmount;
-
-    final orderTotal =
+    final double gstAmount = isDigital ? 0.0 : cartProvider.gstAmount;
+    final double orderTotal =
         cartProvider.subtotalAmount +
         courierAmount +
         transactionAmount +
@@ -105,12 +148,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _switchToTab,
       ),
-
       backgroundColor: Colors.grey.shade100,
       body: Stack(
         children: [
@@ -119,674 +160,53 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// Shipping Address
-                const Text(
-                  "Shipping address",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                const TranslatedText(
+                  'Shipping address',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                 ),
-
-                const SizedBox(height: 10),
-
-                Consumer<AddressProvider>(
-                  builder: (context, provider, child) {
-                    if (provider.isLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    // Prefer backend address. If unavailable, use local address.
-                    final String? displayAddress = provider.hasAddress
-                        ? provider.address
-                        : localAddress;
-
-                    /// No address
-                    if (displayAddress == null && !showAddressForm) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "NO ADDRESS",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                showAddressForm = true;
-                              });
-                            },
-                            child: const Text("ADD ADDRESS"),
-                          ),
-                        ],
-                      );
-                    }
-
-                    /// Address form
-                    if (showAddressForm) {
-                      return Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: const [
-                                BoxShadow(color: Colors.black12, blurRadius: 5),
-                              ],
-                            ),
-                            child: TextField(
-                              controller: addressController,
-                              // maxLines: 4,
-                              decoration: const InputDecoration(
-                                // labelText: "Shipping Address",
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 15),
-
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: ElevatedButton(
-                              onPressed: _saveAddress,
-                              child: const Text("SAVE ADDRESS"),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-
-                    /// Show saved/backend address
-                    return Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black12, blurRadius: 5),
-                        ],
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (provider.hasAddress)
-                                  Text(
-                                    provider.name ?? "",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-
-                                if (provider.hasAddress)
-                                  const SizedBox(height: 5),
-
-                                Text(displayAddress!),
-                              ],
-                            ),
-                          ),
-
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                showAddressForm = true;
-                                addressController.text = displayAddress;
-                              });
-                            },
-                            child: const Text(
-                              "Change",
-                              style: TextStyle(color: AppColors.primaryRed),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
-                /// Delivery
-                const Text(
-                  "Delivery option",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-
-                Row(
-                  children: [
-                    Radio(
-                      activeColor: AppColors.primaryRed,
-                      value: "physical",
-                      groupValue: delivery,
-                      onChanged: (value) {
-                        setState(() {
-                          delivery = value!;
-                        });
-                      },
-                    ),
-                    const Text("Physical"),
-
-                    Radio(
-                      activeColor: AppColors.primaryRed,
-                      value: "Digital",
-                      groupValue: delivery,
-                      onChanged: (value) {
-                        setState(() {
-                          delivery = value!;
-                        });
-                      },
-                    ),
-                    const Text("Digital"),
-                  ],
-                ),
-                const Text(
-                  "Digital orders are charged at the product price only — no tax, shipping, or transaction fees.",
-                  style: TextStyle(fontSize: 12),
-                ),
-
-                if (delivery == "Digital") ...[
-                  const SizedBox(height: 16),
-
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Digital Subtype",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-
-                      Row(
-                        children: [
-                          Radio(
-                            value: "Jsc",
-                            groupValue: digitalSubtype,
-                            activeColor: AppColors.primaryRed,
-                            onChanged: (value) {
-                              setState(() {
-                                digitalSubtype = value!;
-                              });
-                            },
-                          ),
-                          const Text("Jsc"),
-
-                          Radio(
-                            value: "Gsp",
-                            groupValue: digitalSubtype,
-                            activeColor: AppColors.primaryRed,
-                            onChanged: (value) {
-                              setState(() {
-                                digitalSubtype = value!;
-                              });
-                            },
-                          ),
-                          const Text("Gsp"),
-                        ],
-                      ),
-                      const Text(
-                        "Choose jsc or gsp for your digital gold purchase",
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ],
-
-                const SizedBox(height: 20),
-
-                /// Payment
-                const Text(
-                  "Payment",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-
-                Row(
-                  children: [
-                    Radio(
-                      activeColor: AppColors.primaryRed,
-                      value: "Card",
-                      groupValue: payment,
-                      onChanged: (value) {
-                        setState(() {
-                          payment = value!;
-                        });
-                      },
-                    ),
-                    const Text("Card"),
-
-                    Radio(
-                      activeColor: AppColors.primaryRed,
-                      value: "Bank",
-                      groupValue: payment,
-                      onChanged: (value) {
-                        setState(() {
-                          payment = value!;
-                        });
-                      },
-                    ),
-                    const Text("Direct Bank Transfer"),
-                  ],
-                ),
-
-                const SizedBox(height: 10),
-
-                if (payment == "Card") ...[
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      paymentBox("Visa"),
-                      paymentBox("MasterCard"),
-                      paymentBox("G Pay"),
-                      paymentBox("Apple Pay"),
-                    ],
-                  ),
-
+                const SizedBox(height: 12),
+                _buildShippingAddress(),
+                const SizedBox(height: 14),
+                if (isPhysicalConversion) ...[
+                  _buildConversionInfo(physicalProvider),
+                  const SizedBox(height: 18),
+                  _buildDeliverySection(isPhysicalConversion: true),
                   const SizedBox(height: 20),
+                  _buildTerms(),
+                  const SizedBox(height: 18),
+                  _buildPhysicalOrderSummary(cartProvider, currencySymbol),
+                  const SizedBox(height: 25),
+                  _buildActionButtons(currencySymbol, true),
+                ] else ...[
+                  _buildDeliverySection(),
+                  const SizedBox(height: 20),
+                  if (isDigital) ...[
+                    _buildDigitalSubtype(),
+                    const SizedBox(height: 20),
+                  ],
+                  _buildPaymentSection(),
+                  const SizedBox(height: 20),
+                  _buildTerms(),
+                  const SizedBox(height: 18),
+                  _buildNormalOrderSummary(
+                    cartProvider,
+                    currencySymbol,
+                    orderTotal,
+                    isDigital,
+                  ),
+                  const SizedBox(height: 25),
+                  _buildActionButtons(currencySymbol, false),
                 ],
-
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: isTermsAccepted,
-                      activeColor: AppColors.primaryRed,
-                      onChanged: (value) {
-                        setState(() {
-                          isTermsAccepted = value ?? false;
-                        });
-                      },
-                    ),
-                    const Expanded(
-                      child: Text("I agree to the Terms & Conditions"),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 15),
-
-                /// Order Summary
-                Consumer<CartProvider>(
-                  builder: (context, cartProvider, child) {
-                    // if (cartProvider.isLoading) {
-                    //   return const Center(child: CircularProgressIndicator());
-                    // }
-
-                    if (cartProvider.cartItems.isEmpty) {
-                      return const Text("No items in cart");
-                    }
-
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xffF8EAEA),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Consumer<CartProvider>(
-                        builder: (context, provider, child) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Order Summary",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-
-                              const SizedBox(height: 15),
-
-                              /// Products
-                              ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: provider.cartItems.length,
-                                itemBuilder: (context, index) {
-                                  final item = provider.cartItems[index];
-
-                                  log("IIIIIIIIII $item");
-
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 8),
-                                    child: Text(
-                                      "${item["name"]} × ${item["quantity"]}",
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  );
-                                },
-                              ),
-
-                              const Divider(height: 30),
-
-                              _summaryRow(
-                                "Subtotal Product",
-                                provider.formattedSubtotal,
-                              ),
-
-                              const SizedBox(height: 15),
-
-                              // _summaryRow(
-                              //   "Courier Charges",
-                              //   "+ ${provider.formattedCourierFee}",
-                              // ),
-
-                              // const SizedBox(height: 15),
-
-                              // _summaryRow(
-                              //   "Transaction Fee",
-                              //   "+ ${provider.formattedTransactionFee}",
-                              // ),
-
-                              // const Divider(height: 35),
-
-                              // _summaryRow(
-                              //   "Order Total",
-                              //   provider.formattedOrderTotal,
-                              //   bold: true,
-                              //   valueColor: Colors.red,
-                              // ),
-                              _summaryRow(
-                                "Courier Charges",
-                                isDigital
-                                    ? "${provider.currencySymbol}0.00"
-                                    : "+ ${provider.formattedCourierFee}",
-                              ),
-
-                              const SizedBox(height: 15),
-
-                              _summaryRow(
-                                "Transaction Fee",
-                                isDigital
-                                    ? "${provider.currencySymbol}0.00"
-                                    : "+ ${provider.formattedTransactionFee}",
-                              ),
-
-                              if (!isDigital && provider.gstAmount > 0) ...[
-                                const SizedBox(height: 15),
-                                _summaryRow("GST", provider.formattedGST),
-                              ],
-
-                              const Divider(height: 35),
-
-                              _summaryRow(
-                                "Order Total",
-                                "${provider.currencySymbol}${orderTotal.toStringAsFixed(2)}",
-                                bold: true,
-                                valueColor: Colors.red,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 30),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade300,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text("Back"),
-                      ),
-                    ),
-
-                    const SizedBox(width: 15),
-
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff8B1E1E),
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                        ),
-                        onPressed: () async {
-                          final addressProvider = context
-                              .read<AddressProvider>();
-
-                          final hasAddress =
-                              addressProvider.hasAddress ||
-                              (localAddress != null &&
-                                  localAddress!.trim().isNotEmpty);
-
-                          if (!hasAddress) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Please add your shipping address",
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-
-                          if (!isTermsAccepted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  "Please agree to the Terms & Conditions",
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-
-                          if (payment == "Bank") {
-                            setState(() {
-                              _isPlacingOrder = true;
-                            });
-
-                            try {
-                              final response = await CheckoutService.placeOrder(
-                                shippingAddress: addressProvider.hasAddress
-                                    ? addressProvider.address!
-                                    : localAddress!,
-                                deliveryOption: delivery,
-                                digitalType: delivery.toLowerCase() == "digital"
-                                    ? digitalSubtype // e.g. "vault"
-                                    : null,
-                                courierService:
-                                    cartProvider.selectedDeliveryMethod,
-                                terms: true,
-                                paymentType: "bank_transfer",
-                                currency: currencyProvider.selectedCurrency,
-                              );
-
-                              log(
-                                "RRRRRRRRRR $response.........${response.values}",
-                              );
-
-                              if (response["status"] == true) {
-                                // Clear cart only after successful order
-                                await context.read<CartProvider>().fetchCart();
-                                context.read<CartProvider>().clearCart();
-
-                                if (!mounted) return;
-
-                                setState(() {
-                                  _isPlacingOrder = false;
-                                });
-
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => BankTransferSuccessScreen(
-                                      order: response["data"],
-                                      currencySymbol:
-                                          response["summary"]["symbol"],
-                                    ),
-                                  ),
-                                  (route) => false,
-                                );
-
-                                // Navigator.push(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //     builder: (_) => BankTransferSuccessScreen(
-                                //       order: response["data"],
-                                //       currencySymbol:
-                                //           response["summary"]["symbol"],
-                                //     ),
-                                //   ),
-                                // );
-                              } else {
-                                if (!mounted) return;
-
-                                setState(() {
-                                  _isPlacingOrder = false;
-                                });
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Order is not placed. Try again.",
-                                    ),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (!mounted) return;
-
-                              setState(() {
-                                _isPlacingOrder = false;
-                              });
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Order is not placed. Try again.",
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-
-                          if (payment == "Card") {
-                            setState(() {
-                              _isPlacingOrder = true;
-                            });
-
-                            try {
-                              final stripeResponse =
-                                  await StripeService.createStripeSession(
-                                    shippingAddress: addressProvider.hasAddress
-                                        ? addressProvider.address!
-                                        : localAddress!,
-                                    fulfillmentType: delivery,
-                                    courierService:
-                                        cartProvider.selectedDeliveryMethod,
-                                    currency: currencyProvider.selectedCurrency,
-                                    digitalSubtype:
-                                        delivery.toLowerCase() == "digital"
-                                        ? digitalSubtype
-                                        : null,
-                                    terms: true,
-                                    paymentMethod: "visa",
-                                  );
-
-                              final clientSecret =
-                                  stripeResponse["data"]["client_secret"];
-
-                              final paymentSuccess =
-                                  await StripeService.makePayment(clientSecret);
-
-                              log("Payment Success: $paymentSuccess");
-
-                              if (!paymentSuccess) {
-                                setState(() {
-                                  _isPlacingOrder = false;
-                                });
-
-                                return;
-                              }
-
-                              // final orderResponse =
-                              //     await CheckoutService.placeOrder(
-                              //       shippingAddress: addressProvider.hasAddress
-                              //           ? addressProvider.address!
-                              //           : localAddress!,
-                              //       deliveryOption: delivery,
-                              //       digitalType:
-                              //           delivery.toLowerCase() == "digital"
-                              //           ? digitalSubtype
-                              //           : null,
-                              //       courierService:
-                              //           cartProvider.selectedDeliveryMethod,
-                              //       terms: true,
-                              //       paymentType: "card",
-                              //       currency: currencyProvider.selectedCurrency,
-                              //     );
-                              // if (orderResponse["status"] == true) {
-                              //   if (!mounted) return;
-                              //   Navigator.pushAndRemoveUntil(
-                              //     context,
-                              //     MaterialPageRoute(
-                              //       builder: (_) => OrderSuccessScreen(),
-                              //     ),
-                              //     (route) => false,
-                              //   );
-
-                              //   // Navigator.push(
-                              //   //   context,
-                              //   //   MaterialPageRoute(
-                              //   //     builder: (_) => BankTransferSuccessScreen(
-                              //   //       order: orderResponse["data"],
-                              //   //       currencySymbol:
-                              //   //           orderResponse["summary"]["symbol"],
-                              //   //     ),
-                              //   //   ),
-                              //   // );
-                              // } else {
-                              //   ScaffoldMessenger.of(context).showSnackBar(
-                              //     SnackBar(
-                              //       content: Text(
-                              //         orderResponse["message"] ??
-                              //             "Order failed",
-                              //       ),
-                              //     ),
-                              //   );
-                              // }
-                            } catch (e) {
-                              debugPrint(e.toString());
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString())),
-                              );
-                            } finally {
-                              if (mounted) {
-                                setState(() {
-                                  _isPlacingOrder = false;
-                                });
-                              }
-                            }
-                          }
-                        },
-                        child: const Text(
-                          "Proceed to pay",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
-          if (_isPlacingOrder)
-            Container(
-              color: Colors.black.withOpacity(0.4),
-              child: const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryRed),
+          if (_isPlacingOrder || _isCancellingConversion)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.4),
+                child: const Center(
+                  child: CircularProgressIndicator(color: AppColors.primaryRed),
+                ),
               ),
             ),
         ],
@@ -794,11 +214,1428 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  Future<void> _sendPhysicalOrder({required String plan}) async {
+    final cartProvider = context.read<CartProvider>();
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+    final String shippingAddress = addressController.text.trim();
+    log("CHECKOUT SHIPPING ADDRESS -> $shippingAddress");
+
+    if (shippingAddress.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TranslatedText("Please add your shipping address"),
+        ),
+      );
+      return;
+    }
+
+    if (!isTermsAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TranslatedText("Please agree to the Terms & Conditions"),
+        ),
+      );
+      return;
+    }
+
+    if (cartProvider.cartItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: TranslatedText("Your cart is empty")),
+      );
+      return;
+    }
+
+    if (!physicalProvider.isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TranslatedText("Physical conversion is no longer active"),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isPlacingOrder = true;
+    });
+
+    try {
+      log(
+        "PHYSICAL ORDER -> "
+        "address=$shippingAddress "
+        "metal=${physicalProvider.metal} "
+        "amount=${physicalProvider.amount}",
+      );
+
+      log("plannnnn $plan");
+
+      if (plan.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: TranslatedText(
+              'Unable to determine the physical conversion plan.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final response = await CheckoutService.placePhysicalOrder(
+        shippingAddress: shippingAddress,
+        terms: true,
+        digitalType: plan,
+      );
+
+      log("PHYSICAL ORDER RESPONSE -> $response");
+
+      if (!mounted) return;
+
+      if (response["status"] == true) {
+        final Map<String, dynamic> orderData = response["data"] is Map
+            ? Map<String, dynamic>.from(response["data"])
+            : <String, dynamic>{};
+
+        final String currency = context
+            .read<CurrencyProvider>()
+            .selectedCurrency;
+
+        log("PHYSICAL ORDER SUCCESS -> Order created");
+        log("PHYSICAL ORDER SUCCESS -> Cancelling physical conversion...");
+
+        try {
+          final physicalProvider = context.read<PhysicalConversionProvider>();
+
+          final currencyProvider = context.read<CurrencyProvider>();
+
+          final success = await physicalProvider.cancelConversion(
+            cartProvider: cartProvider,
+            currencyProvider: currencyProvider,
+          );
+
+          log("PHYSICAL ORDER -> Conversion cancelled: $success");
+        } catch (e, stackTrace) {
+          log(
+            "PHYSICAL ORDER -> Error cancelling conversion after success: $e",
+            stackTrace: stackTrace,
+          );
+        }
+
+        if (!mounted) return;
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PhysicalOrderSuccessScreen(
+              order: orderData,
+              currencySymbol: currency,
+            ),
+          ),
+          (route) => false,
+        );
+
+        return;
+      }
+      setState(() {
+        _isPlacingOrder = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: TranslatedText(
+            response["message"]?.toString() ??
+                "Order could not be placed. Please try again.",
+          ),
+        ),
+      );
+    } catch (e, stackTrace) {
+      log("PHYSICAL ORDER ERROR -> $e", stackTrace: stackTrace);
+      if (!mounted) return;
+      setState(() {
+        _isPlacingOrder = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: TranslatedText(e.toString().replaceFirst("Exception: ", "")),
+        ),
+      );
+    }
+  }
+
+  Future<void> _cancelPhysicalConversion() async {
+    if (_isCancellingConversion || _isPlacingOrder) {
+      return;
+    }
+
+    setState(() {
+      _isCancellingConversion = true;
+    });
+
+    try {
+      log("CHECKOUT -> Cancelling physical conversion...");
+
+      final cartProvider = context.read<CartProvider>();
+      final currencyProvider = context.read<CurrencyProvider>();
+      final physicalProvider = context.read<PhysicalConversionProvider>();
+
+      final bool success = await physicalProvider.cancelConversion(
+        cartProvider: cartProvider,
+        currencyProvider: currencyProvider,
+      );
+
+      if (!mounted) return;
+
+      if (!success) {
+        setState(() {
+          _isCancellingConversion = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: TranslatedText(
+              "Unable to cancel physical conversion. Please try again.",
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      log("CHECKOUT -> Physical conversion cancelled successfully");
+      setState(() {
+        _isCancellingConversion = false;
+      });
+      log("CHECKOUT -> Cart and physical conversion status refreshed");
+    } catch (e, stackTrace) {
+      log("CHECKOUT -> Cancel conversion error: $e", stackTrace: stackTrace);
+      if (!mounted) return;
+      setState(() {
+        _isCancellingConversion = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: TranslatedText(e.toString().replaceFirst("Exception: ", "")),
+        ),
+      );
+    }
+  }
+
+  Widget _buildDeliverySection({bool isPhysicalConversion = false}) {
+    final cartProvider = context.watch<CartProvider>();
+
+    fulfillment = cartProvider.fulfillment?.toLowerCase().trim() ?? "";
+
+    digitalSubtype = cartProvider.digitalSubtype?.toLowerCase().trim();
+
+    log("CHECKOUT -> Cart fulfillment: $cartProvider");
+
+    final bool isPhysical = fulfillment == "physical";
+    final bool isDigital = fulfillment == "digital";
+    final bool isMixed = fulfillment == "mixed";
+
+    if (isMixed) {
+      return _buildMixedFulfillmentInfo(digitalSubtype);
+    }
+
+    final effectiveDelivery = isPhysical
+        ? "physical"
+        : isDigital
+        ? "digital"
+        : delivery;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const TranslatedText(
+          "Delivery option",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+
+        const SizedBox(height: 8),
+
+        Row(
+          children: [
+            Radio<String>(
+              activeColor: AppColors.primaryRed,
+              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return AppColors.primaryRed;
+                }
+
+                return Colors.black;
+              }),
+              value: "physical",
+              groupValue: effectiveDelivery,
+              onChanged: isPhysical || isDigital
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+
+                      setState(() {
+                        delivery = value;
+                      });
+                    },
+            ),
+
+            TranslatedText("Physical"),
+
+            const SizedBox(width: 20),
+
+            Radio<String>(
+              activeColor: AppColors.primaryRed,
+              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return AppColors.primaryRed;
+                }
+
+                return Colors.black;
+              }),
+              value: "digital",
+              groupValue: effectiveDelivery,
+              onChanged: isPhysical || isDigital
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+
+                      setState(() {
+                        delivery = value;
+                      });
+                    },
+            ),
+
+            TranslatedText("Digital"),
+          ],
+        ),
+
+        TranslatedText(
+          isPhysical
+              ? "Physical delivery is required for the products in your cart. Digital JSC is only available for JSC plan products."
+              : isDigital
+              ? "Your cart contains ${digitalSubtype?.toUpperCase()} plan products, which are digital only and credited to your wallet."
+              : "Select your preferred delivery option.",
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
+  bool _shouldShowDeliveryMethod(CartProvider cartProvider) {
+    if (cartProvider.cartItems.isEmpty) {
+      return false;
+    }
+
+    // If ALL products are digital plans (JSC/GSP),
+    // hide delivery-related details.
+    final bool allDigitalPlans = cartProvider.cartItems.every((item) {
+      return item["is_digital_plan"] == true;
+    });
+
+    // Show delivery details when at least one physical
+    // product exists in the cart.
+    return !allDigitalPlans;
+  }
+
+  Widget _buildMixedFulfillmentInfo(String? digitalSubtype) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5C76B)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, color: Color(0xFF9A7200), size: 22),
+
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: Colors.black87,
+                ),
+                children: [
+                  const TextSpan(
+                    text: "Heads up: ",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF7A5B00),
+                    ),
+                  ),
+                  const TextSpan(
+                    text:
+                        "Your cart includes JSC digital plan products together with regular physical products. Digital items will be credited to your wallet after payment. Physical items will be shipped to your address after KYC verification is approved.",
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDigitalSubtype() {
+    final cartProvider = context.watch<CartProvider>();
+
+    final String? subtype = cartProvider.digitalSubtype;
+
+    log("CHECKOUT -> Cart digital subtype: $subtype");
+
+    final String selectedSubtype = subtype?.toLowerCase() == "gsp"
+        ? "Gsp"
+        : "Jsc";
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const TranslatedText(
+          "Digital subtype",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+
+        const SizedBox(height: 8),
+
+        Row(
+          children: [
+            Radio<String>(
+              value: "Jsc",
+              groupValue: selectedSubtype,
+              activeColor: AppColors.primaryRed,
+              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return AppColors.primaryRed;
+                }
+
+                return Colors.black;
+              }),
+              onChanged: subtype != null
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+
+                      setState(() {
+                        digitalSubtype = value;
+                      });
+                    },
+            ),
+
+            const TranslatedText("JSC"),
+
+            const SizedBox(width: 20),
+
+            Radio<String>(
+              value: "Gsp",
+              groupValue: selectedSubtype,
+              activeColor: AppColors.primaryRed,
+              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return AppColors.primaryRed;
+                }
+
+                return Colors.black;
+              }),
+              onChanged: subtype != null
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+
+                      setState(() {
+                        digitalSubtype = value;
+                      });
+                    },
+            ),
+
+            const TranslatedText("GSP"),
+          ],
+        ),
+
+        TranslatedText(
+          subtype != null
+              ? "${subtype.toUpperCase()} plan products in this cart are digital-only, so ${subtype.toUpperCase()} remains selected for this order."
+              : "Choose JSC or GSP for your digital gold purchase.",
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _placeNormalOrder() async {
+    // final addressProvider = context.read<AddressProvider>();
+    final cartProvider = context.read<CartProvider>();
+    final currencyProvider = context.read<CurrencyProvider>();
+    final String shippingAddress = addressController.text.trim();
+
+    log("CHECKOUT SHIPPING ADDRESS -> $shippingAddress");
+
+    if (shippingAddress.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TranslatedText("Please add your shipping address"),
+        ),
+      );
+      return;
+    }
+
+    if (!isTermsAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TranslatedText("Please agree to the Terms & Conditions"),
+        ),
+      );
+      return;
+    }
+
+    if (cartProvider.cartItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: TranslatedText("Your cart is empty")),
+      );
+      return;
+    }
+
+    if (payment == "Card" && selectedCard == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TranslatedText("Please select a payment method"),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isPlacingOrder = true;
+    });
+
+    try {
+      final cartProvider = context.read<CartProvider>();
+
+      final bool isDigital =
+          cartProvider.fulfillment?.toLowerCase().trim() == "digital";
+
+      final String courierService = cartProvider.selectedDeliveryMethod
+          .toLowerCase();
+
+      log(
+        "CHECKOUT -> Placing normal order: "
+        "address=$shippingAddress "
+        "delivery=$fulfillment "
+        "digitalType=$digitalSubtype "
+        "payment=$payment"
+        "isDigital=$isDigital "
+        "courierService=$courierService ",
+      );
+
+      if (payment == "Bank") {
+        final response = await CheckoutService.placeOrder(
+          shippingAddress: shippingAddress.trim(),
+
+          deliveryOption: fulfillment!.toLowerCase().trim(),
+
+          digitalType: isDigital ? digitalSubtype : null,
+
+          courierService: isDigital ? null : courierService,
+
+          terms: true,
+
+          paymentType: "bank_transfer",
+
+          currency: currencyProvider.selectedCurrency,
+        );
+
+        log("NORMAL BANK ORDER RESPONSE -> $response");
+
+        if (!mounted) return;
+
+        if (response["status"] == true) {
+          cartProvider.clearCart();
+
+          setState(() {
+            _isPlacingOrder = false;
+          });
+
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BankTransferSuccessScreen(
+                order: response["data"],
+                currencySymbol:
+                    response["summary"]?["symbol"] ??
+                    currencyProvider.selectedCurrency,
+              ),
+            ),
+            (route) => false,
+          );
+        } else {
+          setState(() {
+            _isPlacingOrder = false;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: TranslatedText(
+                response["message"] ?? "Order is not placed. Please try again.",
+              ),
+            ),
+          );
+        }
+
+        return;
+      }
+
+      if (payment == "Card") {
+        final String stripePaymentMethod = _getStripePaymentMethod(
+          selectedCard!,
+        );
+
+        log(
+          "CHECKOUT -> Stripe payment method: $shippingAddress ${fulfillment} $isDigital ? null : ${cartProvider.selectedDeliveryMethod} ${currencyProvider.selectedCurrency} ${digitalSubtype} $stripePaymentMethod",
+        );
+
+        final stripeResponse = await StripeService.createStripeSession(
+          shippingAddress: shippingAddress.trim(),
+
+          fulfillmentType: fulfillment!.toLowerCase().trim(),
+
+          courierService: isDigital
+              ? null
+              : cartProvider.selectedDeliveryMethod,
+
+          currency: currencyProvider.selectedCurrency,
+
+          digitalSubtype: digitalSubtype,
+
+          terms: true,
+
+          paymentMethod: stripePaymentMethod,
+        );
+
+        log("STRIPE RESPONSE -> $stripeResponse");
+
+        if (stripeResponse["status"] == false) {
+          throw Exception(
+            stripeResponse["message"] ?? "Unable to create payment session",
+          );
+        }
+
+        final clientSecret = stripeResponse["data"]?["client_secret"];
+
+        if (clientSecret == null || clientSecret.toString().trim().isEmpty) {
+          throw Exception("Stripe client secret not received");
+        }
+
+        final bool paymentSuccess = await StripeService.makePayment(
+          clientSecret.toString(),
+        );
+
+        log("PAYMENT SUCCESS -> $paymentSuccess");
+
+        if (!mounted) return;
+
+        if (!paymentSuccess) {
+          setState(() {
+            _isPlacingOrder = false;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: TranslatedText("Payment was not completed."),
+            ),
+          );
+
+          return;
+        }
+
+        log("STRIPE PAYMENT SUCCESS -> Clearing cart...");
+
+        cartProvider.clearCart();
+
+        await cartProvider.fetchCart();
+
+        if (!mounted) return;
+
+        log(
+          "STRIPE PAYMENT SUCCESS -> Cart cleared. "
+          "Cart count: ${cartProvider.cartCount}",
+        );
+
+        setState(() {
+          _isPlacingOrder = false;
+        });
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const OrderSuccessScreen()),
+          (route) => false,
+        );
+
+        return;
+      }
+
+      throw Exception("Invalid payment method selected");
+    } catch (e, stackTrace) {
+      log("NORMAL ORDER ERROR -> $e", stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      setState(() {
+        _isPlacingOrder = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: TranslatedText(e.toString().replaceFirst("Exception: ", "")),
+        ),
+      );
+    }
+  }
+
+  Widget _buildShippingAddress() {
+    return Consumer<AddressProvider>(
+      builder: (context, addressProvider, child) {
+        if (addressProvider.isLoading) {
+          return const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 48,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // const TranslatedText(
+            //   'Shipping address',
+            //   style: TextStyle(
+            //     fontSize: 20,
+            //     fontWeight: FontWeight.w400,
+            //     color: Colors.black,
+            //   ),
+            // ),
+
+            // const SizedBox(height: 10),
+            TextField(
+              controller: addressController,
+
+              // User can edit the API address.
+              maxLines: 3,
+              minLines: 1,
+
+              style: const TextStyle(fontSize: 14, color: Colors.black),
+
+              decoration: InputDecoration(
+                hintText: 'Enter your shipping address',
+
+                hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 13,
+                ),
+
+                suffixIcon: const Icon(
+                  Icons.edit,
+                  color: Colors.grey,
+                  size: 20,
+                ),
+
+                filled: false,
+
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                ),
+
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                ),
+
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildPaymentSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const TranslatedText(
+          "Payment",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+
+        Row(
+          children: [
+            Radio<String>(
+              activeColor: AppColors.primaryRed,
+              value: "Card",
+              groupValue: payment,
+              onChanged: (value) {
+                if (value == null) return;
+
+                setState(() {
+                  payment = value;
+                });
+              },
+            ),
+
+            const TranslatedText("Card"),
+
+            Radio<String>(
+              activeColor: AppColors.primaryRed,
+              value: "Bank",
+              groupValue: payment,
+              onChanged: (value) {
+                if (value == null) return;
+
+                setState(() {
+                  payment = value;
+                });
+              },
+            ),
+
+            const Expanded(child: TranslatedText("Direct Bank Transfer")),
+          ],
+        ),
+
+        if (payment == "Card") ...[
+          const SizedBox(height: 10),
+
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              paymentBox("Visa"),
+              paymentBox("MasterCard"),
+              paymentBox("G Pay"),
+              paymentBox("Apple Pay"),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildNormalOrderSummary(
+    CartProvider provider,
+    String currencySymbol,
+    double orderTotal,
+    bool isDigital,
+  ) {
+    if (provider.cartItems.isEmpty) {
+      return const TranslatedText("No items in cart");
+    }
+
+    final String deliveryMethod = isDigital
+        ? "Digital"
+        : provider.selectedDeliveryMethod;
+
+    final Map<String, dynamic>? coupon = provider.coupon;
+
+    final bool showDeliveryDetails = _shouldShowDeliveryMethod(provider);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xffF8EAEA),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const TranslatedText(
+            "Order Summary",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+
+          const SizedBox(height: 15),
+
+          ...provider.cartItems.map((item) {
+            log("itemmmmmmmm/ $item");
+            final String name = item["name"]?.toString() ?? "Product";
+
+            final int quantity =
+                int.tryParse(item["quantity"]?.toString() ?? "1") ?? 1;
+
+            final String productPrice =
+                item["formatted_line_total"]?.toString() ??
+                item["line_total"]?.toString() ??
+                "0.00";
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TranslatedText(
+                      "$name × $quantity",
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  TranslatedText(
+                    _formatCheckoutCurrency(productPrice, currencySymbol),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+
+          const Divider(height: 30),
+
+          _checkoutSummaryRow(
+            "Subtotal Product",
+            _formatCheckoutCurrency(provider.formattedSubtotal, currencySymbol),
+          ),
+
+          const SizedBox(height: 15),
+
+          if (showDeliveryDetails) ...[
+            _checkoutSummaryRow(
+              "Courier charge (${deliveryMethod} delivery)",
+              "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedCourierFee, currencySymbol)}",
+            ),
+
+            if (coupon != null) ...[
+              const SizedBox(height: 15),
+
+              _checkoutSummaryRow(
+                "Discount (${coupon["code"] ?? ""})",
+                "- ${_formatCheckoutCurrency(provider.formattedDiscount, currencySymbol)}",
+              ),
+
+              const SizedBox(height: 15),
+
+              _checkoutSummaryRow(
+                "Discount Price",
+                _formatCheckoutCurrency(
+                  provider.formattedDiscountPrice,
+                  currencySymbol,
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 15),
+
+            _checkoutSummaryRow(
+              "Transaction fee (4%)",
+              "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedTransactionFee, currencySymbol)}",
+            ),
+
+            if (provider.showTax) ...[
+              const SizedBox(height: 15),
+
+              _checkoutSummaryRow(
+                "GST (21%)",
+                "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedGST, currencySymbol)}",
+              ),
+            ],
+          ],
+          const Divider(height: 35),
+
+          _checkoutSummaryRow(
+            "Total",
+            _formatCheckoutCurrency(
+              isDigital
+                  ? provider.formattedSubtotal
+                  : provider.formattedOrderTotal,
+              currencySymbol,
+            ),
+            bold: true,
+            valueColor: AppColors.primaryRed,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatCheckoutCurrency(String value, String currency) {
+    final String trimmedValue = value.trim();
+
+    if (trimmedValue.isEmpty) {
+      return '$currency 0.00';
+    }
+
+    if (_hasCheckoutCurrency(trimmedValue)) {
+      return trimmedValue;
+    }
+
+    return '$currency $trimmedValue';
+  }
+
+  bool _hasCheckoutCurrency(String value) {
+    final String upperValue = value.toUpperCase();
+
+    const List<String> currencyCodes = [
+      'USD',
+      'INR',
+      'EUR',
+      'GBP',
+      'SGD',
+      'AED',
+      'SAR',
+      'QAR',
+      'AUD',
+      'CAD',
+      'JPY',
+      'CNY',
+    ];
+
+    for (final code in currencyCodes) {
+      if (upperValue.contains(code)) {
+        return true;
+      }
+    }
+
+    const List<String> currencySymbols = [
+      '₹',
+      '\$',
+      '€',
+      '£',
+      '¥',
+      '₩',
+      '₽',
+      '₺',
+      '฿',
+      '₫',
+      '₦',
+      '₱',
+    ];
+
+    for (final symbol in currencySymbols) {
+      if (value.contains(symbol)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  Widget _checkoutSummaryRow(
+    String title,
+    String value, {
+    bool bold = false,
+    Color valueColor = Colors.black,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: TranslatedText(
+            title,
+            style: TextStyle(
+              fontSize: bold ? 15 : 14,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        TranslatedText(
+          value,
+          style: TextStyle(
+            fontSize: bold ? 15 : 14,
+            fontWeight: bold ? FontWeight.bold : FontWeight.w600,
+            color: valueColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConversionInfo(PhysicalConversionProvider physicalProvider) {
+    final String metal = physicalProvider.metal ?? '';
+
+    final String amount = physicalProvider.formattedAmount;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF0),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5C76B)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF981B1B),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const TranslatedText(
+                    '⟳  PHYSICAL CONVERSION ACTIVE',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              OutlinedButton(
+                onPressed: (_isPlacingOrder || _isCancellingConversion)
+                    ? null
+                    : _cancelPhysicalConversion,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF981B1B),
+                  disabledForegroundColor: Colors.grey,
+                  side: BorderSide(
+                    color: _isCancellingConversion
+                        ? Colors.grey
+                        : const Color(0xFF981B1B),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: _isCancellingConversion
+                      ? const Row(
+                          key: ValueKey('clearing'),
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 8),
+                            TranslatedText(
+                              'Clearing...',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        )
+                      : const TranslatedText(
+                          'Cancel conversion',
+                          key: ValueKey('cancel'),
+                          style: TextStyle(fontSize: 12),
+                        ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const TranslatedText(
+                'Add ',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(width: 5),
+              TranslatedText(
+                metal,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF981B1B),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 5),
+
+              const TranslatedText(
+                ' products up to ',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(width: 5),
+
+              TranslatedText(
+                '$amount g.',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF981B1B),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          const TranslatedText(
+            'No payment will be required at checkout.',
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTerms() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Checkbox(
+          value: isTermsAccepted,
+          activeColor: AppColors.primaryRed,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          onChanged: (value) {
+            setState(() {
+              isTermsAccepted = value ?? false;
+            });
+          },
+        ),
+
+        const Expanded(
+          child: TranslatedText(
+            'I agree to the Terms & Conditions',
+            style: TextStyle(fontSize: 13),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhysicalOrderSummary(
+    CartProvider cartProvider,
+    String currencySymbol,
+  ) {
+    if (cartProvider.cartItems.isEmpty) {
+      return const TranslatedText("No items in cart");
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8EAEA),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const TranslatedText(
+            'Order Summary',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+          ),
+
+          const SizedBox(height: 20),
+
+          ...cartProvider.cartItems.map((item) {
+            final String name = item["name"]?.toString() ?? "Product";
+
+            final int quantity =
+                int.tryParse(item["quantity"]?.toString() ?? "1") ?? 1;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TranslatedText(
+                      "$name × $quantity",
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  // Physical conversion
+                  // has NO monetary charge.
+                  TranslatedText(
+                    "$currencySymbol 0.00",
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            );
+          }),
+
+          const Divider(height: 28),
+
+          _summaryRow(
+            "Courier charge (Standard delivery)",
+            "$currencySymbol 0.00",
+          ),
+
+          const SizedBox(height: 18),
+
+          _summaryRow("Total (ex tax)", "$currencySymbol 0.00"),
+
+          const SizedBox(height: 18),
+
+          _summaryRow("Tax (21%)", "$currencySymbol 0.00"),
+
+          const SizedBox(height: 18),
+
+          _summaryRow("Transaction Fee (4%)", "$currencySymbol 0.00"),
+
+          const Divider(height: 30),
+
+          _summaryRow(
+            "Order Total",
+            "$currencySymbol 0.00",
+            bold: true,
+            valueColor: AppColors.primaryRed,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(String currencySymbol, bool isPhysicalConversion) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: (_isPlacingOrder || _isCancellingConversion)
+                ? null
+                : () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MainScreen(initialIndex: 3),
+                        ),
+                        (route) => false,
+                      );
+                    }
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey.shade300,
+              foregroundColor: Colors.black,
+              disabledBackgroundColor: Colors.grey.shade300,
+              disabledForegroundColor: Colors.black45,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(7),
+              ),
+            ),
+            child: const TranslatedText('Back', style: TextStyle(fontSize: 14)),
+          ),
+        ),
+
+        const SizedBox(width: 15),
+
+        Expanded(
+          flex: 2,
+          child: ElevatedButton(
+            onPressed: (_isPlacingOrder || _isCancellingConversion)
+                ? null
+                : () async {
+                    try {
+                      dynamic plan;
+
+                      final res = await JscService.fetchConvertDetails();
+
+                      log("fetchConvertPhysicalDetails response: $res");
+
+                      log(
+                        "fetchConvertPhysicalDetails data: "
+                        "${res['data']}",
+                      );
+
+                      if (res['data'] != null) {
+                        final data = Map<String, dynamic>.from(res['data']);
+
+                        log("Convert Physical Data: $data");
+
+                        log("Golddd: ${data['purchase_subtype']}");
+
+                        plan = data['purchase_subtype'];
+                      }
+
+                      log("Plannn: $plan");
+
+                      if (isPhysicalConversion) {
+                        await _sendPhysicalOrder(plan: plan);
+                      } else {
+                        await _placeNormalOrder();
+                      }
+                    } catch (e, stackTrace) {
+                      log("fetchConvertPhysicalDetails error: $e");
+
+                      log("StackTrace: $stackTrace");
+                    }
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryRed,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.grey.shade400,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(7),
+              ),
+            ),
+            child: _isPlacingOrder
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : TranslatedText(
+                    isPhysicalConversion
+                        ? 'Send Order $currencySymbol 0.00'
+                        : 'Proceed to pay',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget paymentBox(String title) {
     final bool isSelected = selectedCard == title;
 
     return GestureDetector(
-      onTap: () async {
+      onTap: () {
         setState(() {
           selectedCard = title;
         });
@@ -812,32 +1649,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Text(title),
-      ),
-    );
-  }
-
-  Widget summaryRow(String title, String value, {bool bold = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-              color: bold ? Colors.red : Colors.black,
-            ),
-          ),
-        ],
+        child: TranslatedText(title),
       ),
     );
   }
@@ -852,14 +1664,19 @@ Widget _summaryRow(
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Text(
-        title,
-        style: TextStyle(
-          fontSize: bold ? 15 : 14,
-          fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+      Expanded(
+        child: TranslatedText(
+          title,
+          style: TextStyle(
+            fontSize: bold ? 15 : 14,
+            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
       ),
-      Text(
+
+      const SizedBox(width: 12),
+
+      TranslatedText(
         value,
         style: TextStyle(
           fontSize: bold ? 15 : 14,
@@ -869,4 +1686,23 @@ Widget _summaryRow(
       ),
     ],
   );
+}
+
+String _getStripePaymentMethod(String card) {
+  switch (card.toLowerCase()) {
+    case "visa":
+      return "visa";
+
+    case "mastercard":
+      return "mastercard";
+
+    case "g pay":
+      return "google_pay";
+
+    case "apple pay":
+      return "apple_pay";
+
+    default:
+      return "visa";
+  }
 }

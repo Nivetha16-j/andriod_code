@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
-import 'package:junubullion/widgets/profile/recentorders.dart';
 import 'package:provider/provider.dart';
 
 class WalletSection extends StatelessWidget {
@@ -125,7 +125,7 @@ class DashboardCard extends StatelessWidget {
           ),
 
           // const Spacer(),
-          Text(
+          TranslatedText(
             title,
             style: const TextStyle(
               color: Colors.white,
@@ -136,14 +136,14 @@ class DashboardCard extends StatelessWidget {
 
           const SizedBox(height: 6),
 
-          Text(
+          TranslatedText(
             subtitle,
             style: const TextStyle(color: Colors.white, fontSize: 12),
           ),
 
           const SizedBox(height: 2),
 
-          Text(
+          TranslatedText(
             description,
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
@@ -212,7 +212,7 @@ class ShopCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  TranslatedText(
                     "Shop",
                     style: TextStyle(
                       color: Colors.white,
@@ -221,12 +221,12 @@ class ShopCard extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 4),
-                  Text(
+                  TranslatedText(
                     "Gold, silver & bullion",
                     style: TextStyle(color: Colors.white, fontSize: 12),
                   ),
                   SizedBox(height: 2),
-                  Text(
+                  TranslatedText(
                     "Browse products",
                     style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),

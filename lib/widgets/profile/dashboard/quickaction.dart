@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/profile/account_details.dart';
 import 'package:junubullion/widgets/profile/addresses.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
@@ -14,11 +15,11 @@ class QuickActionsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           children: [
             Icon(Icons.bolt, color: AppColors.primaryRed),
             SizedBox(width: 6),
-            Text(
+            TranslatedText(
               "Quick actions",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
@@ -187,13 +188,13 @@ class ActionTile extends StatelessWidget {
               ),
             ),
 
-            Text(
+            TranslatedText(
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
             ),
 
-            Text(
+            TranslatedText(
               description,
               textAlign: TextAlign.center,
               maxLines: 2,

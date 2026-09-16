@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
-import 'jsc_layout.dart';
+import '../layout.dart';
 import 'package:junubullion/widgets/jsc/jsc_purchases_section.dart';
 
 class JscPurchasesScreen extends StatefulWidget {
@@ -24,7 +26,8 @@ class _JscPurchasesScreenState extends State<JscPurchasesScreen> {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: JscLayout(
+      body: PlansLayout(
+        plans: Plans.jsc,
         selectedMenu: 'Your Purchases',
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
@@ -55,7 +58,7 @@ class JscPurchasesContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           'Your Purchases',
           style: TextStyle(
             fontSize: 14,
@@ -66,7 +69,7 @@ class JscPurchasesContent extends StatelessWidget {
 
         const SizedBox(height: 12),
 
-        const Text(
+        const TranslatedText(
           "Track each digital purchase against today's market price.",
           style: TextStyle(
             fontSize: 13,

@@ -5,6 +5,7 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/kyc_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -78,10 +79,10 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                         colors: [Color(0xff981B1E), Color(0xffD97B2A)],
                       ),
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        TranslatedText(
                           "KYC Verification",
                           style: TextStyle(
                             color: Colors.white,
@@ -90,7 +91,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                           ),
                         ),
                         SizedBox(height: 10),
-                        Text(
+                        TranslatedText(
                           "Upload valid identification documents to verify\n"
                           "your account. Review usually takes 1–3\n"
                           "business days.",
@@ -118,7 +119,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              TranslatedText(
                                 "Verification Status",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -126,7 +127,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                 ),
                               ),
                               SizedBox(height: 5),
-                              Text(
+                              TranslatedText(
                                 provider.kycApproved
                                     ? "Your KYC has been approved."
                                     : provider.kycStatus == "pending"
@@ -147,7 +148,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                 : Colors.blue.shade100,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text(
+                          child: TranslatedText(
                             provider.kycStatus
                                 .replaceAll("_", " ")
                                 .toUpperCase(),
@@ -186,7 +187,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                   color: Colors.grey.shade300,
                                   borderRadius: BorderRadius.circular(15),
                                 ),
-                                child: Text(
+                                child: TranslatedText(
                                   e,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
@@ -200,7 +201,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
 
                   const SizedBox(height: 24),
 
-                  const Text(
+                  const TranslatedText(
                     "Upload Documents",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
@@ -208,7 +209,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                   const SizedBox(height: 20),
 
                   // Government ID Upload
-                  const Text(
+                  const TranslatedText(
                     "Government-Issued ID",
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
@@ -256,7 +257,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                       ),
                                     ),
                                   )
-                                : const Text("Browse"),
+                                : const TranslatedText("Browse"),
                           ),
 
                           const SizedBox(width: 15),
@@ -279,7 +280,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                 //         ),
                                 //       )
                                 //     :
-                                Text(
+                                TranslatedText(
                                   governmentFileName ?? "No File Selected",
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
@@ -292,7 +293,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
 
                   const SizedBox(height: 8),
 
-                  const Text(
+                  const TranslatedText(
                     "Passport, National ID Card or Driving Licence.",
                     style: TextStyle(fontSize: 12, color: Colors.black),
                   ),
@@ -300,7 +301,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                   const SizedBox(height: 24),
 
                   // Proof of Address
-                  const Text(
+                  const TranslatedText(
                     "Proof Of Address (Optional)",
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
@@ -350,7 +351,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                       ),
                                     ),
                                   )
-                                : const Text("Browse"),
+                                : const TranslatedText("Browse"),
                           ),
 
                           const SizedBox(width: 15),
@@ -373,7 +374,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                 //         ),
                                 //       )
                                 //     :
-                                Text(
+                                TranslatedText(
                                   addressFileName ?? "No File Selected",
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
@@ -390,14 +391,14 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
 
                   const SizedBox(height: 8),
 
-                  const Text(
+                  const TranslatedText(
                     "Utility bill, bank statement or official correspondence (within last 3 months).",
                     style: TextStyle(fontSize: 12, color: Colors.black),
                   ),
 
                   const SizedBox(height: 24),
 
-                  const Text(
+                  const TranslatedText(
                     "Additional Notes",
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
@@ -408,7 +409,9 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                     controller: notesController,
                     maxLines: 5,
                     decoration: InputDecoration(
-                      hintText: "Optional Information For The Reviewer...",
+                      hint: const TranslatedText(
+                        "Optional Information For The Reviewer...",
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -436,7 +439,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                 if (selectedGovtIdFile == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text(
+                                      content: TranslatedText(
                                         "Please upload Government ID",
                                       ),
                                     ),
@@ -450,49 +453,49 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                   "Submitting KYC with files: ${selectedGovtIdFile!.path}, ${selectedAddressFile?.path}, ${notesController.text.trim()}",
                                 );
 
-                                // final response = await provider.submitKyc(
-                                //   identityDocument: selectedGovtIdFile!,
-                                //   addressDocument: selectedAddressFile,
-                                //   customerNotes: notesController.text.trim(),
-                                // );
+                                final response = await provider.submitKyc(
+                                  identityDocument: selectedGovtIdFile!,
+                                  addressDocument: selectedAddressFile,
+                                  customerNotes: notesController.text.trim(),
+                                );
 
-                                // if (!mounted) return;
+                                if (!mounted) return;
 
-                                // if (response["success"] == true) {
-                                // ScaffoldMessenger.of(context).showSnackBar(
-                                //   SnackBar(
-                                //     content: Text(
-                                //       response["body"]["message"] ??
-                                //           "KYC submitted successfully",
-                                //     ),
-                                //   ),
-                                // );
+                                if (response["status"] == true) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: TranslatedText(
+                                        response["message"] ??
+                                            "KYC submitted successfully",
+                                      ),
+                                    ),
+                                  );
 
-                                // setState(() {
-                                //   selectedGovtIdFile = null;
-                                //   selectedAddressFile = null;
-                                //   governmentFileName = null;
-                                //   addressFileName = null;
-                                //   notesController.clear();
-                                // });
+                                  setState(() {
+                                    selectedGovtIdFile = null;
+                                    selectedAddressFile = null;
+                                    governmentFileName = null;
+                                    addressFileName = null;
+                                    notesController.clear();
+                                  });
 
-                                // Navigator.pushReplacement(
-                                //   context,
-                                //   MaterialPageRoute(
-                                //     builder: (_) =>
-                                //         MainScreen(initialIndex: 3),
-                                //   ),
-                                // );
-                                // } else {
-                                //   ScaffoldMessenger.of(context).showSnackBar(
-                                //     SnackBar(
-                                //       content: Text(
-                                //         response["body"]["message"] ??
-                                //             "Failed to submit KYC",
-                                //       ),
-                                //     ),
-                                //   );
-                                // }
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          MainScreen(initialIndex: 4),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: TranslatedText(
+                                        response["message"] ??
+                                            "Failed to submit KYC",
+                                      ),
+                                    ),
+                                  );
+                                }
                               },
                         child: provider.isLoading
                             ? const SizedBox(
@@ -503,7 +506,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text(
+                            : const TranslatedText(
                                 "Submit For Verification",
                                 style: TextStyle(
                                   color: Colors.white,
@@ -544,7 +547,11 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
 
       if (pickedFile.size > maxFileMb * 1024 * 1024) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("File size should not exceed $maxFileMb MB")),
+          SnackBar(
+            content: TranslatedText(
+              "File size should not exceed $maxFileMb MB",
+            ),
+          ),
         );
         return;
       }
@@ -581,7 +588,7 @@ class _KycVerificationCardState extends State<KycVerificationCard> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(SnackBar(content: TranslatedText(e.toString())));
     }
   }
 }

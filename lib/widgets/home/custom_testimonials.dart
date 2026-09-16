@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class TestimonialsSection extends StatefulWidget {
   final List<dynamic> testimonialsData; // Pass testimonials list from /home API
@@ -46,7 +47,7 @@ class _TestimonialsSectionState extends State<TestimonialsSection> {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
+        TranslatedText(
           "($rating.0)",
           style: const TextStyle(
             color: Colors.grey,
@@ -77,7 +78,7 @@ class _TestimonialsSectionState extends State<TestimonialsSection> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Section Title
-          const Text(
+          const TranslatedText(
             'What People are Saying',
             style: TextStyle(
               fontSize: 24,
@@ -131,7 +132,7 @@ class _TestimonialsSectionState extends State<TestimonialsSection> {
 
                       // Testimonial Description
                       Expanded(
-                        child: Text(
+                        child: TranslatedText(
                           item.description,
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
@@ -147,7 +148,7 @@ class _TestimonialsSectionState extends State<TestimonialsSection> {
                       const SizedBox(height: 10),
 
                       // User Name
-                      Text(
+                      TranslatedText(
                         item.name,
                         style: const TextStyle(
                           fontSize: 16,
@@ -164,26 +165,26 @@ class _TestimonialsSectionState extends State<TestimonialsSection> {
 
           const SizedBox(height: 12),
 
-          // Bottom Action: View More Button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                GestureDetector(
-                  onTap: widget.onViewMorePressed,
-                  child: const Text(
-                    'View more',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFC39B32), // Gold theme color
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // // Bottom Action: View More Button
+          // Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 24),
+          //   child: Row(
+          //     mainAxisAlignment: MainAxisAlignment.end,
+          //     children: [
+          //       GestureDetector(
+          //         onTap: widget.onViewMorePressed,
+          //         child: const TranslatedText(
+          //           'View more',
+          //           style: TextStyle(
+          //             fontSize: 16,
+          //             fontWeight: FontWeight.bold,
+          //             color: Color(0xFFC39B32), // Gold theme color
+          //           ),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );

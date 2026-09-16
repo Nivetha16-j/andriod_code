@@ -1,23 +1,25 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
-import 'package:junubullion/services/jsc_services.dart';
-import 'package:junubullion/screens/jsc/jsc_layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/plans/layout.dart';
+import 'package:junubullion/services/gsp_service.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
+import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
-import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
 import 'package:provider/provider.dart';
 
-class JscWalletScreen extends StatefulWidget {
-  const JscWalletScreen({super.key});
+class GspWalletScreen extends StatefulWidget {
+  const GspWalletScreen({super.key});
 
   @override
-  State<JscWalletScreen> createState() => _JscWalletScreenState();
+  State<GspWalletScreen> createState() => _GspWalletScreenState();
 }
 
-class _JscWalletScreenState extends State<JscWalletScreen> {
+class _GspWalletScreenState extends State<GspWalletScreen> {
   @override
   Widget build(BuildContext context) {
     const int currentIndex = 0;
@@ -29,11 +31,12 @@ class _JscWalletScreenState extends State<JscWalletScreen> {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: JscLayout(
+      body: PlansLayout(
+        plans: Plans.gsp,
         selectedMenu: 'My Wallet',
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
-          child: const JscWallet(),
+          child: const GspWallet(),
         ),
       ),
       bottomNavigationBar: CustomBottomNavigationBar(
@@ -52,14 +55,14 @@ class _JscWalletScreenState extends State<JscWalletScreen> {
   }
 }
 
-class JscWallet extends StatefulWidget {
-  const JscWallet({super.key});
+class GspWallet extends StatefulWidget {
+  const GspWallet({super.key});
 
   @override
-  State<JscWallet> createState() => _JscWalletState();
+  State<GspWallet> createState() => _GspWalletState();
 }
 
-class _JscWalletState extends State<JscWallet> {
+class _GspWalletState extends State<GspWallet> {
   Timer? _walletTimer;
 
   bool isLoading = true;
@@ -70,7 +73,7 @@ class _JscWalletState extends State<JscWallet> {
   String silverPrice = '...';
   String silverUnit = 'g';
 
-  String currencySymbol = '\$';
+  String currencySymbol = '';
 
   @override
   void initState() {
@@ -78,10 +81,10 @@ class _JscWalletState extends State<JscWallet> {
 
     _fetchWallet();
 
-    // Refresh live spot prices every 10 seconds.
-    _walletTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      _fetchWallet();
-    });
+    _walletTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (_) => _fetchWallet(),
+    );
   }
 
   @override
@@ -97,52 +100,79 @@ class _JscWalletState extends State<JscWallet> {
         listen: false,
       );
 
-      final currency = currencyProvider.selectedCurrency;
+      final String currency = currencyProvider.selectedCurrency;
 
-      final result = await JscService.fetchWallet(currency: currency);
+      final result = await GspService.fetchWallet(currency: currency);
 
       if (!mounted) return;
 
-      if (result['status'] == true) {
-        final data = result['data'] as Map<String, dynamic>? ?? {};
-
-        final summary = data['summary'] as Map<String, dynamic>? ?? {};
-
-        final symbol = summary['symbol']?.toString() ?? '\$';
-
-        final metals = summary['metals'] as Map<String, dynamic>? ?? {};
-
-        final gold =
-            (metals['gold'] ?? summary['gold']) as Map<String, dynamic>? ?? {};
-
-        final silver =
-            (metals['silver'] ?? summary['silver']) as Map<String, dynamic>? ??
-            {};
-
-        setState(() {
-          currencySymbol = symbol;
-
-          goldPrice = _formatPrice(gold['spot_price']);
-          goldUnit =
-              gold['unit_short']?.toString() ?? gold['unit']?.toString() ?? 'g';
-
-          silverPrice = _formatPrice(silver['spot_price']);
-          silverUnit =
-              silver['unit_short']?.toString() ??
-              silver['unit']?.toString() ??
-              'g';
-
-          isLoading = false;
-        });
-      } else {
-        if (!mounted) return;
-
+      if (result['status'] != true) {
         setState(() {
           isLoading = false;
         });
+
+        return;
       }
+
+      final Map<String, dynamic> data = result['data'] is Map
+          ? Map<String, dynamic>.from(result['data'])
+          : <String, dynamic>{};
+
+      final Map<String, dynamic> wallet = data['wallet'] is Map
+          ? Map<String, dynamic>.from(data['wallet'])
+          : <String, dynamic>{};
+
+      final Map<String, dynamic> summary = wallet['summary'] is Map
+          ? Map<String, dynamic>.from(wallet['summary'])
+          : <String, dynamic>{};
+
+      final String symbol = summary['symbol']?.toString() ?? '';
+
+      final Map<String, dynamic> metals = summary['metals'] is Map
+          ? Map<String, dynamic>.from(summary['metals'])
+          : <String, dynamic>{};
+
+      // ==========================================================
+      // GOLD
+      // ==========================================================
+
+      final Map<String, dynamic> gold = metals['gold'] is Map
+          ? Map<String, dynamic>.from(metals['gold'])
+          : <String, dynamic>{};
+
+      final String newGoldPrice = _formatPrice(gold['spot_price']);
+
+      final String newGoldUnit =
+          gold['unit_short']?.toString() ?? gold['unit']?.toString() ?? 'g';
+
+      final Map<String, dynamic> silver = metals['silver'] is Map
+          ? Map<String, dynamic>.from(metals['silver'])
+          : <String, dynamic>{};
+
+      final String newSilverPrice = _formatPrice(silver['spot_price']);
+
+      final String newSilverUnit =
+          silver['unit_short']?.toString() ?? silver['unit']?.toString() ?? 'g';
+
+      debugPrint(
+        'GSP LIVE SPOT -> '
+        'Gold: $symbol$newGoldPrice / $newGoldUnit | '
+        'Silver: $symbol$newSilverPrice / $newSilverUnit',
+      );
+
+      setState(() {
+        currencySymbol = symbol;
+
+        goldPrice = newGoldPrice;
+        goldUnit = newGoldUnit;
+
+        silverPrice = newSilverPrice;
+        silverUnit = newSilverUnit;
+
+        isLoading = false;
+      });
     } catch (e) {
-      debugPrint('JSC Wallet API error: $e');
+      debugPrint('GSP Wallet API error: $e');
 
       if (!mounted) return;
 
@@ -157,7 +187,7 @@ class _JscWalletState extends State<JscWallet> {
       return '...';
     }
 
-    final number = double.tryParse(value.toString());
+    final double? number = double.tryParse(value.toString());
 
     if (number == null) {
       return '...';
@@ -171,7 +201,7 @@ class _JscWalletState extends State<JscWallet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           'My Wallet',
           style: TextStyle(
             fontSize: 14,
@@ -182,7 +212,7 @@ class _JscWalletState extends State<JscWallet> {
 
         const SizedBox(height: 14),
 
-        const Text(
+        const TranslatedText(
           'View your digital gold and silver balances and live market prices.',
           style: TextStyle(
             fontSize: 13,
@@ -194,7 +224,7 @@ class _JscWalletState extends State<JscWallet> {
 
         const SizedBox(height: 25),
 
-        const JscBalanceSection(),
+        const GspBalanceSection(),
 
         const SizedBox(height: 20),
 
@@ -235,7 +265,7 @@ class _LiveSpotPrices extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 14, 10, 14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: const Color(0xFFFFD9D9),
         borderRadius: BorderRadius.circular(7),
@@ -252,12 +282,16 @@ class _LiveSpotPrices extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text(
-                'Live Spot Prices',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF9E2424),
+              Expanded(
+                child: const TranslatedText(
+                  'Live Spot Prices',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF9E2424),
+                  ),
                 ),
               ),
 
@@ -288,7 +322,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
                     SizedBox(width: 5),
 
-                    Text(
+                    TranslatedText(
                       'LIVE',
                       style: TextStyle(
                         fontSize: 9,
@@ -304,7 +338,6 @@ class _LiveSpotPrices extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // GOLD
           Row(
             children: [
               Container(
@@ -318,21 +351,23 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const SizedBox(width: 10),
 
-              const Text(
-                'Gold',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
+              Expanded(
+                child: const TranslatedText(
+                  'Gold',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
                 ),
               ),
 
               const Spacer(),
 
-              Text(
+              TranslatedText(
                 isLoading ? '...' : '$currencySymbol$goldPrice',
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFFA52525),
                 ),
@@ -340,9 +375,9 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const SizedBox(width: 5),
 
-              Text(
+              TranslatedText(
                 '/ $goldUnit',
-                style: const TextStyle(fontSize: 15, color: Color(0xFF9E4A4A)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF9E4A4A)),
               ),
             ],
           ),
@@ -353,7 +388,6 @@ class _LiveSpotPrices extends StatelessWidget {
 
           const SizedBox(height: 11),
 
-          // SILVER
           Row(
             children: [
               Container(
@@ -367,21 +401,23 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const SizedBox(width: 10),
 
-              const Text(
-                'Silver',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
+              Expanded(
+                child: const TranslatedText(
+                  'Silver',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black,
+                  ),
                 ),
               ),
 
               const Spacer(),
 
-              Text(
+              TranslatedText(
                 isLoading ? '...' : '$currencySymbol$silverPrice',
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFFA52525),
                 ),
@@ -389,9 +425,9 @@ class _LiveSpotPrices extends StatelessWidget {
 
               const SizedBox(width: 5),
 
-              Text(
+              TranslatedText(
                 '/ $silverUnit',
-                style: const TextStyle(fontSize: 15, color: Color(0xFF9E4A4A)),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF9E4A4A)),
               ),
             ],
           ),
@@ -402,7 +438,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
           const SizedBox(height: 9),
 
-          const Text(
+          const TranslatedText(
             'Updated in real time from the live market.',
             style: TextStyle(
               fontSize: 12,

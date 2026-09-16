@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
-import 'package:junubullion/screens/jsc/jsc_dashboard.dart';
-import 'package:junubullion/screens/jsc/jsc_details.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_dashboard.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_details.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_dashboard.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_details.dart';
 import 'package:junubullion/widgets/home/custom_banner.dart';
 import 'package:junubullion/widgets/home/custom_brands.dart';
 import 'package:junubullion/widgets/home/custom_exclusivecollections.dart';
@@ -84,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: SingleChildScrollView(
-        controller: widget.scrollController, // Attached controller
+        controller: widget.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 12.0),
         child: Column(
@@ -93,7 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
             BannerSlider(bannerData: bannerData),
             const SizedBox(height: 5),
 
-            // Pass the API spot_prices object here
             LiveSpotPriceCard(
               spotPricesData: homeProvider.homeData?['data']?['spot_prices'],
               selectedCurrency: currencyProvider.selectedCurrency,
@@ -141,7 +142,21 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 5),
 
-            InvestBanner(imagePath: "assets/gsp.png", onTap: () {}),
+            GestureDetector(
+              onTap: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => GspDashboardScreen()));
+              },
+              child: InvestBanner(
+                imagePath: "assets/gsp.png",
+                onTap: () {
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => GspScreen()));
+                },
+              ),
+            ),
             const SizedBox(height: 5),
 
             FeaturesGridSection(),
@@ -151,8 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
               products:
                   homeProvider.homeData?['data']?['trending_products']
                       as List<dynamic>?,
-              onSeeAllTap:
-                  widget.onViewMoreTap, // Navigates to 4th tab (Product List)
+              onSeeAllTap: widget.onViewMoreTap,
               currency: currencyProvider.selectedCurrency,
               unit: currencyProvider.selectedUnit,
             ),

@@ -5,13 +5,13 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
-import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
-import 'package:junubullion/providers/currency_provider.dart';
 
 class ProductListScreen extends StatefulWidget {
   final String title;
@@ -19,12 +19,15 @@ class ProductListScreen extends StatefulWidget {
   final ScrollController scrollController;
   final Future<void> Function()? onRefresh;
 
+  final int initialCategoryIndex;
+
   const ProductListScreen({
     super.key,
     this.title = 'Our Products',
     this.isEmbedded = false,
     required this.scrollController,
     this.onRefresh,
+    this.initialCategoryIndex = 0,
   });
 
   @override
@@ -32,11 +35,11 @@ class ProductListScreen extends StatefulWidget {
 }
 
 class _ProductListScreenState extends State<ProductListScreen> {
-  int _selectedCategoryIndex = 0;
+  late int _selectedCategoryIndex;
+
   String? _lastCurrency;
   String? _lastUnit;
 
-  // 1. Variable to control how many items are shown
   int _displayCount = 6;
 
   final List<String> _categories = [
@@ -48,21 +51,28 @@ class _ProductListScreenState extends State<ProductListScreen> {
   ];
 
   final List<String> _endpoints = [
-    "exclusive-products",
-    "gold-coins",
-    "gold-bars",
-    "silver-coins",
-    "silver-bars",
+    'exclusive-products',
+    'gold-coins',
+    'gold-bars',
+    'silver-coins',
+    'silver-bars',
   ];
 
   @override
   void initState() {
     super.initState();
+
+    // Make sure the index is always valid.
+    _selectedCategoryIndex = widget.initialCategoryIndex.clamp(
+      0,
+      _categories.length - 1,
+    );
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     final currencyProvider = context.watch<CurrencyProvider>();
 
     if (_lastCurrency == currencyProvider.selectedCurrency &&
@@ -72,135 +82,189 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     _lastCurrency = currencyProvider.selectedCurrency;
     _lastUnit = currencyProvider.selectedUnit;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _fetchProducts();
+      if (mounted) {
+        _fetchProducts();
+      }
     });
   }
 
-  // Future<void> _fetchProducts() {
-  //   final currencyProvider = context.read<CurrencyProvider>();
-  //   return context.read<ExclusiveProductProvider>().fetchProducts(
-  //     endpoint: _endpoints[_selectedCategoryIndex],
-  //   );
-  // }
+  // ============================================================
+  // FETCH PRODUCTS
+  // ============================================================
 
-  Future<void> _fetchProducts() {
-    final currency = context.read<CurrencyProvider>();
+  Future<void> _fetchProducts() async {
+    final currencyProvider = context.read<CurrencyProvider>();
+    final productProvider = context.read<ExclusiveProductProvider>();
 
-    return context.read<ExclusiveProductProvider>().fetchProducts(
-      endpoint: _endpoints[_selectedCategoryIndex],
-      currency: currency.selectedCurrency,
-      unit: currency.selectedUnit,
+    final endpoint = _endpoints[_selectedCategoryIndex];
+
+    log(
+      '🛍️ FETCH PRODUCTS -> '
+      'category=${_categories[_selectedCategoryIndex]} '
+      'endpoint=$endpoint '
+      'currency=${currencyProvider.selectedCurrency} '
+      'unit=${currencyProvider.selectedUnit}',
+    );
+
+    // fetchProducts() will:
+    // 1. Set isLoading = true
+    // 2. Clear old products
+    // 3. Fetch the new category
+    // 4. Set isLoading = false
+    await productProvider.fetchProducts(
+      endpoint: endpoint,
+      currency: currencyProvider.selectedCurrency,
+      unit: currencyProvider.selectedUnit,
+      showLoader: true,
     );
   }
 
-  // Gets the filtered list based on category
-  List<dynamic> _filteredProducts(List<dynamic> products) {
-    if (_selectedCategoryIndex == 0) return products;
+  // ============================================================
+  // CATEGORY CHANGE
+  // ============================================================
 
-    final selectedCategory = _categories[_selectedCategoryIndex].toLowerCase();
+  Future<void> _changeCategory(int index) async {
+    if (_selectedCategoryIndex == index) {
+      return;
+    }
 
-    return products.where((product) {
-      final String name = (product['name'] ?? '').toString().toLowerCase();
-      final String subcategory = (product['subcategory'] ?? '')
-          .toString()
-          .toLowerCase();
-      return name.contains(selectedCategory) ||
-          subcategory.contains(selectedCategory);
-    }).toList();
+    log(
+      '🔄 CATEGORY CHANGE -> '
+      '${_categories[_selectedCategoryIndex]} '
+      '→ ${_categories[index]}',
+    );
+
+    setState(() {
+      _selectedCategoryIndex = index;
+      _displayCount = 6;
+    });
+
+    await _fetchProducts();
   }
 
   @override
   Widget build(BuildContext context) {
     final currencyProvider = context.watch<CurrencyProvider>();
-    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-
     final productProvider = context.watch<ExclusiveProductProvider>();
 
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
+    // ============================================================
+    // LOADING
+    // ============================================================
+
     if (productProvider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Container(
+        color: const Color(0xFFFAFAFA),
+        child: const Center(child: CircularProgressIndicator()),
+      );
     }
 
+    // ============================================================
+    // PRODUCTS
+    // ============================================================
+
+    // IMPORTANT:
+    // The API endpoint already returns products for the selected
+    // category.
+    //
+    // Therefore we DO NOT perform any additional filtering here.
     final displayedProducts = productProvider.products;
 
-    final allFilteredProducts = _filteredProducts(displayedProducts);
+    final productsToDisplay = displayedProducts.take(_displayCount).toList();
 
-    final productsToDisplay = allFilteredProducts.take(_displayCount).toList();
+    final hasMoreProducts = _displayCount < displayedProducts.length;
 
-    log("productsToDisplay $productsToDisplay");
+    log(
+      '📦 PRODUCT UI -> '
+      'category=${_categories[_selectedCategoryIndex]} '
+      'products=${displayedProducts.length}',
+    );
 
-    final hasMoreProducts = _displayCount < allFilteredProducts.length;
+    // ============================================================
+    // CONTENT
+    // ============================================================
 
     final Widget content = RefreshIndicator(
-      onRefresh: widget.onRefresh ?? () async {},
+      onRefresh: widget.onRefresh ?? _fetchProducts,
       child: SingleChildScrollView(
-        controller: widget.scrollController, // Attached controller
+        controller: widget.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Column(
           children: [
-            Text(
-              "Our Products",
-              style: const TextStyle(
+            // ======================================================
+            // TITLE
+            // ======================================================
+            const TranslatedText(
+              'Our Products',
+              style: TextStyle(
                 fontSize: 34.0,
                 fontWeight: FontWeight.w700,
                 color: Color.fromRGBO(208, 145, 29, 1),
               ),
             ),
-            SizedBox(height: 12.0),
-            // Filter Pills
+
+            const SizedBox(height: 12),
+
+            // ======================================================
+            // CATEGORY CHIPS
+            // ======================================================
             SizedBox(
-              height: 38.0,
+              height: 38,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: _categories.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(width: 8.0),
+                separatorBuilder: (_, index) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
                   final bool isSelected = _selectedCategoryIndex == index;
+
                   return ChoiceChip(
-                    label: Text(
+                    label: TranslatedText(
                       _categories[index],
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.black87,
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.w500,
-                        fontSize: 13.0,
+                        fontSize: 13,
                       ),
                     ),
                     selected: isSelected,
                     selectedColor: AppColors.primaryRed,
                     backgroundColor: const Color(0xFFE0E0E0),
                     showCheckmark: false,
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
+                      borderRadius: BorderRadius.circular(20),
                       side: BorderSide.none,
                     ),
                     onSelected: (selected) async {
-                      setState(() {
-                        _selectedCategoryIndex = index;
-                        _displayCount = 6;
-                      });
+                      if (!selected) {
+                        return;
+                      }
 
-                      await _fetchProducts();
+                      await _changeCategory(index);
                     },
                   );
                 },
               ),
             ),
 
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 20),
 
-            // Product Grid
+            // ======================================================
+            // PRODUCT GRID
+            // ======================================================
             productsToDisplay.isEmpty
                 ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40.0),
+                    padding: EdgeInsets.symmetric(vertical: 40),
                     child: Center(
-                      child: Text(
+                      child: TranslatedText(
                         'No products found in this category.',
-                        style: TextStyle(color: Colors.grey, fontSize: 14.0),
+                        style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                     ),
                   )
@@ -211,37 +275,48 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          crossAxisSpacing: 14.0,
-                          mainAxisSpacing: 16.0,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 16,
                           childAspectRatio: 0.62,
                         ),
                     itemBuilder: (context, index) {
                       final product =
                           productsToDisplay[index] as Map<String, dynamic>;
+
+                      final String brand = (product['brand'] ?? '')
+                          .toString()
+                          .trim()
+                          .toUpperCase();
+
+                      final bool isDigitalProduct =
+                          brand == 'GSP' || brand == 'JSC';
+
                       return _ProductGridCard(
                         product: product,
                         currencyProvider: currencyProvider,
+                        isDigitalProduct: isDigitalProduct,
                       );
                     },
                   ),
 
-            const SizedBox(height: 24.0),
+            const SizedBox(height: 24),
 
-            // 6. View More Button (Only show if there are hidden products)
+            // ======================================================
+            // VIEW MORE
+            // ======================================================
             if (hasMoreProducts)
               GestureDetector(
                 onTap: () {
                   setState(() {
-                    // Add 6 more to the display count
                     _displayCount += 6;
                   });
                 },
                 child: const Padding(
-                  padding: EdgeInsets.only(bottom: 24.0),
-                  child: Text(
+                  padding: EdgeInsets.only(bottom: 24),
+                  child: TranslatedText(
                     'View more',
                     style: TextStyle(
-                      fontSize: 16.0,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryRed,
                     ),
@@ -253,28 +328,20 @@ class _ProductListScreenState extends State<ProductListScreen> {
       ),
     );
 
+    // ============================================================
+    // EMBEDDED
+    // ============================================================
+
     if (widget.isEmbedded) {
       return Container(color: const Color(0xFFFAFAFA), child: content);
     }
 
+    // ============================================================
+    // STANDALONE
+    // ============================================================
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      // appBar: AppBar(
-
-      //   title: Text(
-      //     widget.title,
-      //     style: const TextStyle(
-      //       color: Color(0xFFC88E2B),
-      //       fontWeight: FontWeight.bold,
-      //       fontSize: 24.0,
-      //     ),
-      //   ),
-      //   centerTitle: true,
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   automaticallyImplyLeading: !widget.isEmbedded,
-      //   iconTheme: const IconThemeData(color: Colors.black87),
-      // ),
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
@@ -283,23 +350,502 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 }
 
+// =================================================================
+// PRODUCT GRID CARD
+// =================================================================
+
 class _ProductGridCard extends StatelessWidget {
   final Map<String, dynamic> product;
-  final currencyProvider;
+  final dynamic currencyProvider;
+  final bool isDigitalProduct;
 
   const _ProductGridCard({
     required this.product,
     required this.currencyProvider,
+    required this.isDigitalProduct,
   });
 
-  String? _validatePhysicalConversion(BuildContext context) {
+  // ===============================================================
+  // TOAST
+  // ===============================================================
+
+  void _showMessage(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black87,
+      textColor: Colors.white,
+      fontSize: 14,
+    );
+  }
+
+  // ===============================================================
+  // PHYSICAL PRODUCT VALIDATION
+  // ===============================================================
+
+  String? _validatePhysicalProduct(BuildContext context) {
     final physicalProvider = context.read<PhysicalConversionProvider>();
 
     return physicalProvider.validateProduct(
-      brand: product['brand']?.toString(),
       metalType: product['metal_type']?.toString(),
     );
   }
+
+  // ===============================================================
+  // CONVERSION WEIGHT VALIDATION
+  // ===============================================================
+
+  String? _validateConversionWeight(
+    CartProvider cartProvider, {
+    required int quantityToAdd,
+    required BuildContext context,
+  }) {
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    if (!physicalProvider.isActive) {
+      return null;
+    }
+
+    final conversionLimit = physicalProvider.amount;
+
+    if (conversionLimit <= 0) {
+      return null;
+    }
+
+    final productWeight = _getProductWeightInGrams();
+
+    if (productWeight <= 0) {
+      log(
+        '⚠️ INVALID PRODUCT WEIGHT -> '
+        'product=${product['name']} '
+        'weight=${product['weight']} '
+        'unit=${product['weight_unit']}',
+      );
+
+      return null;
+    }
+
+    final currentCartWeight = _getCartTotalWeightInGrams(cartProvider);
+
+    final addedWeight = productWeight * quantityToAdd;
+
+    final newTotalWeight = currentCartWeight + addedWeight;
+
+    log(
+      '⚖️ PHYSICAL CONVERSION WEIGHT CHECK -> '
+      'product=${product['name']} '
+      'productWeight=${productWeight}g '
+      'currentCartWeight=${currentCartWeight}g '
+      'adding=${addedWeight}g '
+      'newTotal=${newTotalWeight}g '
+      'limit=${conversionLimit}g',
+    );
+
+    if (newTotalWeight > conversionLimit) {
+      final remainingWeight = (conversionLimit - currentCartWeight).clamp(
+        0,
+        conversionLimit,
+      );
+
+      return 'You can add only '
+          '${remainingWeight.toStringAsFixed(2)}g more. '
+          'Your physical conversion limit is '
+          '${conversionLimit.toStringAsFixed(2)}g.';
+    }
+
+    return null;
+  }
+
+  // ===============================================================
+  // PRODUCT WEIGHT
+  // ===============================================================
+
+  double _getProductWeightInGrams() {
+    final weight = double.tryParse('${product['weight'] ?? 0}') ?? 0;
+
+    final unit = (product['weight_unit'] ?? 'gram')
+        .toString()
+        .trim()
+        .toLowerCase();
+
+    switch (unit) {
+      case 'gram':
+      case 'grams':
+      case 'g':
+        return weight;
+
+      case 'kg':
+      case 'kilogram':
+      case 'kilograms':
+        return weight * 1000;
+
+      case 'toz':
+      case 'troy_ounce':
+      case 'troy_ounces':
+      case 'oz':
+        // 1 troy ounce = 31.1035 grams
+        return weight * 31.1035;
+
+      default:
+        log(
+          '⚠️ UNKNOWN PRODUCT WEIGHT UNIT -> '
+          'weight=$weight unit=$unit',
+        );
+
+        return weight;
+    }
+  }
+
+  // ===============================================================
+  // CART TOTAL WEIGHT
+  // ===============================================================
+
+  double _getCartTotalWeightInGrams(CartProvider cartProvider) {
+    double totalWeight = 0;
+
+    for (final item in cartProvider.cartItems) {
+      final weight = double.tryParse('${item['weight_grams'] ?? 0}') ?? 0;
+
+      final quantity = int.tryParse('${item['quantity'] ?? 0}') ?? 0;
+
+      totalWeight += weight * quantity;
+    }
+
+    return totalWeight;
+  }
+
+  // ===============================================================
+  // ADD PRODUCT
+  // ===============================================================
+
+  Future<void> _addProduct(
+    BuildContext context,
+    CartProvider cartProvider,
+  ) async {
+    final productId = product['id'];
+
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    // =============================================================
+    // PHYSICAL CONVERSION MODE
+    // =============================================================
+
+    if (physicalProvider.isActive) {
+      // -----------------------------------------------------------
+      // DIGITAL PRODUCT
+      // -----------------------------------------------------------
+
+      if (isDigitalProduct) {
+        _showMessage(
+          'Digital products cannot be added during physical conversion.',
+        );
+        return;
+      }
+
+      // -----------------------------------------------------------
+      // METAL VALIDATION
+      // -----------------------------------------------------------
+
+      final validationError = _validatePhysicalProduct(context);
+
+      log(
+        'PHYSICAL PRODUCT METAL VALIDATION -> '
+        '${product['name']} -> $validationError',
+      );
+
+      if (validationError != null) {
+        _showMessage(validationError);
+        return;
+      }
+
+      // -----------------------------------------------------------
+      // WEIGHT VALIDATION
+      // -----------------------------------------------------------
+
+      final weightError = _validateConversionWeight(
+        cartProvider,
+        quantityToAdd: 1,
+        context: context,
+      );
+
+      log(
+        'PHYSICAL PRODUCT WEIGHT VALIDATION -> '
+        '${product['name']} -> $weightError',
+      );
+
+      if (weightError != null) {
+        _showMessage(weightError);
+        return;
+      }
+    }
+
+    // =============================================================
+    // ADD TO CART
+    // =============================================================
+
+    final success = await cartProvider.addToCart(
+      productId: productId,
+      quantity: 1,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    _showMessage(success ? 'Added to Cart' : 'Failed to add product');
+  }
+
+  // ===============================================================
+  // INCREASE QUANTITY
+  // ===============================================================
+
+  Future<void> _increaseQuantity(
+    BuildContext context,
+    CartProvider cartProvider,
+    int currentQuantity,
+  ) async {
+    final productId = product['id'];
+
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    // =============================================================
+    // PHYSICAL CONVERSION MODE
+    // =============================================================
+
+    if (physicalProvider.isActive) {
+      // -----------------------------------------------------------
+      // DIGITAL PRODUCT
+      // -----------------------------------------------------------
+
+      if (isDigitalProduct) {
+        _showMessage(
+          'Digital products cannot be added during physical conversion.',
+        );
+        return;
+      }
+
+      // -----------------------------------------------------------
+      // METAL VALIDATION
+      // -----------------------------------------------------------
+
+      final validationError = _validatePhysicalProduct(context);
+
+      if (validationError != null) {
+        _showMessage(validationError);
+        return;
+      }
+
+      // -----------------------------------------------------------
+      // WEIGHT VALIDATION
+      // -----------------------------------------------------------
+
+      final weightError = _validateConversionWeight(
+        cartProvider,
+        quantityToAdd: 1,
+        context: context,
+      );
+
+      log(
+        'PHYSICAL QUANTITY INCREASE -> '
+        '${product['name']} '
+        'currentQuantity=$currentQuantity '
+        'weightError=$weightError',
+      );
+
+      if (weightError != null) {
+        _showMessage(weightError);
+        return;
+      }
+    }
+
+    // =============================================================
+    // UPDATE CART
+    // =============================================================
+
+    await cartProvider.updateCartQuantity(
+      productId: productId,
+      quantity: currentQuantity + 1,
+    );
+  }
+
+  // ===============================================================
+  // CART BUTTON
+  // ===============================================================
+
+  Widget _buildCartButton(
+    BuildContext context,
+    CartProvider cartProvider,
+    PhysicalConversionProvider physicalProvider,
+    bool canPurchase,
+  ) {
+    final productId = product['id'];
+
+    // =============================================================
+    // OUT OF STOCK
+    // =============================================================
+
+    if (!canPurchase) {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromRGBO(218, 218, 218, 1),
+          foregroundColor: Colors.black54,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: TranslatedText(
+            'OUT OF STOCK',
+            maxLines: 1,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+        ),
+      );
+    }
+
+    // =============================================================
+    // PHYSICAL CONVERSION + DIGITAL PRODUCT
+    // =============================================================
+
+    if (physicalProvider.isActive && isDigitalProduct) {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryRed,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        onPressed: () {
+          _showMessage(
+            'Digital products cannot be added during physical conversion.',
+          );
+        },
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: TranslatedText(
+            'ADD TO CART',
+            maxLines: 1,
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+          ),
+        ),
+      );
+    }
+
+    // =============================================================
+    // CHECK CART
+    // =============================================================
+
+    final bool isInCart = cartProvider.isProductInCart(productId);
+
+    Map<String, dynamic>? cartItem;
+
+    if (isInCart) {
+      try {
+        cartItem = cartProvider.cartItems.firstWhere(
+          (item) => '${item['product_id']}' == '$productId',
+        );
+      } catch (_) {
+        cartItem = null;
+      }
+    }
+
+    final int cartQuantity = int.tryParse('${cartItem?['quantity'] ?? 0}') ?? 0;
+
+    // =============================================================
+    // ALREADY IN CART
+    // =============================================================
+
+    if (isInCart && cartQuantity > 0) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.primaryRed,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(Icons.remove, color: Colors.white, size: 18),
+                onPressed: () async {
+                  if (cartQuantity <= 1) {
+                    await cartProvider.removeFromCart(productId);
+                  } else {
+                    await cartProvider.updateCartQuantity(
+                      productId: productId,
+                      quantity: cartQuantity - 1,
+                    );
+                  }
+                },
+              ),
+            ),
+
+            Text(
+              '$cartQuantity',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            Expanded(
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                onPressed: () async {
+                  await _increaseQuantity(context, cartProvider, cartQuantity);
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // =============================================================
+    // ADD TO CART
+    // =============================================================
+
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primaryRed,
+        foregroundColor: Colors.white,
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      onPressed: cartProvider.isAdding(productId)
+          ? null
+          : () async {
+              await _addProduct(context, cartProvider);
+            },
+      child: cartProvider.isAdding(productId)
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: TranslatedText(
+                'ADD TO CART',
+                maxLines: 1,
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+              ),
+            ),
+    );
+  }
+
+  // ===============================================================
+  // PRODUCT CARD
+  // ===============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -313,15 +859,14 @@ class _ProductGridCard extends StatelessWidget {
         ? 'https://staging.junubullion.com/storage/$imagePath'
         : '';
 
-    final bool isInStock = product["stock_status"] == "in_stock";
-    final bool canPurchase = isInStock;
+    final bool canPurchase = product['stock_status'] == 'in_stock';
 
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ProductDetailsScreen(productId: product["id"]),
+            builder: (_) => ProductDetailsScreen(productId: product['id']),
           ),
         );
       },
@@ -334,13 +879,35 @@ class _ProductGridCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // =====================================================
+            // IMAGE
+            // =====================================================
             Expanded(
               child: fullImageUrl.isNotEmpty
-                  ? Image.network(fullImageUrl, fit: BoxFit.contain)
-                  : const Icon(Icons.image_not_supported),
+                  ? Image.network(
+                      fullImageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.broken_image,
+                          size: 40,
+                          color: Colors.grey,
+                        );
+                      },
+                    )
+                  : const Icon(
+                      Icons.image_not_supported,
+                      size: 40,
+                      color: Colors.grey,
+                    ),
             ),
 
-            Text(
+            const SizedBox(height: 8),
+
+            // =====================================================
+            // NAME
+            // =====================================================
+            TranslatedText(
               name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -349,10 +916,13 @@ class _ProductGridCard extends StatelessWidget {
 
             const SizedBox(height: 6),
 
+            // =====================================================
+            // STOCK
+            // =====================================================
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                canPurchase ? "In Stock" : "Out of Stock",
+              child: TranslatedText(
+                canPurchase ? 'In Stock' : 'Out of Stock',
                 style: TextStyle(
                   color: canPurchase
                       ? const Color(0xFF2E7D32)
@@ -364,6 +934,9 @@ class _ProductGridCard extends StatelessWidget {
 
             const SizedBox(height: 4),
 
+            // =====================================================
+            // PRICE
+            // =====================================================
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -377,164 +950,19 @@ class _ProductGridCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
+            // =====================================================
+            // CART BUTTON
+            // =====================================================
             SizedBox(
               width: double.infinity,
               height: 36,
-              child: Consumer<CartProvider>(
-                builder: (context, cartProvider, child) {
-                  final isInCart = cartProvider.isProductInCart(product["id"]);
-
-                  final cartItem = isInCart
-                      ? cartProvider.cartItems.firstWhere(
-                          (e) => e["product_id"] == product["id"],
-                        )
-                      : null;
-
-                  final int cartQuantity = cartItem?["quantity"] ?? 0;
-
-                  if (isInCart) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryRed,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(
-                                Icons.remove,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              onPressed: () async {
-                                if (cartQuantity == 1) {
-                                  await cartProvider.removeFromCart(
-                                    product["id"],
-                                  );
-                                } else {
-                                  await cartProvider.updateCartQuantity(
-                                    productId: product["id"],
-                                    quantity: cartQuantity - 1,
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-
-                          Text(
-                            "$cartQuantity",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          Expanded(
-                            child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: const Icon(
-                                Icons.add,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              onPressed: () async {
-                                final validationError =
-                                    _validatePhysicalConversion(context);
-
-                                if (validationError != null) {
-                                  Fluttertoast.showToast(
-                                    msg: validationError,
-                                    toastLength: Toast.LENGTH_SHORT,
-                                    gravity: ToastGravity.BOTTOM,
-                                    // backgroundColor: isError
-                                    //     ? AppColors.primaryRed
-                                    //     : Colors.green,
-                                    textColor: Colors.white,
-                                    fontSize: 14.0,
-                                  );
-
-                                  return;
-                                }
-                                await cartProvider.updateCartQuantity(
-                                  productId: product["id"],
-                                  quantity: cartQuantity + 1,
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: canPurchase
-                          ? AppColors.primaryRed
-                          : const Color.fromRGBO(218, 218, 218, 1),
-                      foregroundColor: canPurchase
-                          ? Colors.white
-                          : Colors.black54,
-                      elevation: canPurchase ? 2 : 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    onPressed: !canPurchase
-                        ? null
-                        : cartProvider.isAdding(product["id"])
-                        ? null
-                        : () async {
-                            final validationError = _validatePhysicalConversion(
-                              context,
-                            );
-
-                            log("VVVVVVVVVV $validationError");
-
-                            if (validationError != null) {
-                              Fluttertoast.showToast(
-                                msg: validationError,
-                                toastLength: Toast.LENGTH_SHORT,
-                                gravity: ToastGravity.BOTTOM,
-                                textColor: Colors.white,
-                                fontSize: 14.0,
-                              );
-
-                              return;
-                            }
-                            final success = await cartProvider.addToCart(
-                              productId: product["id"],
-                              quantity: 1,
-                            );
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  success
-                                      ? "Added to Cart"
-                                      : "Failed to add product",
-                                ),
-                              ),
-                            );
-                          },
-                    child: cartProvider.isAdding(product["id"])
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            canPurchase ? "ADD TO CART" : "OUT OF STOCK",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
+              child: Consumer2<CartProvider, PhysicalConversionProvider>(
+                builder: (context, cartProvider, physicalProvider, child) {
+                  return _buildCartButton(
+                    context,
+                    cartProvider,
+                    physicalProvider,
+                    canPurchase,
                   );
                 },
               ),

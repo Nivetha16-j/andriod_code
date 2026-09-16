@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
-import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/home_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class TrendingProductsSection extends StatefulWidget {
@@ -34,7 +34,6 @@ class TrendingProductsSection extends StatefulWidget {
 class _TrendingProductsSectionState extends State<TrendingProductsSection> {
   late final ScrollController _scrollController;
 
-  // Local state for live-updated product list
   List<dynamic>? _liveProducts;
   Timer? _refreshTimer;
   bool _isFetching = false;
@@ -43,7 +42,7 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
   void initState() {
     super.initState();
 
-    log("TrendingProducts initState");
+    log("TrendingProducts initState ${widget.products}");
 
     _scrollController = ScrollController();
     _liveProducts = widget.products;
@@ -67,7 +66,6 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
     super.dispose();
   }
 
-  // --- 1-Second Timer for Live Prices in Trending Products ---
   void _start1SecAutoRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
@@ -90,6 +88,8 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
         final products =
             homeData['data']['trending_products'] as List<dynamic>?;
 
+        log("TrendingProducts fetched products: $products");
+
         if (mounted && products != null) {
           setState(() {
             _liveProducts = products;
@@ -111,7 +111,6 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
 
     if (maxExtent <= 0) return;
 
-    // Already at the end → do nothing
     if (currentOffset >= maxExtent - 10) {
       return;
     }
@@ -142,56 +141,54 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- HEADER ROW (Title + See All) ---
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Trending Products',
-                style: TextStyle(
-                  fontSize: 22.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+              Expanded(
+                child: const TranslatedText(
+                  'Trending Products',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  _slideNext();
-                  // if (widget.onSeeAllTap != null) {
-                  //   widget.onSeeAllTap!();
-                  // }
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 2.0,
-                    horizontal: 2.0,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'See All',
-                        style: TextStyle(
-                          fontSize: 15.0,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+              Flexible(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    _slideNext();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 2.0,
+                      horizontal: 2.0,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const TranslatedText(
+                          'See All',
+                          style: TextStyle(
+                            fontSize: 15.0,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6.0),
-                      Container(
-                        padding: const EdgeInsets.all(6.0),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryRed,
-                          shape: BoxShape.circle,
+                        const SizedBox(width: 6.0),
+                        Container(
+                          padding: const EdgeInsets.all(6.0),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryRed,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_forward,
+                            color: Colors.white,
+                            size: 14.0,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.arrow_forward,
-                          color: Colors.white,
-                          size: 14.0,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -200,7 +197,6 @@ class _TrendingProductsSectionState extends State<TrendingProductsSection> {
 
           const SizedBox(height: 16.0),
 
-          // --- HORIZONTAL PRODUCT LIST ---
           SizedBox(
             height: 290.0,
             child: ListView.builder(
@@ -229,29 +225,20 @@ class _ProductCard extends StatelessWidget {
 
   const _ProductCard({required this.product});
 
-  String? _validatePhysicalConversion(BuildContext context) {
-    final physicalProvider = context.read<PhysicalConversionProvider>();
-
-    return physicalProvider.validateProduct(
-      brand: product['brand']?.toString(),
-      metalType: product['metal_type']?.toString(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    // 1. Extract Name
+    log(
+      "Building ProductCard for product: ${product['weight']} ${product['weight_unit']} - ${product['name']}",
+    );
     final String name = product['name']?.toString() ?? 'Product Name';
 
-    // 2. Extract Live Price from JSON Response
-    // Checks "live_price" -> "formatted_price" -> "price" in priority order
     final String priceText =
         product['live_price']?.toString() ??
         product['formatted_price']?.toString() ??
         (product['price'] != null ? '\$${product['price']}' : '\$0.00');
 
-    // 3. Extract Image Path / URL
     final String? imageUrlFromApi = product['image_url']?.toString();
+
     final String? imagePath = product['image_path']?.toString();
 
     final String fullImageUrl =
@@ -261,29 +248,124 @@ class _ProductCard extends StatelessWidget {
               ? '${TrendingProductsSection.imageBaseUrl}$imagePath'
               : '');
 
-    // 4. Extract Stock Status
-    // final bool isInStock = product['stock_status'] == 'in_stock';
-
-    // final int quantity = int.tryParse(product["quantity"].toString()) ?? 0;
-
     final bool canPurchase = product["stock_status"] == "in_stock";
+
+    double _getProductWeightInGrams() {
+      final weight = double.tryParse('${product['weight'] ?? 0}') ?? 0;
+
+      final unit = (product['weight_unit'] ?? 'gram')
+          .toString()
+          .trim()
+          .toLowerCase();
+
+      switch (unit) {
+        case 'gram':
+        case 'grams':
+        case 'g':
+          return weight;
+
+        case 'kg':
+        case 'kilogram':
+        case 'kilograms':
+          return weight * 1000;
+
+        case 'toz':
+        case 'troy_ounce':
+        case 'troy_ounces':
+        case 'oz':
+          return weight * 31.1035;
+
+        default:
+          log(
+            '⚠️ UNKNOWN PRODUCT WEIGHT UNIT -> '
+            'weight=$weight unit=$unit',
+          );
+          return weight;
+      }
+    }
+
+    double _getCartTotalWeightInGrams(CartProvider cartProvider) {
+      double totalWeight = 0;
+
+      for (final item in cartProvider.cartItems) {
+        final weight = double.tryParse('${item['weight_grams'] ?? 0}') ?? 0;
+
+        totalWeight += weight;
+      }
+
+      log('⚖️ CURRENT CART TOTAL WEIGHT -> ${totalWeight}g');
+
+      return totalWeight;
+    }
+
+    String? _validateConversionWeight(
+      CartProvider cartProvider, {
+      required int quantityToAdd,
+    }) {
+      final physicalProvider = context.read<PhysicalConversionProvider>();
+
+      if (!physicalProvider.isActive) {
+        return null;
+      }
+
+      final conversionLimit = physicalProvider.amount;
+
+      if (conversionLimit <= 0) {
+        return null;
+      }
+
+      final productWeight = _getProductWeightInGrams();
+
+      if (productWeight <= 0) {
+        log(
+          '⚠️ INVALID PRODUCT WEIGHT -> '
+          'product=${product['name']} '
+          'weight=${product['weight']} '
+          'unit=${product['weight_unit']}',
+        );
+
+        return null;
+      }
+
+      final currentCartWeight = _getCartTotalWeightInGrams(cartProvider);
+
+      final addedWeight = productWeight * quantityToAdd;
+
+      final newTotalWeight = currentCartWeight + addedWeight;
+
+      log(
+        '⚖️ PHYSICAL CONVERSION WEIGHT CHECK -> '
+        'product=${product['name']} '
+        'productWeight=${productWeight}g '
+        'currentCartWeight=${currentCartWeight}g '
+        'adding=${addedWeight}g '
+        'newTotal=${newTotalWeight}g '
+        'limit=${conversionLimit}g',
+      );
+
+      if (newTotalWeight > conversionLimit + 0.000001) {
+        final remainingWeight = (conversionLimit - currentCartWeight).clamp(
+          0,
+          conversionLimit,
+        );
+
+        return 'You can add only '
+            '${remainingWeight.toStringAsFixed(2)}g more. '
+            'Your physical conversion limit is '
+            '${conversionLimit.toStringAsFixed(2)}g.';
+      }
+
+      return null;
+    }
 
     return InkWell(
       onTap: () {
-        log("Product tapped");
-        log("Proooo $product");
-
-        try {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ProductDetailsScreen(productId: product["id"]),
-            ),
-          );
-        } catch (e, s) {
-          log("Navigation Error: $e.......$s");
-          log(s.toString());
-        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailsScreen(productId: product["id"]),
+          ),
+        );
       },
       child: Container(
         width: 170.0,
@@ -292,7 +374,6 @@ class _ProductCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            // Image Container with Border & Rounded Corners
             Container(
               height: 170.0,
               width: 170.0,
@@ -306,11 +387,13 @@ class _ProductCard extends StatelessWidget {
                   ? Image.network(
                       fullImageUrl,
                       fit: BoxFit.fill,
-                      errorBuilder: (context, error, stackTrace) => const Icon(
-                        Icons.broken_image,
-                        size: 40,
-                        color: Colors.grey,
-                      ),
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.broken_image,
+                          size: 40,
+                          color: Colors.grey,
+                        );
+                      },
                     )
                   : const Icon(
                       Icons.image_not_supported,
@@ -321,10 +404,9 @@ class _ProductCard extends StatelessWidget {
 
             const SizedBox(height: 8.0),
 
-            // Title
             SizedBox(
               height: 34.0,
-              child: Text(
+              child: TranslatedText(
                 name,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -339,8 +421,7 @@ class _ProductCard extends StatelessWidget {
 
             const SizedBox(height: 6.0),
 
-            // Display Live Price
-            Text(
+            TranslatedText(
               priceText,
               style: const TextStyle(
                 fontSize: 18.0,
@@ -351,22 +432,11 @@ class _ProductCard extends StatelessWidget {
 
             const SizedBox(height: 6.0),
 
-            // Add to Cart / Out of Stock Button
             SizedBox(
               width: double.infinity,
               height: 36,
-              child: Consumer<CartProvider>(
-                builder: (context, cartProvider, child) {
-                  final isInCart = cartProvider.isProductInCart(product["id"]);
-
-                  final cartItem = isInCart
-                      ? cartProvider.cartItems.firstWhere(
-                          (e) => e["product_id"] == product["id"],
-                        )
-                      : null;
-
-                  final int cartQuantity = cartItem?["quantity"] ?? 0;
-
+              child: Consumer2<CartProvider, PhysicalConversionProvider>(
+                builder: (context, cartProvider, physicalProvider, child) {
                   if (!canPurchase) {
                     return ElevatedButton(
                       onPressed: null,
@@ -377,11 +447,33 @@ class _ProductCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                      child: const Text("Out of stock"),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: TranslatedText("Out of Stock", maxLines: 1),
+                      ),
                     );
                   }
 
+                  final productId = product["id"];
+
+                  final bool isInCart = cartProvider.isProductInCart(productId);
+
+                  Map<String, dynamic>? cartItem;
+
                   if (isInCart) {
+                    try {
+                      cartItem = cartProvider.cartItems.firstWhere(
+                        (item) => '${item["product_id"]}' == '$productId',
+                      );
+                    } catch (_) {
+                      cartItem = null;
+                    }
+                  }
+
+                  final int cartQuantity =
+                      int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
+
+                  if (isInCart && cartQuantity > 0) {
                     return Container(
                       decoration: BoxDecoration(
                         color: AppColors.primaryRed,
@@ -392,13 +484,11 @@ class _ProductCard extends StatelessWidget {
                         children: [
                           InkWell(
                             onTap: () async {
-                              if (cartQuantity == 1) {
-                                await cartProvider.removeFromCart(
-                                  product["id"],
-                                );
+                              if (cartQuantity <= 1) {
+                                await cartProvider.removeFromCart(productId);
                               } else {
                                 await cartProvider.updateCartQuantity(
-                                  productId: product["id"],
+                                  productId: productId,
                                   quantity: cartQuantity - 1,
                                 );
                               }
@@ -410,8 +500,8 @@ class _ProductCard extends StatelessWidget {
                             ),
                           ),
 
-                          Text(
-                            "$cartQuantity",
+                          TranslatedText(
+                            '$cartQuantity',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -420,33 +510,42 @@ class _ProductCard extends StatelessWidget {
                           ),
 
                           InkWell(
-                            // onTap: () async {
-                            //   await cartProvider.updateCartQuantity(
-                            //     productId: product["id"],
-                            //     quantity: cartQuantity + 1,
-                            //   );
-                            // },
                             onTap: () async {
-                              final validationError =
-                                  _validatePhysicalConversion(context);
-
-                              if (validationError != null) {
-                                Fluttertoast.showToast(
-                                  msg: validationError,
-                                  toastLength: Toast.LENGTH_SHORT,
-                                  gravity: ToastGravity.BOTTOM,
-                                  // backgroundColor: isError
-                                  //     ? AppColors.primaryRed
-                                  //     : Colors.green,
-                                  textColor: Colors.white,
-                                  fontSize: 14.0,
+                              if (physicalProvider.isActive) {
+                                final error = physicalProvider.validateProduct(
+                                  metalType: product['metal_type']?.toString(),
                                 );
 
-                                return;
+                                if (error != null) {
+                                  Fluttertoast.showToast(
+                                    msg: error,
+                                    toastLength: Toast.LENGTH_SHORT,
+                                    gravity: ToastGravity.BOTTOM,
+                                    textColor: Colors.white,
+                                    fontSize: 14,
+                                  );
+                                  return;
+                                }
+
+                                final weightError = _validateConversionWeight(
+                                  cartProvider,
+                                  quantityToAdd: 1,
+                                );
+
+                                if (weightError != null) {
+                                  Fluttertoast.showToast(
+                                    msg: weightError,
+                                    toastLength: Toast.LENGTH_SHORT,
+                                    gravity: ToastGravity.BOTTOM,
+                                    textColor: Colors.white,
+                                    fontSize: 14,
+                                  );
+                                  return;
+                                }
                               }
 
                               await cartProvider.updateCartQuantity(
-                                productId: product["id"],
+                                productId: productId,
                                 quantity: cartQuantity + 1,
                               );
                             },
@@ -461,6 +560,10 @@ class _ProductCard extends StatelessWidget {
                     );
                   }
 
+                  // ============================================================
+                  // ADD TO CART
+                  // ============================================================
+
                   return ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryRed,
@@ -469,78 +572,62 @@ class _ProductCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    // onPressed: cartProvider.isAdding(product["id"])
-                    //     ? null
-                    //     : () async {
-                    //         bool success = await cartProvider.addToCart(
-                    //           productId: product["id"],
-                    //           quantity: 1,
-                    //         );
-
-                    //         ScaffoldMessenger.of(context).showSnackBar(
-                    //           SnackBar(
-                    //             content: Text(
-                    //               success
-                    //                   ? "Added to Cart"
-                    //                   : "Failed to add product",
-                    //             ),
-                    //           ),
-                    //         );
-                    //       },
-                    onPressed: cartProvider.isAdding(product["id"])
+                    onPressed: cartProvider.isAdding(productId)
                         ? null
                         : () async {
-                            // --------------------------------------------------
-                            // Check Physical Conversion restrictions
-                            // --------------------------------------------------
-                            final validationError = _validatePhysicalConversion(
-                              context,
-                            );
-
-                            log("VVVVVVVVVV $validationError");
-
-                            // If conversion is active and product is invalid,
-                            // stop here.
-                            if (validationError != null) {
-                              // ScaffoldMessenger.of(context).showSnackBar(
-                              //   SnackBar(content: Text(validationError)),
-                              // );
-
-                              Fluttertoast.showToast(
-                                msg: validationError,
-                                toastLength: Toast.LENGTH_SHORT,
-                                gravity: ToastGravity.BOTTOM,
-                                // backgroundColor: isError
-                                //     ? AppColors.primaryRed
-                                //     : Colors.green,
-                                textColor: Colors.white,
-                                fontSize: 14.0,
+                            if (physicalProvider.isActive) {
+                              final error = physicalProvider.validateProduct(
+                                metalType: product['metal_type']?.toString(),
                               );
 
-                              return;
+                              if (error != null) {
+                                Fluttertoast.showToast(
+                                  msg: error,
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.BOTTOM,
+                                  textColor: Colors.white,
+                                  fontSize: 14,
+                                );
+                                return;
+                              }
+
+                              final weightError = _validateConversionWeight(
+                                cartProvider,
+                                quantityToAdd: 1,
+                              );
+
+                              if (weightError != null) {
+                                Fluttertoast.showToast(
+                                  msg: weightError,
+                                  toastLength: Toast.LENGTH_SHORT,
+                                  gravity: ToastGravity.BOTTOM,
+                                  textColor: Colors.white,
+                                  fontSize: 14,
+                                );
+                                return;
+                              }
                             }
 
-                            // --------------------------------------------------
-                            // Normal Add To Cart
-                            // --------------------------------------------------
-                            final bool success = await cartProvider.addToCart(
-                              productId: product["id"],
+                            final success = await cartProvider.addToCart(
+                              productId: productId,
                               quantity: 1,
                             );
 
-                            if (!context.mounted) return;
+                            if (!context.mounted) {
+                              return;
+                            }
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(
+                                content: TranslatedText(
                                   success
-                                      ? "Added to Cart"
-                                      : "Failed to add product",
+                                      ? 'Added to Cart'
+                                      : 'Failed to add product',
                                 ),
                               ),
                             );
                           },
-                    child: cartProvider.isAdding(product["id"])
+                    child: cartProvider.isAdding(productId)
                         ? const SizedBox(
                             height: 18,
                             width: 18,
@@ -549,9 +636,9 @@ class _ProductCard extends StatelessWidget {
                               color: Colors.white,
                             ),
                           )
-                        : const Text(
-                            "ADD TO CART",
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                        : FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: TranslatedText("ADD TO CART", maxLines: 1),
                           ),
                   );
                 },

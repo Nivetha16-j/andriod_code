@@ -1,15 +1,18 @@
 import 'dart:async';
 import 'dart:developer';
+
 import 'package:html/parser.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/product_detail_provider.dart';
 import 'package:junubullion/providers/review_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
@@ -29,19 +32,175 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int quantity = 1;
   int selectedTab = 0;
   int _currentIndex = 3;
+
   late final ScrollController _scrollController;
+
   String? _lastCurrency;
   String? _lastUnit;
+
   Timer? _timer;
+
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   int selectedRating = 0;
   final TextEditingController reviewController = TextEditingController();
 
+  // ============================================================
+  // HELPERS
+  // ============================================================
+
+  bool _isDigitalProduct(Map<String, dynamic> product) {
+    final String brand = (product['brand'] ?? '')
+        .toString()
+        .trim()
+        .toUpperCase();
+
+    return brand == "GSP" || brand == "JSC";
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: TranslatedText(message)));
+  }
+
+  // ============================================================
+  // PRODUCT WEIGHT
+  // ============================================================
+
+  double _getProductWeightInGrams(Map<String, dynamic> product) {
+    final weight = double.tryParse('${product['weight'] ?? 0}') ?? 0;
+
+    final unit = (product['weight_unit'] ?? 'gram')
+        .toString()
+        .trim()
+        .toLowerCase();
+
+    switch (unit) {
+      case 'gram':
+      case 'grams':
+      case 'g':
+        return weight;
+
+      case 'kg':
+      case 'kilogram':
+      case 'kilograms':
+        return weight * 1000;
+
+      case 'toz':
+      case 'troy_ounce':
+      case 'troy_ounces':
+      case 'oz':
+        return weight * 31.1035;
+
+      default:
+        log(
+          '⚠️ UNKNOWN PRODUCT WEIGHT UNIT -> '
+          'weight=$weight unit=$unit',
+        );
+        return weight;
+    }
+  }
+
+  // ============================================================
+  // CURRENT CART TOTAL WEIGHT
+  // ============================================================
+
+  double _getCartTotalWeightInGrams(CartProvider cartProvider) {
+    double totalWeight = 0;
+
+    for (final item in cartProvider.cartItems) {
+      final weight = double.tryParse('${item['weight_grams'] ?? 0}') ?? 0;
+
+      // weight_grams is already the line total.
+      // DO NOT multiply by quantity.
+      totalWeight += weight;
+    }
+
+    log(
+      '⚖️ CURRENT CART TOTAL WEIGHT -> '
+      '${totalWeight}g',
+    );
+
+    return totalWeight;
+  }
+
+  // ============================================================
+  // PHYSICAL CONVERSION WEIGHT VALIDATION
+  // ============================================================
+
+  String? _validateConversionWeight(
+    CartProvider cartProvider, {
+    required Map<String, dynamic> product,
+    required int quantityToAdd,
+  }) {
+    final physicalProvider = context.read<PhysicalConversionProvider>();
+
+    if (!physicalProvider.isActive) {
+      return null;
+    }
+
+    final conversionLimit = physicalProvider.amount;
+
+    if (conversionLimit <= 0) {
+      return null;
+    }
+
+    final productWeight = _getProductWeightInGrams(product);
+
+    if (productWeight <= 0) {
+      log(
+        '⚠️ INVALID PRODUCT WEIGHT -> '
+        'product=${product['name']} '
+        'weight=${product['weight']} '
+        'unit=${product['weight_unit']}',
+      );
+
+      return null;
+    }
+
+    final currentCartWeight = _getCartTotalWeightInGrams(cartProvider);
+
+    final addedWeight = productWeight * quantityToAdd;
+
+    final newTotalWeight = currentCartWeight + addedWeight;
+
+    log(
+      '⚖️ PHYSICAL CONVERSION WEIGHT CHECK -> '
+      'product=${product['name']} '
+      'productWeight=${productWeight}g '
+      'currentCartWeight=${currentCartWeight}g '
+      'adding=${addedWeight}g '
+      'newTotal=${newTotalWeight}g '
+      'limit=${conversionLimit}g',
+    );
+
+    if (newTotalWeight > conversionLimit + 0.000001) {
+      final remainingWeight = (conversionLimit - currentCartWeight).clamp(
+        0,
+        conversionLimit,
+      );
+
+      return 'You can add only '
+          '${remainingWeight.toStringAsFixed(2)}g more. '
+          'Your physical conversion limit is '
+          '${conversionLimit.toStringAsFixed(2)}g.';
+    }
+
+    return null;
+  }
+
+  // ============================================================
+  // SLIDER
+  // ============================================================
+
   void _slideNext() {
     if (!_scrollController.hasClients) return;
 
     final double currentOffset = _scrollController.offset;
+
     final double maxExtent = _scrollController.position.maxScrollExtent;
 
     if (maxExtent <= 0) return;
@@ -63,31 +222,30 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
+  // ============================================================
+  // REVIEW
+  // ============================================================
+
   Future<void> submitReview() async {
     if (selectedRating == 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please select a rating")));
+      _showMessage("Please select a rating");
       return;
     }
 
     if (reviewController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please enter your review")));
+      _showMessage("Please enter your review");
       return;
     }
 
     final token = await SessionManager.getToken();
 
     if (token == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please login first")));
+      _showMessage("Please login first");
       return;
     }
 
     final reviewProvider = context.read<ReviewProvider>();
+
     final response = await reviewProvider.submitReview(
       token: token,
       productId: widget.productId,
@@ -106,15 +264,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
       await _fetchProductDetails();
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(response["message"])));
+      _showMessage(response["message"] ?? "Review submitted successfully");
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response["message"] ?? "Something went wrong")),
-      );
+      _showMessage(response["message"] ?? "Something went wrong");
     }
   }
+
+  // ============================================================
+  // INIT
+  // ============================================================
 
   @override
   void initState() {
@@ -125,18 +283,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _fetchProductDetails(showLoader: true);
 
+      if (!mounted) return;
+
       final cart = context.read<CartProvider>();
 
       if (cart.isProductInCart(widget.productId)) {
         final cartItem = cart.cartItems.firstWhere(
-          (e) => e["product_id"] == widget.productId,
+          (e) => '${e["product_id"]}' == '${widget.productId}',
         );
 
         setState(() {
-          quantity = cartItem["quantity"] ?? 1;
+          quantity = int.tryParse('${cartItem["quantity"] ?? 1}') ?? 1;
         });
       } else {
-        quantity = 1;
+        setState(() {
+          quantity = 1;
+        });
       }
     });
 
@@ -147,9 +309,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     });
   }
 
+  // ============================================================
+  // CURRENCY
+  // ============================================================
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     final currencyProvider = context.watch<CurrencyProvider>();
 
     if (_lastCurrency == currencyProvider.selectedCurrency &&
@@ -158,7 +325,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
 
     _lastCurrency = currencyProvider.selectedCurrency;
+
     _lastUnit = currencyProvider.selectedUnit;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _fetchProductDetails(showLoader: false);
@@ -177,12 +346,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
-  String _apiUnit(String unit) => switch (unit.toLowerCase()) {
-    'gram' => 'gram',
-    'ounce' => 'toz',
-    _ => 'kg',
-  };
-
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
       context,
@@ -196,12 +359,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     reviewController.dispose();
     _scrollController.dispose();
     _timer?.cancel();
+
     super.dispose();
   }
+
+  // ============================================================
+  // MAIN BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ProductDetailsProvider>();
+
     final reviewProvider = context.watch<ReviewProvider>();
 
     if (provider.isLoading) {
@@ -212,14 +381,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (!provider.isLoading && provider.product == null) {
-      return const Scaffold(body: Center(child: Text("Product not found")));
-    }
-
     final product = provider.product!;
+
     log("pppppppppppppppppppp $product");
-    final reviews = provider.reviews!;
-    final subcategories = provider.subcategories!;
+
+    final reviews = provider.reviews ?? [];
+
+    final subcategories = provider.subcategories ?? [];
 
     final relatedProducts = provider.relatedProducts;
 
@@ -232,7 +400,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     final String price = product['live_price']?.toString() ?? '--';
 
     final bool isInStock = product['stock_status'] == 'in_stock';
+
     final bool canPurchase = isInStock;
+
+    final bool isDigitalProduct = _isDigitalProduct(product);
 
     final String imageUrl =
         "https://staging.junubullion.com/storage/${product['image_path']}";
@@ -240,12 +411,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     String description = product['description'] ?? '';
 
     description = description
-        .replaceAll(RegExp(r'<p[^>]*>'), '') // remove opening <p>
-        .replaceAll('</p>', '\n\n') // new line after each paragraph
+        .replaceAll(RegExp(r'<p[^>]*>'), '')
+        .replaceAll('</p>', '\n\n')
         .replaceAll('<br>', '\n')
         .replaceAll('<br/>', '\n')
         .replaceAll('<br />', '\n')
-        .replaceAll(RegExp(r'<[^>]+>'), '') // remove remaining HTML tags
+        .replaceAll(RegExp(r'<[^>]+>'), '')
         .replaceAll('&nbsp;', ' ')
         .trim();
 
@@ -254,12 +425,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     final String shortDescription =
         parse(shortDescriptionHtml).documentElement?.text ?? '';
 
-    final String brand = (product['brand'] ?? '')
-        .toString()
-        .replaceAll('\r\n', '\n')
-        .trim();
-
-    debugPrint("reviewsssssss ${reviews}");
+    final String brand = (product['brand'] ?? '').toString().trim();
 
     final String categoryName = product['category']?['name']?.toString() ?? '';
 
@@ -273,7 +439,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     ].join(', ');
 
     return Scaffold(
-      backgroundColor: Color(0xffFAFAF8),
+      backgroundColor: const Color(0xffFAFAF8),
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
@@ -283,14 +449,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// Main Image
+              // ========================================================
+              // MAIN IMAGE
+              // ========================================================
               Container(
                 height: 300,
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xffF9EAEA),
-                  // borderRadius: BorderRadius.circular(8),
-                ),
+                decoration: const BoxDecoration(color: Color(0xffF9EAEA)),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Image.network(
@@ -302,7 +467,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 12),
 
-              /// Thumbnails
+              // ========================================================
+              // THUMBNAILS
+              // ========================================================
               Row(
                 children: List.generate(images.length, (index) {
                   return GestureDetector(
@@ -320,10 +487,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               ? Colors.brown
                               : Colors.grey.shade300,
                         ),
-                        // borderRadius: BorderRadius.circular(15),
                       ),
                       child: Image.network(
-                        images[index]['url'], // ✅ Correct
+                        images[index]['url'],
                         fit: BoxFit.contain,
                         height: 80,
                         width: 80,
@@ -335,9 +501,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 15),
 
-              Text(
+              TranslatedText(
                 metalType,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.brown,
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
@@ -346,7 +512,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 8),
 
-              Text(
+              TranslatedText(
                 name,
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
@@ -356,7 +522,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 12),
 
-              Text(
+              TranslatedText(
                 price,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
@@ -366,7 +532,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 4),
 
-              Text(
+              TranslatedText(
                 canPurchase ? "In Stock" : "Out of Stock",
                 style: TextStyle(
                   color: canPurchase ? Colors.green : Colors.red,
@@ -376,19 +542,47 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 10),
 
-              Text(
+              TranslatedText(
                 shortDescription,
                 style: const TextStyle(color: Colors.black87, height: 1.6),
               ),
 
               const SizedBox(height: 20),
 
-              Consumer<CartProvider>(
-                builder: (context, cartProvider, child) {
-                  final isInCart = cartProvider.isProductInCart(product["id"]);
+              Consumer2<CartProvider, PhysicalConversionProvider>(
+                builder: (context, cartProvider, physicalProvider, child) {
+                  final productId = product["id"];
+
+                  final bool isInCart = cartProvider.isProductInCart(productId);
+
+                  Map<String, dynamic>? cartItem;
+
+                  if (isInCart) {
+                    try {
+                      cartItem = cartProvider.cartItems.firstWhere(
+                        (item) => '${item["product_id"]}' == '$productId',
+                      );
+                    } catch (_) {
+                      cartItem = null;
+                    }
+                  }
+
+                  final int cartQuantity =
+                      int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
+
+                  // ============================================================
+                  // QUANTITY TO DISPLAY
+                  // ============================================================
+
+                  final int displayQuantity = isInCart && cartQuantity > 0
+                      ? cartQuantity
+                      : quantity;
 
                   return Row(
                     children: [
+                      // ==========================================================
+                      // - QUANTITY +
+                      // ==========================================================
                       Expanded(
                         child: Container(
                           height: 48,
@@ -399,38 +593,96 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
+                              // --------------------------------------------------
+                              // MINUS
+                              // --------------------------------------------------
                               IconButton(
                                 icon: const Icon(Icons.remove),
-                                onPressed: () async {
-                                  if (quantity <= 1) return;
-
-                                  setState(() => quantity--);
-
-                                  if (isInCart) {
-                                    await cartProvider.updateCartQuantity(
-                                      productId: product["id"],
-                                      quantity: quantity,
-                                    );
-                                  }
-                                },
+                                onPressed: displayQuantity <= 1
+                                    ? null
+                                    : () async {
+                                        // Product already in cart
+                                        if (isInCart) {
+                                          await cartProvider.updateCartQuantity(
+                                            productId: productId,
+                                            quantity: cartQuantity - 1,
+                                          );
+                                        }
+                                        // Product not yet in cart
+                                        else {
+                                          setState(() {
+                                            quantity--;
+                                          });
+                                        }
+                                      },
                               ),
-                              Text(
-                                quantity.toString(),
+
+                              // --------------------------------------------------
+                              // QUANTITY
+                              // --------------------------------------------------
+                              TranslatedText(
+                                '$displayQuantity',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
+
+                              // --------------------------------------------------
+                              // PLUS
+                              // --------------------------------------------------
                               IconButton(
                                 icon: const Icon(Icons.add),
                                 onPressed: () async {
-                                  setState(() => quantity++);
+                                  // ==============================================
+                                  // PHYSICAL CONVERSION VALIDATION
+                                  // ==============================================
+
+                                  if (physicalProvider.isActive) {
+                                    if (_isDigitalProduct(product)) {
+                                      _showMessage(
+                                        "Digital products cannot be added during physical conversion.",
+                                      );
+                                      return;
+                                    }
+
+                                    final error = physicalProvider
+                                        .validateProduct(
+                                          metalType: product['metal_type']
+                                              ?.toString(),
+                                        );
+
+                                    if (error != null) {
+                                      _showMessage(error);
+                                      return;
+                                    }
+
+                                    final weightError =
+                                        _validateConversionWeight(
+                                          cartProvider,
+                                          product: product,
+                                          quantityToAdd: 1,
+                                        );
+
+                                    if (weightError != null) {
+                                      _showMessage(weightError);
+                                      return;
+                                    }
+                                  }
+
+                                  // ==============================================
+                                  // CART QUANTITY
+                                  // ==============================================
 
                                   if (isInCart) {
                                     await cartProvider.updateCartQuantity(
-                                      productId: product["id"],
-                                      quantity: quantity,
+                                      productId: productId,
+                                      quantity: cartQuantity + 1,
                                     );
+                                  } else {
+                                    setState(() {
+                                      quantity++;
+                                    });
                                   }
                                 },
                               ),
@@ -441,6 +693,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                       const SizedBox(width: 12),
 
+                      // ==========================================================
+                      // ADD TO CART / GO TO CART
+                      // ==========================================================
                       Expanded(
                         child: SizedBox(
                           height: 48,
@@ -459,37 +714,80 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             ),
                             onPressed: !canPurchase
                                 ? null
-                                : cartProvider.isAdding(product["id"])
+                                : isInCart
+                                ? () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const MainScreen(initialIndex: 2),
+                                      ),
+                                    );
+                                  }
+                                : cartProvider.isAdding(productId)
                                 ? null
                                 : () async {
-                                    if (isInCart) {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              const MainScreen(initialIndex: 2),
-                                        ),
-                                      );
-                                      return;
+                                    // ========================================
+                                    // PHYSICAL CONVERSION VALIDATION
+                                    // ========================================
+
+                                    if (physicalProvider.isActive) {
+                                      if (_isDigitalProduct(product)) {
+                                        _showMessage(
+                                          "Digital products cannot be added during physical conversion.",
+                                        );
+                                        return;
+                                      }
+
+                                      final error = physicalProvider
+                                          .validateProduct(
+                                            metalType: product['metal_type']
+                                                ?.toString(),
+                                          );
+
+                                      if (error != null) {
+                                        _showMessage(error);
+                                        return;
+                                      }
+
+                                      final weightError =
+                                          _validateConversionWeight(
+                                            cartProvider,
+                                            product: product,
+                                            quantityToAdd: quantity,
+                                          );
+
+                                      if (weightError != null) {
+                                        _showMessage(weightError);
+                                        return;
+                                      }
                                     }
+
+                                    // ========================================
+                                    // ADD SELECTED QUANTITY
+                                    // ========================================
 
                                     final success = await cartProvider
                                         .addToCart(
-                                          productId: product["id"],
+                                          productId: productId,
                                           quantity: quantity,
                                         );
 
+                                    if (!context.mounted) return;
+
+                                    _showMessage(
+                                      success
+                                          ? "Added to Cart"
+                                          : "Failed to add product",
+                                    );
+
                                     if (success) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text("Added to Cart"),
-                                        ),
-                                      );
+                                      setState(() {
+                                        quantity = 1;
+                                      });
                                     }
                                   },
-                            child: cartProvider.isAdding(product["id"])
+                            child: cartProvider.isAdding(productId)
                                 ? const SizedBox(
                                     height: 18,
                                     width: 18,
@@ -498,12 +796,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : Text(
-                                    !canPurchase
-                                        ? "OUT OF STOCK"
-                                        : isInCart
-                                        ? "GO TO CART"
-                                        : "ADD TO CART",
+                                : TranslatedText(
+                                    isInCart ? "GO TO CART" : "ADD TO CART",
+                                    maxLines: 1,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w600,
@@ -516,23 +811,35 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   );
                 },
               ),
+
               const SizedBox(height: 20),
 
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(color: Colors.black, fontSize: 15),
-                  children: [
-                    const TextSpan(
-                      text: "Categories: ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+              // ========================================================
+              // CATEGORIES
+              // ========================================================
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const TranslatedText(
+                    'Categories: ',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
                     ),
-                    TextSpan(text: categories),
-                  ],
-                ),
+                  ),
+                  TranslatedText(
+                    categories,
+                    style: const TextStyle(color: Colors.black, fontSize: 15),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 20),
 
+              // ========================================================
+              // TABS
+              // ========================================================
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -544,23 +851,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     Row(
                       children: [
                         tabButton("Description", 0),
-
                         const SizedBox(width: 8),
-
                         tabButton("Reviews", 1),
-
                         const SizedBox(width: 8),
-
                         tabButton("Brands", 2),
                       ],
                     ),
 
                     const SizedBox(height: 18),
 
-                    const SizedBox(height: 18),
-
                     if (selectedTab == 0)
-                      Text(
+                      TranslatedText(
                         description,
                         style: const TextStyle(
                           height: 1.8,
@@ -572,8 +873,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          /// Existing Reviews
-                          const Text(
+                          const TranslatedText(
                             "Reviews",
                             style: TextStyle(
                               fontSize: 22,
@@ -584,7 +884,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           const SizedBox(height: 15),
 
                           if (reviews.isEmpty)
-                            const Text(
+                            const TranslatedText(
                               "No reviews available for this product.",
                               style: TextStyle(color: Colors.grey),
                             )
@@ -597,70 +897,79 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   const Divider(height: 30),
                               itemBuilder: (context, index) {
                                 final review = reviews[index];
+
                                 final customer = review["customer"] ?? {};
+
                                 final DateTime createdAt = DateTime.parse(
                                   review["created_at"],
                                 );
+
                                 final formattedDate = DateFormat(
                                   'dd MMM yyyy • hh:mm a',
                                 ).format(createdAt.toLocal());
 
                                 return Row(
                                   children: [
-                                    CircleAvatar(
+                                    const CircleAvatar(
                                       radius: 30,
                                       child: Icon(Icons.person),
                                     ),
-                                    SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          // mainAxisAlignment:
-                                          //     MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              customer["name"] ?? "Anonymous",
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Flexible(
+                                                child: TranslatedText(
+                                                  customer["name"] ??
+                                                      "Anonymous",
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                            SizedBox(width: 5),
-                                            Text(
-                                              formattedDate,
-                                              style: TextStyle(
-                                                color: Colors.grey.shade600,
-                                                fontSize: 13,
+                                              const SizedBox(width: 5),
+                                              TranslatedText(
+                                                formattedDate,
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 13,
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
+                                            ],
+                                          ),
 
-                                        const SizedBox(height: 6),
+                                          const SizedBox(height: 6),
 
-                                        Row(
-                                          children: List.generate(
-                                            5,
-                                            (star) => Icon(
-                                              Icons.star,
-                                              size: 18,
-                                              color:
-                                                  star < (review["rating"] ?? 0)
-                                                  ? Colors.amber
-                                                  : Colors.grey.shade300,
+                                          Row(
+                                            children: List.generate(
+                                              5,
+                                              (star) => Icon(
+                                                Icons.star,
+                                                size: 18,
+                                                color:
+                                                    star <
+                                                        (review["rating"] ?? 0)
+                                                    ? Colors.amber
+                                                    : Colors.grey.shade300,
+                                              ),
                                             ),
                                           ),
-                                        ),
 
-                                        const SizedBox(height: 8),
+                                          const SizedBox(height: 8),
 
-                                        Text(
-                                          review["description"] ?? "",
-                                          style: const TextStyle(fontSize: 15),
-                                        ),
-                                      ],
+                                          TranslatedText(
+                                            review["description"] ?? "",
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 );
@@ -669,8 +978,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                           const SizedBox(height: 20),
 
-                          /// Add Review
-                          const Text(
+                          const TranslatedText(
                             "Add a review",
                             style: TextStyle(
                               fontSize: 20,
@@ -680,24 +988,37 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
                           const SizedBox(height: 10),
 
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 10,
+                            runSpacing: 6,
                             children: [
-                              const Text(
-                                "Your rating ",
-                                style: TextStyle(fontWeight: FontWeight.w600),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const TranslatedText(
+                                    "Your rating ",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const TranslatedText(
+                                    "*",
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ],
                               ),
-                              const Text(
-                                "*",
-                                style: TextStyle(color: Colors.red),
-                              ),
-                              const SizedBox(width: 10),
 
                               Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: List.generate(
                                   5,
                                   (index) => IconButton(
                                     padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 30,
+                                      minHeight: 30,
+                                    ),
                                     onPressed: () {
                                       setState(() {
                                         selectedRating = index + 1;
@@ -705,6 +1026,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                     },
                                     icon: Icon(
                                       Icons.star,
+                                      size: 22,
                                       color: index < selectedRating
                                           ? Colors.amber
                                           : Colors.grey.shade400,
@@ -716,10 +1038,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           ),
 
                           const SizedBox(height: 10),
-
-                          const Text(
-                            "Your review *",
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                          Row(
+                            children: [
+                              const TranslatedText(
+                                "Your review ",
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              const TranslatedText(
+                                "*",
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
                           ),
 
                           const SizedBox(height: 8),
@@ -735,7 +1064,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           const SizedBox(height: 20),
 
                           SizedBox(
-                            width: 100,
+                            // width: 100,
                             height: 42,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -754,17 +1083,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                         color: Colors.black,
                                       ),
                                     )
-                                  : const Text("Submit"),
+                                  : TranslatedText(
+                                      "Submit",
+                                      // style: TextStyle(fontSize: 20),
+                                    ),
                             ),
                           ),
                         ],
                       )
                     else
                       Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: Text(
+                        padding: const EdgeInsets.only(left: 10),
+                        child: TranslatedText(
                           brand,
-                          style: TextStyle(color: Colors.black87, fontSize: 15),
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                   ],
@@ -773,43 +1108,38 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
               const SizedBox(height: 20),
 
+              // ========================================================
+              // RELATED PRODUCTS
+              // ========================================================
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const TranslatedText(
                     "Related Products",
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      _slideNext();
-                      // if (widget.onSeeAllTap != null) {
-                      //   widget.onSeeAllTap!();
-                      // }
-                    },
+                    onTap: _slideNext,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        vertical: 2.0,
-                        horizontal: 2.0,
+                        vertical: 2,
+                        horizontal: 2,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
+                          const TranslatedText(
                             'See All',
                             style: TextStyle(
-                              fontSize: 15.0,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: Colors.black87,
                             ),
                           ),
-                          const SizedBox(width: 6.0),
+                          const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.all(6.0),
+                            padding: const EdgeInsets.all(6),
                             decoration: const BoxDecoration(
                               color: AppColors.primaryRed,
                               shape: BoxShape.circle,
@@ -817,7 +1147,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             child: const Icon(
                               Icons.arrow_forward,
                               color: Colors.white,
-                              size: 14.0,
+                              size: 14,
                             ),
                           ),
                         ],
@@ -836,32 +1166,35 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   controller: _scrollController,
                   itemCount: relatedProducts.length,
                   itemBuilder: (context, index) {
-                    final product = relatedProducts[index];
+                    final relatedProduct = relatedProducts[index];
 
-                    log("ppppppppppppp $product");
+                    log("related product $relatedProduct");
 
                     final String image =
-                        "https://staging.junubullion.com/storage/${product['image_path'] ?? ''}";
+                        "https://staging.junubullion.com/storage/${relatedProduct['image_path'] ?? ''}";
 
-                    final String name = product['name']?.toString() ?? '';
+                    final String relatedName =
+                        relatedProduct['name']?.toString() ?? '';
 
                     final String livePrice =
-                        product['live_price']?.toString() ?? '--';
+                        relatedProduct['live_price']?.toString() ?? '--';
 
                     final String stockStatus =
-                        product['stock_status']?.toString() ?? 'out_of_stock';
+                        relatedProduct['stock_status']?.toString() ??
+                        'out_of_stock';
 
-                    final bool canPurchase = stockStatus == "in_stock";
+                    final bool relatedCanPurchase = stockStatus == "in_stock";
+
+                    final bool isRelatedDigital = _isDigitalProduct(
+                      relatedProduct as Map<String, dynamic>,
+                    );
 
                     return Container(
                       width: 170,
                       margin: const EdgeInsets.only(right: 14),
                       decoration: BoxDecoration(
-                        color: Color.fromRGBO(251, 242, 242, 1),
+                        color: const Color.fromRGBO(251, 242, 242, 1),
                         borderRadius: BorderRadius.circular(16),
-                        // boxShadow: [
-                        //   BoxShadow(color: Colors.black12, blurRadius: 6),
-                        // ],
                       ),
                       child: InkWell(
                         onTap: () {
@@ -869,7 +1202,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (_) => ProductDetailsScreen(
-                                productId: product["id"],
+                                productId: relatedProduct["id"],
                               ),
                             ),
                           );
@@ -885,98 +1218,293 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   fit: BoxFit.contain,
                                 ),
                               ),
+
                               const SizedBox(height: 8),
-                              Text(
-                                name,
+
+                              TranslatedText(
+                                relatedName,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
+
                               const SizedBox(height: 6),
-                              Text(
-                                canPurchase ? "In Stock" : "Out of Stock",
+
+                              TranslatedText(
+                                relatedCanPurchase
+                                    ? "In Stock"
+                                    : "Out of Stock",
                                 style: TextStyle(
-                                  color: canPurchase
+                                  color: relatedCanPurchase
                                       ? Colors.green
                                       : Colors.red,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
+
                               const SizedBox(height: 4),
-                              Text(
+
+                              TranslatedText(
                                 livePrice,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,
                                 ),
                               ),
+
                               const SizedBox(height: 8),
+
                               SizedBox(
                                 width: double.infinity,
-                                child: Consumer<CartProvider>(
-                                  builder: (context, cartProvider, child) {
-                                    final isInCart = cartProvider
-                                        .isProductInCart(product["id"]);
+                                height: 36,
+                                child: Consumer2<CartProvider, PhysicalConversionProvider>(
+                                  builder: (context, cartProvider, physicalProvider, child) {
+                                    if (!relatedCanPurchase) {
+                                      return ElevatedButton(
+                                        onPressed: null,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color.fromRGBO(
+                                            218,
+                                            218,
+                                            218,
+                                            1,
+                                          ),
+                                          foregroundColor: Colors.black54,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                        ),
+                                        child: const FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: TranslatedText(
+                                            "Out of Stock",
+                                            maxLines: 1,
+                                          ),
+                                        ),
+                                      );
+                                    }
+
+                                    final productId = relatedProduct["id"];
+
+                                    // ============================================================
+                                    // CHECK WHETHER RELATED PRODUCT IS ALREADY IN CART
+                                    // ============================================================
+
+                                    final bool isInCart = cartProvider
+                                        .isProductInCart(productId);
+
+                                    Map<String, dynamic>? cartItem;
+
+                                    if (isInCart) {
+                                      try {
+                                        cartItem = cartProvider.cartItems
+                                            .firstWhere(
+                                              (item) =>
+                                                  '${item["product_id"]}' ==
+                                                  '$productId',
+                                            );
+                                      } catch (_) {
+                                        cartItem = null;
+                                      }
+                                    }
+
+                                    final int cartQuantity =
+                                        int.tryParse(
+                                          '${cartItem?["quantity"] ?? 0}',
+                                        ) ??
+                                        0;
+
+                                    // ============================================================
+                                    // EXISTING CART ITEM -> SHOW - QUANTITY +
+                                    // ============================================================
+
+                                    if (isInCart && cartQuantity > 0) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryRed,
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            // ------------------------------------------------------
+                                            // MINUS
+                                            // ------------------------------------------------------
+                                            InkWell(
+                                              onTap: () async {
+                                                if (cartQuantity <= 1) {
+                                                  await cartProvider
+                                                      .removeFromCart(
+                                                        productId,
+                                                      );
+                                                } else {
+                                                  await cartProvider
+                                                      .updateCartQuantity(
+                                                        productId: productId,
+                                                        quantity:
+                                                            cartQuantity - 1,
+                                                      );
+                                                }
+                                              },
+                                              child: const Icon(
+                                                Icons.remove,
+                                                color: Colors.white,
+                                                size: 18,
+                                              ),
+                                            ),
+
+                                            // ------------------------------------------------------
+                                            // QUANTITY
+                                            // ------------------------------------------------------
+                                            TranslatedText(
+                                              '$cartQuantity',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+
+                                            // ------------------------------------------------------
+                                            // PLUS
+                                            // ------------------------------------------------------
+                                            InkWell(
+                                              onTap: () async {
+                                                if (physicalProvider.isActive) {
+                                                  // 1. Digital product validation
+                                                  if (isRelatedDigital) {
+                                                    _showMessage(
+                                                      "Digital products cannot be added during physical conversion.",
+                                                    );
+                                                    return;
+                                                  }
+
+                                                  // 2. Metal validation
+                                                  final error = physicalProvider
+                                                      .validateProduct(
+                                                        metalType:
+                                                            relatedProduct['metal_type']
+                                                                ?.toString(),
+                                                      );
+
+                                                  if (error != null) {
+                                                    _showMessage(error);
+                                                    return;
+                                                  }
+
+                                                  // 3. Weight validation
+                                                  final weightError =
+                                                      _validateConversionWeight(
+                                                        cartProvider,
+                                                        product: relatedProduct,
+                                                        quantityToAdd: 1,
+                                                      );
+
+                                                  if (weightError != null) {
+                                                    _showMessage(weightError);
+                                                    return;
+                                                  }
+                                                }
+
+                                                await cartProvider
+                                                    .updateCartQuantity(
+                                                      productId: productId,
+                                                      quantity:
+                                                          cartQuantity + 1,
+                                                    );
+                                              },
+                                              child: const Icon(
+                                                Icons.add,
+                                                color: Colors.white,
+                                                size: 18,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }
+
+                                    // ============================================================
+                                    // ADD TO CART
+                                    // ============================================================
 
                                     return ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: canPurchase
-                                            ? AppColors.primaryRed
-                                            : const Color.fromRGBO(
-                                                218,
-                                                218,
-                                                218,
-                                                1,
-                                              ),
-                                        foregroundColor: canPurchase
-                                            ? Colors.white
-                                            : Colors.black54,
-                                        elevation: canPurchase ? 2 : 0,
+                                        backgroundColor: AppColors.primaryRed,
+                                        foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
-                                            20.0,
+                                            20,
                                           ),
                                         ),
-                                        padding: EdgeInsets.zero,
                                       ),
-                                      onPressed: !canPurchase
-                                          ? null
-                                          : cartProvider.isAdding(product["id"])
+                                      onPressed:
+                                          cartProvider.isAdding(productId)
                                           ? null
                                           : () async {
-                                              if (isInCart) {
-                                                log("Cart screen");
-                                                Navigator.pushReplacement(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        const MainScreen(
-                                                          initialIndex: 2,
-                                                        ),
-                                                  ),
-                                                );
-                                                return;
+                                              // ==================================================
+                                              // PHYSICAL CONVERSION VALIDATION
+                                              // ==================================================
+
+                                              if (physicalProvider.isActive) {
+                                                // Digital product validation
+                                                if (isRelatedDigital) {
+                                                  _showMessage(
+                                                    "Digital products cannot be added during physical conversion.",
+                                                  );
+                                                  return;
+                                                }
+
+                                                // Metal validation
+                                                final error = physicalProvider
+                                                    .validateProduct(
+                                                      metalType:
+                                                          relatedProduct['metal_type']
+                                                              ?.toString(),
+                                                    );
+
+                                                if (error != null) {
+                                                  _showMessage(error);
+                                                  return;
+                                                }
+
+                                                // Weight validation
+                                                final weightError =
+                                                    _validateConversionWeight(
+                                                      cartProvider,
+                                                      product: relatedProduct,
+                                                      quantityToAdd: 1,
+                                                    );
+
+                                                if (weightError != null) {
+                                                  _showMessage(weightError);
+                                                  return;
+                                                }
                                               }
 
-                                              bool success = await cartProvider
+                                              // ==================================================
+                                              // ADD TO CART
+                                              // ==================================================
+
+                                              final success = await cartProvider
                                                   .addToCart(
-                                                    productId: product["id"],
+                                                    productId: productId,
                                                     quantity: 1,
                                                   );
 
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    success
-                                                        ? "Added to Cart"
-                                                        : "Failed to add product",
-                                                  ),
-                                                ),
+                                              if (!context.mounted) return;
+
+                                              _showMessage(
+                                                success
+                                                    ? "Added to Cart"
+                                                    : "Failed to add product",
                                               );
                                             },
-                                      child:
-                                          cartProvider.isAdding(product["id"])
+                                      child: cartProvider.isAdding(productId)
                                           ? const SizedBox(
                                               height: 18,
                                               width: 18,
@@ -985,14 +1513,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                                 color: Colors.white,
                                               ),
                                             )
-                                          : Text(
-                                              !canPurchase
-                                                  ? "Out of stock"
-                                                  : isInCart
-                                                  ? "GO TO CART"
-                                                  : "ADD TO CART",
-                                              style: const TextStyle(
-                                                color: Colors.white,
+                                          : const FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: TranslatedText(
+                                                "ADD TO CART",
+                                                maxLines: 1,
                                               ),
                                             ),
                                     );
@@ -1007,7 +1532,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   },
                 ),
               ),
-              SizedBox(height: 20),
+
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -1019,8 +1545,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     );
   }
 
+  // ============================================================
+  // TAB BUTTON
+  // ============================================================
+
   Widget tabButton(String title, int index) {
-    bool isSelected = selectedTab == index;
+    final bool isSelected = selectedTab == index;
 
     return Expanded(
       child: GestureDetector(
@@ -1036,7 +1566,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             borderRadius: BorderRadius.circular(8),
           ),
           alignment: Alignment.center,
-          child: Text(
+          child: TranslatedText(
             title,
             style: TextStyle(color: isSelected ? Colors.white : Colors.black87),
           ),

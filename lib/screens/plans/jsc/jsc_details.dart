@@ -1,13 +1,20 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:junubullion/screens/jsc/jsc_form.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/providers/convert_to_physical_provider.dart';
+import 'package:junubullion/providers/exclusive_product_provider.dart';
+import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:junubullion/widgets/jsc/custom_featurecard.dart';
+import 'package:provider/provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/services/jsc_services.dart';
 
 class JscScreen extends StatefulWidget {
   const JscScreen({super.key});
@@ -20,19 +27,6 @@ class _JscScreenState extends State<JscScreen> {
   int _currentIndex = 0;
 
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-
-  final products = [
-    {
-      "image": "assets/gold_coin.png",
-      "title": "1 Gram Digital Gold (JSC)",
-      "price": "\$145.39",
-    },
-    {
-      "image": "assets/silver_coin.png",
-      "title": "1 oz Gram Digital Silver (JSC)",
-      "price": "\$71.63",
-    },
-  ];
 
   final List<Map<String, dynamic>> features = [
     {
@@ -105,10 +99,79 @@ class _JscScreenState extends State<JscScreen> {
       "image": "assets/emergency_safety.png",
     },
   ];
+
   final PageController _pageController = PageController();
-  Timer? _autoScrollTimer;
 
   int _currentPage = 0;
+
+  String? _lastCurrency;
+  String? _lastUnit;
+
+  bool isLoadingApplication = true;
+  bool hasJscRegistration = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkJscRegistration();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchJscProducts();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final currencyProvider = context.watch<CurrencyProvider>();
+
+    if (_lastCurrency == currencyProvider.selectedCurrency &&
+        _lastUnit == currencyProvider.selectedUnit) {
+      return;
+    }
+
+    _lastCurrency = currencyProvider.selectedCurrency;
+    _lastUnit = currencyProvider.selectedUnit;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _fetchJscProducts(showLoader: false);
+      }
+    });
+  }
+
+  Future<void> _checkJscRegistration() async {
+    try {
+      final result = await JscService.getApplication(applicationType: 'JSC');
+
+      if (!mounted) return;
+
+      setState(() {
+        hasJscRegistration = result["hasRegistration"] == true;
+        isLoadingApplication = false;
+      });
+    } catch (e) {
+      debugPrint('JSC registration check error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        hasJscRegistration = false;
+        isLoadingApplication = false;
+      });
+    }
+  }
+
+  Future<void> _fetchJscProducts({bool showLoader = true}) async {
+    final currencyProvider = context.read<CurrencyProvider>();
+
+    await context.read<ExclusiveProductProvider>().fetchProducts(
+      endpoint: "exclusive-products",
+      currency: currencyProvider.selectedCurrency,
+      unit: currencyProvider.selectedUnit,
+      showLoader: showLoader,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +215,7 @@ class _JscScreenState extends State<JscScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        const TranslatedText(
                           '"Save Smart.Own Gold.',
                           style: TextStyle(
                             fontSize: 20,
@@ -160,7 +223,7 @@ class _JscScreenState extends State<JscScreen> {
                             color: Color(0xffFFCC19),
                           ),
                         ),
-                        const Text(
+                        const TranslatedText(
                           'Build Your Future."',
                           style: TextStyle(
                             fontSize: 20,
@@ -174,7 +237,7 @@ class _JscScreenState extends State<JscScreen> {
 
                   const SizedBox(height: 22),
 
-                  const Text(
+                  const TranslatedText(
                     "Your Wealth, Backed by Real Gold & Silver",
                     style: TextStyle(
                       color: Colors.white,
@@ -186,7 +249,7 @@ class _JscScreenState extends State<JscScreen> {
 
                   const SizedBox(height: 10),
 
-                  const Text(
+                  const TranslatedText(
                     "Start building your future with the Junu Savings Capital — own digital gold and silver, starting from just 1 gram.",
                     style: TextStyle(
                       color: Colors.white,
@@ -199,7 +262,6 @@ class _JscScreenState extends State<JscScreen> {
                   const SizedBox(height: 10),
 
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.5,
                     height: 54,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -210,26 +272,44 @@ class _JscScreenState extends State<JscScreen> {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => JscApplicationForm(),
-                          ),
-                        );
+                        hasJscRegistration
+                            ? Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ApplicationForm(
+                                    isEdit: true,
+                                    applicationType: 'JSC',
+                                  ),
+                                ),
+                              )
+                            : Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ApplicationForm(applicationType: 'JSC'),
+                                ),
+                              );
                       },
-                      child: const Text(
-                        "Open Your Jsc Account",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
+                      child: hasJscRegistration
+                          ? TranslatedText(
+                              "View Your Jsc Application",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            )
+                          : TranslatedText(
+                              "Open Your Jsc Account",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
                     ),
                   ),
 
                   const SizedBox(height: 30),
 
-                  /// Images
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -244,7 +324,6 @@ class _JscScreenState extends State<JscScreen> {
 
             const SizedBox(height: 18),
 
-            /// White Card
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(18),
@@ -262,7 +341,7 @@ class _JscScreenState extends State<JscScreen> {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  TranslatedText(
                     "Junu Savings Capital (JSC) Plan",
                     style: TextStyle(
                       fontSize: 16,
@@ -273,14 +352,14 @@ class _JscScreenState extends State<JscScreen> {
 
                   SizedBox(height: 14),
 
-                  Text(
+                  TranslatedText(
                     "Junu Savings Capital (JSC) is a precious metals savings program offered by Junu Bullion that allows customers to accumulate gold or silver gradually through digital ownership backed by physical bullion. Investors can start with small amounts and build long-term wealth through regular savings.",
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                   ),
 
                   SizedBox(height: 20),
 
-                  Text(
+                  TranslatedText(
                     "What is JSC?",
                     style: TextStyle(
                       fontSize: 16,
@@ -291,7 +370,7 @@ class _JscScreenState extends State<JscScreen> {
 
                   SizedBox(height: 14),
 
-                  Text(
+                  TranslatedText(
                     "JSC is designed as a flexible savings and wealth-building solution where every gram purchased is backed by real physical gold or silver. Customers can buy digital grams, monitor their holdings online, and later sell, withdraw, or convert their holdings into physical bullion products.",
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                   ),
@@ -299,7 +378,7 @@ class _JscScreenState extends State<JscScreen> {
               ),
             ),
 
-            const Text(
+            const TranslatedText(
               "Start Small, Grow Big\nStart Your Wealth Journey Today",
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -312,98 +391,67 @@ class _JscScreenState extends State<JscScreen> {
 
             const SizedBox(height: 16),
 
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: products.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 18,
-                  childAspectRatio: .60,
-                ),
-                itemBuilder: (_, index) {
-                  final product = products[index];
+            Consumer<ExclusiveProductProvider>(
+              builder: (context, exclusiveProvider, child) {
+                if (exclusiveProvider.isLoading &&
+                    exclusiveProvider.products.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
 
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(.18),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(5),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(22),
-                          child: Image.asset(
-                            product["image"]!,
-                            height: 180,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                final List<Map<String, dynamic>> jscProducts = exclusiveProvider
+                    .products
+                    .where(
+                      (product) =>
+                          (product['brand'] ?? '')
+                              .toString()
+                              .trim()
+                              .toUpperCase() ==
+                          'JSC',
+                    )
+                    .map((product) => Map<String, dynamic>.from(product))
+                    .toList();
 
-                        const SizedBox(height: 10),
-
-                        Text(
-                          product["title"]!,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-
-                        const SizedBox(height: 5),
-
-                        Text(
-                          product["price"]!,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        // const Spacer(),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 45,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xffA51E22),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(25),
-                              ),
-                            ),
-                            child: const Text(
-                              "ADD TO CART",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                if (jscProducts.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 30),
+                    child: Center(
+                      child: TranslatedText(
+                        "No JSC products available.",
+                        style: TextStyle(color: Colors.grey, fontSize: 15),
+                      ),
                     ),
                   );
-                },
-              ),
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 18,
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      const double spacing = 10;
+
+                      final double cardWidth =
+                          (constraints.maxWidth - spacing) / 2;
+
+                      return Wrap(
+                        spacing: spacing,
+                        runSpacing: 12,
+                        children: jscProducts.map((product) {
+                          return SizedBox(
+                            width: cardWidth,
+                            child: _JscProductCard(product: product),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 16),
@@ -414,7 +462,7 @@ class _JscScreenState extends State<JscScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Key Features",
                     style: TextStyle(
                       color: AppColors.primaryRed,
@@ -426,7 +474,7 @@ class _JscScreenState extends State<JscScreen> {
                   const SizedBox(height: 22),
 
                   SizedBox(
-                    height: 160,
+                    height: 200,
                     child: PageView.builder(
                       controller: _pageController,
                       itemCount: features.length,
@@ -454,7 +502,6 @@ class _JscScreenState extends State<JscScreen> {
 
                   const SizedBox(height: 12),
 
-                  /// Page indicators
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(features.length, (index) {
@@ -480,10 +527,6 @@ class _JscScreenState extends State<JscScreen> {
                   Container(
                     width: double.infinity,
                     color: const Color(0xffF8F6F0),
-                    // padding: const EdgeInsets.symmetric(
-                    //   horizontal: 30,
-                    //   vertical: 30,
-                    // ),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         return Row(
@@ -508,9 +551,8 @@ class _JscScreenState extends State<JscScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      const TranslatedText(
                         "JSC Benefits for Customers",
-                        // textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Color(0xffB00000),
                           fontSize: 22,
@@ -524,7 +566,6 @@ class _JscScreenState extends State<JscScreen> {
                         height: 450,
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
-                          // padding: const EdgeInsets.symmetric(horizontal: 20),
                           itemCount: benefits.length,
                           separatorBuilder: (context, index) {
                             return const SizedBox(width: 18);
@@ -582,7 +623,7 @@ class _JscScreenState extends State<JscScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "Your Emergency Safety Net",
           style: TextStyle(
             color: Color(0xffA51E22),
@@ -593,7 +634,7 @@ class _JscScreenState extends State<JscScreen> {
 
         const SizedBox(height: 5),
 
-        const Text(
+        const TranslatedText(
           "Gold and silver bought today grows with the market. Whether it’s for emergencies, future plans, or peace of mind — your savings are always there when you need them.",
           style: TextStyle(fontSize: 10, color: Colors.black),
         ),
@@ -607,7 +648,7 @@ class _JscScreenState extends State<JscScreen> {
             color: const Color(0xffFFF5A8),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Text(
+          child: const TranslatedText(
             "With just SGD 1 gram, you can begin building a safety net that grows while you sleep.",
             style: TextStyle(
               color: Color(0xff245C45),
@@ -632,7 +673,7 @@ class _JscScreenState extends State<JscScreen> {
 
     return Column(
       children: [
-        const Text(
+        const TranslatedText(
           "How JSC Works",
           textAlign: TextAlign.center,
           style: TextStyle(
@@ -648,7 +689,7 @@ class _JscScreenState extends State<JscScreen> {
           children: List.generate(steps.length, (index) {
             return Column(
               children: [
-                Text(
+                TranslatedText(
                   steps[index],
                   textAlign: TextAlign.center,
                   style: const TextStyle(
@@ -698,11 +739,11 @@ class _JscScreenState extends State<JscScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Title
-          Text(
+          TranslatedText(
             title,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 22,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
               height: 1.25,
             ),
@@ -710,7 +751,6 @@ class _JscScreenState extends State<JscScreen> {
 
           const SizedBox(height: 18),
 
-          /// Bullet points
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -720,7 +760,7 @@ class _JscScreenState extends State<JscScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      const TranslatedText(
                         "•",
                         style: TextStyle(
                           color: Colors.white,
@@ -732,11 +772,11 @@ class _JscScreenState extends State<JscScreen> {
                       const SizedBox(width: 8),
 
                       Expanded(
-                        child: Text(
+                        child: TranslatedText(
                           point,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 14,
+                            fontSize: 12,
                             height: 1.4,
                           ),
                         ),
@@ -748,7 +788,6 @@ class _JscScreenState extends State<JscScreen> {
             ),
           ),
 
-          /// Image
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: Image.asset(
@@ -761,5 +800,340 @@ class _JscScreenState extends State<JscScreen> {
         ],
       ),
     );
+  }
+}
+
+class _JscProductCard extends StatelessWidget {
+  final Map<String, dynamic> product;
+
+  const _JscProductCard({required this.product});
+
+  static const String imageBaseUrl = 'https://staging.junubullion.com/storage/';
+
+  void _showMessage(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.black87,
+      textColor: Colors.white,
+      fontSize: 14,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final int productId = int.tryParse('${product['id']}') ?? 0;
+
+    final String productName = product['name']?.toString() ?? 'JSC Product';
+
+    final String imagePath = product['image_path']?.toString() ?? '';
+
+    final String imageUrl = imagePath.isNotEmpty
+        ? '$imageBaseUrl$imagePath'
+        : '';
+
+    final String priceText =
+        product['live_price']?.toString() ??
+        product['formatted_price']?.toString() ??
+        (product['price'] != null ? '\$${product['price']}' : '\$0.00');
+
+    final String stockStatus =
+        product['stock_status']?.toString().toLowerCase() ?? 'out_of_stock';
+
+    final bool isInStock = stockStatus == 'in_stock';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.18),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: SizedBox(
+              height: 180,
+              width: double.infinity,
+              child: imageUrl.isNotEmpty
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        return const Icon(
+                          Icons.image_not_supported,
+                          size: 40,
+                          color: Colors.grey,
+                        );
+                      },
+                    )
+                  : const Icon(
+                      Icons.image_not_supported,
+                      size: 40,
+                      color: Colors.grey,
+                    ),
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          TranslatedText(
+            productName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+
+          const SizedBox(height: 4),
+
+          TranslatedText(
+            priceText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+
+          const SizedBox(height: 3),
+
+          TranslatedText(
+            isInStock ? "In Stock" : "Out of Stock",
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isInStock ? Colors.green : Colors.red,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: Consumer2<CartProvider, PhysicalConversionProvider>(
+              builder: (context, cartProvider, physicalProvider, child) {
+                return _buildCartButton(
+                  context: context,
+                  cartProvider: cartProvider,
+                  physicalProvider: physicalProvider,
+                  productId: productId,
+                  isInStock: isInStock,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartButton({
+    required BuildContext context,
+    required CartProvider cartProvider,
+    required PhysicalConversionProvider physicalProvider,
+    required int productId,
+    required bool isInStock,
+  }) {
+    if (!isInStock) {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromRGBO(218, 218, 218, 1),
+          foregroundColor: Colors.black54,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+        ),
+        child: const TranslatedText(
+          "OUT OF STOCK",
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+      );
+    }
+
+    if (physicalProvider.isActive) {
+      return ElevatedButton(
+        onPressed: () {
+          _showMessage(
+            "Digital products cannot be added during physical conversion.",
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryRed,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+        ),
+        child: const TranslatedText(
+          "ADD TO CART",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    final bool isInCart = cartProvider.isProductInCart(productId);
+
+    Map<String, dynamic>? cartItem;
+
+    if (isInCart) {
+      try {
+        cartItem = cartProvider.cartItems.firstWhere(
+          (item) => '${item["product_id"]}' == '$productId',
+        );
+      } catch (_) {
+        cartItem = null;
+      }
+    }
+
+    final int cartQuantity = int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
+
+    if (isInCart && cartQuantity > 0) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.primaryRed,
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            InkWell(
+              onTap: () async {
+                if (cartQuantity <= 1) {
+                  await cartProvider.removeFromCart(productId);
+                } else {
+                  await cartProvider.updateCartQuantity(
+                    productId: productId,
+                    quantity: cartQuantity - 1,
+                  );
+                }
+              },
+              child: const SizedBox(
+                width: 40,
+                height: 45,
+                child: Center(
+                  child: Icon(Icons.remove, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+
+            TranslatedText(
+              "$cartQuantity",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+
+            InkWell(
+              onTap: () async {
+                await cartProvider.updateCartQuantity(
+                  productId: productId,
+                  quantity: cartQuantity + 1,
+                );
+              },
+              child: const SizedBox(
+                width: 40,
+                height: 45,
+                child: Center(
+                  child: Icon(Icons.add, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final bool isAdding = cartProvider.isAdding(productId);
+
+    return ElevatedButton(
+      onPressed: isAdding
+          ? null
+          : () async {
+              final bool success = await cartProvider.addToCart(
+                productId: productId,
+                quantity: 1,
+              );
+
+              if (!context.mounted) {
+                return;
+              }
+
+              _showMessage(success ? "Added to Cart" : "Failed to add product");
+            },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primaryRed,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+      ),
+      child: isAdding
+          ? const SizedBox(
+              height: 18,
+              width: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const TranslatedText(
+              "ADD TO CART",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+    );
+  }
+}
+
+class _MeasureSize extends StatefulWidget {
+  final Widget child;
+  final ValueChanged<Size> onChange;
+
+  const _MeasureSize({required this.child, required this.onChange});
+
+  @override
+  State<_MeasureSize> createState() => _MeasureSizeState();
+}
+
+class _MeasureSizeState extends State<_MeasureSize> {
+  Size? _oldSize;
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final renderObject = context.findRenderObject();
+
+      if (renderObject is RenderBox) {
+        final newSize = renderObject.size;
+
+        if (_oldSize != newSize) {
+          _oldSize = newSize;
+          widget.onChange(newSize);
+        }
+      }
+    });
+
+    return widget.child;
   }
 }

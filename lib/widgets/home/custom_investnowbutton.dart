@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class InvestBanner extends StatelessWidget {
   final String imagePath;
@@ -42,7 +43,7 @@ class InvestBanner extends StatelessWidget {
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
-                child: const Text(
+                child: const TranslatedText(
                   "Invest Now",
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),

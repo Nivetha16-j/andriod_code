@@ -1,9 +1,9 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:junubullion/main.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/services/session_manager.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/profile/dashboard/quickaction.dart';
 import 'package:junubullion/widgets/profile/recentorders.dart';
 import 'package:junubullion/widgets/profile/dashboard/wallet.dart';
@@ -71,7 +71,7 @@ class _DashboardState extends State<Dashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                TranslatedText(
                   "Welcome Back, ${user['name'] ?? 'User'}",
                   style: TextStyle(
                     color: Colors.white,
@@ -82,7 +82,7 @@ class _DashboardState extends State<Dashboard> {
 
                 const SizedBox(height: 10),
 
-                const Text(
+                TranslatedText(
                   "Your Personal Hub For Orders, Account Settings,\nAnd Verification — All In One Place.",
                   style: TextStyle(color: Colors.white, height: 1.5),
                 ),
@@ -149,7 +149,7 @@ class _InfoButton extends StatelessWidget {
         children: [
           Image.asset(image, height: 20, width: 20, color: Colors.white),
           const SizedBox(width: 5),
-          Text(
+          TranslatedText(
             title,
             style: const TextStyle(
               color: Colors.white,

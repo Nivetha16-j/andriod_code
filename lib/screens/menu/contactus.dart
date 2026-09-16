@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/services/contact_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
-import 'package:junubullion/widgets/menu/googlemap.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContactUsScreen extends StatefulWidget {
@@ -22,9 +24,90 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
   final TextEditingController email = TextEditingController();
 
   final TextEditingController message = TextEditingController();
+  bool _isSubmitting = false;
 
   int _currentIndex = 0;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void dispose() {
+    firstName.dispose();
+    lastName.dispose();
+    email.dispose();
+    message.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitContactForm() async {
+    FocusScope.of(context).unfocus();
+
+    final firstNameText = firstName.text.trim();
+    final lastNameText = lastName.text.trim();
+    final emailText = email.text.trim();
+    final description = message.text.trim();
+
+    if (firstNameText.isEmpty) {
+      Fluttertoast.showToast(msg: "Please enter your first name");
+      return;
+    }
+
+    if (lastNameText.isEmpty) {
+      Fluttertoast.showToast(msg: "Please enter your last name");
+      return;
+    }
+
+    if (emailText.isEmpty) {
+      Fluttertoast.showToast(msg: "Please enter your email");
+      return;
+    }
+
+    if (description.isEmpty) {
+      Fluttertoast.showToast(msg: "Please enter your message");
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final response = await ContactService.submitContact(
+        firstName: firstNameText,
+        lastName: lastNameText,
+        email: emailText,
+        description: description,
+      );
+
+      debugPrint("Contact API Response: $response");
+
+      if (response['success'] == true) {
+        Fluttertoast.showToast(
+          msg: response['message'] ?? "Message sent successfully.",
+        );
+
+        // Clear form after successful submission
+        firstName.clear();
+        lastName.clear();
+        email.clear();
+        message.clear();
+      } else {
+        Fluttertoast.showToast(
+          msg: response['message'] ?? "Failed to send message.",
+        );
+      }
+    } catch (e) {
+      debugPrint("Contact API Error: $e");
+
+      Fluttertoast.showToast(msg: "Something went wrong. Please try again.");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,7 +116,6 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: SingleChildScrollView(
-        // padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Container(
@@ -43,7 +125,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    const TranslatedText(
                       "Contact Us",
                       style: TextStyle(
                         fontSize: 24,
@@ -53,7 +135,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 10),
 
-                    const Text(
+                    const TranslatedText(
                       "If you have any questions about our products, shipping, or any other details, feel free to contact us.",
                       style: TextStyle(
                         fontSize: 15,
@@ -79,7 +161,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          const TranslatedText(
                             "Get in Touch",
                             style: TextStyle(
                               fontSize: 20,
@@ -89,7 +171,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                           const SizedBox(height: 5),
 
-                          const Text(
+                          const TranslatedText(
                             "You can reach us anytime",
                             style: TextStyle(
                               fontSize: 13,
@@ -130,8 +212,10 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                               ),
-                              onPressed: () {},
-                              child: const Text(
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : _submitContactForm,
+                              child: const TranslatedText(
                                 "Submit",
                                 style: TextStyle(
                                   color: Colors.white,
@@ -147,7 +231,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 24),
 
-                    _contactRow(Icons.email, "info@junubullion.com"),
+                    _contactRow(Icons.email, "customer@junubullion.com"),
 
                     const SizedBox(height: 18),
 
@@ -155,7 +239,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 30),
 
-                    const Text(
+                    const TranslatedText(
                       "Customer Support",
                       style: TextStyle(
                         fontSize: 20,
@@ -165,7 +249,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 8),
 
-                    const Text(
+                    const TranslatedText(
                       "Our support team is available around the clock to address any concerns or queries you may have.",
                       style: TextStyle(
                         fontSize: 15,
@@ -175,7 +259,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 22),
 
-                    const Text(
+                    const TranslatedText(
                       "Feedback and Suggestions",
                       style: TextStyle(
                         fontSize: 20,
@@ -185,7 +269,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 8),
 
-                    const Text(
+                    const TranslatedText(
                       "We value your feedback and are continuously working to improve Snappy.",
                       style: TextStyle(
                         fontSize: 15,
@@ -195,7 +279,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 22),
 
-                    const Text(
+                    const TranslatedText(
                       "Media Inquiries",
                       style: TextStyle(
                         fontSize: 20,
@@ -205,7 +289,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                     const SizedBox(height: 8),
 
-                    const Text(
+                    const TranslatedText(
                       "For media-related questions or press inquiries, please contact us.",
                       style: TextStyle(
                         fontSize: 15,
@@ -218,14 +302,13 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
             ),
             const SizedBox(height: 30),
 
-            const Text(
+            const TranslatedText(
               "Our Location",
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 15),
 
-            // const GoogleMapWidget(),
             Image.asset("assets/map.png"),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -248,7 +331,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
                 },
                 icon: const Icon(Icons.location_on, color: Colors.white),
-                label: const Text(
+                label: const TranslatedText(
                   "Open in Google Maps",
                   style: TextStyle(
                     color: Colors.white,
@@ -260,7 +343,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
             const SizedBox(height: 20),
 
-            const Text(
+            const TranslatedText(
               "Our Shopfront Your Destination for Precious Metals!!",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
@@ -326,7 +409,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
           child: Icon(icon, color: AppColors.primaryRed),
         ),
         const SizedBox(width: 14),
-        Text(
+        TranslatedText(
           text,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),

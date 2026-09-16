@@ -15,8 +15,8 @@ class OTPScreen extends StatefulWidget {
   final int? countryId;
   final String? fname;
   final String? lname;
-  final String? password;
-  final String? passwordConfirmation;
+  // final String? password;
+  // final String? passwordConfirmation;
   final bool isLogin;
   final Map<String, dynamic>? loginUser;
   final String? loginToken;
@@ -29,9 +29,9 @@ class OTPScreen extends StatefulWidget {
     this.countryId,
     this.fname,
     this.lname,
-    this.password,
-    this.passwordConfirmation,
 
+    // this.password,
+    // this.passwordConfirmation,
     this.isLogin = false,
     this.loginUser,
     this.loginToken,
@@ -68,9 +68,6 @@ class _OTPScreenState extends State<OTPScreen> {
     });
 
     try {
-      // ==========================
-      // EMAIL LOGIN
-      // ==========================
       if (widget.isLogin && widget.email != null && widget.email!.isNotEmpty) {
         final response = await http.post(
           Uri.parse("https://staging.junubullion.com/api/verify-login-otp"),
@@ -105,9 +102,6 @@ class _OTPScreenState extends State<OTPScreen> {
         return;
       }
 
-      // ==========================
-      // PHONE LOGIN / REGISTRATION
-      // ==========================
       final credential = PhoneAuthProvider.credential(
         verificationId: widget.verificationId,
         smsCode: _enteredOtp,
@@ -126,15 +120,11 @@ class _OTPScreenState extends State<OTPScreen> {
         throw Exception("Unable to get Firebase token");
       }
 
-      /// ============================
-      /// LOGIN FLOW0
-      /// ============================
       log("isloggggg ${widget.isLogin}");
       if (widget.isLogin) {
         log(
           "IsLoginnnnnn ${widget.isLogin}........${widget.loginToken}......${widget.loginUser}",
         );
-        // await SessionManager.saveLogin(widget.loginUser!);
         if (widget.loginUser != null && widget.loginToken != null) {
           await SessionManager.saveLogin(
             user: widget.loginUser!,
@@ -159,22 +149,18 @@ class _OTPScreenState extends State<OTPScreen> {
         return;
       }
 
-      /// ============================
-      /// REGISTRATION FLOW
-      /// ============================
-
       final fullName = "${widget.fname ?? ""} ${widget.lname ?? ""}".trim();
 
       log(
-        "Payloadddddd $fullName ${widget.email} ${widget.phoneNumber} ${widget.password} ${widget.passwordConfirmation} ${widget.countryId} ${firebaseToken}",
+        "Payloadddddd $fullName ${widget.email} ${widget.phoneNumber} ${widget.countryId} ${firebaseToken}",
       );
 
       final payload = {
         "name": fullName,
         "email": widget.email ?? "",
         "phone_number": widget.phoneNumber,
-        "password": widget.password ?? "",
-        "password_confirmation": widget.passwordConfirmation ?? "",
+        // "password": widget.password ?? "",
+        // "password_confirmation": widget.passwordConfirmation ?? "",
         "country_id": widget.countryId,
         "address": "",
         "firebase_token": firebaseToken,
@@ -273,29 +259,54 @@ class _OTPScreenState extends State<OTPScreen> {
                   ),
                   const SizedBox(height: 30),
 
-                  // OTP Input Field
-                  OtpTextField(
-                    numberOfFields: 6,
-                    borderColor: const Color.fromRGBO(0, 0, 0, 0.15),
-                    focusedBorderColor: AppColors.primaryRed,
-                    showFieldAsBox: true,
-                    fieldWidth: 46.0,
-                    borderRadius: BorderRadius.circular(10.0),
-                    filled: true,
-                    cursorColor: AppColors.primaryRed,
-                    fillColor: Colors.white,
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    onCodeChanged: (String code) {
-                      _enteredOtp = code;
-                    },
-                    onSubmit: (String verificationCode) {
-                      setState(() {
-                        _enteredOtp = verificationCode;
-                      });
-                      _verifyAndSubmitOtp();
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      const int numberOfFields = 6;
+                      const double spacing = 3.0;
+
+                      final double availableWidth = constraints.maxWidth;
+
+                      final double fieldWidth =
+                          (availableWidth - (spacing * numberOfFields)) /
+                          numberOfFields;
+
+                      return SizedBox(
+                        width: double.infinity,
+                        child: OtpTextField(
+                          numberOfFields: numberOfFields,
+
+                          margin: const EdgeInsets.only(right: spacing),
+
+                          borderColor: const Color.fromRGBO(0, 0, 0, 0.15),
+                          focusedBorderColor: AppColors.primaryRed,
+                          showFieldAsBox: true,
+
+                          fieldWidth: fieldWidth,
+                          fieldHeight: 48,
+
+                          borderRadius: BorderRadius.circular(10),
+                          filled: true,
+                          fillColor: Colors.white,
+                          cursorColor: AppColors.primaryRed,
+
+                          textStyle: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+
+                          onCodeChanged: (String code) {
+                            _enteredOtp = code;
+                          },
+
+                          onSubmit: (String verificationCode) {
+                            setState(() {
+                              _enteredOtp = verificationCode;
+                            });
+
+                            _verifyAndSubmitOtp();
+                          },
+                        ),
+                      );
                     },
                   ),
 

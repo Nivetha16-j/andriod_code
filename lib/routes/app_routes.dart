@@ -3,7 +3,6 @@ import 'package:junubullion/screens/auth/loginscreen.dart';
 import 'package:junubullion/screens/auth/otpscreen.dart';
 import 'package:junubullion/screens/auth/registrationscreen.dart';
 import 'package:junubullion/screens/auth/splashscreen.dart';
-import 'package:junubullion/screens/home/homescreen.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 

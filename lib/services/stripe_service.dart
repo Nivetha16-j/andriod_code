@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer';
-
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:http/http.dart' as http;
 import 'package:junubullion/services/session_manager.dart';
@@ -32,7 +31,7 @@ class StripeService {
   static Future<Map<String, dynamic>> createStripeSession({
     required String shippingAddress,
     required String fulfillmentType,
-    required String courierService,
+    String? courierService,
     required String currency,
     String? digitalSubtype,
     required bool terms,
@@ -43,7 +42,7 @@ class StripeService {
 
       final Map<String, dynamic> payload = {
         "shipping_address": shippingAddress,
-        "courier_service": courierService.toLowerCase(),
+        "courier_service": courierService?.toLowerCase(),
         "currency": currency,
         "terms": terms,
         "fulfillment_type": fulfillmentType.toLowerCase(),
