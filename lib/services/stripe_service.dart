@@ -82,4 +82,46 @@ class StripeService {
       rethrow;
     }
   }
+
+  static Future<Map<String, dynamic>> stripePaymentSuccess({
+    required String paymentIntentId,
+  }) async {
+    try {
+      final token = await SessionManager.getToken();
+
+      final uri = Uri.parse(
+        '$baseUrl/checkout/stripe/success',
+      ).replace(queryParameters: {'payment_intent_id': paymentIntentId});
+
+      log('STRIPE SUCCESS API URL -> $uri');
+
+      final response = await http.get(
+        uri,
+        headers: {
+          "Accept": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      );
+
+      log(
+        'STRIPE SUCCESS API -> '
+        '${response.statusCode} ${response.body}',
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return Map<String, dynamic>.from(data);
+      }
+
+      return {
+        'status': false,
+        'message': data['message'] ?? 'Stripe success API failed',
+      };
+    } catch (e, stackTrace) {
+      log('STRIPE SUCCESS API ERROR -> $e', stackTrace: stackTrace);
+
+      return {'status': false, 'message': e.toString()};
+    }
+  }
 }

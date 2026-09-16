@@ -791,24 +791,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
 
         log(
-          "CHECKOUT -> Stripe payment method: $shippingAddress ${fulfillment} $isDigital ? null : ${cartProvider.selectedDeliveryMethod} ${currencyProvider.selectedCurrency} ${digitalSubtype} $stripePaymentMethod",
+          "CHECKOUT -> Stripe payment method: "
+          "$shippingAddress "
+          "$fulfillment "
+          "$isDigital ? null : ${cartProvider.selectedDeliveryMethod} "
+          "${currencyProvider.selectedCurrency} "
+          "$digitalSubtype "
+          "$stripePaymentMethod",
         );
 
         final stripeResponse = await StripeService.createStripeSession(
           shippingAddress: shippingAddress.trim(),
-
           fulfillmentType: fulfillment!.toLowerCase().trim(),
-
           courierService: isDigital
               ? null
               : cartProvider.selectedDeliveryMethod,
-
           currency: currencyProvider.selectedCurrency,
-
           digitalSubtype: digitalSubtype,
-
           terms: true,
-
           paymentMethod: stripePaymentMethod,
         );
 
@@ -822,9 +822,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         final clientSecret = stripeResponse["data"]?["client_secret"];
 
+        // Get payment intent ID from create session response
+        final paymentIntentId = stripeResponse["data"]?["payment_intent_id"];
+
+        log("STRIPE CLIENT SECRET -> $clientSecret");
+        log("STRIPE PAYMENT INTENT ID -> $paymentIntentId");
+
         if (clientSecret == null || clientSecret.toString().trim().isEmpty) {
           throw Exception("Stripe client secret not received");
         }
+
+        if (paymentIntentId == null ||
+            paymentIntentId.toString().trim().isEmpty) {
+          throw Exception("Stripe payment intent ID not received");
+        }
+
+        // -----------------------------
+        // MAKE STRIPE PAYMENT
+        // -----------------------------
 
         final bool paymentSuccess = await StripeService.makePayment(
           clientSecret.toString(),
@@ -848,7 +863,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           return;
         }
 
-        log("STRIPE PAYMENT SUCCESS -> Clearing cart...");
+        // -----------------------------
+        // PAYMENT SUCCESS API
+        // -----------------------------
+
+        log(
+          "STRIPE PAYMENT COMPLETED -> "
+          "Calling /checkout/stripe/success "
+          "with payment_intent_id: $paymentIntentId",
+        );
+
+        final successResponse = await StripeService.stripePaymentSuccess(
+          paymentIntentId: paymentIntentId.toString(),
+        );
+
+        log("STRIPE SUCCESS RESPONSE -> $successResponse");
+
+        if (successResponse["status"] == false) {
+          throw Exception(
+            successResponse["message"] ?? "Unable to confirm Stripe payment",
+          );
+        }
+
+        // -----------------------------
+        // CLEAR CART ONLY AFTER
+        // SUCCESS API
+        // -----------------------------
+
+        log("STRIPE SUCCESS API COMPLETED -> Clearing cart...");
 
         cartProvider.clearCart();
 
