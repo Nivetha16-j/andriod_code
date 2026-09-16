@@ -16,7 +16,6 @@ import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -49,25 +48,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       (route) => false,
     );
   }
-
-  // @override
-  // void initState() {
-  //   super.initState();
-
-  //   Future.microtask(() async {
-  //     if (!mounted) return;
-
-  //     await context.read<AddressProvider>().fetchAddress();
-
-  //     if (!mounted) return;
-
-  //     final cartProvider = context.read<CartProvider>();
-
-  //     await cartProvider.fetchCart();
-  //   });
-
-  //   _loadLocalAddress();
-  // }
 
   @override
   void initState() {
@@ -235,7 +215,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _sendPhysicalOrder({required String plan}) async {
-    final addressProvider = context.read<AddressProvider>();
     final cartProvider = context.read<CartProvider>();
     final physicalProvider = context.read<PhysicalConversionProvider>();
     final String shippingAddress = addressController.text.trim();
@@ -742,7 +721,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       log(
         "CHECKOUT -> Placing normal order: "
         "address=$shippingAddress "
-        "delivery=${fulfillment} "
+        "delivery=$fulfillment "
         "digitalType=$digitalSubtype "
         "payment=$payment"
         "isDigital=$isDigital "
@@ -812,7 +791,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
 
         log(
-          "CHECKOUT -> Stripe payment method: $shippingAddress ${fulfillment} $isDigital ${currencyProvider.selectedCurrency} ${isDigital ? digitalSubtype : null} $stripePaymentMethod",
+          "CHECKOUT -> Stripe payment method: $shippingAddress ${fulfillment} $isDigital ? null : ${cartProvider.selectedDeliveryMethod} ${currencyProvider.selectedCurrency} ${digitalSubtype} $stripePaymentMethod",
         );
 
         final stripeResponse = await StripeService.createStripeSession(
@@ -826,7 +805,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           currency: currencyProvider.selectedCurrency,
 
-          digitalSubtype: isDigital ? digitalSubtype : null,
+          digitalSubtype: digitalSubtype,
 
           terms: true,
 
