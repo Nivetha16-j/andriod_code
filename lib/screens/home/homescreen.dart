@@ -10,6 +10,8 @@ import 'package:junubullion/widgets/home/custom_banner.dart';
 import 'package:junubullion/widgets/home/custom_brands.dart';
 import 'package:junubullion/widgets/home/custom_exclusivecollections.dart';
 import 'package:junubullion/widgets/home/custom_featuregrid.dart';
+import 'package:junubullion/widgets/home/custom_inventory.dart';
+import 'package:junubullion/widgets/home/custom_investment.dart';
 import 'package:junubullion/widgets/home/custom_investnowbutton.dart';
 import 'package:junubullion/widgets/home/custom_livespot.dart';
 import 'package:junubullion/widgets/home/custom_statscard.dart';
@@ -88,13 +90,9 @@ class _HomeScreenState extends State<HomeScreen> {
       child: SingleChildScrollView(
         controller: widget.scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: 12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            BannerSlider(bannerData: bannerData),
-            const SizedBox(height: 5),
-
             LiveSpotPriceCard(
               spotPricesData: homeProvider.homeData?['data']?['spot_prices'],
               selectedCurrency: currencyProvider.selectedCurrency,
@@ -123,56 +121,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (!mounted) return;
               },
             ),
+
             const SizedBox(height: 5),
 
-            GestureDetector(
-              onTap: () {
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => JscDashboardScreen()));
-              },
-              child: InvestBanner(
-                imagePath: "assets/jsc.png",
-                onTap: () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (_) => JscScreen()));
-                },
-              ),
-            ),
-            const SizedBox(height: 5),
+            const InventorySection(),
 
-            GestureDetector(
-              onTap: () {
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => GspDashboardScreen()));
-              },
-              child: InvestBanner(
-                imagePath: "assets/gsp.png",
-                onTap: () {
-                  Navigator.of(
-                    context,
-                  ).push(MaterialPageRoute(builder: (_) => GspScreen()));
-                },
-              ),
-            ),
-            const SizedBox(height: 5),
-
-            FeaturesGridSection(),
-            const SizedBox(height: 5),
-
-            TrendingProductsSection(
-              products:
-                  homeProvider.homeData?['data']?['trending_products']
-                      as List<dynamic>?,
-              onSeeAllTap: widget.onViewMoreTap,
-              currency: currencyProvider.selectedCurrency,
-              unit: currencyProvider.selectedUnit,
-            ),
-            const SizedBox(height: 5),
-
-            StatsCardSection(),
             const SizedBox(height: 5),
 
             ExclusiveCollectionsSection(
@@ -181,17 +134,45 @@ class _HomeScreenState extends State<HomeScreen> {
               currency: currencyProvider.selectedCurrency,
               unit: currencyProvider.selectedUnit,
             ),
+
             const SizedBox(height: 5),
 
-            BrandsWeCarrySection(),
+            InvestmentSection(),
+
+            // GestureDetector(
+            //   onTap: () {
+            //     Navigator.of(
+            //       context,
+            //     ).push(MaterialPageRoute(builder: (_) => JscDashboardScreen()));
+            //   },
+            //   child: InvestBanner(
+            //     imagePath: "assets/jsc.png",
+            //     onTap: () {
+            //       Navigator.of(
+            //         context,
+            //       ).push(MaterialPageRoute(builder: (_) => JscScreen()));
+            //     },
+            //   ),
+            // ),
             const SizedBox(height: 5),
 
-            TestimonialsSection(
-              testimonialsData:
-                  homeProvider.homeData?['data']?['testimonials'] ?? [],
-              onViewMorePressed: () {},
-            ),
-            const SizedBox(height: 5),
+            // GestureDetector(
+            //   onTap: () {
+            //     Navigator.of(
+            //       context,
+            //     ).push(MaterialPageRoute(builder: (_) => GspDashboardScreen()));
+            //   },
+            //   child: InvestBanner(
+            //     imagePath: "assets/gsp.png",
+            //     onTap: () {
+            //       Navigator.of(
+            //         context,
+            //       ).push(MaterialPageRoute(builder: (_) => GspScreen()));
+            //     },
+            //   ),
+            // ),
+
+            // const SizedBox(height: 5),
           ],
         ),
       ),

@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
@@ -42,6 +43,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   int _displayCount = 6;
 
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   final List<String> _categories = [
     'All Items',
     'Gold Coin',
@@ -67,6 +71,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
       0,
       _categories.length - 1,
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -144,6 +154,28 @@ class _ProductListScreenState extends State<ProductListScreen> {
     await _fetchProducts();
   }
 
+  List<dynamic> _filterProducts(List<dynamic> products) {
+    final query = _searchQuery.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return products;
+    }
+
+    return products.where((product) {
+      final name = product['name']?.toString().toLowerCase() ?? '';
+      final brand = product['brand']?.toString().toLowerCase() ?? '';
+      final metalType = product['metal_type']?.toString().toLowerCase() ?? '';
+      final weight = product['weight']?.toString().toLowerCase() ?? '';
+      final weightUnit = product['weight_unit']?.toString().toLowerCase() ?? '';
+
+      return name.contains(query) ||
+          brand.contains(query) ||
+          metalType.contains(query) ||
+          weight.contains(query) ||
+          weightUnit.contains(query);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final currencyProvider = context.watch<CurrencyProvider>();
@@ -171,7 +203,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
     // category.
     //
     // Therefore we DO NOT perform any additional filtering here.
-    final displayedProducts = productProvider.products;
+    final displayedProducts = _filterProducts(productProvider.products);
 
     final productsToDisplay = displayedProducts.take(_displayCount).toList();
 
@@ -195,19 +227,79 @@ class _ProductListScreenState extends State<ProductListScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Column(
           children: [
+            // // ======================================================
+            // // TITLE
+            // // ======================================================
+            // const TranslatedText(
+            //   'Our Products',
+            //   style: TextStyle(
+            //     fontSize: 34.0,
+            //     fontWeight: FontWeight.w700,
+            //     color: Color.fromRGBO(208, 145, 29, 1),
+            //   ),
+            // ),
             // ======================================================
-            // TITLE
+            // SEARCH BAR
             // ======================================================
-            const TranslatedText(
-              'Our Products',
-              style: TextStyle(
-                fontSize: 34.0,
-                fontWeight: FontWeight.w700,
-                color: Color.fromRGBO(208, 145, 29, 1),
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.primaryRed.withOpacity(0.25),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                    _displayCount = 6;
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search products',
+                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: AppColors.primaryRed,
+                  ),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.clear,
+                            color: AppColors.primaryRed,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+
+                            setState(() {
+                              _searchQuery = '';
+                              _displayCount = 6;
+                            });
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
+                ),
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+
+            // const SizedBox(height: 12),
 
             // ======================================================
             // CATEGORY CHIPS
@@ -225,7 +317,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     label: TranslatedText(
                       _categories[index],
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
+                        color: isSelected
+                            ? AppColors.white
+                            : AppColors.primaryRed,
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.w500,
@@ -234,7 +328,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     ),
                     selected: isSelected,
                     selectedColor: AppColors.primaryRed,
-                    backgroundColor: const Color(0xFFE0E0E0),
+                    backgroundColor: AppColors.pink,
                     showCheckmark: false,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
@@ -259,12 +353,17 @@ class _ProductListScreenState extends State<ProductListScreen> {
             // PRODUCT GRID
             // ======================================================
             productsToDisplay.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
                     child: Center(
                       child: TranslatedText(
-                        'No products found in this category.',
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                        _searchQuery.trim().isNotEmpty
+                            ? 'No products found for your search.'
+                            : 'No products found in this category.',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   )
@@ -725,13 +824,19 @@ class _ProductGridCard extends StatelessWidget {
             'Digital products cannot be added during physical conversion.',
           );
         },
-        child: const FittedBox(
-          fit: BoxFit.scaleDown,
-          child: TranslatedText(
-            'ADD TO CART',
-            maxLines: 1,
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/Cart.png', height: 24),
+            const SizedBox(width: 6),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: TranslatedText("ADD TO CART", maxLines: 1),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -832,13 +937,19 @@ class _ProductGridCard extends StatelessWidget {
                 color: Colors.white,
               ),
             )
-          : const FittedBox(
-              fit: BoxFit.scaleDown,
-              child: TranslatedText(
-                'ADD TO CART',
-                maxLines: 1,
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
-              ),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/Cart.png', height: 24),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: TranslatedText("ADD TO CART", maxLines: 1),
+                  ),
+                ),
+              ],
             ),
     );
   }
@@ -872,11 +983,12 @@ class _ProductGridCard extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF7F7),
+          gradient: AppColors.BgGradient,
           borderRadius: BorderRadius.circular(16),
         ),
         padding: const EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // =====================================================
@@ -911,7 +1023,11 @@ class _ProductGridCard extends StatelessWidget {
               name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: AppColors.white,
+              ),
             ),
 
             const SizedBox(height: 6),
@@ -944,6 +1060,7 @@ class _ProductGridCard extends StatelessWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
+                  color: AppColors.mustard,
                 ),
               ),
             ),

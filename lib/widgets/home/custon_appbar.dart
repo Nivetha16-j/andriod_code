@@ -1,5 +1,5 @@
 import 'dart:developer';
-
+import 'package:flutter_svg/svg.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 import 'package:junubullion/providers/cart_provider.dart';
@@ -286,7 +286,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
               child: Marquee(
                 text: _translatedTicker.isEmpty ? ticker : _translatedTicker,
                 style: const TextStyle(
-                  color: CustomAppBar.textGold,
+                  color: AppColors.white,
                   fontSize: 11.5,
                   fontWeight: FontWeight.w500,
                 ),
@@ -302,12 +302,23 @@ class _CustomAppBarState extends State<CustomAppBar> {
             // MAIN NAVIGATION BAR
             // --------------------------------------------------
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12.0,
-                vertical: 8.0,
-              ),
+              padding: const EdgeInsets.all(12),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  GestureDetector(
+                    onTap: () {
+                      widget.scaffoldKey?.currentState?.openDrawer();
+
+                      log('sssssssss ${widget.scaffoldKey}');
+
+                      log(
+                        'ssssscccc '
+                        '${widget.scaffoldKey?.currentState}',
+                      );
+                    },
+                    child: Icon(Icons.menu, size: 24, color: AppColors.white),
+                  ),
                   // ------------------------------------------------
                   // LOGO
                   // ------------------------------------------------
@@ -321,10 +332,15 @@ class _CustomAppBarState extends State<CustomAppBar> {
                         (route) => false,
                       );
                     },
-                    child: Image.asset('assets/logo/logo.png', height: 40),
+                    child: SvgPicture.asset(
+                      'assets/logo/logo.svg',
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.contain,
+                    ),
                   ),
 
-                  const Spacer(),
+                  // const Spacer(),
 
                   // ------------------------------------------------
                   // CART ICON
@@ -351,8 +367,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
                             children: [
                               Positioned.fill(
                                 child: Image.asset(
-                                  'assets/shopping-cart.png',
-                                  fit: BoxFit.contain,
+                                  'assets/Cart.png',
+                                  height: 24,
                                 ),
                               ),
 
@@ -385,33 +401,18 @@ class _CustomAppBarState extends State<CustomAppBar> {
                     },
                   ),
 
-                  const SizedBox(width: 12),
+                  // const SizedBox(width: 12),
 
                   // ------------------------------------------------
                   // LANGUAGE DROPDOWN
                   // ------------------------------------------------
-                  _buildLanguageDropdown(context, languageProvider),
+                  // _buildLanguageDropdown(context, languageProvider),
 
-                  const SizedBox(width: 12),
+                  // const SizedBox(width: 12),
 
                   // ------------------------------------------------
                   // MENU ICON
                   // ------------------------------------------------
-                  IconButton(
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-                    onPressed: () async {
-                      widget.scaffoldKey?.currentState?.openDrawer();
-
-                      log('sssssssss ${widget.scaffoldKey}');
-
-                      log(
-                        'ssssscccc '
-                        '${widget.scaffoldKey?.currentState}',
-                      );
-                    },
-                  ),
                 ],
               ),
             ),

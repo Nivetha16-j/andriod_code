@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:junubullion/routes/app_routes.dart';
@@ -166,77 +167,111 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(250, 250, 248, 1),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 25),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Login',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 32),
-                ),
-                const SizedBox(height: 15),
-                Text(
-                  "To get full profile and unlimited searches, please login or register.",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 15),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppColors.BgGradient),
 
-                CustomTextField(
-                  label: "Email or Phone Number",
-                  hintText: "Enter Email or Phone Number",
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-
-                const SizedBox(height: 15),
-
-                CustomButton(
-                  label: "Login",
-                  height: 70,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  borderRadius: 50,
-                  padding: const EdgeInsets.all(25),
-                  isLoading: _isLoading,
-                  onPressed: loginUser,
-                ),
-                Center(
-                  child: RichText(
-                    text: TextSpan(
-                      style: const TextStyle(fontSize: 20, color: Colors.black),
-                      children: [
-                        const TextSpan(
-                          text: "Don't have an account? ",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'Register',
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              Navigator.pushNamed(context, AppRoutes.register);
-                            },
-
-                          style: const TextStyle(
-                            color: AppColors
-                                .primaryRed, // Different color for this word
-                            fontWeight: FontWeight.w600,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 25),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: SvgPicture.asset(
+                      'assets/logo/logo.svg',
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.contain,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Text(
+                      'Sign In To Your Account',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Text(
+                      "To get full profile and unlimited \n searches, please login or register.",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  CustomTextField(
+                    label: "Email or Phone Number",
+                    hintText: "Enter Email or Phone Number",
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  CustomButton(
+                    label: "Log In",
+                    height: 50,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    borderRadius: 16,
+                    // padding: const EdgeInsets.all(25),
+                    isLoading: _isLoading,
+                    onPressed: loginUser,
+                  ),
+                  const SizedBox(height: 20),
+
+                  Center(
+                    child: RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          fontSize: 20,
+                          color: AppColors.white,
+                        ),
+                        children: [
+                          const TextSpan(
+                            text: "Don't have an account yet? ",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.white,
+                            ),
+                          ),
+                          TextSpan(
+                            text: 'Register',
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.register,
+                                );
+                              },
+
+                            style: const TextStyle(
+                              color: AppColors
+                                  .mustard, // Different color for this word
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

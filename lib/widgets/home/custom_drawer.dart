@@ -88,7 +88,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.8,
       child: Container(
-        color: AppColors.primaryRed,
+        decoration: const BoxDecoration(gradient: AppColors.BgGradient),
         child: SafeArea(
           child: Column(
             children: [
@@ -100,135 +100,11 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   ),
                   children: [
                     // =========================
-                    // JSC DROPDOWN
-                    // =========================
-                    _drawerExpansionTile(
-                      icon: Icons.money,
-                      title: "JSC",
-                      isExpanded: isJscExpanded,
-                      onExpansionChanged: (value) {
-                        setState(() {
-                          isJscExpanded = value;
-
-                          // Close GSP when JSC opens
-                          if (value) {
-                            isGspExpanded = false;
-                          }
-                        });
-                      },
-                      children: [
-                        _subMenuTile(
-                          title: "Bullion Dashboard",
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => JscDashboardScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _subMenuTile(
-                          title: "Future With JSC",
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => JscScreen()),
-                            );
-                          },
-                        ),
-                        _subMenuTile(
-                          title: "JSC Application Form",
-                          onTap: () {
-                            hasJscRegistration
-                                ? Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const ApplicationForm(
-                                        isEdit: true,
-                                        applicationType: 'JSC',
-                                      ),
-                                    ),
-                                  )
-                                : Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ApplicationForm(
-                                        applicationType: 'JSC',
-                                      ),
-                                    ),
-                                  );
-                          },
-                        ),
-                      ],
-                    ),
-
-                    // =========================
-                    // GSP DROPDOWN
-                    // =========================
-                    _drawerExpansionTile(
-                      icon: Icons.money_outlined,
-                      title: "GSP",
-                      isExpanded: isGspExpanded,
-                      onExpansionChanged: (value) {
-                        setState(() {
-                          isGspExpanded = value;
-
-                          // Close JSC when GSP opens
-                          if (value) {
-                            isJscExpanded = false;
-                          }
-                        });
-                      },
-                      children: [
-                        _subMenuTile(
-                          title: "GSP Dashboard",
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => GspDashboardScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _subMenuTile(
-                          title: "Know More About GSP",
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => GspScreen()),
-                            );
-                          },
-                        ),
-                        _subMenuTile(
-                          title: "GSP Application Form",
-                          onTap: () {
-                            hasGspRegistration
-                                ? Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const ApplicationForm(
-                                        isEdit: true,
-                                        applicationType: 'GSP',
-                                      ),
-                                    ),
-                                  )
-                                : Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ApplicationForm(
-                                        applicationType: 'GSP',
-                                      ),
-                                    ),
-                                  );
-                          },
-                        ),
-                      ],
-                    ),
-
-                    // =========================
                     // ABOUT US
                     // =========================
                     _drawerTile(
                       context,
-                      icon: Icons.info_outline,
+                      assetIcon: "assets/aboutus.png",
                       title: "About us",
                       onTap: () {
                         Navigator.of(context).push(
@@ -244,7 +120,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     // =========================
                     _drawerTile(
                       context,
-                      icon: Icons.call_outlined,
+                      assetIcon: "assets/contactus.png",
                       title: "Contact Us",
                       onTap: () {
                         Navigator.of(context).push(
@@ -258,7 +134,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     // =========================
                     _drawerTile(
                       context,
-                      icon: Icons.help_outline,
+                      assetIcon: "assets/faq.png",
                       title: "FAQ",
                       onTap: () {
                         Navigator.of(
@@ -272,7 +148,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     // =========================
                     _drawerTile(
                       context,
-                      icon: Icons.privacy_tip_outlined,
+                      assetIcon: "assets/privacy.png",
                       title: "Privacy & More",
                       onTap: () {
                         Navigator.of(context).push(
@@ -288,7 +164,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     // =========================
                     _drawerTile(
                       context,
-                      icon: Icons.star_border,
+                      assetIcon: "assets/testimonial.png",
                       title: "Testimonial",
                       onTap: () {
                         Navigator.of(context).push(
@@ -296,6 +172,157 @@ class _CustomDrawerState extends State<CustomDrawer> {
                         );
                       },
                     ),
+
+                    // =========================
+                    // JSC DROPDOWN
+                    // =========================
+                    _drawerExpansionTile(
+                      assetIcon: "assets/jsc_icon.png",
+                      title: "Invest Gold & Silver",
+                      isExpanded: isJscExpanded,
+                      onExpansionChanged: (value) {
+                        setState(() {
+                          isJscExpanded = value;
+
+                          // Close GSP when JSC opens
+                          if (value) {
+                            isGspExpanded = false;
+                          }
+                        });
+                      },
+                      children: [
+                        _subMenuTile(
+                          title: "JSC",
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => JscScreen()),
+                            );
+                          },
+                        ),
+                        _subMenuTile(
+                          title: "GSP",
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => GspScreen()),
+                            );
+                          },
+                        ),
+                        // _subMenuTile(
+                        //   title: "Bullion Dashboard",
+                        //   onTap: () {
+                        //     Navigator.of(context).push(
+                        //       MaterialPageRoute(
+                        //         builder: (_) => JscDashboardScreen(),
+                        //       ),
+                        //     );
+                        //   },
+                        // ),
+                        // _subMenuTile(
+                        //   title: "Future With JSC",
+                        //   onTap: () {
+                        //     Navigator.of(context).push(
+                        //       MaterialPageRoute(builder: (_) => JscScreen()),
+                        //     );
+                        //   },
+                        // ),
+                        // _subMenuTile(
+                        //   title: "JSC Application Form",
+                        //   onTap: () {
+                        //     hasJscRegistration
+                        //         ? Navigator.push(
+                        //             context,
+                        //             MaterialPageRoute(
+                        //               builder: (_) => const ApplicationForm(
+                        //                 isEdit: true,
+                        //                 applicationType: 'JSC',
+                        //               ),
+                        //             ),
+                        //           )
+                        //         : Navigator.push(
+                        //             context,
+                        //             MaterialPageRoute(
+                        //               builder: (_) => ApplicationForm(
+                        //                 applicationType: 'JSC',
+                        //               ),
+                        //             ),
+                        //           );
+                        //   },
+                        // ),
+                      ],
+                    ),
+
+                    _drawerTile(
+                      context,
+                      assetIcon: "assets/testimonial.png",
+                      title: "Brands",
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => ReviewsScreen()),
+                        );
+                      },
+                    ),
+
+                    // =========================
+                    // GSP DROPDOWN
+                    // =========================
+                    // _drawerExpansionTile(
+                    //   assetIcon: "assets/gsp_icon.png",
+                    //   title: "GSP",
+                    //   isExpanded: isGspExpanded,
+                    //   onExpansionChanged: (value) {
+                    //     setState(() {
+                    //       isGspExpanded = value;
+
+                    //       // Close JSC when GSP opens
+                    //       if (value) {
+                    //         isJscExpanded = false;
+                    //       }
+                    //     });
+                    //   },
+                    //   children: [
+                    //     _subMenuTile(
+                    //       title: "GSP Dashboard",
+                    //       onTap: () {
+                    //         Navigator.of(context).push(
+                    //           MaterialPageRoute(
+                    //             builder: (_) => GspDashboardScreen(),
+                    //           ),
+                    //         );
+                    //       },
+                    //     ),
+                    //     _subMenuTile(
+                    //       title: "Know More About GSP",
+                    //       onTap: () {
+                    //         Navigator.of(context).push(
+                    //           MaterialPageRoute(builder: (_) => GspScreen()),
+                    //         );
+                    //       },
+                    //     ),
+                    //     _subMenuTile(
+                    //       title: "GSP Application Form",
+                    //       onTap: () {
+                    //         hasGspRegistration
+                    //             ? Navigator.push(
+                    //                 context,
+                    //                 MaterialPageRoute(
+                    //                   builder: (_) => const ApplicationForm(
+                    //                     isEdit: true,
+                    //                     applicationType: 'GSP',
+                    //                   ),
+                    //                 ),
+                    //               )
+                    //             : Navigator.push(
+                    //                 context,
+                    //                 MaterialPageRoute(
+                    //                   builder: (_) => ApplicationForm(
+                    //                     applicationType: 'GSP',
+                    //                   ),
+                    //                 ),
+                    //               );
+                    //       },
+                    //     ),
+                    //   ],
+                    // ),
 
                     // const SizedBox(height: 15),
 
@@ -312,12 +339,12 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        color: const Color.fromRGBO(153, 30, 30, 1),
+                        gradient: AppColors.BgGradient,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
-                        children: const [
-                          Icon(Icons.location_on, color: accentGold, size: 34),
+                        children: [
+                          Image.asset("assets/Address.png"),
                           SizedBox(height: 12),
                           TranslatedText(
                             "10 Anson Road\n"
@@ -331,13 +358,27 @@ class _CustomDrawerState extends State<CustomDrawer> {
                             ),
                           ),
                           SizedBox(height: 20),
-                          Icon(Icons.phone, color: accentGold),
-                          SizedBox(height: 8),
-                          TranslatedText(
-                            "+65 83125775",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
+                          Container(
+                            color: AppColors.mustard,
+                            // decoration: BoxDecoration(
+                            //   borderRadius: BorderRadius.circular(5),
+                            // ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.phone, color: accentGold),
+                                  SizedBox(height: 8),
+                                  TranslatedText(
+                                    "+65 83125775",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -346,19 +387,25 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
                     const SizedBox(height: 30),
 
-                    const TranslatedText(
-                      "Connect with Us",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Divider(thickness: 2, color: Colors.yellow),
+                        const TranslatedText(
+                          "Connect with Us",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Divider(thickness: 2, color: Colors.yellow),
+                      ],
                     ),
 
-                    const SizedBox(height: 8),
+                    // const SizedBox(height: 8),
 
-                    Container(height: 1, color: accentGold),
-
+                    // Container(height: 1, color: accentGold),
                     const SizedBox(height: 18),
 
                     Row(
@@ -392,6 +439,84 @@ class _CustomDrawerState extends State<CustomDrawer> {
   // EXPANSION TILE - JSC / GSP
   // ============================================================
 
+  // Widget _buildCurrencySelector(BuildContext context) {
+  //   const List<String> currencies = [
+  //     'USD',
+  //     'SGD',
+  //     'CAD',
+  //     'INR',
+  //     'EUR',
+  //     'AED',
+  //     'CNY',
+  //   ];
+
+  //   return Consumer<CurrencyProvider>(
+  //     builder: (context, currencyProvider, child) {
+  //       return Row(
+  //         children: [
+  //           Image.asset("assets/currency.png", height: 24, width: 24),
+
+  //           const SizedBox(width: 17),
+
+  //           const Expanded(
+  //             child: TranslatedText(
+  //               'Currency',
+  //               style: TextStyle(
+  //                 color: Colors.white,
+  //                 fontSize: 16,
+  //                 fontWeight: FontWeight.w500,
+  //               ),
+  //             ),
+  //           ),
+
+  //           Container(
+  //             height: 38,
+  //             padding: const EdgeInsets.symmetric(horizontal: 8),
+  //             decoration: BoxDecoration(
+  //               color: Colors.white,
+  //               borderRadius: BorderRadius.circular(6),
+  //             ),
+  //             child: DropdownButtonHideUnderline(
+  //               child: DropdownButton<String>(
+  //                 value: currencies.contains(currencyProvider.selectedCurrency)
+  //                     ? currencyProvider.selectedCurrency
+  //                     : currencies.first,
+
+  //                 icon: const Icon(
+  //                   Icons.keyboard_arrow_down,
+  //                   color: Colors.grey,
+  //                   size: 20,
+  //                 ),
+
+  //                 style: const TextStyle(
+  //                   color: Colors.black,
+  //                   fontSize: 13,
+  //                   fontWeight: FontWeight.w600,
+  //                 ),
+
+  //                 onChanged: (String? value) {
+  //                   if (value != null) {
+  //                     currencyProvider.changeCurrency(value);
+
+  //                     debugPrint('Currency changed to: $value');
+  //                   }
+  //                 },
+
+  //                 items: currencies.map((currency) {
+  //                   return DropdownMenuItem<String>(
+  //                     value: currency,
+  //                     child: Text(currency),
+  //                   );
+  //                 }).toList(),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
   Widget _buildCurrencySelector(BuildContext context) {
     const List<String> currencies = [
       'USD',
@@ -405,77 +530,33 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
     return Consumer<CurrencyProvider>(
       builder: (context, currencyProvider, child) {
-        return Padding(
-          padding: const EdgeInsets.only(left: 6.0),
-          child: Row(
-            children: [
-              const Icon(Icons.currency_exchange, color: accentGold, size: 20),
+        return _drawerExpansionTile(
+          assetIcon: "assets/currency.png",
+          title: "Currency",
+          isExpanded: false,
+          onExpansionChanged: (value) {
+            // handle expansion if needed
+          },
+          children: currencies.map((currency) {
+            return _subMenuTile(
+              title: currency,
+              onTap: () {
+                currencyProvider.changeCurrency(currency);
 
-              const SizedBox(width: 15),
+                Navigator.pop(context);
 
-              const Expanded(
-                child: TranslatedText(
-                  'Currency',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-
-              Container(
-                height: 38,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value:
-                        currencies.contains(currencyProvider.selectedCurrency)
-                        ? currencyProvider.selectedCurrency
-                        : currencies.first,
-
-                    icon: const Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.grey,
-                      size: 20,
-                    ),
-
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-
-                    onChanged: (String? value) {
-                      if (value != null) {
-                        currencyProvider.changeCurrency(value);
-
-                        debugPrint('Currency changed to: $value');
-                      }
-                    },
-
-                    items: currencies.map((currency) {
-                      return DropdownMenuItem<String>(
-                        value: currency,
-                        child: Text(currency),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ],
-          ),
+                debugPrint('Currency changed to: $currency');
+              },
+            );
+          }).toList(),
         );
       },
     );
   }
 
   Widget _drawerExpansionTile({
-    required IconData icon,
+    IconData? icon,
+    String? assetIcon,
     required String title,
     required bool isExpanded,
     required ValueChanged<bool> onExpansionChanged,
@@ -488,8 +569,28 @@ class _CustomDrawerState extends State<CustomDrawer> {
         initiallyExpanded: isExpanded,
         onExpansionChanged: onExpansionChanged,
 
-        leading: Icon(icon, color: accentGold),
+        // =========================
+        // LEADING ICON / ASSET
+        // =========================
+        leading: assetIcon != null
+            ? Image.asset(
+                assetIcon,
+                width: 25,
+                height: 25,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.image_not_supported_outlined,
+                    color: accentGold,
+                    size: 25,
+                  );
+                },
+              )
+            : Icon(icon, color: accentGold, size: 25),
 
+        // =========================
+        // TITLE
+        // =========================
         title: TranslatedText(
           title,
           style: const TextStyle(
@@ -499,6 +600,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
           ),
         ),
 
+        // =========================
+        // ARROW
+        // =========================
         trailing: Icon(
           isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
           color: accentGold,
@@ -554,14 +658,29 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
   Widget _drawerTile(
     BuildContext context, {
-    required IconData icon,
+    IconData? icon,
+    String? assetIcon,
     required String title,
     required VoidCallback onTap,
   }) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
 
-      leading: Icon(icon, color: accentGold),
+      leading: assetIcon != null
+          ? Image.asset(
+              assetIcon,
+              width: 24,
+              height: 24,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(
+                  Icons.image_not_supported_outlined,
+                  color: accentGold,
+                  size: 24,
+                );
+              },
+            )
+          : Icon(icon, color: accentGold, size: 24),
 
       title: TranslatedText(
         title,

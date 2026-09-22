@@ -187,29 +187,66 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
     final String goldPriceText = _getPrice('gold');
     final String silverPriceText = _getPrice('silver');
 
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-        decoration: BoxDecoration(
-          color: AppColors.primaryRed,
-          borderRadius: BorderRadius.circular(16.0),
-        ),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(gradient: AppColors.BgGradient),
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ==========================================
+            // SPOT PRICE HEADER
+            // ==========================================
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const TranslatedText(
+                  'Spot price',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24.0,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.pink,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    "Real-Time Feed",
+                    style: TextStyle(
+                      color: AppColors.primaryRed,
+                      fontSize: 11.0,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 3),
+
             const TranslatedText(
-              'Live spot price',
-              textAlign: TextAlign.center,
+              'Live precious metals prices',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 26.0,
-                fontWeight: FontWeight.bold,
+                fontSize: 16.0,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 20.0),
 
+            const SizedBox(height: 20),
+
+            // ==========================================
+            // GOLD + SILVER PRICE CARDS
+            // ==========================================
             Row(
               children: [
                 Expanded(
@@ -218,7 +255,9 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                     priceText: goldPriceText,
                   ),
                 ),
-                const SizedBox(width: 16.0),
+
+                const SizedBox(width: 14),
+
                 Expanded(
                   child: _buildPriceBadge(
                     metalName: 'Silver',
@@ -227,46 +266,65 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                 ),
               ],
             ),
-            const SizedBox(height: 18.0),
 
-            // Currency Dropdown
-            _buildDropdownContainer(
-              value: widget.selectedCurrency,
-              items: currencies,
-              onChanged: (val) {
-                if (val != null) {
-                  widget.onSelectionChanged(val, widget.selectedUnit);
-                }
-              },
-            ),
-            const SizedBox(height: 12.0),
+            const SizedBox(height: 17),
 
-            // Unit Dropdown
-            _buildDropdownContainer(
-              value: widget.selectedUnit,
-              items: units,
-              onChanged: (val) {
-                if (val != null) {
-                  widget.onSelectionChanged(widget.selectedCurrency, val);
-                }
-              },
-            ),
-            const SizedBox(height: 20.0),
-
-            Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () {},
-                child: const TranslatedText(
-                  'Marketing Trend',
-                  style: TextStyle(
-                    color: lightGoldText,
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.bold,
+            // ==========================================
+            // CURRENCY + UNIT DROPDOWNS
+            // ==========================================
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDropdownContainer(
+                    icon: Icons.attach_money,
+                    label: 'Currency',
+                    value: widget.selectedCurrency,
+                    items: currencies,
+                    onChanged: (val) {
+                      if (val != null) {
+                        widget.onSelectionChanged(val, widget.selectedUnit);
+                      }
+                    },
                   ),
                 ),
-              ),
+
+                const SizedBox(width: 13),
+
+                Expanded(
+                  child: _buildDropdownContainer(
+                    icon: Icons.balance,
+                    label: 'Unit',
+                    value: widget.selectedUnit,
+                    items: units,
+                    onChanged: (val) {
+                      if (val != null) {
+                        widget.onSelectionChanged(widget.selectedCurrency, val);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
+
+            const SizedBox(height: 20),
+
+            // ==========================================
+            // MARKETING TREND
+            // ==========================================
+            // Align(
+            //   alignment: Alignment.centerRight,
+            //   child: GestureDetector(
+            //     onTap: () {},
+            //     child: const TranslatedText(
+            //       'Marketing Trend',
+            //       style: TextStyle(
+            //         color: lightGoldText,
+            //         fontSize: 16.0,
+            //         fontWeight: FontWeight.bold,
+            //       ),
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -277,78 +335,146 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
     required String metalName,
     required String priceText,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TranslatedText(
-          metalName,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18.0,
-            fontWeight: FontWeight.bold,
-          ),
+    final bool isGold = metalName.toLowerCase() == 'gold';
+
+    return Container(
+      height: 130,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+      decoration: BoxDecoration(
+        color: const Color(0xFF70282A),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isGold ? AppColors.mustard : Colors.white70,
+          width: 2.2,
         ),
-        const SizedBox(height: 6.0),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
-          decoration: BoxDecoration(
-            color: accentGold,
-            borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Stack(
+        children: [
+          // Main content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              // Metal name
+              TranslatedText(
+                metalName.toUpperCase(),
+                style: TextStyle(
+                  color: isGold ? AppColors.mustard : Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Price
+              Text(
+                priceText,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                ),
+              ),
+
+              const SizedBox(height: 5),
+
+              // Currency / Unit
+              Text(
+                '${widget.selectedCurrency}/${widget.selectedUnit}',
+                style: const TextStyle(
+                  color: AppColors.grey,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-          child: TranslatedText(
-            priceText,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14.0,
+
+          // Gold/Silver indicator
+          Positioned(
+            right: 0,
+            top: 2,
+            child: Container(
+              width: 13,
+              height: 13,
+              decoration: BoxDecoration(
+                color: isGold ? AppColors.mustard : Colors.white,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildDropdownContainer({
+    required IconData icon,
+    required String label,
     required String value,
     required List<String> items,
     required ValueChanged<String?> onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
+      height: 52,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.0),
+        color: const Color(0xFF982628),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 5,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: items.contains(value) ? value : items.first,
-          isExpanded: true,
-          icon: const Icon(
-            Icons.keyboard_arrow_down,
-            color: Color(0xFF1E1035),
-            size: 28,
-          ),
-          style: const TextStyle(
-            color: Colors.black87,
-            fontSize: 15.0,
-            fontWeight: FontWeight.w600,
-          ),
-          onChanged: onChanged,
-          items: items.map<DropdownMenuItem<String>>((String itemValue) {
-            return DropdownMenuItem<String>(
-              value: itemValue,
-              child: TranslatedText(
-                itemValue,
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 15.0,
-                  fontWeight: FontWeight.w600,
-                ),
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Row(
+          children: [
+            // const SizedBox(width: 12),
+            Icon(icon, color: const Color(0xFFD2A900), size: 21),
+
+            // const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
               ),
-            );
-          }).toList(),
+            ),
+
+            const Spacer(),
+
+            DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: items.contains(value) ? value : null,
+                dropdownColor: const Color(0xFF3A2022),
+                icon: const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                ),
+                onChanged: onChanged,
+                items: items.map((item) {
+                  return DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(item),
+                  );
+                }).toList(),
+              ),
+            ),
+
+            // const SizedBox(width: 8),
+          ],
         ),
       ),
     );

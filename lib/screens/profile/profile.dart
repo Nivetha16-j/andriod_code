@@ -69,145 +69,150 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final orders = context.watch<OrdersProvider>().orders;
 
     return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            ProfileHeader(name, email),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppColors.BgGradient),
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              ProfileHeader(name, email),
 
-            const SizedBox(height: 25),
+              const SizedBox(height: 25),
 
-            const TranslatedText(
-              "General",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+              const TranslatedText(
+                "General",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            ProfileMenuTile(
-              icon: Icons.dashboard_outlined,
-              title: "Dashboard",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const DashboardScreen()),
-                );
-              },
-            ),
+              ProfileMenuTile(
+                icon: Icons.dashboard_outlined,
+                title: "Dashboard",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                  );
+                },
+              ),
 
-            ProfileMenuTile(
-              icon: Icons.verified_user_outlined,
-              title: "KYC Verification",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const KycVerificationCard(),
-                  ),
-                );
-              },
-            ),
-
-            ProfileMenuTile(
-              icon: Icons.shopping_cart_outlined,
-              title: "Orders",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const OrderScreen()),
-                );
-              },
-            ),
-
-            // ProfileMenuTile(
-            //   icon: Icons.download,
-            //   title: "Downloads",
-            //   onTap: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(builder: (_) => const DownloadsScreen()),
-            //     );
-            //   },
-            // ),
-            ProfileMenuTile(
-              icon: Icons.location_on_outlined,
-              title: "Addresses",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AddressSection()),
-                );
-              },
-            ),
-
-            // ProfileMenuTile(
-            //   icon: Icons.credit_card,
-            //   title: "Payment Methods",
-            //   onTap: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //         builder: (_) => const PaymentMethodsScreen(),
-            //       ),
-            //     );
-            //   },
-            // ),
-            ProfileMenuTile(
-              icon: Icons.person_outline,
-              title: "Account Details",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AccountDetailsScreen(),
-                  ),
-                );
-              },
-            ),
-
-            ProfileMenuTile(
-              icon: Icons.logout,
-              title: "Logout",
-              onTap: () async {
-                final shouldLogout = await showDialog<bool>(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    backgroundColor: const Color(0xffF7F7F7),
-                    title: const TranslatedText("Log Out"),
-                    content: const TranslatedText(
-                      "Are you sure you want to Log out?",
+              ProfileMenuTile(
+                icon: Icons.verified_user_outlined,
+                title: "KYC Verification",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const KycVerificationCard(),
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const TranslatedText("No"),
+                  );
+                },
+              ),
+
+              ProfileMenuTile(
+                icon: Icons.shopping_cart_outlined,
+                title: "Orders",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const OrderScreen()),
+                  );
+                },
+              ),
+
+              // ProfileMenuTile(
+              //   icon: Icons.download,
+              //   title: "Downloads",
+              //   onTap: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(builder: (_) => const DownloadsScreen()),
+              //     );
+              //   },
+              // ),
+              ProfileMenuTile(
+                icon: Icons.location_on_outlined,
+                title: "Addresses",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddressSection()),
+                  );
+                },
+              ),
+
+              // ProfileMenuTile(
+              //   icon: Icons.credit_card,
+              //   title: "Payment Methods",
+              //   onTap: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(
+              //         builder: (_) => const PaymentMethodsScreen(),
+              //       ),
+              //     );
+              //   },
+              // ),
+              ProfileMenuTile(
+                icon: Icons.person_outline,
+                title: "Account Details",
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AccountDetailsScreen(),
+                    ),
+                  );
+                },
+              ),
+
+              ProfileMenuTile(
+                icon: Icons.logout,
+                title: "Logout",
+                onTap: () async {
+                  final shouldLogout = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      backgroundColor: const Color(0xffF7F7F7),
+                      title: const TranslatedText("Log Out"),
+                      content: const TranslatedText(
+                        "Are you sure you want to Log out?",
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const TranslatedText("Yes"),
-                      ),
-                    ],
-                  ),
-                );
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const TranslatedText("No"),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const TranslatedText("Yes"),
+                        ),
+                      ],
+                    ),
+                  );
 
-                if (shouldLogout == true) {
-                  // context.read<ConvertPhysicalProvider>().clear();
-                  await SessionManager.logout();
+                  if (shouldLogout == true) {
+                    // context.read<ConvertPhysicalProvider>().clear();
+                    await SessionManager.logout();
 
-                  // Reset the in-memory state for all JSC balance sections
-                  balanceUnlockedNotifier.value = false;
+                    // Reset the in-memory state for all JSC balance sections
+                    balanceUnlockedNotifier.value = false;
 
-                  if (context.mounted) {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AppRoutes.login,
-                      (route) => false,
-                    );
+                    if (context.mounted) {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        AppRoutes.login,
+                        (route) => false,
+                      );
+                    }
                   }
-                }
-              },
-            ),
-          ],
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -285,20 +290,34 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const CircleAvatar(radius: 45, child: Icon(Icons.person, size: 45)),
-        const SizedBox(height: 12),
-        TranslatedText(
-          name,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.mustard),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // const CircleAvatar(radius: 45, child: Icon(Icons.person, size: 45)),
+            // const SizedBox(height: 12),
+            TranslatedText(
+              name,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.white,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TranslatedText(
+              email,
+              style: const TextStyle(fontSize: 15, color: AppColors.white),
+            ),
+          ],
         ),
-        const SizedBox(height: 10),
-        TranslatedText(
-          email,
-          style: const TextStyle(fontSize: 15, color: Colors.grey),
-        ),
-      ],
+      ),
     );
   }
 }

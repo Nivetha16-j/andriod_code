@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/recently_viewed_service.dart';
 import 'package:junubullion/services/search_service.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -16,7 +17,8 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController searchController = TextEditingController();
-  final ScrollController _recentlyViewedController = ScrollController();
+  final PageController _recentlyViewedController = PageController();
+  int _recentlyViewedPage = 0;
 
   List<dynamic> searchResults = [];
   List<Map<String, dynamic>> recentlyViewed = [];
@@ -111,9 +113,45 @@ class _SearchScreenState extends State<SearchScreen> {
               },
               decoration: InputDecoration(
                 hint: const TranslatedText('Search products'),
-                suffixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
+
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppColors.primaryRed,
+                ),
+
+                // Background color
+                filled: true,
+                fillColor: AppColors.offWhite,
+
+                // Normal border
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryRed,
+                    width: 1,
+                  ),
+                ),
+                suffixIcon: searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () {
+                          searchController.clear();
+
+                          setState(() {
+                            searchResults = [];
+                            isLoading = false;
+                          });
+                        },
+                      )
+                    : null,
+
+                // Border when TextField is focused
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryRed,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -197,8 +235,8 @@ class _SearchScreenState extends State<SearchScreen> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -206,12 +244,18 @@ class _SearchScreenState extends State<SearchScreen> {
                   Flexible(
                     child: InkWell(
                       onTap: () {
-                        if (!_recentlyViewedController.hasClients) {
-                          return;
+                        if (recentlyViewed.length <= 2) return;
+
+                        final totalPages = (recentlyViewed.length / 2).ceil();
+
+                        int nextPage = _recentlyViewedPage + 1;
+
+                        if (nextPage >= totalPages) {
+                          nextPage = 0;
                         }
 
-                        _recentlyViewedController.animateTo(
-                          _recentlyViewedController.position.maxScrollExtent,
+                        _recentlyViewedController.animateToPage(
+                          nextPage,
                           duration: const Duration(milliseconds: 500),
                           curve: Curves.easeInOut,
                         );
@@ -221,7 +265,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue,
+                          color: AppColors.primaryRed,
                         ),
                       ),
                     ),
@@ -233,96 +277,78 @@ class _SearchScreenState extends State<SearchScreen> {
 
               /// RECENTLY VIEWED PRODUCTS
               SizedBox(
-                height: 140,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
+                height: 170,
+                child: PageView.builder(
                   controller: _recentlyViewedController,
-                  itemCount: recentlyViewed.length,
-                  itemBuilder: (context, index) {
-                    final product = recentlyViewed[index];
+                  itemCount: (recentlyViewed.length / 2).ceil(),
+                  onPageChanged: (page) {
+                    setState(() {
+                      _recentlyViewedPage = page;
+                    });
+                  },
+                  itemBuilder: (context, pageIndex) {
+                    final int firstIndex = pageIndex * 2;
 
-                    log("PPPPPP ---- $product");
+                    final int secondIndex = firstIndex + 1;
+                    log("recentlyViewed $recentlyViewed");
 
-                    return Stack(
+                    return Row(
                       children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ProductDetailsScreen(
-                                  productId: product["id"],
-                                ),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: 110,
-                            margin: const EdgeInsets.only(right: 12, top: 8),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: Column(
-                              children: [
-                                /// Product Image
-                                SizedBox(
-                                  height: 85,
-                                  width: 110,
-                                  child: ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(12),
-                                    ),
-                                    child: Image.network(
-                                      "https://staging.junubullion.com/storage/${product["image_path"]}",
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (_, __, ___) {
-                                        return const Icon(Icons.image);
-                                      },
-                                    ),
+                        // =========================
+                        // FIRST PRODUCT
+                        // =========================
+                        Expanded(
+                          child: _RecentlyViewedCard(
+                            product: recentlyViewed[firstIndex],
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ProductDetailsScreen(
+                                    productId: recentlyViewed[firstIndex]["id"],
                                   ),
                                 ),
-
-                                /// Product Name
-                                Expanded(
-                                  child: TranslatedText(
-                                    product["name"]?.toString() ?? "",
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        /// Close Button
-                        Positioned(
-                          top: 0,
-                          right: 4,
-                          child: InkWell(
-                            onTap: () async {
+                              );
+                            },
+                            onRemove: () async {
                               await RecentlyViewedService.removeProduct(
-                                product["id"],
+                                recentlyViewed[firstIndex]["id"],
                               );
 
                               await loadRecentlyViewed();
                             },
-                            child: Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                size: 16,
-                                color: Colors.black54,
-                              ),
-                            ),
                           ),
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        // =========================
+                        // SECOND PRODUCT
+                        // =========================
+                        Expanded(
+                          child: secondIndex < recentlyViewed.length
+                              ? _RecentlyViewedCard(
+                                  product: recentlyViewed[secondIndex],
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ProductDetailsScreen(
+                                          productId:
+                                              recentlyViewed[secondIndex]["id"],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  onRemove: () async {
+                                    await RecentlyViewedService.removeProduct(
+                                      recentlyViewed[secondIndex]["id"],
+                                    );
+
+                                    await loadRecentlyViewed();
+                                  },
+                                )
+                              : const SizedBox(),
                         ),
                       ],
                     );
@@ -332,6 +358,120 @@ class _SearchScreenState extends State<SearchScreen> {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RecentlyViewedCard extends StatelessWidget {
+  final Map<String, dynamic> product;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  const _RecentlyViewedCard({
+    required this.product,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: double.infinity,
+            height: 300,
+            decoration: BoxDecoration(
+              gradient: AppColors.BgGradient,
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // =========================
+                  // PRODUCT IMAGE
+                  // =========================
+                  SizedBox(
+                    height: 85,
+                    width: double.infinity,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(8),
+                      ),
+                      child: Image.network(
+                        "https://staging.junubullion.com/storage/${product["image_path"]}",
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) {
+                          return const Icon(
+                            Icons.image,
+                            size: 35,
+                            color: Colors.grey,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+
+                  // =========================
+                  // PRODUCT NAME
+                  // =========================
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TranslatedText(
+                      product["live_price"]?.toString() ?? "",
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.mustard,
+                      ),
+                    ),
+                  ),
+                  TranslatedText(
+                    product["name"]?.toString() ?? "",
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // =========================
+          // CLOSE BUTTON
+          // =========================
+          Positioned(
+            top: -7,
+            right: -5,
+            child: InkWell(
+              onTap: onRemove,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  // border: Border.all(color: AppColors.red),
+                ),
+                child: const Icon(Icons.close, size: 14, color: AppColors.red),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

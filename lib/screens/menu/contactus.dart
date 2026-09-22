@@ -29,6 +29,8 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
   int _currentIndex = 0;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
+  bool _showMap = false;
+
   @override
   void dispose() {
     firstName.dispose();
@@ -115,251 +117,583 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              color: AppColors.sandal,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const TranslatedText(
-                      "Contact Us",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+      body: Stack(
+        children: [
+          // ============================================================
+          // BACKGROUND - 75% GRADIENT + 25% WHITE
+          // ============================================================
+          Positioned.fill(
+            child: Column(
+              children: [
+                // --------------------------------------------------------
+                // TOP 75% - GRADIENT
+                // --------------------------------------------------------
+                SizedBox(
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height * 0.50,
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(gradient: AppColors.BgGradient),
+                  ),
+                ),
 
-                    const SizedBox(height: 10),
+                // --------------------------------------------------------
+                // BOTTOM 25% - WHITE
+                // --------------------------------------------------------
+                Expanded(
+                  child: Container(width: double.infinity, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
 
-                    const TranslatedText(
-                      "If you have any questions about our products, shipping, or any other details, feel free to contact us.",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(.08),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const TranslatedText(
-                            "Get in Touch",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-
-                          const SizedBox(height: 5),
-
-                          const TranslatedText(
-                            "You can reach us anytime",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey,
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          _field(controller: firstName, hint: "First name"),
-
-                          const SizedBox(height: 12),
-
-                          _field(controller: lastName, hint: "Last name"),
-
-                          const SizedBox(height: 12),
-
-                          _field(controller: email, hint: "Your email"),
-
-                          const SizedBox(height: 12),
-
-                          _field(
-                            controller: message,
-                            hint: "How can we help you?",
-                            maxLines: 5,
-                          ),
-
-                          const SizedBox(height: 22),
-
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryRed,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : _submitContactForm,
-                              child: const TranslatedText(
-                                "Submit",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                ),
+          // ============================================================
+          // SCROLLABLE CONTENT
+          // ============================================================
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                // ========================================================
+                // CONTACT HERO SECTION
+                // ========================================================
+                Container(
+                  width: double.infinity,
+                  color: Colors.transparent,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ==================================================
+                      // HERO IMAGE + OVERLAY CONTENT
+                      // ==================================================
+                      SizedBox(
+                        height: 250,
+                        child: Stack(
+                          children: [
+                            // ------------------------------------------------
+                            // BACKGROUND IMAGE
+                            // ------------------------------------------------
+                            Positioned.fill(
+                              child: Image.asset(
+                                "assets/contact.png",
+                                fit: BoxFit.cover,
                               ),
                             ),
+
+                            // ------------------------------------------------
+                            // RED OVERLAY
+                            // ------------------------------------------------
+                            Positioned.fill(
+                              child: Container(
+                                color: AppColors.primaryRed.withOpacity(0.55),
+                              ),
+                            ),
+
+                            // ------------------------------------------------
+                            // CONTACT US + CALL + EMAIL
+                            // ------------------------------------------------
+                            Positioned.fill(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // CONTACT US
+                                  const TranslatedText(
+                                    "CONTACT US",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 35),
+
+                                  // CALL + EMAIL
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        // ==================================================
+                                        // CALL US
+                                        // ==================================================
+                                        Expanded(
+                                          child: Container(
+                                            height: 52,
+                                            margin: const EdgeInsets.only(
+                                              right: 5,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primaryRed
+                                                  .withOpacity(0.55),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: AppColors.mustard
+                                                    .withOpacity(0.6),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                const TranslatedText(
+                                                  "CALL US",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 5),
+
+                                                const TranslatedText(
+                                                  "9947532323",
+                                                  style: TextStyle(
+                                                    color: AppColors.yellow,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+
+                                        // ==================================================
+                                        // EMAIL US
+                                        // ==================================================
+                                        Expanded(
+                                          child: Container(
+                                            height: 52,
+                                            margin: const EdgeInsets.only(
+                                              left: 5,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primaryRed
+                                                  .withOpacity(0.55),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: AppColors.mustard
+                                                    .withOpacity(0.6),
+                                                width: 1,
+                                              ),
+                                            ),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                const TranslatedText(
+                                                  "EMAIL US",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 5),
+
+                                                const TranslatedText(
+                                                  "info@junubullion.com",
+                                                  style: TextStyle(
+                                                    color: AppColors.yellow,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // ==================================================
+                      // LET'S GET IN TOUCH
+                      // ==================================================
+                      const SizedBox(height: 12),
+
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: 14.0,
+                          top: 8,
+                          bottom: 8,
+                        ),
+                        child: const TranslatedText(
+                          "Let's Get in Touch",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
-                        ],
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 9),
 
-                    _contactRow(Icons.email, "customer@junubullion.com"),
+                      // ==================================================
+                      // CONTACT / MAP SECTION
+                      // ==================================================
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.symmetric(horizontal: 10),
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 18),
+                        decoration: BoxDecoration(
+                          gradient: AppColors.BgGradient,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ==================================================
+                            // CONTACT + MAP BUTTONS
+                            // ==================================================
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                // ------------------------------------------------
+                                // CONTACT BUTTON
+                                // ------------------------------------------------
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _showMap = false;
+                                    });
+                                  },
+                                  child: Container(
+                                    width: 44,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: Image.asset(
+                                      "assets/email.png",
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
 
-                    const SizedBox(height: 18),
+                                // ------------------------------------------------
+                                // MAP BUTTON
+                                // ------------------------------------------------
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _showMap = true;
+                                    });
+                                  },
+                                  child: Container(
+                                    width: 44,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: Image.asset(
+                                      "assets/location.png",
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
 
-                    _contactRow(Icons.call, "+65 83125775"),
+                            const SizedBox(height: 8),
 
-                    const SizedBox(height: 30),
-
-                    const TranslatedText(
-                      "Customer Support",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
+                            // ==================================================
+                            // FORM / MAP SWITCH
+                            // ==================================================
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              transitionBuilder:
+                                  (Widget child, Animation<double> animation) {
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: child,
+                                    );
+                                  },
+                              child: _showMap
+                                  ? _buildMapSection()
+                                  : _buildContactFormSection(),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 8),
-
-                    const TranslatedText(
-                      "Our support team is available around the clock to address any concerns or queries you may have.",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    const TranslatedText(
-                      "Feedback and Suggestions",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const TranslatedText(
-                      "We value your feedback and are continuously working to improve Snappy.",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    const TranslatedText(
-                      "Media Inquiries",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const TranslatedText(
-                      "For media-related questions or press inquiries, please contact us.",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            const TranslatedText(
-              "Our Location",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-
-            const SizedBox(height: 15),
-
-            Image.asset("assets/map.png"),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryRed,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 14,
-                    horizontal: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                onPressed: () async {
-                  final uri = Uri.parse(
-                    "https://maps.app.goo.gl/NUTETVZUYKVcRAoM7",
-                  );
-
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                },
-                icon: const Icon(Icons.location_on, color: Colors.white),
-                label: const TranslatedText(
-                  "Open in Google Maps",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
-              ),
+              ],
             ),
-
-            const SizedBox(height: 20),
-
-            const TranslatedText(
-              "Our Shopfront Your Destination for Precious Metals!!",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-
-            const SizedBox(height: 15),
-
-            Image.asset("assets/shop_image.png"),
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _switchToTab,
       ),
+    );
+  }
+
+  Widget _buildContactForm() {
+    return Column(
+      key: const ValueKey("contactForm"),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 30),
+
+        _field(controller: firstName, hint: "First name"),
+
+        const SizedBox(height: 12),
+
+        _field(controller: lastName, hint: "Last name"),
+
+        const SizedBox(height: 12),
+
+        _field(controller: email, hint: "Your email"),
+
+        const SizedBox(height: 12),
+
+        _field(controller: message, hint: "How can we help you?", maxLines: 5),
+
+        const SizedBox(height: 22),
+
+        SizedBox(
+          width: double.infinity,
+          height: 45,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryRed,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: _isSubmitting ? null : _submitContactForm,
+            child: const TranslatedText(
+              "Submit",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Widget _buildContactFormSection() {
+    return Column(
+      key: const ValueKey("contact_form"),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 30),
+
+        const TranslatedText(
+          "YOU CAN REACH US ANYTIME",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 8,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        _contactField(controller: firstName, hint: "First name"),
+
+        const SizedBox(height: 10),
+
+        _contactField(controller: lastName, hint: "Last name"),
+
+        const SizedBox(height: 10),
+
+        _contactField(controller: email, hint: "Your email"),
+
+        const SizedBox(height: 10),
+
+        _contactField(
+          controller: message,
+          hint: "How can we help you?",
+          maxLines: 4,
+        ),
+
+        const SizedBox(height: 12),
+
+        SizedBox(
+          width: double.infinity,
+          height: 40,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryRed,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: _isSubmitting ? null : _submitContactForm,
+            child: const TranslatedText(
+              "Submit",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _contactField({
+    required TextEditingController controller,
+    required String hint,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      style: const TextStyle(color: Colors.white, fontSize: 10),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 9),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(
+            color: Colors.white.withOpacity(0.55),
+            width: 0.8,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.yellow, width: 1),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapSection() {
+    return Column(
+      key: const ValueKey("map_section"),
+      children: [
+        const SizedBox(height: 8),
+
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            "assets/map.png",
+            width: double.infinity,
+            height: 185,
+            fit: BoxFit.cover,
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        SizedBox(
+          width: double.infinity,
+          height: 40,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryRed,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () async {
+              final uri = Uri.parse(
+                "https://maps.app.goo.gl/NUTETVZUYKVcRAoM7",
+              );
+
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+            icon: const Icon(Icons.location_on, color: Colors.white, size: 18),
+            label: const TranslatedText(
+              "Open in Google Maps",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMapContent() {
+    return Column(
+      key: const ValueKey("map"),
+      children: [
+        const SizedBox(height: 8),
+
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            "assets/map.png",
+            width: double.infinity,
+            height: 185,
+            fit: BoxFit.cover,
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        SizedBox(
+          width: double.infinity,
+          height: 42,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryRed,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () async {
+              final uri = Uri.parse(
+                "https://maps.app.goo.gl/NUTETVZUYKVcRAoM7",
+              );
+
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            },
+            icon: const Icon(Icons.location_on, color: Colors.white, size: 20),
+            label: const TranslatedText(
+              "Open in Google Maps",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 10),
+      ],
     );
   }
 

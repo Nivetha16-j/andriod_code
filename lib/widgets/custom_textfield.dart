@@ -35,9 +35,9 @@ class CustomTextField extends StatelessWidget {
           text: TextSpan(
             text: label,
             style: const TextStyle(
-              fontSize: 17,
+              fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: Colors.black,
+              color: AppColors.white,
             ),
             children: const [
               TextSpan(
@@ -48,7 +48,7 @@ class CustomTextField extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 10),
 
         // Text Field
         TextFormField(
@@ -56,11 +56,15 @@ class CustomTextField extends StatelessWidget {
           validator: validator,
           keyboardType: keyboardType,
           obscureText: obscureText,
-          cursorColor: Colors.black,
+          cursorColor: AppColors.black,
           maxLength: maxLength,
+
           style: const TextStyle(fontSize: 13),
           decoration: InputDecoration(
             hintText: hintText,
+            hintStyle: TextStyle(color: AppColors.black),
+            filled: true,
+            fillColor: AppColors.lightRed,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 13,
               vertical: 13,
@@ -69,18 +73,18 @@ class CustomTextField extends StatelessWidget {
             suffixIcon: suffixIcon,
 
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: Color(0xffE1D5D5)),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.lightRed),
             ),
 
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: Color(0xffE1D5D5)),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.lightRed),
             ),
 
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: AppColors.primaryRed),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.lightRed),
             ),
           ),
         ),

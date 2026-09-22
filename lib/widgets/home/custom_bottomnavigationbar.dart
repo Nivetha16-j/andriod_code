@@ -116,6 +116,13 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 isSelected: currentIndex == 4,
                 onTap: () => onTap(4),
               ),
+
+              // Index 5: Balances
+              _NavItem(
+                icon: Image.asset('assets/balance.png', height: 24),
+                isSelected: currentIndex == 5,
+                onTap: () => onTap(5),
+              ),
             ],
           ),
         ),

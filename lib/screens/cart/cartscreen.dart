@@ -283,13 +283,23 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xffF7F7F7),
-      body: Consumer2<CartProvider, PhysicalConversionProvider>(
-        builder: (context, cartProvider, physicalProvider, child) {
-          return _buildCartScreen(cartProvider, physicalProvider);
-        },
-      ),
+    return Consumer2<CartProvider, PhysicalConversionProvider>(
+      builder: (context, cartProvider, physicalProvider, child) {
+        final bool hasItems = cartProvider.cartItems.isNotEmpty;
+
+        return Scaffold(
+          backgroundColor: hasItems ? Colors.white : null,
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: hasItems
+                ? null
+                : const BoxDecoration(gradient: AppColors.BgGradient),
+
+            child: _buildCartScreen(cartProvider, physicalProvider),
+          ),
+        );
+      },
     );
   }
 
@@ -298,94 +308,72 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
     PhysicalConversionProvider physicalProvider,
   ) {
     final bool isPhysicalActive = physicalProvider.isActive;
-
     final bool hasItems = cartProvider.cartItems.isNotEmpty;
 
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (isPhysicalActive) ...[
-            _buildPhysicalConversionHeader(physicalProvider),
-            const SizedBox(height: 20),
-          ],
+      child: hasItems
+          ? ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (isPhysicalActive) ...[
+                  _buildPhysicalConversionHeader(physicalProvider),
+                  const SizedBox(height: 20),
+                ],
 
-          const TranslatedText(
-            'Your cart',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-          ),
+                _buildCartProducts(cartProvider, isPhysicalActive),
 
-          const SizedBox(height: 15),
+                const SizedBox(height: 30),
 
-          if (!hasItems)
-            _buildEmptyCart()
-          else
-            _buildCartProducts(cartProvider, isPhysicalActive),
+                _buildCouponSection(provider: cartProvider),
 
-          if (hasItems) ...[
-            const SizedBox(height: 30),
+                if (_shouldShowDeliveryMethod(cartProvider)) ...[
+                  const SizedBox(height: 20),
+                  const DeliveryMethodWidget(),
+                ],
 
-            const TranslatedText(
-              'Cart Summary',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                const SizedBox(height: 20),
+
+                SummaryWidget(
+                  subtotal: isPhysicalActive
+                      ? '0.00'
+                      : cartProvider.formattedSubtotal,
+                  courier_fee: isPhysicalActive
+                      ? '0.00'
+                      : cartProvider.formattedCourierFee,
+                  transaction_fee: isPhysicalActive
+                      ? '0.00'
+                      : cartProvider.formattedTransactionFee,
+                  total: isPhysicalActive
+                      ? '0.00'
+                      : cartProvider.formattedOrderTotal,
+                  deliveryMethod: isPhysicalActive
+                      ? 'Standard'
+                      : cartProvider.selectedDeliveryMethod,
+                  coupon: cartProvider.coupon,
+                  discount: isPhysicalActive
+                      ? '0.00'
+                      : cartProvider.formattedDiscount,
+                  discountPrice: isPhysicalActive
+                      ? '0.00'
+                      : cartProvider.formattedDiscountPrice,
+                  gst: isPhysicalActive ? '0.00' : cartProvider.formattedGST,
+                  currency: cartProvider.currency,
+                  isPhysicalActive: isPhysicalActive,
+                ),
+              ],
+            )
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Show physical conversion status even when cart is empty
+                if (isPhysicalActive) ...[
+                  _buildPhysicalConversionHeader(physicalProvider),
+                  const SizedBox(height: 30),
+                ],
+
+                _buildEmptyCart(),
+              ],
             ),
-
-            const SizedBox(height: 20),
-
-            _buildCouponSection(provider: cartProvider),
-
-            if (_shouldShowDeliveryMethod(cartProvider)) ...[
-              const SizedBox(height: 20),
-
-              const DeliveryMethodWidget(),
-            ],
-            const SizedBox(height: 20),
-
-            SummaryWidget(
-              subtotal: isPhysicalActive
-                  ? '0.00'
-                  : cartProvider.formattedSubtotal,
-
-              courier_fee: isPhysicalActive
-                  ? '0.00'
-                  : cartProvider.formattedCourierFee,
-
-              transaction_fee: isPhysicalActive
-                  ? '0.00'
-                  : cartProvider.formattedTransactionFee,
-
-              total: isPhysicalActive
-                  ? '0.00'
-                  : cartProvider.formattedOrderTotal,
-
-              deliveryMethod: isPhysicalActive
-                  ? 'Standard'
-                  : cartProvider.selectedDeliveryMethod,
-
-              coupon: cartProvider.coupon,
-
-              discount: isPhysicalActive
-                  ? '0.00'
-                  : cartProvider.formattedDiscount,
-
-              discountPrice: isPhysicalActive
-                  ? '0.00'
-                  : cartProvider.formattedDiscountPrice,
-
-              gst: isPhysicalActive ? '0.00' : cartProvider.formattedGST,
-
-              currency: cartProvider.currency,
-            ),
-
-            const SizedBox(height: 30),
-
-            if (isPhysicalActive)
-              _buildPhysicalOrderButton()
-            else
-              _buildCheckoutButton(),
-          ],
-        ],
-      ),
     );
   }
 
@@ -397,7 +385,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF0),
+        color: AppColors.lightRed,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5C76B)),
       ),
@@ -406,41 +394,35 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            // crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF981B1B),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.sync, size: 15, color: Colors.white),
-                      SizedBox(width: 6),
-                      Flexible(
-                        child: TranslatedText(
-                          'PHYSICAL CONVERSION ACTIVE',
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF981B1B),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Icon(Icons.sync, size: 15, color: Colors.white),
+                    // SizedBox(width: 6),
+                    Flexible(
+                      child: TranslatedText(
+                        'PHYSICAL CONVERSION ACTIVE',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                onPressed: _isClearingConversion
+              GestureDetector(
+                onTap: _isClearingConversion
                     ? null
                     : () async {
                         log('Clicked cancel conversion');
@@ -495,21 +477,12 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                           );
                         }
                       },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF981B1B),
-                  disabledForegroundColor: Colors.grey,
-                  side: BorderSide(
-                    color: _isClearingConversion
-                        ? Colors.grey
-                        : const Color(0xFF981B1B),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.yellow,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                ),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
                   child: _isClearingConversion
                       ? const Row(
                           key: ValueKey('clearing'),
@@ -534,6 +507,102 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                         ),
                 ),
               ),
+              // const SizedBox(width: 8),
+              // OutlinedButton(
+              //   onPressed: _isClearingConversion
+              //       ? null
+              //       : () async {
+              //           log('Clicked cancel conversion');
+
+              //           setState(() {
+              //             _isClearingConversion = true;
+              //           });
+
+              //           try {
+              //             final cartProvider = context.read<CartProvider>();
+              //             final currencyProvider = context
+              //                 .read<CurrencyProvider>();
+
+              //             final success = await provider.cancelConversion(
+              //               cartProvider: cartProvider,
+              //               currencyProvider: currencyProvider,
+              //             );
+
+              //             if (!mounted) return;
+
+              //             setState(() {
+              //               _isClearingConversion = false;
+              //             });
+
+              //             if (!success) {
+              //               ScaffoldMessenger.of(context).showSnackBar(
+              //                 const SnackBar(
+              //                   content: TranslatedText(
+              //                     'Unable to cancel physical conversion. Please try again.',
+              //                   ),
+              //                 ),
+              //               );
+              //             }
+              //           } catch (e, stackTrace) {
+              //             log(
+              //               'Error clearing conversion: $e',
+              //               stackTrace: stackTrace,
+              //             );
+
+              //             if (!mounted) return;
+
+              //             setState(() {
+              //               _isClearingConversion = false;
+              //             });
+
+              //             ScaffoldMessenger.of(context).showSnackBar(
+              //               const SnackBar(
+              //                 content: TranslatedText(
+              //                   'Unable to cancel physical conversion. Please try again.',
+              //                 ),
+              //               ),
+              //             );
+              //           }
+              //         },
+              //   style: OutlinedButton.styleFrom(
+              //     foregroundColor: const Color(0xFF981B1B),
+              //     disabledForegroundColor: Colors.grey,
+              //     side: BorderSide(
+              //       color: _isClearingConversion
+              //           ? Colors.grey
+              //           : const Color(0xFF981B1B),
+              //     ),
+              //     padding: const EdgeInsets.symmetric(
+              //       horizontal: 10,
+              //       vertical: 8,
+              //     ),
+              //   ),
+              //   child: AnimatedSwitcher(
+              //     duration: const Duration(milliseconds: 200),
+              //     child: _isClearingConversion
+              //         ? const Row(
+              //             key: ValueKey('clearing'),
+              //             mainAxisSize: MainAxisSize.min,
+              //             children: [
+              //               SizedBox(
+              //                 width: 14,
+              //                 height: 14,
+              //                 child: CircularProgressIndicator(strokeWidth: 2),
+              //               ),
+              //               SizedBox(width: 8),
+              //               TranslatedText(
+              //                 'Clearing...',
+              //                 style: TextStyle(fontSize: 11),
+              //               ),
+              //             ],
+              //           )
+              //         : const TranslatedText(
+              //             'Cancel conversion',
+              //             key: ValueKey('cancel'),
+              //             style: TextStyle(fontSize: 11),
+              //           ),
+              //   ),
+              // ),
             ],
           ),
           const SizedBox(height: 16),
@@ -574,7 +643,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
           const SizedBox(height: 8),
           const TranslatedText(
             'No payment will be required at checkout.',
-            style: TextStyle(fontSize: 12, color: Colors.black54),
+            style: TextStyle(fontSize: 12, color: Colors.black),
           ),
         ],
       ),
@@ -582,19 +651,23 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildEmptyCart() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset('assets/no_product.png', height: 80, width: 80),
+
           const SizedBox(height: 20),
+
           const TranslatedText(
-            'Your cart is empty',
+            'There Is No Item Here',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, color: Colors.grey),
+            style: TextStyle(fontSize: 18, color: Colors.white),
           ),
+
           const SizedBox(height: 30),
+
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -603,15 +676,19 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                 Navigator.pushNamed(context, '/home');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF981B1B),
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.red,
+                // foregroundColor: const Color(0xFF981B1B),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
               child: const TranslatedText(
                 'CONTINUE SHOPPING',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.white,
+                ),
               ),
             ),
           ),
@@ -722,8 +799,9 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
       height: 50,
       padding: const EdgeInsets.only(left: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade300),
+        color: AppColors.lightRed,
+        // border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         children: [
@@ -732,7 +810,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
               controller: couponController,
               decoration: const InputDecoration(
                 hintText: 'Enter coupon code',
-                hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                hintStyle: TextStyle(fontSize: 13, color: AppColors.black),
                 border: InputBorder.none,
               ),
             ),
@@ -749,8 +827,11 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryRed,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(18),
+                    bottomRight: Radius.circular(18),
+                  ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 18),
               ),

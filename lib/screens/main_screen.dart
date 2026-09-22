@@ -7,6 +7,7 @@ import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/providers/order_provider.dart';
+import 'package:junubullion/screens/balance/balancescreen.dart';
 import 'package:junubullion/screens/cart/cartscreen.dart';
 import 'package:junubullion/screens/home/homescreen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
@@ -520,6 +521,7 @@ class _MainScreenState extends State<MainScreen> {
       // PROFILE
       // ========================================================
       const ProfileScreen(),
+      BalanceScreen(),
     ];
 
     // ============================================================

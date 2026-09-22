@@ -228,160 +228,169 @@ class _OTPScreenState extends State<OTPScreen> {
     final String displayValue = isEmailOtp ? widget.email! : widget.phoneNumber;
 
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 80),
-                  const Text(
-                    'OTP Sent !',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 28,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    isEmailOtp
-                        ? "Enter the verification code we sent to your registered email $displayValue."
-                        : "Enter the verification code we just sent to your number ${_maskPhoneNumber(displayValue)}.",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Color.fromRGBO(128, 128, 127, 1),
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppColors.BgGradient),
 
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      const int numberOfFields = 6;
-                      const double spacing = 3.0;
-
-                      final double availableWidth = constraints.maxWidth;
-
-                      final double fieldWidth =
-                          (availableWidth - (spacing * numberOfFields)) /
-                          numberOfFields;
-
-                      return SizedBox(
-                        width: double.infinity,
-                        child: OtpTextField(
-                          numberOfFields: numberOfFields,
-
-                          margin: const EdgeInsets.only(right: spacing),
-
-                          borderColor: const Color.fromRGBO(0, 0, 0, 0.15),
-                          focusedBorderColor: AppColors.primaryRed,
-                          showFieldAsBox: true,
-
-                          fieldWidth: fieldWidth,
-                          fieldHeight: 48,
-
-                          borderRadius: BorderRadius.circular(10),
-                          filled: true,
-                          fillColor: Colors.white,
-                          cursorColor: AppColors.primaryRed,
-
-                          textStyle: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                          ),
-
-                          onCodeChanged: (String code) {
-                            _enteredOtp = code;
-                          },
-
-                          onSubmit: (String verificationCode) {
-                            setState(() {
-                              _enteredOtp = verificationCode;
-                            });
-
-                            _verifyAndSubmitOtp();
-                          },
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // Action Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _verifyAndSubmitOtp,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryRed,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          "Verify",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 80),
+                    const Text(
+                      'OTP Sent !',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                        color: AppColors.white,
                       ),
-                      const SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () => Navigator.pop(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromRGBO(
-                            128,
-                            128,
-                            127,
-                            1,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          "Cancel",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      isEmailOtp
+                          ? "Enter the verification code we sent to your registered email $displayValue."
+                          : "Enter the verification code we just sent to your number ${_maskPhoneNumber(displayValue)}.",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white,
+                        height: 1.4,
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+                    ),
+                    const SizedBox(height: 30),
 
-            if (_isLoading)
-              Container(
-                color: Colors.black.withOpacity(0.3),
-                child: const Center(
-                  child: CircularProgressIndicator(color: AppColors.primaryRed),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        const int numberOfFields = 6;
+                        const double spacing = 3.0;
+
+                        final double availableWidth = constraints.maxWidth;
+
+                        final double fieldWidth =
+                            (availableWidth - (spacing * numberOfFields)) /
+                            numberOfFields;
+
+                        return SizedBox(
+                          width: double.infinity,
+                          child: OtpTextField(
+                            numberOfFields: numberOfFields,
+
+                            margin: const EdgeInsets.only(right: spacing),
+                            borderColor: AppColors.lightRed,
+                            focusedBorderColor: AppColors.lightRed,
+
+                            fieldWidth: fieldWidth,
+                            fieldHeight: 48,
+                            showFieldAsBox: true,
+                            borderRadius: BorderRadius.circular(10),
+                            filled: true,
+                            fillColor: AppColors.lightRed,
+                            cursorColor: AppColors.red,
+
+                            textStyle: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+
+                            onCodeChanged: (String code) {
+                              _enteredOtp = code;
+                            },
+
+                            onSubmit: (String verificationCode) {
+                              setState(() {
+                                _enteredOtp = verificationCode;
+                              });
+
+                              _verifyAndSubmitOtp();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // Action Buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _verifyAndSubmitOtp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryRed,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            "Verify",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton(
+                          onPressed: _isLoading
+                              ? null
+                              : () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromRGBO(
+                              128,
+                              128,
+                              127,
+                              1,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            "Cancel",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-          ],
+
+              if (_isLoading)
+                Container(
+                  color: Colors.black.withOpacity(0.3),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryRed,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

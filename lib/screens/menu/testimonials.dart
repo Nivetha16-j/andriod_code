@@ -22,7 +22,8 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
-
+  final PageController _reviewPageController = PageController();
+  int _currentReviewIndex = 0;
   int rating = 5;
 
   @override
@@ -39,6 +40,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     nameController.dispose();
     emailController.dispose();
     descriptionController.dispose();
+    _reviewPageController.dispose();
     super.dispose();
   }
 
@@ -78,17 +80,84 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                return SizedBox(
-                  height: 250,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: provider.testimonials.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 15),
-                    itemBuilder: (context, index) {
-                      final review = provider.testimonials[index];
+                if (provider.testimonials.isEmpty) {
+                  return const Center(
+                    child: TranslatedText(
+                      "No reviews available",
+                      style: TextStyle(fontSize: 15),
+                    ),
+                  );
+                }
 
-                      return ReviewCard(testimonial: review);
-                    },
+                return SizedBox(
+                  height: 280,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // REVIEW SLIDER
+                      PageView.builder(
+                        controller: _reviewPageController,
+                        itemCount: provider.testimonials.length,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _currentReviewIndex = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          return Center(
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.78,
+                              child: ReviewCard(
+                                testimonial: provider.testimonials[index],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      // BACKWARD ARROW
+                      if (_currentReviewIndex > 0)
+                        Positioned(
+                          left: 5,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: GestureDetector(
+                              onTap: () {
+                                _reviewPageController.previousPage(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                );
+                              },
+                              child: _reviewArrow(
+                                icon: Icons.arrow_back_ios_new,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // FORWARD ARROW
+                      if (_currentReviewIndex <
+                          provider.testimonials.length - 1)
+                        Positioned(
+                          right: 5,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: GestureDetector(
+                              onTap: () {
+                                _reviewPageController.nextPage(
+                                  duration: const Duration(milliseconds: 350),
+                                  curve: Curves.easeInOut,
+                                );
+                              },
+                              child: _reviewArrow(
+                                icon: Icons.arrow_forward_ios,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 );
               },
@@ -232,6 +301,25 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     );
   }
 
+  Widget _reviewArrow({required IconData icon}) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Icon(icon, size: 17, color: AppColors.primaryRed),
+    );
+  }
+
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
       context,
@@ -249,10 +337,10 @@ class ReviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 260,
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: AppColors.BgGradient,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
@@ -263,54 +351,45 @@ class ReviewCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: TranslatedText(
-              testimonial.description,
-              maxLines: 5,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(height: 1.5),
-            ),
+          CircleAvatar(
+            backgroundColor: Colors.amber.withOpacity(.2),
+            child: const Icon(Icons.person, color: Colors.amber),
           ),
 
+          const SizedBox(height: 10),
+
+          TranslatedText(
+            testimonial.name,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.white,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TranslatedText(
+            testimonial.createdAt.substring(0, 10),
+            style: const TextStyle(color: AppColors.white),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0, right: 8),
+            child: Expanded(
+              child: TranslatedText(
+                testimonial.description,
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(height: 1.5, color: AppColors.white),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: List.generate(
               testimonial.rating,
               (index) => const Icon(Icons.star, color: Colors.amber, size: 18),
             ),
-          ),
-
-          const SizedBox(height: 12),
-
-          const Divider(),
-
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: Colors.amber.withOpacity(.2),
-                child: const Icon(Icons.person, color: Colors.amber),
-              ),
-
-              const SizedBox(width: 10),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TranslatedText(
-                      testimonial.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-
-                    TranslatedText(
-                      testimonial.createdAt.substring(0, 10),
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ],
       ),

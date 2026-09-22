@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:junubullion/screens/auth/otpscreen.dart';
 import 'package:junubullion/services/country_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
@@ -260,11 +261,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(
-                    0xFFF5F5F5,
-                  ), // Same background as other fields
+                  color: AppColors.lightRed, // Same background as other fields
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: AppColors.lightRed),
                 ),
                 child: const Row(
                   children: [
@@ -322,27 +321,31 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             const SizedBox(height: 8),
             DropdownButtonFormField<dynamic>(
               initialValue: selectedCountryId,
+              style: const TextStyle(color: AppColors.black, fontSize: 14),
               icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
               decoration: InputDecoration(
                 hintText: "Select Country",
-                hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                // hintStyle: const TextStyle(
+                //   color: AppColors.white,
+                //   fontSize: 14,
+                // ),
                 filled: true,
-                fillColor: const Color(0xFFF5F5F5), // Light gray field fill
+                fillColor: AppColors.lightRed, // Light gray field fill
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 14,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: AppColors.lightRed),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: AppColors.lightRed),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade400),
+                  borderSide: BorderSide(color: AppColors.lightRed),
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -385,9 +388,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       text: TextSpan(
         text: label,
         style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: AppColors.white,
         ),
         children: const [
           TextSpan(
@@ -405,124 +408,154 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffF9F9F9),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 25),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Register here",
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 32),
-                  ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppColors.BgGradient),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 25),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: SvgPicture.asset(
+                        'assets/logo/logo.svg',
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Center(
+                      child: Text(
+                        'Sign Up To Your Account',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
 
-                  const SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
-                  const Text(
-                    "Fill the form below to create an account",
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
+                    Center(
+                      child: const Text(
+                        "Fill the form below to create an account",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  CustomTextField(
-                    label: "First Name",
-                    hintText: "Enter First Name",
-                    controller: firstNameController,
-                    validator: (val) => _validateName(val, "First Name"),
-                  ),
+                    CustomTextField(
+                      label: "First Name",
+                      hintText: "Enter First Name",
+                      controller: firstNameController,
+                      validator: (val) => _validateName(val, "First Name"),
+                    ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  CustomTextField(
-                    label: "Last Name",
-                    hintText: "Enter Last Name",
-                    controller: lastNameController,
-                    validator: (val) => _validateName(val, "Last Name"),
-                  ),
+                    CustomTextField(
+                      label: "Last Name",
+                      hintText: "Enter Last Name",
+                      controller: lastNameController,
+                      validator: (val) => _validateName(val, "Last Name"),
+                    ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  CustomTextField(
-                    label: "Email",
-                    hintText: "Enter Email",
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: _validateEmail,
-                  ),
+                    CustomTextField(
+                      label: "Email",
+                      hintText: "Enter Email",
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: _validateEmail,
+                    ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  CustomTextField(
-                    label: "Phone Number",
-                    hintText: "+6570903029",
-                    helperText: "Include country code (e.g., +91 or +65)",
-                    controller: phoneController,
-                    keyboardType: TextInputType.phone,
-                    validator: _validatePhone,
-                  ),
+                    CustomTextField(
+                      label: "Phone Number",
+                      hintText: "+6570903029",
+                      helperText: "Include country code (e.g., +91 or +65)",
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      validator: _validatePhone,
+                    ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  _buildCountryDropdown(),
+                    _buildCountryDropdown(),
 
-                  // const SizedBox(height: 20),
+                    // const SizedBox(height: 20),
 
-                  // CustomTextField(
-                  //   label: "Password",
-                  //   hintText: "Enter Password",
-                  //   controller: passwordController,
-                  //   validator: _validatePassword,
-                  //   obscureText: obscurePassword,
-                  //   suffixIcon: IconButton(
-                  //     icon: Icon(
-                  //       obscurePassword
-                  //           ? Icons.visibility_off
-                  //           : Icons.visibility,
-                  //       size: 20,
-                  //     ),
-                  //     onPressed: () {
-                  //       setState(() {
-                  //         obscurePassword = !obscurePassword;
-                  //       });
-                  //     },
-                  //   ),
-                  // ),
+                    // CustomTextField(
+                    //   label: "Password",
+                    //   hintText: "Enter Password",
+                    //   controller: passwordController,
+                    //   validator: _validatePassword,
+                    //   obscureText: obscurePassword,
+                    //   suffixIcon: IconButton(
+                    //     icon: Icon(
+                    //       obscurePassword
+                    //           ? Icons.visibility_off
+                    //           : Icons.visibility,
+                    //       size: 20,
+                    //     ),
+                    //     onPressed: () {
+                    //       setState(() {
+                    //         obscurePassword = !obscurePassword;
+                    //       });
+                    //     },
+                    //   ),
+                    // ),
 
-                  // const SizedBox(height: 15),
+                    // const SizedBox(height: 15),
 
-                  // CustomTextField(
-                  //   label: "Confirm Password",
-                  //   hintText: "Confirm Password",
-                  //   controller: confirmPasswordController,
-                  //   validator: _validateConfirmPassword,
-                  //   obscureText: obscureConfirmPassword,
-                  //   suffixIcon: IconButton(
-                  //     icon: Icon(
-                  //       obscureConfirmPassword
-                  //           ? Icons.visibility_off
-                  //           : Icons.visibility,
-                  //       size: 20,
-                  //     ),
-                  //     onPressed: () {
-                  //       setState(() {
-                  //         obscureConfirmPassword = !obscureConfirmPassword;
-                  //       });
-                  //     },
-                  //   ),
-                  // ),
-                  const SizedBox(height: 25),
+                    // CustomTextField(
+                    //   label: "Confirm Password",
+                    //   hintText: "Confirm Password",
+                    //   controller: confirmPasswordController,
+                    //   validator: _validateConfirmPassword,
+                    //   obscureText: obscureConfirmPassword,
+                    //   suffixIcon: IconButton(
+                    //     icon: Icon(
+                    //       obscureConfirmPassword
+                    //           ? Icons.visibility_off
+                    //           : Icons.visibility,
+                    //       size: 20,
+                    //     ),
+                    //     onPressed: () {
+                    //       setState(() {
+                    //         obscureConfirmPassword = !obscureConfirmPassword;
+                    //       });
+                    //     },
+                    //   ),
+                    // ),
+                    const SizedBox(height: 25),
 
-                  CustomButton(
-                    label: "Submit",
-                    isLoading: _isLoading,
-                    onPressed: _submitForm,
-                  ),
-                ],
+                    CustomButton(
+                      label: "Sign Up",
+                      fontSize: 20,
+                      height: 50,
+                      borderRadius: 16,
+                      fontWeight: FontWeight.w700,
+                      isLoading: _isLoading,
+                      onPressed: _submitForm,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

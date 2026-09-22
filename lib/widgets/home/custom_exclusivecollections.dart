@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
@@ -44,7 +45,7 @@ class _ExclusiveCollectionsSectionState
   List<Map<String, dynamic>> _displayProducts = [];
 
   Timer? _refreshTimer;
-
+  int _currentProductPage = 0;
   bool _isFetching = false;
 
   @override
@@ -299,7 +300,7 @@ class _ExclusiveCollectionsSectionState
                   child: const TranslatedText(
                     "View more",
                     style: TextStyle(
-                      color: ExclusiveCollectionsSection.accentGold,
+                      color: AppColors.mustard,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -313,21 +314,68 @@ class _ExclusiveCollectionsSectionState
           // ========================================================
           // PRODUCTS
           // ========================================================
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: displayProducts.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: 0.72,
-            ),
-            itemBuilder: (context, index) {
-              final product = displayProducts[index];
+          Column(
+            children: [
+              SizedBox(
+                height: 250, // adjust based on your product card height
+                child: PageView.builder(
+                  controller: PageController(viewportFraction: 1.0),
+                  itemCount: (displayProducts.length / 2).ceil(),
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentProductPage = index;
+                    });
+                  },
+                  itemBuilder: (context, pageIndex) {
+                    final int firstIndex = pageIndex * 2;
 
-              return _ExclusiveProductCard(product: product);
-            },
+                    final products = displayProducts
+                        .skip(firstIndex)
+                        .take(2)
+                        .toList();
+
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: _ExclusiveProductCard(product: products[0]),
+                        ),
+
+                        const SizedBox(width: 14),
+
+                        Expanded(
+                          child: products.length > 1
+                              ? _ExclusiveProductCard(product: products[1])
+                              : const SizedBox(),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Page indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate((displayProducts.length / 2).ceil(), (
+                  index,
+                ) {
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    height: 7,
+                    width: _currentProductPage == index ? 20 : 7,
+                    decoration: BoxDecoration(
+                      color: _currentProductPage == index
+                          ? AppColors.primaryRed
+                          : Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  );
+                }),
+              ),
+            ],
           ),
         ],
       ),
@@ -377,7 +425,7 @@ class _ExclusiveProductCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          gradient: AppColors.BgGradient,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -430,15 +478,15 @@ class _ExclusiveProductCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: ExclusiveCollectionsSection.primaryDarkRed,
+                  color: AppColors.white,
                   height: 1.2,
                 ),
               ),
             ),
 
-            const SizedBox(height: 6),
+            // const SizedBox(height: 6),
 
             // ======================================================
             // PRICE
@@ -446,9 +494,9 @@ class _ExclusiveProductCard extends StatelessWidget {
             TranslatedText(
               priceText,
               style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Colors.black,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: AppColors.white,
               ),
             ),
 
@@ -512,9 +560,19 @@ class _ExclusiveProductCard extends StatelessWidget {
           fontSize: 14,
         );
       },
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: TranslatedText("ADD TO CART", maxLines: 1),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SvgPicture.asset("assets/addtocart.svg", height: 25, width: 25),
+          const SizedBox(width: 6),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: TranslatedText("ADD TO CART", maxLines: 1),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -820,9 +878,19 @@ class _ExclusiveProductCard extends StatelessWidget {
                 color: Colors.white,
               ),
             )
-          : FittedBox(
-              fit: BoxFit.scaleDown,
-              child: TranslatedText("ADD TO CART", maxLines: 1),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SvgPicture.asset("assets/addtocart.svg", height: 25, width: 25),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: TranslatedText("ADD TO CART", maxLines: 1),
+                  ),
+                ),
+              ],
             ),
     );
   }

@@ -28,101 +28,107 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
         currentIndex: _currentIndex,
         onTap: _switchToTab,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const TranslatedText(
-              "Privacy Policy and Terms & Conditions",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                height: 1.2,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppColors.BgGradient),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const TranslatedText(
+                "Privacy Policy and Terms & Conditions",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  color: AppColors.white,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-            const TranslatedText(
-              "At JunuBullion.com, we respect your privacy and are committed to  ensuring transparency in how we use cookies and handle your personal  data.  This document explains our use of cookies, how we collect and  process personal data, and how you can manage you privacy preferences.",
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.black,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
+              const TranslatedText(
+                "At JunuBullion.com, we respect your privacy and are committed to  ensuring transparency in how we use cookies and handle your personal  data.  This document explains our use of cookies, how we collect and  process personal data, and how you can manage you privacy preferences.",
+                style: TextStyle(
+                  fontSize: 15,
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 25),
+              const SizedBox(height: 25),
 
-            const PolicyTile(
-              title: "Cookies Policy",
-              content: CookiePolicyContent(),
-            ),
+              const PolicyTile(
+                title: "Cookies Policy",
+                content: CookiePolicyContent(),
+              ),
 
-            const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-            const PolicyTile(
-              title: "Data Protection Policy",
-              content: DataProtectionPolicyContent(),
-            ),
+              const PolicyTile(
+                title: "Data Protection Policy",
+                content: DataProtectionPolicyContent(),
+              ),
 
-            const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-            const PolicyTile(
-              title: "Shipping & Delivery Policy",
-              content: ShippingAndDeliveryPolicy(),
-            ),
-            const SizedBox(height: 25),
+              const PolicyTile(
+                title: "Shipping & Delivery Policy",
+                content: ShippingAndDeliveryPolicy(),
+              ),
+              const SizedBox(height: 25),
 
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(22),
-              color: AppColors.primaryRed,
-              child: Column(
-                children: [
-                  const TranslatedText(
-                    "Contact Us",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(22),
+                color: AppColors.primaryRed,
+                child: Column(
+                  children: [
+                    const TranslatedText(
+                      "Contact Us",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 10),
 
-                  const TranslatedText(
-                    "If you have any questions about our\nCookies Policy or Data Protection Policy,\nplease contact us:",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      // height: 1.5,
-                      fontWeight: FontWeight.w500,
+                    const TranslatedText(
+                      "If you have any questions about our\nCookies Policy or Data Protection Policy,\nplease contact us:",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        // height: 1.5,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 25),
+                    const SizedBox(height: 25),
 
-                  ContactCard(
-                    icon: Icons.email,
-                    title: "Mail",
-                    value: "customer@junubullion.com",
-                  ),
+                    ContactCard(
+                      icon: Icons.email,
+                      title: "Mail",
+                      value: "customer@junubullion.com",
+                    ),
 
-                  const SizedBox(height: 15),
+                    const SizedBox(height: 15),
 
-                  ContactCard(
-                    icon: Icons.phone,
-                    title: "Phone",
-                    value: "+65 83125775",
-                  ),
-                ],
+                    ContactCard(
+                      icon: Icons.phone,
+                      title: "Phone",
+                      value: "+65 83125775",
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -600,7 +606,10 @@ class PolicyTile extends StatelessWidget {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
-        color: const Color(0xffA51E22),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(5),
+          color: const Color(0xffA51E22),
+        ),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
           collapsedIconColor: const Color(0xffF4C542),

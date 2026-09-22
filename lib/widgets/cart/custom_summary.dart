@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
+import 'package:junubullion/screens/checkout/checkout.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
@@ -11,7 +13,7 @@ class SummaryWidget extends StatelessWidget {
   final String deliveryMethod;
   final String gst;
   final String currency;
-
+  final bool isPhysicalActive;
   final Map<String, dynamic>? coupon;
   final String discount;
   final String discountPrice;
@@ -28,6 +30,7 @@ class SummaryWidget extends StatelessWidget {
     this.coupon,
     required this.discount,
     required this.discountPrice,
+    required this.isPhysicalActive,
   });
 
   @override
@@ -38,53 +41,100 @@ class SummaryWidget extends StatelessWidget {
     // contains at least one physical product.
     final bool showDeliveryDetails = _shouldShowDeliveryMethod(provider);
 
-    return Column(
-      children: [
-        _row("Subtotal Product", _formatCurrency(subtotal)),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.lightRed,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            _row("Subtotal Product", _formatCurrency(subtotal)),
 
-        const SizedBox(height: 15),
-
-        // ============================================================
-        // DELIVERY / PHYSICAL PRODUCT CHARGES
-        // ============================================================
-        if (showDeliveryDetails) ...[
-          _row(
-            "Courier charge (${deliveryMethod} delivery)",
-            "+ ${_formatCurrency(courier_fee)}",
-          ),
-
-          // Coupon
-          if (coupon != null) ...[
             const SizedBox(height: 15),
 
-            _row(
-              "Discount (${coupon!["code"]})",
-              "- ${_formatCurrency(discount)}",
+            // ============================================================
+            // DELIVERY / PHYSICAL PRODUCT CHARGES
+            // ============================================================
+            if (showDeliveryDetails) ...[
+              _row(
+                "Courier charge (${deliveryMethod} delivery)",
+                "+ ${_formatCurrency(courier_fee)}",
+              ),
+
+              // Coupon
+              if (coupon != null) ...[
+                const SizedBox(height: 15),
+
+                _row(
+                  "Discount (${coupon!["code"]})",
+                  "- ${_formatCurrency(discount)}",
+                ),
+
+                const SizedBox(height: 15),
+
+                _row("Discount Price", _formatCurrency(discountPrice)),
+              ],
+
+              const SizedBox(height: 15),
+
+              _row(
+                "Transaction fee (4%)",
+                "+ ${_formatCurrency(transaction_fee)}",
+              ),
+
+              if (provider.showTax) ...[
+                const SizedBox(height: 15),
+
+                _row("GST (21%)", "+ ${_formatCurrency(gst)}"),
+              ],
+            ],
+
+            // ============================================================
+            // TOTAL
+            // ============================================================
+            const SizedBox(height: 20),
+
+            CustomPaint(
+              painter: DottedLinePainter(),
+              child: const SizedBox(height: 1, width: double.infinity),
             ),
 
-            const SizedBox(height: 15),
+            const SizedBox(height: 20),
 
-            _row("Discount Price", _formatCurrency(discountPrice)),
+            _row("Total", _formatCurrency(total), bold: true),
+            const SizedBox(height: 25),
+
+            SizedBox(
+              height: 60,
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryRed,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: TranslatedText(
+                  isPhysicalActive ? 'Send Order' : 'CheckOut',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           ],
-
-          const SizedBox(height: 15),
-
-          _row("Transaction fee (4%)", "+ ${_formatCurrency(transaction_fee)}"),
-
-          if (provider.showTax) ...[
-            const SizedBox(height: 15),
-
-            _row("GST (21%)", "+ ${_formatCurrency(gst)}"),
-          ],
-        ],
-
-        // ============================================================
-        // TOTAL
-        // ============================================================
-        const Divider(height: 35),
-
-        _row("Total", _formatCurrency(total), bold: true),
-      ],
+        ),
+      ),
     );
   }
 
@@ -224,5 +274,43 @@ class SummaryWidget extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class DottedLinePainter extends CustomPainter {
+  final double dashWidth;
+  final double dashSpace;
+  final double strokeWidth;
+  final Color color;
+
+  DottedLinePainter({
+    this.dashWidth = 5,
+    this.dashSpace = 5,
+    this.strokeWidth = 1,
+    this.color = AppColors.black,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth;
+
+    double startX = 0;
+
+    while (startX < size.width) {
+      canvas.drawLine(
+        Offset(startX, 0),
+        Offset((startX + dashWidth).clamp(0, size.width), 0),
+        paint,
+      );
+
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant DottedLinePainter oldDelegate) {
+    return false;
   }
 }
