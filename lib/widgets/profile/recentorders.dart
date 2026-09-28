@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/screens/profile/profile.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
@@ -48,7 +49,37 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
 
     return Container(
       width: double.infinity,
-      padding: widget.showAll ? EdgeInsets.all(24) : EdgeInsets.zero,
+      padding: widget.showAll
+          ? const EdgeInsets.all(24)
+          : const EdgeInsets.all(16),
+      decoration: widget.showAll
+          ? BoxDecoration(
+              gradient: AppColors.pinkGradient,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color.fromARGB(
+                    255,
+                    14,
+                    7,
+                    7,
+                  ).withValues(alpha: .06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            )
+          : BoxDecoration(
+              gradient: AppColors.pinkGradient,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.black.withValues(alpha: .06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +89,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
               children: [
                 Expanded(
                   child: TranslatedText(
-                    widget.showAll ? "Orders" : "Recent Orders",
+                    widget.showAll ? "Orders" : "Recent orders",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -87,7 +118,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.right,
                         style: TextStyle(
-                          color: Colors.brown,
+                          color: AppColors.primaryRed,
                           fontWeight: FontWeight.bold,
                           decoration: TextDecoration.underline,
                         ),
@@ -98,7 +129,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
             if (provider.isLoading)
               const Center(
@@ -116,8 +147,8 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
               )
             else ...[
               Row(
-                children: const [
-                  Expanded(
+                children: [
+                  const Expanded(
                     flex: 3,
                     child: TranslatedText(
                       "Order",
@@ -127,8 +158,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                       ),
                     ),
                   ),
-
-                  Expanded(
+                  const Expanded(
                     flex: 3,
                     child: TranslatedText(
                       "Date",
@@ -138,8 +168,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                       ),
                     ),
                   ),
-
-                  Expanded(
+                  const Expanded(
                     flex: 2,
                     child: TranslatedText(
                       "Status",
@@ -149,8 +178,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                       ),
                     ),
                   ),
-
-                  Expanded(
+                  const Expanded(
                     flex: 2,
                     child: TranslatedText(
                       "Total",
@@ -161,13 +189,24 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                       ),
                     ),
                   ),
+                  if (!widget.showAll)
+                    const Expanded(
+                      flex: 2,
+                      child: TranslatedText(
+                        "Actions",
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                 ],
               ),
 
               const SizedBox(height: 12),
 
-              const Divider(),
-
+              // const Divider(),
               ...displayOrders.map((order) {
                 final orderNumber = order["order_number"]?.toString() ?? "-";
 
@@ -216,15 +255,24 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                           // STATUS
                           Expanded(
                             flex: 2,
-                            child: TranslatedText(
-                              status.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 12,
+                            child: Container(
+                              decoration: BoxDecoration(
                                 color: status.toLowerCase() == "pending"
-                                    ? Colors.orange
-                                    : Colors.green,
+                                    ? AppColors.yellow
+                                    : AppColors.green,
+                                borderRadius: BorderRadius.circular(4),
                               ),
-                              overflow: TextOverflow.ellipsis,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: TranslatedText(
+                                  status.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.black,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             ),
                           ),
 
@@ -238,11 +286,36 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+
+                          if (!widget.showAll)
+                            Expanded(
+                              flex: 2,
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const OrderScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const TranslatedText(
+                                  "View",
+                                  textAlign: TextAlign.right,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.primaryRed,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
 
-                    const Divider(height: 1, color: Color(0xffEEEEEE)),
+                    // const Divider(height: 1, color: AppColors.lightGrey),
                   ],
                 );
               }),
@@ -266,7 +339,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                             : null,
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
-                          side: const BorderSide(color: Color(0xffA90020)),
+                          side: const BorderSide(color: AppColors.primaryRed),
                         ),
                         child: const TranslatedText(
                           "Previous",
@@ -283,7 +356,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: const Color(0xffA90020),
+                        color: AppColors.primaryRed,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: TranslatedText(
@@ -311,7 +384,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                             : null,
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
-                          side: const BorderSide(color: Color(0xffA90020)),
+                          side: const BorderSide(color: AppColors.primaryRed),
                         ),
                         child: const TranslatedText(
                           "Next",
@@ -329,10 +402,7 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                   child: TranslatedText(
                     "Showing ${startIndex + 1}–$endIndex "
                     "of ${allOrders.length} orders",
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xff777777),
-                    ),
+                    style: const TextStyle(fontSize: 11, color: AppColors.grey),
                   ),
                 ),
             ],

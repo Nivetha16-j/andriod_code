@@ -161,8 +161,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const TranslatedText(
-                  'Shipping address',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                  'Shipping To',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 12),
                 _buildShippingAddress(),
@@ -175,8 +175,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   _buildTerms(),
                   const SizedBox(height: 18),
                   _buildPhysicalOrderSummary(cartProvider, currencySymbol),
-                  const SizedBox(height: 25),
-                  _buildActionButtons(currencySymbol, true),
+                  // const SizedBox(height: 25),
+
+                  // _buildBackButton(),
                 ] else ...[
                   _buildDeliverySection(),
                   const SizedBox(height: 20),
@@ -194,8 +195,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     orderTotal,
                     isDigital,
                   ),
-                  const SizedBox(height: 25),
-                  _buildActionButtons(currencySymbol, false),
+                  // const SizedBox(height: 25),
+                  // _buildActionButtons(currencySymbol, false),
+                  // const SizedBox(height: 25),
+
+                  // _buildBackButton(),
                 ],
               ],
             ),
@@ -416,6 +420,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       );
     }
+  }
+
+  Widget _buildBackButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: (_isPlacingOrder || _isCancellingConversion)
+            ? null
+            : () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MainScreen(initialIndex: 3),
+                    ),
+                    (route) => false,
+                  );
+                }
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey.shade300,
+          foregroundColor: Colors.black,
+          disabledBackgroundColor: Colors.grey.shade300,
+          disabledForegroundColor: Colors.black45,
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+        ),
+        child: const TranslatedText('Back', style: TextStyle(fontSize: 14)),
+      ),
+    );
   }
 
   Widget _buildDeliverySection({bool isPhysicalConversion = false}) {
@@ -981,27 +1018,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   vertical: 13,
                 ),
 
-                suffixIcon: const Icon(
-                  Icons.edit,
-                  color: Colors.grey,
-                  size: 20,
-                ),
+                suffixIcon: Image.asset("assets/Edit.png"),
 
                 filled: false,
 
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.lightRed,
+                    // width: 1.5,
+                  ),
                 ),
 
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.lightRed,
+                    // width: 1.5,
+                  ),
                 ),
 
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.black, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.lightRed,
+                    // width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -1057,14 +1099,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (payment == "Card") ...[
           const SizedBox(height: 10),
 
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              paymentBox("Visa"),
-              paymentBox("MasterCard"),
-              paymentBox("G Pay"),
-              paymentBox("Apple Pay"),
+              paymentBox("assets/visa.png"),
+              paymentBox("assets/mastercard.png"),
+              paymentBox("assets/googlepay.png"),
+              paymentBox("assets/applepay.png"),
             ],
           ),
         ],
@@ -1094,7 +1135,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xffF8EAEA),
+        color: AppColors.lightRed,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -1208,6 +1249,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             bold: true,
             valueColor: AppColors.primaryRed,
           ),
+
+          const SizedBox(height: 20),
+
+          _buildProceedButton(currencySymbol, false),
         ],
       ),
     );
@@ -1317,62 +1362,70 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF0),
-        borderRadius: BorderRadius.circular(10),
+        color: AppColors.lightRed,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5C76B)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF981B1B),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: const TranslatedText(
-                    '⟳  PHYSICAL CONVERSION ACTIVE',
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF981B1B),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Icon(Icons.sync, size: 15, color: Colors.white),
+                    // SizedBox(width: 6),
+                    Flexible(
+                      child: TranslatedText(
+                        'PHYSICAL CONVERSION ACTIVE',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
 
               const SizedBox(width: 10),
 
-              OutlinedButton(
-                onPressed: (_isPlacingOrder || _isCancellingConversion)
+              GestureDetector(
+                onTap: (_isPlacingOrder || _isCancellingConversion)
                     ? null
                     : _cancelPhysicalConversion,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF981B1B),
-                  disabledForegroundColor: Colors.grey,
-                  side: BorderSide(
-                    color: _isCancellingConversion
-                        ? Colors.grey
-                        : const Color(0xFF981B1B),
+                // style: OutlinedButton.styleFrom(
+                //   foregroundColor: const Color(0xFF981B1B),
+                //   disabledForegroundColor: Colors.grey,
+                //   side: BorderSide(
+                //     color: _isCancellingConversion
+                //         ? Colors.grey
+                //         : const Color(0xFF981B1B),
+                //   ),
+                //   padding: const EdgeInsets.symmetric(
+                //     horizontal: 14,
+                //     vertical: 10,
+                //   ),
+                //   shape: RoundedRectangleBorder(
+                //     borderRadius: BorderRadius.circular(20),
+                //   ),
+                // ),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.yellow,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
                   child: _isCancellingConversion
                       ? const Row(
                           key: ValueKey('clearing'),
@@ -1386,14 +1439,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             SizedBox(width: 8),
                             TranslatedText(
                               'Clearing...',
-                              style: TextStyle(fontSize: 12),
+                              style: TextStyle(fontSize: 11),
                             ),
                           ],
                         )
                       : const TranslatedText(
                           'Cancel conversion',
                           key: ValueKey('cancel'),
-                          style: TextStyle(fontSize: 12),
+                          style: TextStyle(fontSize: 11),
                         ),
                 ),
               ),
@@ -1556,122 +1609,198 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             bold: true,
             valueColor: AppColors.primaryRed,
           ),
+
+          const SizedBox(height: 20),
+
+          _buildProceedButton(currencySymbol, true),
         ],
       ),
     );
   }
 
-  Widget _buildActionButtons(String currencySymbol, bool isPhysicalConversion) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: (_isPlacingOrder || _isCancellingConversion)
-                ? null
-                : () {
-                    if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    } else {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const MainScreen(initialIndex: 3),
-                        ),
-                        (route) => false,
-                      );
-                    }
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey.shade300,
-              foregroundColor: Colors.black,
-              disabledBackgroundColor: Colors.grey.shade300,
-              disabledForegroundColor: Colors.black45,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(7),
-              ),
-            ),
-            child: const TranslatedText('Back', style: TextStyle(fontSize: 14)),
-          ),
+  Widget _buildProceedButton(String currencySymbol, bool isPhysicalConversion) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: (_isPlacingOrder || _isCancellingConversion)
+            ? null
+            : () async {
+                try {
+                  dynamic plan;
+
+                  final res = await JscService.fetchConvertDetails();
+
+                  log("fetchConvertPhysicalDetails response: $res");
+
+                  log(
+                    "fetchConvertPhysicalDetails data: "
+                    "${res['data']}",
+                  );
+
+                  if (res['data'] != null) {
+                    final data = Map<String, dynamic>.from(res['data']);
+
+                    log("Convert Physical Data: $data");
+
+                    log("Golddd: ${data['purchase_subtype']}");
+
+                    plan = data['purchase_subtype'];
+                  }
+
+                  log("Plannn: $plan");
+
+                  if (isPhysicalConversion) {
+                    await _sendPhysicalOrder(plan: plan);
+                  } else {
+                    await _placeNormalOrder();
+                  }
+                } catch (e, stackTrace) {
+                  log("fetchConvertPhysicalDetails error: $e");
+
+                  log("StackTrace: $stackTrace");
+                }
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primaryRed,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: Colors.grey.shade400,
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
         ),
-
-        const SizedBox(width: 15),
-
-        Expanded(
-          flex: 2,
-          child: ElevatedButton(
-            onPressed: (_isPlacingOrder || _isCancellingConversion)
-                ? null
-                : () async {
-                    try {
-                      dynamic plan;
-
-                      final res = await JscService.fetchConvertDetails();
-
-                      log("fetchConvertPhysicalDetails response: $res");
-
-                      log(
-                        "fetchConvertPhysicalDetails data: "
-                        "${res['data']}",
-                      );
-
-                      if (res['data'] != null) {
-                        final data = Map<String, dynamic>.from(res['data']);
-
-                        log("Convert Physical Data: $data");
-
-                        log("Golddd: ${data['purchase_subtype']}");
-
-                        plan = data['purchase_subtype'];
-                      }
-
-                      log("Plannn: $plan");
-
-                      if (isPhysicalConversion) {
-                        await _sendPhysicalOrder(plan: plan);
-                      } else {
-                        await _placeNormalOrder();
-                      }
-                    } catch (e, stackTrace) {
-                      log("fetchConvertPhysicalDetails error: $e");
-
-                      log("StackTrace: $stackTrace");
-                    }
-                  },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryRed,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey.shade400,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(7),
+        child: _isPlacingOrder
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : TranslatedText(
+                isPhysicalConversion
+                    ? 'Send Order $currencySymbol 0.00'
+                    : 'Proceed to pay',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            child: _isPlacingOrder
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : TranslatedText(
-                    isPhysicalConversion
-                        ? 'Send Order $currencySymbol 0.00'
-                        : 'Proceed to pay',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-          ),
-        ),
-      ],
+      ),
     );
   }
+
+  // Widget _buildActionButtons(String currencySymbol, bool isPhysicalConversion) {
+  //   return Row(
+  //     children: [
+  //       Expanded(
+  //         child: ElevatedButton(
+  //           onPressed: (_isPlacingOrder || _isCancellingConversion)
+  //               ? null
+  //               : () {
+  //                   if (Navigator.canPop(context)) {
+  //                     Navigator.pop(context);
+  //                   } else {
+  //                     Navigator.pushAndRemoveUntil(
+  //                       context,
+  //                       MaterialPageRoute(
+  //                         builder: (_) => const MainScreen(initialIndex: 3),
+  //                       ),
+  //                       (route) => false,
+  //                     );
+  //                   }
+  //                 },
+  //           style: ElevatedButton.styleFrom(
+  //             backgroundColor: Colors.grey.shade300,
+  //             foregroundColor: Colors.black,
+  //             disabledBackgroundColor: Colors.grey.shade300,
+  //             disabledForegroundColor: Colors.black45,
+  //             padding: const EdgeInsets.symmetric(vertical: 15),
+  //             elevation: 0,
+  //             shape: RoundedRectangleBorder(
+  //               borderRadius: BorderRadius.circular(7),
+  //             ),
+  //           ),
+  //           child: const TranslatedText('Back', style: TextStyle(fontSize: 14)),
+  //         ),
+  //       ),
+
+  //       const SizedBox(width: 15),
+
+  //       Expanded(
+  //         flex: 2,
+  //         child: ElevatedButton(
+  //           onPressed: (_isPlacingOrder || _isCancellingConversion)
+  //               ? null
+  //               : () async {
+  //                   try {
+  //                     dynamic plan;
+
+  //                     final res = await JscService.fetchConvertDetails();
+
+  //                     log("fetchConvertPhysicalDetails response: $res");
+
+  //                     log(
+  //                       "fetchConvertPhysicalDetails data: "
+  //                       "${res['data']}",
+  //                     );
+
+  //                     if (res['data'] != null) {
+  //                       final data = Map<String, dynamic>.from(res['data']);
+
+  //                       log("Convert Physical Data: $data");
+
+  //                       log("Golddd: ${data['purchase_subtype']}");
+
+  //                       plan = data['purchase_subtype'];
+  //                     }
+
+  //                     log("Plannn: $plan");
+
+  //                     if (isPhysicalConversion) {
+  //                       await _sendPhysicalOrder(plan: plan);
+  //                     } else {
+  //                       await _placeNormalOrder();
+  //                     }
+  //                   } catch (e, stackTrace) {
+  //                     log("fetchConvertPhysicalDetails error: $e");
+
+  //                     log("StackTrace: $stackTrace");
+  //                   }
+  //                 },
+  //           style: ElevatedButton.styleFrom(
+  //             backgroundColor: AppColors.primaryRed,
+  //             foregroundColor: Colors.white,
+  //             disabledBackgroundColor: Colors.grey.shade400,
+  //             padding: const EdgeInsets.symmetric(vertical: 15),
+  //             elevation: 0,
+  //             shape: RoundedRectangleBorder(
+  //               borderRadius: BorderRadius.circular(7),
+  //             ),
+  //           ),
+  //           child: _isPlacingOrder
+  //               ? const SizedBox(
+  //                   height: 20,
+  //                   width: 20,
+  //                   child: CircularProgressIndicator(
+  //                     strokeWidth: 2,
+  //                     color: Colors.white,
+  //                   ),
+  //                 )
+  //               : TranslatedText(
+  //                   isPhysicalConversion
+  //                       ? 'Send Order $currencySymbol 0.00'
+  //                       : 'Proceed to pay',
+  //                   style: const TextStyle(
+  //                     fontSize: 14,
+  //                     fontWeight: FontWeight.w600,
+  //                   ),
+  //                 ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget paymentBox(String title) {
     final bool isSelected = selectedCard == title;
@@ -1682,17 +1811,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           selectedCard = title;
         });
       },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey,
-            width: isSelected ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: TranslatedText(title),
-      ),
+      child: Image.asset(title, height: 50, width: 65),
     );
   }
 }

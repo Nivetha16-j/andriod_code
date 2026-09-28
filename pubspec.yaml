@@ -88,9 +88,12 @@ flutter:
     - assets/logo/logo.svg
     - assets/logo/video.mp4
     - assets/
-    - assets/orders.png
     - assets/no_product.png
     - assets/about.png
+    - assets/i1.png
+    - assets/i2.png
+    - assets/i3.png
+    - assets/i4.png
     - .env
   #   - images/a_dot_ham.jpeg
 

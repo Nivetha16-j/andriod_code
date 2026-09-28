@@ -20,6 +20,19 @@ class AppColors {
     end: Alignment.bottomCenter,
     colors: [Color.fromRGBO(133, 34, 33, 1), Color.fromRGBO(34, 7, 7, 1)],
   );
+  static const LinearGradient pinkGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color.fromRGBO(252, 216, 216, 1),
+      Color.fromRGBO(252, 252, 244, 1),
+    ],
+  );
+  static const LinearGradient blueGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color.fromRGBO(2, 17, 147, 1), Color.fromRGBO(61, 62, 76, 1)],
+  );
   static const Color white = Color.fromRGBO(255, 255, 255, 1);
   static const Color mustard = Color.fromRGBO(200, 157, 8, 1);
   static const Color lightRed = Color.fromRGBO(243, 172, 172, 1);
@@ -33,4 +46,5 @@ class AppColors {
   static const Color green = Color.fromRGBO(26, 148, 67, 1);
   static const Color offWhite = Color.fromRGBO(255, 248, 230, 1);
   static const Color sandal = Color.fromRGBO(252, 252, 244, 1);
+  static const Color lightYellow = Color.fromRGBO(255, 186, 73, 1);
 }

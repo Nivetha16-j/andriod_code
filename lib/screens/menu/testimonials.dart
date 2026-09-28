@@ -165,131 +165,172 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
 
             const SizedBox(height: 35),
 
-            const TranslatedText(
-              "We'd love to hear your thoughts",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-
-            const SizedBox(height: 12),
-
-            const TranslatedText(
-              "Tell us about your vision: which challenges are you facing? We'd love to stay in touch with you, so we are always ready to answer any question that interests you.",
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-            ),
-
-            const SizedBox(height: 25),
-
-            const TranslatedText(
-              "What's your name?",
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-
-            const SizedBox(height: 8),
-
-            CustomField(controller: nameController, hint: "Your Name"),
-
-            const SizedBox(height: 20),
-
-            const TranslatedText(
-              "What's your email?",
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-
-            const SizedBox(height: 8),
-
-            CustomField(controller: emailController, hint: "Your Email"),
-
-            const SizedBox(height: 20),
-
-            const TranslatedText(
-              "Share your thoughts",
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-
-            const SizedBox(height: 8),
-
-            CustomField(
-              controller: descriptionController,
-              hint: "How can we help?",
-              maxLines: 4,
-            ),
-
-            const SizedBox(height: 28),
-
-            Consumer<TestimonialProvider>(
-              builder: (context, provider, child) {
-                return SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryRed,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+            Container(
+              decoration: BoxDecoration(
+                gradient: AppColors.BgGradient,
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const TranslatedText(
+                      "We'd love to hear your thoughts",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.white,
                       ),
                     ),
-                    onPressed: provider.isSubmitting
-                        ? null
-                        : () async {
-                            debugPrint("SEND BUTTON CLICKED");
 
-                            final provider = context
-                                .read<TestimonialProvider>();
+                    const SizedBox(height: 12),
 
-                            final success = await provider.submitTestimonial(
-                              name: nameController.text.trim(),
-                              email: emailController.text.trim(),
-                              rating: rating,
-                              description: descriptionController.text.trim(),
-                            );
+                    const TranslatedText(
+                      "Tell us about your vision: which challenges are you facing? We'd love to stay in touch with you, so we are always ready to answer any question that interests you.",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white,
+                      ),
+                    ),
 
-                            if (!mounted) return;
+                    const SizedBox(height: 25),
 
-                            if (success) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: TranslatedText(
-                                    "Feedback submitted successfully.",
-                                  ),
-                                ),
-                              );
+                    const TranslatedText(
+                      "What's your name?",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white,
+                      ),
+                    ),
 
-                              nameController.clear();
-                              emailController.clear();
-                              descriptionController.clear();
+                    const SizedBox(height: 8),
 
-                              // Refresh the testimonials list
-                              provider.fetchTestimonials();
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: TranslatedText(
-                                    "Failed to submit feedback.",
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                    child: provider.isSubmitting
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                    CustomField(controller: nameController, hint: "Your Name"),
+
+                    const SizedBox(height: 20),
+
+                    const TranslatedText(
+                      "What's your email?",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    CustomField(
+                      controller: emailController,
+                      hint: "Your Email",
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    const TranslatedText(
+                      "Share your thoughts",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    CustomField(
+                      controller: descriptionController,
+                      hint: "How can we help?",
+                      maxLines: 4,
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    Consumer<TestimonialProvider>(
+                      builder: (context, provider, child) {
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryRed,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
-                          )
-                        : const TranslatedText(
-                            "SEND",
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                            onPressed: provider.isSubmitting
+                                ? null
+                                : () async {
+                                    debugPrint("SEND BUTTON CLICKED");
+
+                                    final provider = context
+                                        .read<TestimonialProvider>();
+
+                                    final success = await provider
+                                        .submitTestimonial(
+                                          name: nameController.text.trim(),
+                                          email: emailController.text.trim(),
+                                          rating: rating,
+                                          description: descriptionController
+                                              .text
+                                              .trim(),
+                                        );
+
+                                    if (!mounted) return;
+
+                                    if (success) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: TranslatedText(
+                                            "Feedback submitted successfully.",
+                                          ),
+                                        ),
+                                      );
+
+                                      nameController.clear();
+                                      emailController.clear();
+                                      descriptionController.clear();
+
+                                      // Refresh the testimonials list
+                                      provider.fetchTestimonials();
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: TranslatedText(
+                                            "Failed to submit feedback.",
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                            child: provider.isSubmitting
+                                ? const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const TranslatedText(
+                                    "SEND",
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
-                  ),
-                );
-              },
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -412,11 +453,26 @@ class CustomField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      style: TextStyle(color: AppColors.white),
       controller: controller,
       maxLines: maxLines,
       decoration: InputDecoration(
+        // enabledBorder: ,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         hintText: hint,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        hintStyle: TextStyle(color: AppColors.white),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.white, width: 1.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.white, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.white, width: 1.5),
+        ),
       ),
     );
   }

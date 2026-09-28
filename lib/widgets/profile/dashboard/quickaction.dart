@@ -15,26 +15,26 @@ class QuickActionsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
-            Icon(Icons.bolt, color: AppColors.primaryRed),
-            SizedBox(width: 6),
             TranslatedText(
               "Quick actions",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: AppColors.white,
+              ),
             ),
           ],
         ),
-
-        const SizedBox(height: 18),
-
+        const SizedBox(height: 16),
         GridView.count(
-          crossAxisCount: 2,
+          crossAxisCount: 3,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          childAspectRatio: .9,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.05,
           children: [
             GestureDetector(
               onTap: () {
@@ -43,11 +43,11 @@ class QuickActionsSection extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => const OrderScreen()),
                 );
               },
-              child: ActionTile(
+              child: const ActionTile(
                 "assets/orders.png",
                 "Orders",
                 "View order history and payment status.",
-                gradientColors: [Color(0xff991E1E), Color(0xffEA7676)],
+                // gradientColors: [AppColors.primaryRed, AppColors.lightRed],
               ),
             ),
             GestureDetector(
@@ -57,11 +57,11 @@ class QuickActionsSection extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => const AddressSection()),
                 );
               },
-              child: ActionTile(
-                "assets/addresses.png",
+              child: const ActionTile(
+                "assets/blueadd.png",
                 "Addresses",
                 "Update your shipping address.",
-                gradientColors: [Color(0xff2563EB), Color(0xffEBF0FC)],
+                // gradientColors: [AppColors.red, AppColors.pink],
               ),
             ),
             GestureDetector(
@@ -73,11 +73,11 @@ class QuickActionsSection extends StatelessWidget {
                   ),
                 );
               },
-              child: ActionTile(
-                "assets/acc_details.png",
+              child: const ActionTile(
+                "assets/accdet.png",
                 "Account details",
                 "Edit your profile and password.",
-                gradientColors: [Color(0xff7C3AED), Color(0xffC8B1F1)],
+                // gradientColors: [AppColors.primaryRed, AppColors.mustard],
               ),
             ),
             GestureDetector(
@@ -87,11 +87,11 @@ class QuickActionsSection extends StatelessWidget {
                 //   MaterialPageRoute(builder: (_) => const PaymentMethodsScreen()),
                 // );
               },
-              child: ActionTile(
-                "assets/payment_methods.png",
+              child: const ActionTile(
+                "assets/pay.png",
                 "Payment methods",
                 "Manage saved payment options",
-                gradientColors: [Color(0xff059669), Color(0xffBAFBE7)],
+                // gradientColors: [AppColors.green, AppColors.offWhite],
               ),
             ),
             GestureDetector(
@@ -103,11 +103,11 @@ class QuickActionsSection extends StatelessWidget {
                   ),
                 );
               },
-              child: ActionTile(
-                "assets/kyc_required.png",
+              child: const ActionTile(
+                "assets/kyc_verification.png",
                 "KYC Verification",
                 "Upload identification documents for verification",
-                gradientColors: [Color(0xffD97706), Color(0xffFFDBB1)],
+                // gradientColors: [AppColors.mustard, AppColors.yellow],
               ),
             ),
             GestureDetector(
@@ -120,11 +120,11 @@ class QuickActionsSection extends StatelessWidget {
                   (route) => false,
                 );
               },
-              child: ActionTile(
-                "assets/shop_products.png",
+              child: const ActionTile(
+                "assets/prod.png",
                 "Shop products",
                 "Browse gold, silver, and bullion products.",
-                gradientColors: [Color(0xffC2410C), Color(0xffFCB091)],
+                // gradientColors: [AppColors.red, AppColors.mustard],
               ),
             ),
           ],
@@ -138,68 +138,58 @@ class ActionTile extends StatelessWidget {
   final String image;
   final String title;
   final String description;
-  final List<Color> gradientColors;
+  // final List<Color> gradientColors;
 
   const ActionTile(
     this.image,
     this.title,
     this.description, {
     super.key,
-    required this.gradientColors,
+    // required this.gradientColors,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.12),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppColors.sandal,
+        borderRadius: BorderRadius.circular(10),
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: AppColors.black.withValues(alpha: .08),
+        //     blurRadius: 10,
+        //     offset: const Offset(0, 4),
+        //   ),
+        // ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(4),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              height: 50,
-              width: 50,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: gradientColors,
-                ),
-              ),
-              child: Center(
-                child: Image.asset(
-                  image,
-                  width: 28,
-                  height: 28,
-                  color: Colors.white,
-                ),
+            Center(
+              child: Image.asset(
+                image,
+                width: 24,
+                height: 24,
+                // color: AppColors.white,
               ),
             ),
-
+            const SizedBox(height: 10),
             TranslatedText(
               title,
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
             ),
-
+            const SizedBox(height: 4),
             TranslatedText(
               description,
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: Colors.black54),
+              style: const TextStyle(fontSize: 11, color: AppColors.grey),
             ),
           ],
         ),

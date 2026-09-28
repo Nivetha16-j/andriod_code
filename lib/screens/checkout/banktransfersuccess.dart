@@ -2,12 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/services/session_manager.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
-import 'package:provider/provider.dart';
 
 class BankTransferSuccessScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -66,11 +65,9 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 24),
-              Center(
-                child: const TranslatedText(
-                  "Thank you. Your order has been received.",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+              const TranslatedText(
+                "Thank you. Your order has been received.",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 24),
@@ -105,8 +102,8 @@ Widget orderDetailsCard({
     width: double.infinity,
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border.all(color: Colors.grey.shade400),
+      color: AppColors.lightRed,
+      // border: Border.all(color: Colors.grey.shade400),
       borderRadius: BorderRadius.circular(12),
     ),
     child: Column(
@@ -169,7 +166,7 @@ Widget bankTransferCard(BuildContext context) {
     width: double.infinity,
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppColors.sandal,
       borderRadius: BorderRadius.circular(12),
       border: Border.all(color: Colors.grey.shade400),
     ),
@@ -275,7 +272,7 @@ Widget bankTransferCard(BuildContext context) {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xff8B1E1E),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
             onPressed: () {

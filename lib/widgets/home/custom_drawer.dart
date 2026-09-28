@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/menu/aboutus.dart';
+import 'package:junubullion/screens/menu/brands.dart';
 import 'package:junubullion/screens/menu/contactus.dart';
 import 'package:junubullion/screens/menu/faq.dart';
 import 'package:junubullion/screens/menu/privacy.dart';
 import 'package:junubullion/screens/menu/testimonials.dart';
-import 'package:junubullion/screens/plans/form.dart';
-import 'package:junubullion/screens/plans/gsp/gsp_dashboard.dart';
 import 'package:junubullion/screens/plans/gsp/gsp_details.dart';
-import 'package:junubullion/screens/plans/jsc/jsc_dashboard.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_details.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
+import 'package:junubullion/providers/language_provider.dart';
+import 'package:google_mlkit_translation/google_mlkit_translation.dart';
+import 'dart:developer';
 
 class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
@@ -197,6 +198,11 @@ class _CustomDrawerState extends State<CustomDrawer> {
                             Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => JscScreen()),
                             );
+                            // Navigator.of(context).push(
+                            //   MaterialPageRoute(
+                            //     builder: (_) => JscDashboardScreen(),
+                            //   ),
+                            // );
                           },
                         ),
                         _subMenuTile(
@@ -257,7 +263,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                       title: "Brands",
                       onTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => ReviewsScreen()),
+                          MaterialPageRoute(builder: (_) => BrandScreen()),
                         );
                       },
                     ),
@@ -329,7 +335,14 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     // =========================
                     // CURRENCY
                     // =========================
-                    _buildCurrencySelector(context),
+                    Consumer<LanguageProvider>(
+                      builder: (context, languageProvider, child) {
+                        return _buildLanguageSelector(
+                          context,
+                          languageProvider,
+                        );
+                      },
+                    ),
 
                     const SizedBox(height: 30),
 
@@ -517,41 +530,124 @@ class _CustomDrawerState extends State<CustomDrawer> {
   //   );
   // }
 
-  Widget _buildCurrencySelector(BuildContext context) {
-    const List<String> currencies = [
-      'USD',
-      'SGD',
-      'CAD',
-      'INR',
-      'EUR',
-      'AED',
-      'CNY',
+  Widget _buildLanguageSelector(
+    BuildContext context,
+    LanguageProvider languageProvider,
+  ) {
+    final List<Map<String, String>> languages = [
+      {'name': 'Arabic', 'code': 'ar'},
+      {'name': 'English', 'code': 'en'},
+      {'name': 'German', 'code': 'de'},
+      {'name': 'Hindi', 'code': 'hi'},
+      {'name': 'Italian', 'code': 'it'},
+      {'name': 'Spanish', 'code': 'es'},
+      {'name': 'Tamil', 'code': 'ta'},
     ];
 
-    return Consumer<CurrencyProvider>(
-      builder: (context, currencyProvider, child) {
-        return _drawerExpansionTile(
-          assetIcon: "assets/currency.png",
-          title: "Currency",
-          isExpanded: false,
-          onExpansionChanged: (value) {
-            // handle expansion if needed
-          },
-          children: currencies.map((currency) {
-            return _subMenuTile(
-              title: currency,
-              onTap: () {
-                currencyProvider.changeCurrency(currency);
-
-                Navigator.pop(context);
-
-                debugPrint('Currency changed to: $currency');
-              },
-            );
-          }).toList(),
-        );
+    return _drawerExpansionTile(
+      assetIcon: "assets/language.png",
+      title: "Language",
+      isExpanded: false,
+      onExpansionChanged: (value) {
+        // No additional action needed.
       },
+      children: languages.map((language) {
+        final String code = language['code']!;
+        final String name = language['name']!;
+
+        final bool isSelected =
+            languageProvider.selectedLanguage == _getMlKitLanguage(code);
+
+        return InkWell(
+          onTap: () async {
+            final TranslateLanguage mlKitLanguage = _getMlKitLanguage(code);
+
+            debugPrint('Selected language: $name');
+            debugPrint('Language code: $code');
+
+            try {
+              await languageProvider.changeLanguage(mlKitLanguage);
+
+              if (!mounted) return;
+
+              debugPrint(
+                'Current language: '
+                '${languageProvider.selectedLanguageName}',
+              );
+
+              setState(() {});
+            } catch (e) {
+              debugPrint('Language change error: $e');
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+            child: Row(
+              children: [
+                // Gold dot - same as JSC/GSP submenu
+                Container(
+                  width: 5,
+                  height: 5,
+                  decoration: const BoxDecoration(
+                    color: accentGold,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: TranslatedText(
+                    name,
+                    style: TextStyle(
+                      color: isSelected
+                          ? accentGold
+                          : Colors.white.withOpacity(0.9),
+                      fontSize: 14,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                    ),
+                  ),
+                ),
+
+                if (isSelected)
+                  const Icon(Icons.check, color: accentGold, size: 18),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
+  }
+
+  TranslateLanguage _getMlKitLanguage(String code) {
+    switch (code) {
+      case 'ar':
+        return TranslateLanguage.arabic;
+
+      case 'en':
+        return TranslateLanguage.english;
+
+      case 'de':
+        return TranslateLanguage.german;
+
+      case 'hi':
+        return TranslateLanguage.hindi;
+
+      case 'it':
+        return TranslateLanguage.italian;
+
+      case 'es':
+        return TranslateLanguage.spanish;
+
+      case 'ta':
+        return TranslateLanguage.tamil;
+
+      default:
+        return TranslateLanguage.english;
+    }
   }
 
   Widget _drawerExpansionTile({

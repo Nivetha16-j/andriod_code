@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:junubullion/routes/app_routes.dart';
+import 'package:junubullion/services/app_bootstrap.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:video_player/video_player.dart';
 
@@ -19,15 +20,12 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
 
-  late VideoPlayerController _videoController;
-
+  VideoPlayerController? _videoController;
   bool _hasNavigated = false;
 
   @override
   void initState() {
     super.initState();
-
-    // ---------------- ANIMATION ----------------
 
     _controller = AnimationController(
       vsync: this,
@@ -46,57 +44,59 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // ---------------- VIDEO ----------------
-
-    _videoController = VideoPlayerController.asset('assets/logo/video.mp4');
-
-    _initializeVideo();
+    // Let the first Flutter frame paint (logo on black) before starting
+    // the video decoder — which can delay the first frame on cold start.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _videoController = VideoPlayerController.asset('assets/logo/video.mp4');
+      _initializeVideo();
+    });
   }
 
   Future<void> _initializeVideo() async {
+    final video = _videoController;
+    if (video == null) return;
+
     try {
-      await _videoController.initialize();
-
-      // DO NOT LOOP
-      await _videoController.setLooping(false);
-
-      // Listen for video completion
-      _videoController.addListener(_videoListener);
-
-      // Start video
-      await _videoController.play();
+      await video.initialize();
+      await video.setLooping(false);
+      video.addListener(_videoListener);
+      await video.play();
 
       if (mounted) {
         setState(() {});
       }
 
-      log("Video duration: ${_videoController.value.duration}");
+      log("Video duration: ${video.value.duration}");
     } catch (e) {
       log("Splash video error: $e");
+      if (!_hasNavigated) {
+        _hasNavigated = true;
+        checkLogin();
+      }
     }
   }
 
   void _videoListener() {
-    if (!_videoController.value.isInitialized) {
+    final video = _videoController;
+    if (video == null || !video.value.isInitialized) {
       return;
     }
 
-    final position = _videoController.value.position;
-    final duration = _videoController.value.duration;
+    final position = video.value.position;
+    final duration = video.value.duration;
 
-    // Check whether video has completed
     if (position >= duration && !_hasNavigated) {
       _hasNavigated = true;
-
       log("Splash video completed");
-
       checkLogin();
     }
   }
 
   Future<void> checkLogin() async {
-    bool loggedIn = await SessionManager.isLoggedIn();
+    await AppBootstrap.ready;
 
+    final loggedIn = await SessionManager.isLoggedIn();
     final token = await SessionManager.getToken();
 
     log("lllooooo $loggedIn..............$token");
@@ -112,61 +112,51 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _videoController.removeListener(_videoListener);
-    _videoController.dispose();
-
+    final video = _videoController;
+    if (video != null) {
+      video.removeListener(_videoListener);
+      video.dispose();
+    }
     _controller.dispose();
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final video = _videoController;
+    final videoReady = video != null && video.value.isInitialized;
+
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // ==================================================
-          // BACKGROUND VIDEO
-          // ==================================================
           Positioned.fill(
-            child: _videoController.value.isInitialized
+            child: videoReady
                 ? FittedBox(
                     fit: BoxFit.cover,
                     child: SizedBox(
-                      width: _videoController.value.size.width,
-                      height: _videoController.value.size.height,
-                      child: VideoPlayer(_videoController),
+                      width: video.value.size.width,
+                      height: video.value.size.height,
+                      child: VideoPlayer(video),
                     ),
                   )
-                : Container(color: Colors.black),
+                : const ColoredBox(color: Colors.black),
           ),
-
-          // ==================================================
-          // DARK OVERLAY
-          // ==================================================
           Positioned.fill(
             child: Container(color: Colors.black.withOpacity(0.25)),
           ),
-
-          // ==================================================
-          // LOGO + TEXT
-          // ==================================================
           Positioned.fill(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // LOGO
                   SvgPicture.asset(
                     'assets/logo/logo.svg',
                     width: 60,
                     height: 60,
                     fit: BoxFit.contain,
                   ),
-
                   const SizedBox(height: 10),
-
-                  // TEXT
                   FadeTransition(
                     opacity: _fadeAnimation,
                     child: ScaleTransition(

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="splash_background">#881B1B</color>
+    <!-- Match Flutter SplashScreen (black) so the gap before first frame
+         does not look like a stuck red error screen. -->
+    <color name="splash_background">#000000</color>
 </resources>

@@ -182,215 +182,333 @@ class _JscScreenState extends State<JscScreen> {
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// Hero Section
+            // Container(
+            //   width: double.infinity,
+            //   decoration: BoxDecoration(gradient: AppColors.BgGradient),
+            //   padding: const EdgeInsets.all(20),
+            //   child: Column(
+            //     crossAxisAlignment: CrossAxisAlignment.start,
+            //     children: [
+            //       /// Tagline
+            //       Container(
+            //         padding: const EdgeInsets.symmetric(
+            //           horizontal: 18,
+            //           vertical: 12,
+            //         ),
+            //         decoration: BoxDecoration(
+            //           color: const Color(0xFF7B0000),
+            //           border: Border.all(
+            //             color: const Color(0xFFFFC107),
+            //             width: 2,
+            //           ),
+            //           boxShadow: [
+            //             BoxShadow(
+            //               color: const Color(0xFFFFC107).withOpacity(0.45),
+            //               blurRadius: 18,
+            //               spreadRadius: 6,
+            //               offset: const Offset(0, 0),
+            //             ),
+            //           ],
+            //         ),
+            //         child: Column(
+            //           crossAxisAlignment: CrossAxisAlignment.start,
+            //           children: [
+            //             const TranslatedText(
+            //               '"Save Smart.Own Gold.',
+            //               style: TextStyle(
+            //                 fontSize: 20,
+            //                 fontWeight: FontWeight.bold,
+            //                 color: Color(0xffFFCC19),
+            //               ),
+            //             ),
+            //             const TranslatedText(
+            //               'Build Your Future."',
+            //               style: TextStyle(
+            //                 fontSize: 20,
+            //                 fontWeight: FontWeight.bold,
+            //                 color: Colors.white,
+            //               ),
+            //             ),
+            //           ],
+            //         ),
+            //       ),
+
+            //       const SizedBox(height: 22),
+
+            //       const TranslatedText(
+            //         "Your Wealth, Backed by Real Gold & Silver",
+            //         style: TextStyle(
+            //           color: Colors.white,
+            //           fontWeight: FontWeight.w700,
+            //           fontSize: 24,
+            //           // height: 1.2,
+            //         ),
+            //       ),
+
+            //       const SizedBox(height: 10),
+
+            //       const TranslatedText(
+            //         "Start building your future with the Junu Savings Capital — own digital gold and silver, starting from just 1 gram.",
+            //         style: TextStyle(
+            //           color: Colors.white,
+            //           fontSize: 15,
+            //           // height: 1.4,
+            //           fontWeight: FontWeight.w500,
+            //         ),
+            //       ),
+
+            //       const SizedBox(height: 10),
+
+            //       SizedBox(
+            //         height: 54,
+            //         child: ElevatedButton(
+            //           style: ElevatedButton.styleFrom(
+            //             backgroundColor: const Color(0xffFFBA49),
+            //             foregroundColor: Colors.black,
+            //             shape: RoundedRectangleBorder(
+            //               borderRadius: BorderRadius.circular(18),
+            //             ),
+            //           ),
+            //           onPressed: () {
+            //             hasJscRegistration
+            //                 ? Navigator.push(
+            //                     context,
+            //                     MaterialPageRoute(
+            //                       builder: (_) => const ApplicationForm(
+            //                         isEdit: true,
+            //                         applicationType: 'JSC',
+            //                       ),
+            //                     ),
+            //                   )
+            //                 : Navigator.push(
+            //                     context,
+            //                     MaterialPageRoute(
+            //                       builder: (_) =>
+            //                           ApplicationForm(applicationType: 'JSC'),
+            //                     ),
+            //                   );
+            //           },
+            //           child: hasJscRegistration
+            //               ? TranslatedText(
+            //                   "View Your Jsc Application",
+            //                   style: TextStyle(
+            //                     fontWeight: FontWeight.w600,
+            //                     fontSize: 14,
+            //                   ),
+            //                 )
+            //               : TranslatedText(
+            //                   "Open Your Jsc Account",
+            //                   style: TextStyle(
+            //                     fontWeight: FontWeight.w600,
+            //                     fontSize: 14,
+            //                   ),
+            //                 ),
+            //         ),
+            //       ),
+
+            //       const SizedBox(height: 30),
+
+            //       Row(
+            //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //         children: [
+            //           Image.asset("assets/jsc_1.png"),
+            //           Image.asset("assets/jsc_2.png"),
+            //           Image.asset("assets/jsc_1.png"),
+            //         ],
+            //       ),
+            //     ],
+            //   ),
+            // ),
             Container(
-              width: double.infinity,
-              color: const Color(0xff6B0404),
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// Tagline
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF7B0000),
-                      border: Border.all(
-                        color: const Color(0xFFFFC107),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFFC107).withOpacity(0.45),
-                          blurRadius: 18,
-                          spreadRadius: 6,
-                          offset: const Offset(0, 0),
-                        ),
-                      ],
-                    ),
-                    child: Column(
+              decoration: BoxDecoration(gradient: AppColors.BgGradient),
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
+                height: 280,
+                decoration: BoxDecoration(
+                  gradient: AppColors.BgGradient,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xffD4A017), width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const TranslatedText(
-                          '"Save Smart.Own Gold.',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xffFFCC19),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xffD4A017)),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: const TranslatedText(
+                            "Physical Asset Backed",
+                            style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
                         ),
-                        const TranslatedText(
-                          'Build Your Future."',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: const [
+                            TranslatedText(
+                              "DIGITAL BALANCE",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            TranslatedText(
+                              "\$1000.25",
+                              style: TextStyle(
+                                color: Color(0xffE8C45A),
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ),
 
-                  const SizedBox(height: 22),
+                    const SizedBox(height: 24),
 
-                  const TranslatedText(
-                    "Your Wealth, Backed by Real Gold & Silver",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 24,
-                      // height: 1.2,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  const TranslatedText(
-                    "Start building your future with the Junu Savings Capital — own digital gold and silver, starting from just 1 gram.",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      // height: 1.4,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  SizedBox(
-                    height: 54,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xffFFBA49),
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                    RichText(
+                      text: const TextSpan(
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
+                        children: [
+                          TextSpan(
+                            text: "Real Gold & Silver ",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          TextSpan(
+                            text: "Holdings",
+                            style: TextStyle(color: Color(0xffD4A017)),
+                          ),
+                        ],
                       ),
-                      onPressed: () {
-                        hasJscRegistration
-                            ? Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ApplicationForm(
-                                    isEdit: true,
-                                    applicationType: 'JSC',
-                                  ),
-                                ),
-                              )
-                            : Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      ApplicationForm(applicationType: 'JSC'),
-                                ),
-                              );
-                      },
-                      child: hasJscRegistration
-                          ? TranslatedText(
-                              "View Your Jsc Application",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            )
-                          : TranslatedText(
-                              "Open Your Jsc Account",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
                     ),
-                  ),
 
-                  const SizedBox(height: 30),
+                    const SizedBox(height: 12),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Image.asset("assets/jsc_1.png"),
-                      Image.asset("assets/jsc_2.png"),
-                      Image.asset("assets/jsc_1.png"),
-                    ],
-                  ),
-                ],
+                    const TranslatedText(
+                      "Start Building Wealth From Just 1 Gram",
+                      style: TextStyle(
+                        color: Color(0xffA7A9B4),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xffA72222),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const TranslatedText(
+                            "START INVESTING",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Image.asset("assets/GS.png", width: 110),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
 
             const SizedBox(height: 18),
 
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(.25),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TranslatedText(
-                    "Junu Savings Capital (JSC) Plan",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xff9A1B1B),
-                    ),
-                  ),
+            // Container(
+            //   margin: const EdgeInsets.all(16),
+            //   padding: const EdgeInsets.all(18),
+            //   decoration: BoxDecoration(
+            //     color: Colors.white,
+            //     borderRadius: BorderRadius.circular(6),
+            //     boxShadow: [
+            //       BoxShadow(
+            //         color: Colors.grey.withOpacity(.25),
+            //         blurRadius: 10,
+            //         offset: const Offset(0, 5),
+            //       ),
+            //     ],
+            //   ),
+            //   child: const Column(
+            //     crossAxisAlignment: CrossAxisAlignment.start,
+            //     children: [
+            //       TranslatedText(
+            //         "Junu Savings Capital (JSC) Plan",
+            //         style: TextStyle(
+            //           fontSize: 16,
+            //           fontWeight: FontWeight.w600,
+            //           color: Color(0xff9A1B1B),
+            //         ),
+            //       ),
 
-                  SizedBox(height: 14),
+            //       SizedBox(height: 14),
 
-                  TranslatedText(
-                    "Junu Savings Capital (JSC) is a precious metals savings program offered by Junu Bullion that allows customers to accumulate gold or silver gradually through digital ownership backed by physical bullion. Investors can start with small amounts and build long-term wealth through regular savings.",
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
+            //       TranslatedText(
+            //         "Junu Savings Capital (JSC) is a precious metals savings program offered by Junu Bullion that allows customers to accumulate gold or silver gradually through digital ownership backed by physical bullion. Investors can start with small amounts and build long-term wealth through regular savings.",
+            //         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            //       ),
 
-                  SizedBox(height: 20),
+            //       SizedBox(height: 20),
 
-                  TranslatedText(
-                    "What is JSC?",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xff9A1B1B),
-                    ),
-                  ),
+            //       TranslatedText(
+            //         "What is JSC?",
+            //         style: TextStyle(
+            //           fontSize: 16,
+            //           fontWeight: FontWeight.w600,
+            //           color: Color(0xff9A1B1B),
+            //         ),
+            //       ),
 
-                  SizedBox(height: 14),
+            //       SizedBox(height: 14),
 
-                  TranslatedText(
-                    "JSC is designed as a flexible savings and wealth-building solution where every gram purchased is backed by real physical gold or silver. Customers can buy digital grams, monitor their holdings online, and later sell, withdraw, or convert their holdings into physical bullion products.",
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                ],
+            //       TranslatedText(
+            //         "JSC is designed as a flexible savings and wealth-building solution where every gram purchased is backed by real physical gold or silver. Customers can buy digital grams, monitor their holdings online, and later sell, withdraw, or convert their holdings into physical bullion products.",
+            //         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            Padding(
+              padding: const EdgeInsets.only(left: 12.0),
+              child: const TranslatedText(
+                "Featured Assets",
+                // textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.black,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 20,
+                ),
               ),
             ),
 
-            const TranslatedText(
-              "Start Small, Grow Big\nStart Your Wealth Journey Today",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xffA51E22),
-                fontWeight: FontWeight.w600,
-                fontSize: 20,
-                height: 1.3,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
+            // const SizedBox(height: 10),
             Consumer<ExclusiveProductProvider>(
               builder: (context, exclusiveProvider, child) {
                 if (exclusiveProvider.isLoading &&
@@ -845,7 +963,7 @@ class _JscProductCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: AppColors.BgGradient,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
@@ -860,28 +978,31 @@ class _JscProductCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: SizedBox(
-              height: 180,
-              width: double.infinity,
-              child: imageUrl.isNotEmpty
-                  ? Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
-                        return const Icon(
-                          Icons.image_not_supported,
-                          size: 40,
-                          color: Colors.grey,
-                        );
-                      },
-                    )
-                  : const Icon(
-                      Icons.image_not_supported,
-                      size: 40,
-                      color: Colors.grey,
-                    ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: SizedBox(
+                height: 180,
+                width: double.infinity,
+                child: imageUrl.isNotEmpty
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) {
+                          return const Icon(
+                            Icons.image_not_supported,
+                            size: 40,
+                            color: Colors.grey,
+                          );
+                        },
+                      )
+                    : const Icon(
+                        Icons.image_not_supported,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -890,7 +1011,11 @@ class _JscProductCard extends StatelessWidget {
             productName,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.white,
+              fontWeight: FontWeight.w500,
+            ),
           ),
 
           const SizedBox(height: 4),
@@ -899,7 +1024,11 @@ class _JscProductCard extends StatelessWidget {
             priceText,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
 
           const SizedBox(height: 3),

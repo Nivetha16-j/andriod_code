@@ -1,5 +1,5 @@
 import 'dart:developer';
-
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/account_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
@@ -65,187 +65,195 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
         currentIndex: _currentIndex,
         onTap: _switchToTab,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: TranslatedText(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(gradient: AppColors.BgGradient),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TranslatedText(
                 "Account Details",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.white,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            buildTextField(label: "Name", controller: nameController),
+              buildTextField(label: "Name", controller: nameController),
 
-            const SizedBox(height: 18),
+              const SizedBox(height: 18),
 
-            buildTextField(
-              label: "Email",
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              readOnly: true,
-            ),
+              buildTextField(
+                label: "Email",
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                readOnly: true,
+              ),
 
-            const SizedBox(height: 18),
+              const SizedBox(height: 18),
 
-            buildTextField(
-              label: "Phone Number",
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              readOnly: true,
-            ),
+              buildTextField(
+                label: "Phone Number",
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                readOnly: true,
+              ),
 
-            const SizedBox(height: 22),
+              const SizedBox(height: 22),
 
-            Consumer<AccountProvider>(
-              builder: (context, provider, child) {
-                return buildButton(
-                  text: provider.isLoading ? "Saving..." : "Save Changes",
-                  onPressed: provider.isLoading
-                      ? () {}
-                      : () async {
-                          final success = await provider.updateAccountDetails(
-                            name: nameController.text.trim(),
-                            email: emailController.text.trim(),
-                            phone: phoneController.text.trim(),
-                          );
+              Consumer<AccountProvider>(
+                builder: (context, provider, child) {
+                  return buildButton(
+                    text: provider.isLoading ? "Saving..." : "Save Changes",
+                    onPressed: provider.isLoading
+                        ? () {}
+                        : () async {
+                            final success = await provider.updateAccountDetails(
+                              name: nameController.text.trim(),
+                              email: emailController.text.trim(),
+                              phone: phoneController.text.trim(),
+                            );
 
-                          if (!mounted) return;
+                            if (!mounted) return;
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: TranslatedText(
-                                success
-                                    ? "Account updated successfully"
-                                    : "Failed to update account",
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: TranslatedText(
+                                  success
+                                      ? "Account updated successfully"
+                                      : "Failed to update account",
+                                  style: TextStyle(color: AppColors.white),
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                );
-              },
-            ),
+                            );
+                          },
+                  );
+                },
+              ),
 
-            // const SizedBox(height: 34),
+              // const SizedBox(height: 34),
 
-            // const TranslatedText(
-            //   "Password Change",
-            //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            // ),
+              // const TranslatedText(
+              //   "Password Change",
+              //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              // ),
 
-            // const SizedBox(height: 20),
+              // const SizedBox(height: 20),
 
-            // buildTextField(
-            //   label: "Current Password",
-            //   controller: currentPasswordController,
-            //   obscure: true,
-            // ),
+              // buildTextField(
+              //   label: "Current Password",
+              //   controller: currentPasswordController,
+              //   obscure: true,
+              // ),
 
-            // const SizedBox(height: 18),
+              // const SizedBox(height: 18),
 
-            // buildTextField(
-            //   label: "New Password",
-            //   controller: newPasswordController,
-            //   obscure: true,
-            // ),
+              // buildTextField(
+              //   label: "New Password",
+              //   controller: newPasswordController,
+              //   obscure: true,
+              // ),
 
-            // const SizedBox(height: 18),
+              // const SizedBox(height: 18),
 
-            // buildTextField(
-            //   label: "Confirm New Password",
-            //   controller: confirmPasswordController,
-            //   obscure: true,
-            // ),
+              // buildTextField(
+              //   label: "Confirm New Password",
+              //   controller: confirmPasswordController,
+              //   obscure: true,
+              // ),
 
-            // const SizedBox(height: 22),
+              // const SizedBox(height: 22),
 
-            // Consumer<AccountProvider>(
-            //   builder: (context, provider, child) {
-            //     return buildButton(
-            //       text: provider.isLoading ? "Updating..." : "Update Password",
-            //       onPressed: provider.isLoading
-            //           ? null
-            //           : () async {
-            //               if (currentPasswordController.text.isEmpty ||
-            //                   newPasswordController.text.isEmpty ||
-            //                   confirmPasswordController.text.isEmpty) {
-            //                 ScaffoldMessenger.of(context).showSnackBar(
-            //                   const SnackBar(
-            //                     content: TranslatedText(
-            //                       "Please fill all password fields",
-            //                     ),
-            //                   ),
-            //                 );
-            //                 return;
-            //               }
+              // Consumer<AccountProvider>(
+              //   builder: (context, provider, child) {
+              //     return buildButton(
+              //       text: provider.isLoading ? "Updating..." : "Update Password",
+              //       onPressed: provider.isLoading
+              //           ? null
+              //           : () async {
+              //               if (currentPasswordController.text.isEmpty ||
+              //                   newPasswordController.text.isEmpty ||
+              //                   confirmPasswordController.text.isEmpty) {
+              //                 ScaffoldMessenger.of(context).showSnackBar(
+              //                   const SnackBar(
+              //                     content: TranslatedText(
+              //                       "Please fill all password fields",
+              //                     ),
+              //                   ),
+              //                 );
+              //                 return;
+              //               }
 
-            //               if (newPasswordController.text !=
-            //                   confirmPasswordController.text) {
-            //                 ScaffoldMessenger.of(context).showSnackBar(
-            //                   const SnackBar(
-            //                     content: TranslatedText(
-            //                       "Passwords do not match",
-            //                     ),
-            //                   ),
-            //                 );
-            //                 return;
-            //               }
+              //               if (newPasswordController.text !=
+              //                   confirmPasswordController.text) {
+              //                 ScaffoldMessenger.of(context).showSnackBar(
+              //                   const SnackBar(
+              //                     content: TranslatedText(
+              //                       "Passwords do not match",
+              //                     ),
+              //                   ),
+              //                 );
+              //                 return;
+              //               }
 
-            //               // Verify current password
-            //               final verify = await provider.verifyPassword(
-            //                 currentPasswordController.text.trim(),
-            //               );
+              //               // Verify current password
+              //               final verify = await provider.verifyPassword(
+              //                 currentPasswordController.text.trim(),
+              //               );
 
-            //               if (verify["status"] != true ||
-            //                   verify["valid"] != true) {
-            //                 if (!mounted) return;
+              //               if (verify["status"] != true ||
+              //                   verify["valid"] != true) {
+              //                 if (!mounted) return;
 
-            //                 ScaffoldMessenger.of(context).showSnackBar(
-            //                   SnackBar(
-            //                     content: TranslatedText(
-            //                       verify["message"] ??
-            //                           "Current password is incorrect.",
-            //                     ),
-            //                   ),
-            //                 );
-            //                 return;
-            //               }
+              //                 ScaffoldMessenger.of(context).showSnackBar(
+              //                   SnackBar(
+              //                     content: TranslatedText(
+              //                       verify["message"] ??
+              //                           "Current password is incorrect.",
+              //                     ),
+              //                   ),
+              //                 );
+              //                 return;
+              //               }
 
-            //               // Update password
-            //               final success = await provider.updatePassword(
-            //                 currentPassword: currentPasswordController.text
-            //                     .trim(),
-            //                 password: newPasswordController.text.trim(),
-            //                 passwordConfirmation: confirmPasswordController.text
-            //                     .trim(),
-            //               );
+              //               // Update password
+              //               final success = await provider.updatePassword(
+              //                 currentPassword: currentPasswordController.text
+              //                     .trim(),
+              //                 password: newPasswordController.text.trim(),
+              //                 passwordConfirmation: confirmPasswordController.text
+              //                     .trim(),
+              //               );
 
-            //               if (!mounted) return;
+              //               if (!mounted) return;
 
-            //               ScaffoldMessenger.of(context).showSnackBar(
-            //                 SnackBar(
-            //                   content: TranslatedText(
-            //                     success
-            //                         ? "Password updated successfully"
-            //                         : "Failed to update password",
-            //                   ),
-            //                 ),
-            //               );
+              //               ScaffoldMessenger.of(context).showSnackBar(
+              //                 SnackBar(
+              //                   content: TranslatedText(
+              //                     success
+              //                         ? "Password updated successfully"
+              //                         : "Failed to update password",
+              //                   ),
+              //                 ),
+              //               );
 
-            //               if (success) {
-            //                 currentPasswordController.clear();
-            //                 newPasswordController.clear();
-            //                 confirmPasswordController.clear();
-            //               }
-            //             },
-            //     );
-            //   },
-            // ),
-          ],
+              //               if (success) {
+              //                 currentPasswordController.clear();
+              //                 newPasswordController.clear();
+              //                 confirmPasswordController.clear();
+              //               }
+              //             },
+              //     );
+              //   },
+              // ),
+            ],
+          ),
         ),
       ),
     );
@@ -254,14 +262,14 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
 
 Widget buildButton({required String text, VoidCallback? onPressed}) {
   return SizedBox(
-    width: double.infinity,
+    // width: double.infinity,
     height: 46,
     child: ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xff8F2424),
+        backgroundColor: AppColors.mustard,
         disabledBackgroundColor: Colors.grey,
-        elevation: 3,
+        // elevation: 3,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),
       child: TranslatedText(
@@ -288,7 +296,11 @@ Widget buildTextField({
     children: [
       TranslatedText(
         label,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: AppColors.white,
+        ),
       ),
       const SizedBox(height: 8),
       TextField(
@@ -296,25 +308,26 @@ Widget buildTextField({
         obscureText: obscure,
         readOnly: readOnly,
         keyboardType: keyboardType,
+        style: TextStyle(color: AppColors.white),
         decoration: InputDecoration(
-          // filled: true,
-          // fillColor: const Color(0xffF8F6F1),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.10),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 15,
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
-            borderSide: const BorderSide(color: Color(0xffDDDDDD)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
-            borderSide: const BorderSide(color: Color(0xffDDDDDD)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(6),
-            borderSide: const BorderSide(color: Color(0xff8F2424)),
-          ),
+          // border: OutlineInputBorder(
+          //   borderRadius: BorderRadius.circular(6),
+          //   borderSide: const BorderSide(color: Color(0xffDDDDDD)),
+          // ),
+          // enabledBorder: OutlineInputBorder(
+          //   borderRadius: BorderRadius.circular(6),
+          //   borderSide: const BorderSide(color: Color(0xffDDDDDD)),
+          // ),
+          // focusedBorder: OutlineInputBorder(
+          //   borderRadius: BorderRadius.circular(6),
+          //   borderSide: const BorderSide(color: Color(0xff8F2424)),
+          // ),
         ),
       ),
     ],

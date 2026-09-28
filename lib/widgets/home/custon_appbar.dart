@@ -1,14 +1,17 @@
 import 'dart:developer';
-import 'package:flutter_svg/svg.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/providers/language_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final GlobalKey<ScaffoldState>? scaffoldKey;
@@ -26,9 +29,9 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
-  // ------------------------------------------------------------
+  // ============================================================
   // TICKER TRANSLATION STATE
-  // ------------------------------------------------------------
+  // ============================================================
 
   String _translatedTicker = '';
   String _lastTicker = '';
@@ -36,11 +39,13 @@ class _CustomAppBarState extends State<CustomAppBar> {
 
   bool _isTranslatingTicker = false;
 
-  // ------------------------------------------------------------
+  // ============================================================
   // TRANSLATE TICKER
-  // ------------------------------------------------------------
+  // ============================================================
 
   Future<void> _translateTicker(String ticker) async {
+    if (!mounted) return;
+
     if (_isTranslatingTicker) {
       return;
     }
@@ -106,9 +111,9 @@ class _CustomAppBarState extends State<CustomAppBar> {
     }
   }
 
-  // ------------------------------------------------------------
+  // ============================================================
   // LANGUAGE DROPDOWN
-  // ------------------------------------------------------------
+  // ============================================================
 
   TranslateLanguage _getMlKitLanguage(String code) {
     switch (code) {
@@ -126,9 +131,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
 
       case 'it':
         return TranslateLanguage.italian;
-
-      // case 'ms':
-      //   return TranslateLanguage.malay;
 
       case 'es':
         return TranslateLanguage.spanish;
@@ -151,10 +153,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
       {'name': 'German', 'code': 'de'},
       {'name': 'Hindi', 'code': 'hi'},
       {'name': 'Italian', 'code': 'it'},
-      // {
-      //   'name': 'Malayalam',
-      //   'code': 'ml',
-      // },
       {'name': 'Spanish', 'code': 'es'},
       {'name': 'Tamil', 'code': 'ta'},
     ];
@@ -176,21 +174,23 @@ class _CustomAppBarState extends State<CustomAppBar> {
           'Current language: '
           '${context.read<LanguageProvider>().selectedLanguageName}',
         );
-
-        // The LanguageProvider change will rebuild this widget.
-        // The ticker translation will then be triggered automatically.
       },
+
       offset: const Offset(0, 38),
+
       color: Colors.white,
+
       elevation: 5,
+
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+
       itemBuilder: (context) {
         return languages.map((language) {
           return PopupMenuItem<String>(
             value: language['code']!,
             height: 28,
             child: Text(
-              '›${language['name']}',
+              '› ${language['name']}',
               style: const TextStyle(
                 color: Colors.blue,
                 fontSize: 13,
@@ -200,6 +200,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
           );
         }).toList();
       },
+
       child: Container(
         height: 28,
         width: 120,
@@ -237,9 +238,9 @@ class _CustomAppBarState extends State<CustomAppBar> {
     );
   }
 
-  // ------------------------------------------------------------
+  // ============================================================
   // BUILD
-  // ------------------------------------------------------------
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -251,20 +252,10 @@ class _CustomAppBarState extends State<CustomAppBar> {
 
     final languageProvider = context.watch<LanguageProvider>();
 
-    // ----------------------------------------------------------
-    // TRANSLATE TICKER WHEN:
-    // 1. Ticker changes
-    // 2. Language changes
-    // ----------------------------------------------------------
-
-    if (_lastTicker != ticker ||
-        _lastLanguage != languageProvider.selectedLanguage) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-
-        _translateTicker(ticker);
-      });
-    }
+    // ------------------------------------------------------------
+    // IMPORTANT:
+    // Do NOT call addPostFrameCallback here on every build.
+    // ------------------------------------------------------------
 
     return Container(
       decoration: const BoxDecoration(
@@ -274,51 +265,70 @@ class _CustomAppBarState extends State<CustomAppBar> {
           topRight: Radius.circular(16.0),
         ),
       ),
+
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // --------------------------------------------------
+            // ======================================================
             // TOP TICKER BAR
-            // --------------------------------------------------
+            // ======================================================
             SizedBox(
               height: 20,
               child: Marquee(
                 text: _translatedTicker.isEmpty ? ticker : _translatedTicker,
+
                 style: const TextStyle(
                   color: AppColors.white,
                   fontSize: 11.5,
                   fontWeight: FontWeight.w500,
                 ),
+
                 scrollAxis: Axis.horizontal,
+
                 crossAxisAlignment: CrossAxisAlignment.center,
+
                 blankSpace: 40,
+
                 velocity: 30,
+
                 pauseAfterRound: Duration.zero,
               ),
             ),
 
-            // --------------------------------------------------
+            // ======================================================
             // MAIN NAVIGATION BAR
-            // --------------------------------------------------
+            // ======================================================
             Padding(
               padding: const EdgeInsets.all(12),
+
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // ------------------------------------------------
+                  // MENU
+                  // ------------------------------------------------
                   GestureDetector(
                     onTap: () {
                       widget.scaffoldKey?.currentState?.openDrawer();
 
-                      log('sssssssss ${widget.scaffoldKey}');
+                      log('Scaffold key: ${widget.scaffoldKey}');
 
                       log(
-                        'ssssscccc '
+                        'Scaffold state: '
                         '${widget.scaffoldKey?.currentState}',
                       );
                     },
-                    child: Icon(Icons.menu, size: 24, color: AppColors.white),
+
+                    child: const Icon(
+                      Icons.menu,
+                      size: 24,
+                      color: AppColors.white,
+                    ),
                   ),
+
+                  // const SizedBox(width: 20),
+
                   // ------------------------------------------------
                   // LOGO
                   // ------------------------------------------------
@@ -332,6 +342,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                         (route) => false,
                       );
                     },
+
                     child: SvgPicture.asset(
                       'assets/logo/logo.svg',
                       width: 40,
@@ -340,85 +351,102 @@ class _CustomAppBarState extends State<CustomAppBar> {
                     ),
                   ),
 
+                  // ------------------------------------------------
+                  // PUSH CURRENCY TO RIGHT
+                  // ------------------------------------------------
                   // const Spacer(),
 
                   // ------------------------------------------------
-                  // CART ICON
+                  // CURRENCY
                   // ------------------------------------------------
-                  Consumer<CartProvider>(
-                    builder: (context, cartProvider, child) {
-                      final count = cartProvider.cartItems.length;
-
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const MainScreen(initialIndex: 2),
-                            ),
-                            (route) => false,
-                          );
-                        },
-                        child: SizedBox(
-                          width: 25,
-                          height: 25,
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Positioned.fill(
-                                child: Image.asset(
-                                  'assets/Cart.png',
-                                  height: 24,
-                                ),
-                              ),
-
-                              if (count > 0)
-                                Positioned(
-                                  right: -8,
-                                  top: -4,
-                                  child: Container(
-                                    height: 18,
-                                    width: 18,
-                                    alignment: Alignment.center,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Text(
-                                      count > 99 ? '99+' : count.toString(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  // const SizedBox(width: 12),
-
-                  // ------------------------------------------------
-                  // LANGUAGE DROPDOWN
-                  // ------------------------------------------------
-                  // _buildLanguageDropdown(context, languageProvider),
-
-                  // const SizedBox(width: 12),
-
-                  // ------------------------------------------------
-                  // MENU ICON
-                  // ------------------------------------------------
+                  _buildCurrencySelector(context),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // ============================================================
+  // CURRENCY SELECTOR
+  // ============================================================
+
+  Widget _buildCurrencySelector(BuildContext context) {
+    const List<String> currencies = [
+      'USD',
+      'SGD',
+      'CAD',
+      'INR',
+      'EUR',
+      'AED',
+      'CNY',
+    ];
+
+    return Consumer<CurrencyProvider>(
+      builder: (context, currencyProvider, child) {
+        final String selectedCurrency =
+            currencies.contains(currencyProvider.selectedCurrency)
+            ? currencyProvider.selectedCurrency
+            : currencies.first;
+
+        return Container(
+          height: 38,
+
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(6),
+          ),
+
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: selectedCurrency,
+
+              isDense: true,
+
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.grey,
+                size: 20,
+              ),
+
+              dropdownColor: Colors.white,
+
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+
+              onChanged: (String? value) {
+                if (value == null) return;
+
+                debugPrint('Currency changed to: $value');
+
+                currencyProvider.changeCurrency(value);
+              },
+
+              items: currencies.map((currency) {
+                return DropdownMenuItem<String>(
+                  value: currency,
+
+                  child: Text(
+                    currency,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 }

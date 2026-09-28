@@ -362,16 +362,30 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                 ),
               ],
             )
-          : ListView(
-              padding: const EdgeInsets.all(16),
+          // : ListView(
+          //     padding: const EdgeInsets.all(16),
+          //     children: [
+          //       // Show physical conversion status even when cart is empty
+          //       if (isPhysicalActive) ...[
+          //         _buildPhysicalConversionHeader(physicalProvider),
+          //         const SizedBox(height: 30),
+          //       ],
+          //       _buildEmptyCart(),
+          //     ],
+          //   ),
+          : Column(
               children: [
-                // Show physical conversion status even when cart is empty
+                // Keep physical conversion header exactly as it is
                 if (isPhysicalActive) ...[
-                  _buildPhysicalConversionHeader(physicalProvider),
-                  const SizedBox(height: 30),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: _buildPhysicalConversionHeader(physicalProvider),
+                  ),
+                  const SizedBox(height: 10),
                 ],
 
-                _buildEmptyCart(),
+                // Center empty cart content in the remaining screen
+                Expanded(child: Center(child: _buildEmptyCart())),
               ],
             ),
     );
@@ -650,26 +664,77 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
     );
   }
 
+  // Widget _buildEmptyCart() {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 20),
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         Image.asset('assets/no_product.png', height: 80, width: 80),
+
+  //         const SizedBox(height: 20),
+
+  //         const TranslatedText(
+  //           'There Is No Item Here',
+  //           textAlign: TextAlign.center,
+  //           style: TextStyle(fontSize: 18, color: Colors.white),
+  //         ),
+
+  //         const SizedBox(height: 30),
+
+  //         SizedBox(
+  //           width: double.infinity,
+  //           height: 52,
+  //           child: ElevatedButton(
+  //             onPressed: () {
+  //               Navigator.pushNamed(context, '/home');
+  //             },
+  //             style: ElevatedButton.styleFrom(
+  //               backgroundColor: AppColors.red,
+  //               // foregroundColor: const Color(0xFF981B1B),
+  //               shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.circular(10),
+  //               ),
+  //             ),
+  //             child: const TranslatedText(
+  //               'CONTINUE SHOPPING',
+  //               style: TextStyle(
+  //                 fontSize: 14,
+  //                 fontWeight: FontWeight.bold,
+  //                 color: AppColors.white,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
   Widget _buildEmptyCart() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset('assets/no_product.png', height: 80, width: 80),
+          Image.asset('assets/no_product.png', height: 100, width: 100),
 
           const SizedBox(height: 20),
 
           const TranslatedText(
             'There Is No Item Here',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 18, color: Colors.white),
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
           ),
 
           const SizedBox(height: 30),
 
           SizedBox(
-            width: double.infinity,
+            width: 280,
             height: 52,
             child: ElevatedButton(
               onPressed: () {
@@ -677,7 +742,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.red,
-                // foregroundColor: const Color(0xFF981B1B),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -750,38 +814,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
           ),
           child: const TranslatedText(
             'CheckOut',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPhysicalOrderButton() {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: SizedBox(
-        height: 60,
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CheckoutScreen()),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryRed,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          child: const TranslatedText(
-            'Send Order',
             style: TextStyle(
               color: Colors.white,
               fontSize: 20,

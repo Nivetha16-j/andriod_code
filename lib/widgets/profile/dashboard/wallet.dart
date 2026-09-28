@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/kyc_provider.dart';
 import 'package:junubullion/providers/order_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/profile/kyc.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +14,7 @@ class WalletSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ordersProvider = context.watch<OrdersProvider>();
+    final kycProvider = context.watch<KycProvider>();
 
     return Column(
       children: [
@@ -26,17 +29,15 @@ class WalletSection extends StatelessWidget {
                   );
                 },
                 child: DashboardCard(
-                  image: "assets/order.png",
-                  title: "${ordersProvider.totalOrders} Orders",
+                  image: "assets/orders.png",
+                  title: "${ordersProvider.totalOrders}",
                   subtitle: "Total orders",
                   description: "View orders",
-                  colors: const [Color(0xffB5141D), Color(0xffDB2727)],
+                  gradient: AppColors.pinkGradient,
                 ),
               ),
             ),
-
             const SizedBox(width: 12),
-
             Expanded(
               child: GestureDetector(
                 onTap: () {
@@ -49,19 +50,19 @@ class WalletSection extends StatelessWidget {
                 },
                 child: DashboardCard(
                   image: "assets/kyc_required.png",
-                  title: "KYC Required",
+                  title: kycProvider.kycApproved
+                      ? "KYC Approved"
+                      : "KYC Required",
                   subtitle: "Verification status",
                   description: "Manage KYC",
-                  colors: const [Color(0xffD47A00), Color(0xffF5B53C)],
+                  gradient: AppColors.gspGradient,
                 ),
               ),
             ),
           ],
         ),
-
-        SizedBox(height: 14),
-
-        ShopCard(),
+        const SizedBox(height: 14),
+        const ShopCard(),
       ],
     );
   }
@@ -72,7 +73,7 @@ class DashboardCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String description;
-  final List<Color> colors;
+  final Gradient gradient;
 
   const DashboardCard({
     super.key,
@@ -80,24 +81,19 @@ class DashboardCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.description,
-    required this.colors,
+    required this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 120,
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: colors,
-        ),
+        borderRadius: BorderRadius.circular(16),
+        gradient: gradient,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.18),
+            color: AppColors.black.withValues(alpha: .18),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -106,46 +102,30 @@ class DashboardCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 40,
-            width: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white, width: 1.5),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Image.asset(
-                image,
-                color: Colors.white,
-                height: 10,
-                width: 10,
-              ),
-            ),
-          ),
-
-          // const Spacer(),
+          Image.asset(image, height: 35, width: 35),
+          const SizedBox(height: 12),
           TranslatedText(
             title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
+              color: AppColors.black,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
-
-          const SizedBox(height: 6),
-
+          const SizedBox(height: 4),
           TranslatedText(
             subtitle,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
+            style: const TextStyle(color: AppColors.black, fontSize: 12),
           ),
-
           const SizedBox(height: 2),
-
           TranslatedText(
             description,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            style: TextStyle(
+              color: AppColors.black.withValues(alpha: .75),
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -167,19 +147,14 @@ class ShopCard extends StatelessWidget {
         );
       },
       child: Container(
-        height: 95,
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          gradient: const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [Color(0xff304E9D), Color(0xff6875E6)],
-          ),
+          borderRadius: BorderRadius.circular(16),
+          gradient: AppColors.blueGradient,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(.18),
+              color: AppColors.black.withValues(alpha: .18),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -187,48 +162,33 @@ class ShopCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Image.asset(
-                  "assets/shop.png",
-                  color: Colors.white,
-                  height: 10,
-                  width: 10,
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 18),
-
-            const Expanded(
+            Image.asset("assets/shop.png"),
+            const SizedBox(width: 16),
+            Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TranslatedText(
+                  const TranslatedText(
                     "Shop",
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
+                      color: AppColors.white,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 4),
-                  TranslatedText(
+                  const SizedBox(height: 4),
+                  const TranslatedText(
                     "Gold, silver & bullion",
-                    style: TextStyle(color: Colors.white, fontSize: 12),
+                    style: TextStyle(color: AppColors.white, fontSize: 12),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   TranslatedText(
                     "Browse products",
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.white.withValues(alpha: .75),
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
