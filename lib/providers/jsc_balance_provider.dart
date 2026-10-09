@@ -5,6 +5,43 @@ import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
 class JscBalanceProvider extends ChangeNotifier {
   bool isBalancesUnlocked = false;
 
+  String jscGoldBalance = '...';
+  String jscGoldUnit = '';
+
+  String jscSilverBalance = '...';
+  String jscSilverUnit = '';
+
+  String gspGoldBalance = '...';
+  String gspGoldUnit = '';
+
+  String gspSilverBalance = '...';
+  String gspSilverUnit = '';
+
+  void setWalletData({
+    required String jscGoldBalance,
+    required String jscGoldUnit,
+    required String jscSilverBalance,
+    required String jscSilverUnit,
+    required String gspGoldBalance,
+    required String gspGoldUnit,
+    required String gspSilverBalance,
+    required String gspSilverUnit,
+  }) {
+    this.jscGoldBalance = jscGoldBalance;
+    this.jscGoldUnit = jscGoldUnit;
+
+    this.jscSilverBalance = jscSilverBalance;
+    this.jscSilverUnit = jscSilverUnit;
+
+    this.gspGoldBalance = gspGoldBalance;
+    this.gspGoldUnit = gspGoldUnit;
+
+    this.gspSilverBalance = gspSilverBalance;
+    this.gspSilverUnit = gspSilverUnit;
+
+    notifyListeners();
+  }
+
   bool isLoading = false;
 
   JscBalanceProvider() {

@@ -12,12 +12,12 @@ import 'package:junubullion/widgets/home/custon_appbar.dart';
 
 class ApplicationForm extends StatefulWidget {
   final bool isEdit;
-  final String applicationType;
+  // final String applicationType;
 
   const ApplicationForm({
     super.key,
     this.isEdit = false,
-    required this.applicationType,
+    // required this.applicationType,
   });
 
   @override
@@ -88,22 +88,32 @@ class _ApplicationFormState extends State<ApplicationForm> {
   bool _originalDeclarationAccepted = false;
 
   List<String> _originalIdentityFiles = [];
+  int selectedTab = 0; // JSC=0 GSP=1
 
-  bool get isGsp => widget.applicationType.toUpperCase() == 'GSP';
+  String get selectedApplicationType {
+    return selectedTab == 0 ? 'JSC' : 'GSP';
+  }
 
-  String get applicationName => isGsp ? 'GSP' : 'JSC';
+  String get applicationName {
+    return selectedTab == 0 ? 'JSC' : 'GSP';
+  }
 
-  String get applicationType => widget.applicationType.toUpperCase();
+  // @override
+  // void initState() {
+  //   super.initState();
 
+  //   loadUser();
+
+  //   if (widget.isEdit) {
+  //     loadApplication();
+  //   }
+  // }
   @override
   void initState() {
     super.initState();
 
     loadUser();
-
-    if (widget.isEdit) {
-      loadApplication();
-    }
+    loadApplication();
   }
 
   @override
@@ -329,7 +339,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
     try {
       final response = await JscService.submitApplication(
-        applicationType: applicationType,
+        applicationType: selectedApplicationType,
 
         name: fullNameController.text.trim(),
         email: emailController.text.trim(),
@@ -434,7 +444,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
     try {
       final response = await JscService.getApplication(
-        applicationType: applicationType,
+        applicationType: selectedApplicationType,
       );
 
       log("$applicationName APPLICATION RESPONSE: $response");
@@ -600,6 +610,37 @@ class _ApplicationFormState extends State<ApplicationForm> {
     }
   }
 
+  void clearForm() {
+    fullNameController.clear();
+    dobController.clear();
+    emailController.clear();
+    mobileController.clear();
+    nationalityController.clear();
+    occupationController.clear();
+    addressController.clear();
+
+    idNumController.clear();
+
+    nomineeNameController.clear();
+    nDobController.clear();
+    nMobileController.clear();
+    nAddressController.clear();
+
+    selectedIdType = null;
+    selectedRelationship = null;
+
+    selectedPhoto = null;
+
+    selectedIdentityFiles.clear();
+    existingIdentityFiles.clear();
+
+    existingPhotoUrl = null;
+
+    isDeclarationAccepted = false;
+
+    hasChanges = false;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoadingApplication) {
@@ -622,145 +663,226 @@ class _ApplicationFormState extends State<ApplicationForm> {
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-
-                TranslatedText(
-                  "$applicationName Application Form",
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                ),
-
-                const SizedBox(height: 5),
-
-                const TranslatedText(
-                  "Complete your application to start investing in premium bullion.",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.black,
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // ------------------------------------------------
-                // STEP INDICATOR
-                // ------------------------------------------------
-                _buildStepIndicator(),
-
-                const SizedBox(height: 30),
-
-                // ------------------------------------------------
-                // INFO MESSAGE
-                // ------------------------------------------------
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 22,
-                    vertical: 15,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color.fromRGBO(230, 255, 238, 1),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.20),
-                        blurRadius: 3,
-                        offset: const Offset(0, 2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                decoration: BoxDecoration(gradient: AppColors.BgGradient),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // const SizedBox(height: 10),
+                      TranslatedText(
+                        "Application Form",
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.white,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: const TranslatedText(
-                    "Your Account Details Have Been Pre-Filled.\n"
-                    "Please Complete The Remaining Fields.",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
 
-                const SizedBox(height: 34),
+                      const SizedBox(height: 5),
 
-                // ------------------------------------------------
-                // PERSONAL INFORMATION
-                // ------------------------------------------------
-                Container(
-                  key: _personalInfoKey,
-                  child: _buildPersonalInformation(),
-                ),
-                Container(
-                  key: _identityVerificationKey,
-                  child: _buildIdentityVerification(),
-                ),
-                Container(key: _nomineeKey, child: _buildNominee()),
-                SizedBox(height: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Declaration
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 28,
+                      const TranslatedText(
+                        "Complete your application to start investing in premium bullion.",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.white,
+                        ),
                       ),
-                      color: AppColors.pink,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                      const SizedBox(height: 30),
+                      Row(
                         children: [
-                          Checkbox(
-                            value: isDeclarationAccepted,
-                            onChanged: (value) {
-                              setState(() {
-                                isDeclarationAccepted = value ?? false;
-                              });
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () async {
+                                if (selectedTab == 0) return;
 
-                              if (isEditMode) {
-                                _checkForChanges();
-                              }
-                            },
-                            activeColor: const Color(0xff941A1D),
-                            side: const BorderSide(
-                              color: Color(0xff941A1D),
-                              width: 3,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(1),
+                                setState(() {
+                                  selectedTab = 0;
+                                });
+
+                                await loadApplication();
+                              },
+                              child: Container(
+                                height: 48,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: selectedTab == 0
+                                      ? AppColors.primaryRed
+                                      : const Color(0xFFF7F7F7),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'JSC FORM',
+                                  style: TextStyle(
+                                    color: selectedTab == 0
+                                        ? Colors.white
+                                        : Colors.black,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
 
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
 
                           Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 3),
-                              child: TranslatedText(
-                                "I hereby declare that the information provided above is true and correct. I agree to the Terms & Conditions of the account.",
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xff242424),
+                            child: GestureDetector(
+                              onTap: () async {
+                                if (selectedTab == 1) return;
+
+                                setState(() {
+                                  selectedTab = 1;
+                                });
+
+                                await loadApplication();
+                              },
+                              child: Container(
+                                height: 48,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: selectedTab == 1
+                                      ? AppColors.primaryRed
+                                      : const Color(0xFFF7F7F7),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'GSP FORM',
+                                  style: TextStyle(
+                                    color: selectedTab == 1
+                                        ? Colors.white
+                                        : Colors.black,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 30),
+
+                      // ------------------------------------------------
+                      // STEP INDICATOR
+                      // ------------------------------------------------
+                      _buildStepIndicator(),
+
+                      const SizedBox(height: 30),
+
+                      // ------------------------------------------------
+                      // INFO MESSAGE
+                      // ------------------------------------------------
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 15,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color.fromRGBO(230, 255, 238, 1),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.20),
+                              blurRadius: 3,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const TranslatedText(
+                          "Your Account Details Have Been Pre-Filled.\n"
+                          "Please Complete The Remaining Fields.",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.black,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 34),
+
+              // ------------------------------------------------
+              // PERSONAL INFORMATION
+              // ------------------------------------------------
+              Container(
+                key: _personalInfoKey,
+                child: _buildPersonalInformation(),
+              ),
+              Container(
+                key: _identityVerificationKey,
+                child: _buildIdentityVerification(),
+              ),
+              Container(key: _nomineeKey, child: _buildNominee()),
+              SizedBox(height: 20),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Declaration
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 28,
                     ),
+                    color: AppColors.pink,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: isDeclarationAccepted,
+                          onChanged: (value) {
+                            setState(() {
+                              isDeclarationAccepted = value ?? false;
+                            });
 
-                    const SizedBox(height: 30),
+                            if (isEditMode) {
+                              _checkForChanges();
+                            }
+                          },
+                          activeColor: const Color(0xff941A1D),
+                          side: const BorderSide(
+                            color: Color(0xff941A1D),
+                            width: 3,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(1),
+                          ),
+                        ),
 
-                    // Submit button
-                    SizedBox(
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: TranslatedText(
+                              "I hereby declare that the information provided above is true and correct. I agree to the Terms & Conditions of the account.",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xff242424),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Submit button
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SizedBox(
                       width: double.infinity,
                       height: 70,
                       child: ElevatedButton(
@@ -797,12 +919,12 @@ class _ApplicationFormState extends State<ApplicationForm> {
                               ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
 
-                const SizedBox(height: 30),
-              ],
-            ),
+              const SizedBox(height: 30),
+            ],
           ),
         ),
       ),
@@ -948,7 +1070,11 @@ class _ApplicationFormState extends State<ApplicationForm> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.white,
+            ),
           ),
         ],
       ),
@@ -1212,7 +1338,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                     ),
                     items: const [
                       DropdownMenuItem<String>(
-                        value: "Aadhaar",
+                        value: "Aadhar",
                         child: TranslatedText("Aadhaar"),
                       ),
                       DropdownMenuItem<String>(
@@ -2091,7 +2217,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
     try {
       final response = await JscService.submitApplication(
-        applicationType: applicationType,
+        applicationType: selectedApplicationType,
 
         name: fullNameController.text.trim(),
         email: emailController.text.trim(),

@@ -11,6 +11,7 @@ import 'package:junubullion/screens/plans/jsc/jsc_details.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
+import 'package:junubullion/screens/menu/wallet.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/language_provider.dart';
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
@@ -259,7 +260,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
                     _drawerTile(
                       context,
-                      assetIcon: "assets/testimonial.png",
+                      assetIcon: "assets/brand.png",
                       title: "Brands",
                       onTap: () {
                         Navigator.of(context).push(
@@ -340,6 +341,16 @@ class _CustomDrawerState extends State<CustomDrawer> {
                         return _buildLanguageSelector(
                           context,
                           languageProvider,
+                        );
+                      },
+                    ),
+                    _drawerTile(
+                      context,
+                      assetIcon: "assets/wallet.png",
+                      title: "Wallet",
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => CustomWallet()),
                         );
                       },
                     ),
@@ -545,7 +556,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
     ];
 
     return _drawerExpansionTile(
-      assetIcon: "assets/language.png",
+      assetIcon: "assets/lang.png",
       title: "Language",
       isExpanded: false,
       onExpansionChanged: (value) {

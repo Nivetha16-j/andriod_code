@@ -100,6 +100,39 @@ class _JscScreenState extends State<JscScreen> {
     },
   ];
 
+  final List<Map<String, dynamic>> targetGoals = [
+    {
+      "title": "For Children's Future",
+      "image": "assets/target1.jpg",
+      "description":
+          "Keep A Tangible Financial Safety Net Ready When You Need It.",
+      "points": [
+        "Gold And Silver Can Serve As A Financial Safety Net.",
+        "Assets Can Be Sold When Needed.",
+      ],
+    },
+    {
+      "title": "For Retirement Planning",
+      "image": "assets/target2.jpg",
+      "description":
+          "Build Tangible Wealth Gradually For A More Secure Retirement.",
+      "points": [
+        "Accumulate Tangible Assets Over Time.",
+        "Assets Can Be Sold When Needed.",
+      ],
+    },
+    {
+      "title": "For Emergency Funds",
+      "image": "assets/target3.jpg",
+      "description":
+          "Keep A Tangible Financial Safety Net Ready When You Need It.",
+      "points": [
+        "Gold And Silver Can Serve As A Financial Safety Net.",
+        "Assets Can Be Sold When Needed.",
+      ],
+    },
+  ];
+
   final PageController _pageController = PageController();
 
   int _currentPage = 0;
@@ -172,6 +205,54 @@ class _JscScreenState extends State<JscScreen> {
       showLoader: showLoader,
     );
   }
+
+  final List<Map<String, dynamic>> journeyData = [
+    {
+      "tag": "TODAY",
+      "day": "Day 1",
+      "title": "Start Your Plan",
+      "min": "SGD 20",
+      "max": "SGD 10K",
+      "icon": "assets/investment1.png",
+      "highlight": false,
+    },
+    {
+      "tag": "TOMORROW",
+      "day": "Day 2",
+      "title": "Continue Saving",
+      "min": "SGD 20",
+      "max": "SGD 10K",
+      "icon": "assets/investment2.png",
+      "highlight": false,
+    },
+    {
+      "tag": "AFTER 7 DAYS",
+      "day": "Day 7",
+      "title": "Build Momentum",
+      "min": "SGD 20",
+      "max": "SGD 15K",
+      "icon": "assets/investment3.png",
+      "highlight": false,
+    },
+    {
+      "tag": "AFTER 30 DAYS",
+      "day": "Day 30",
+      "title": "Grow Consistently",
+      "min": "SGD 20",
+      "max": "SGD 25K",
+      "icon": "assets/investment4.png",
+      "highlight": true,
+    },
+    {
+      "tag": "AFTER 365 DAYS",
+      "day": "Day 365",
+      "title": "Reach Your Goal",
+      "min": "SGD 20",
+      "max": "SGD 50K",
+      "icon": "assets/investment5.png",
+      "highlight": false,
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -574,135 +655,329 @@ class _JscScreenState extends State<JscScreen> {
 
             const SizedBox(height: 16),
 
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 12),
+                  child: TranslatedText(
+                    "Investment Journey",
+                    style: TextStyle(
+                      color: AppColors.black,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                SizedBox(
+                  height: 280,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: journeyData.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 16),
+                    itemBuilder: (context, index) {
+                      final item = journeyData[index];
+
+                      return Container(
+                        width: 220,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: AppColors.sandal,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: AppColors.mustard,
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEDEFF3),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                item["tag"],
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            Center(
+                              child: Image.asset(
+                                item["icon"],
+                                width: 60,
+                                height: 60,
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            Center(
+                              child: Text(
+                                item["day"],
+                                style: const TextStyle(
+                                  color: Color(0xFF7A869A),
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+
+                            Center(
+                              child: Text(
+                                item["title"],
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF172B4D),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            // const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF7F7F9),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        const Text(
+                                          "Minimum",
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          item["min"],
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    height: 35,
+                                    width: 1,
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        const Text(
+                                          "Maximum",
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          item["max"],
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
             Container(
               color: const Color(0xffF8F6F0),
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const TranslatedText(
-                    "Key Features",
-                    style: TextStyle(
-                      color: AppColors.primaryRed,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  // const TranslatedText(
+                  //   "Key Features",
+                  //   style: TextStyle(
+                  //     color: AppColors.primaryRed,
+                  //     fontSize: 15,
+                  //     fontWeight: FontWeight.w600,
+                  //   ),
+                  // ),
 
-                  const SizedBox(height: 22),
+                  // const SizedBox(height: 22),
 
-                  SizedBox(
-                    height: 200,
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: features.length,
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentPage = index;
-                        });
-                      },
-                      itemBuilder: (context, index) {
-                        final feature = features[index];
+                  // SizedBox(
+                  //   height: 200,
+                  //   child: PageView.builder(
+                  //     controller: _pageController,
+                  //     itemCount: features.length,
+                  //     onPageChanged: (index) {
+                  //       setState(() {
+                  //         _currentPage = index;
+                  //       });
+                  //     },
+                  //     itemBuilder: (context, index) {
+                  //       final feature = features[index];
 
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 15),
-                          child: FeatureCard(
-                            image: "assets/feature.png",
-                            title: feature["title"],
-                            descriptions: List<String>.from(
-                              feature["description"],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                  //       return Padding(
+                  //         padding: const EdgeInsets.only(right: 15),
+                  //         child: FeatureCard(
+                  //           image: "assets/feature.png",
+                  //           title: feature["title"],
+                  //           descriptions: List<String>.from(
+                  //             feature["description"],
+                  //           ),
+                  //         ),
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
 
-                  const SizedBox(height: 12),
+                  // const SizedBox(height: 12),
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.center,
+                  //   children: List.generate(features.length, (index) {
+                  //     final isSelected = _currentPage == index;
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(features.length, (index) {
-                      final isSelected = _currentPage == index;
+                  //     return AnimatedContainer(
+                  //       duration: const Duration(milliseconds: 300),
+                  //       margin: const EdgeInsets.symmetric(horizontal: 4),
+                  //       width: isSelected ? 22 : 7,
+                  //       height: 7,
+                  //       decoration: BoxDecoration(
+                  //         color: isSelected
+                  //             ? const Color(0xffA51E22)
+                  //             : Colors.grey.shade400,
+                  //         borderRadius: BorderRadius.circular(10),
+                  //       ),
+                  //     );
+                  //   }),
+                  // ),
 
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: isSelected ? 22 : 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xffA51E22)
-                              : Colors.grey.shade400,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      );
-                    }),
-                  ),
+                  // const SizedBox(height: 25),
 
-                  const SizedBox(height: 25),
+                  // Container(
+                  //   width: double.infinity,
+                  //   color: const Color(0xffF8F6F0),
+                  //   child: LayoutBuilder(
+                  //     builder: (context, constraints) {
+                  //       return Row(
+                  //         crossAxisAlignment: CrossAxisAlignment.center,
+                  //         children: [
+                  //           Expanded(flex: 5, child: _buildImage()),
 
-                  Container(
-                    width: double.infinity,
-                    color: const Color(0xffF8F6F0),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(flex: 5, child: _buildImage()),
+                  //           const SizedBox(width: 25),
 
-                            const SizedBox(width: 25),
+                  //           Expanded(flex: 5, child: _buildContent()),
+                  //         ],
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
 
-                            Expanded(flex: 5, child: _buildContent()),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
+                  // const SizedBox(height: 25),
                   howJscWorksSection(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const TranslatedText(
-                        "JSC Benefits for Customers",
-                        style: TextStyle(
-                          color: Color(0xffB00000),
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: TranslatedText(
+                      "Target Savings Goals",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.black,
                       ),
-
-                      const SizedBox(height: 25),
-
-                      SizedBox(
-                        height: 450,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: benefits.length,
-                          separatorBuilder: (context, index) {
-                            return const SizedBox(width: 18);
-                          },
-                          itemBuilder: (context, index) {
-                            final benefit = benefits[index];
-
-                            return _benefitCard(
-                              title: benefit["title"] as String,
-                              points: List<String>.from(
-                                benefit["points"] as List,
-                              ),
-                              image: benefit["image"] as String,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
+
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: targetGoals.map((goal) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: GoalCard(goal: goal),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  // const SizedBox(height: 16),
+
+                  // Column(
+                  //   crossAxisAlignment: CrossAxisAlignment.start,
+                  //   children: [
+                  //     const TranslatedText(
+                  //       "JSC Benefits for Customers",
+                  //       style: TextStyle(
+                  //         color: Color(0xffB00000),
+                  //         fontSize: 22,
+                  //         fontWeight: FontWeight.bold,
+                  //       ),
+                  //     ),
+
+                  //     const SizedBox(height: 25),
+
+                  //     SizedBox(
+                  //       height: 450,
+                  //       child: ListView.separated(
+                  //         scrollDirection: Axis.horizontal,
+                  //         itemCount: benefits.length,
+                  //         separatorBuilder: (context, index) {
+                  //           return const SizedBox(width: 18);
+                  //         },
+                  //         itemBuilder: (context, index) {
+                  //           final benefit = benefits[index];
+
+                  //           return _benefitCard(
+                  //             title: benefit["title"] as String,
+                  //             points: List<String>.from(
+                  //               benefit["points"] as List,
+                  //             ),
+                  //             image: benefit["image"] as String,
+                  //           );
+                  //         },
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                   const SizedBox(height: 25),
                 ],
               ),
@@ -790,48 +1065,115 @@ class _JscScreenState extends State<JscScreen> {
     ];
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const TranslatedText(
           "How JSC Works",
-          textAlign: TextAlign.center,
           style: TextStyle(
-            color: Color(0xffB00000),
-            fontSize: 22,
+            color: AppColors.black,
             fontWeight: FontWeight.w600,
+            fontSize: 20,
           ),
         ),
 
         const SizedBox(height: 20),
 
-        Column(
-          children: List.generate(steps.length, (index) {
-            return Column(
-              children: [
-                TranslatedText(
-                  steps[index],
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    height: 1.45,
-                  ),
-                ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.asset(
+              "assets/jsc1.png",
+              width: 30,
+              height: 30,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TranslatedText(
+                "Join JSC",
+                style: const TextStyle(color: AppColors.black, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Image.asset(
+              "assets/jsc2.png",
+              width: 30,
+              height: 30,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TranslatedText(
+                "Purchase digital gold or silver grams",
+                style: const TextStyle(color: AppColors.black, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Image.asset(
+              "assets/jsc3.png",
+              width: 30,
+              height: 30,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 10),
 
-                if (index != steps.length - 1) ...[
-                  const SizedBox(height: 12),
+            Expanded(
+              child: TranslatedText(
+                "Track holdings through your account",
+                style: TextStyle(color: AppColors.black, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Image.asset(
+              "assets/jsc4.png",
+              width: 30,
+              height: 30,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TranslatedText(
+                "Add more grams regularly",
+                style: TextStyle(color: AppColors.black, fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Image.asset(
+              "assets/jsc5.png",
+              width: 30,
+              height: 30,
+              fit: BoxFit.contain,
+            ),
 
-                  const Icon(
-                    Icons.arrow_downward,
-                    color: Color(0xffD49A00),
-                    size: 30,
-                  ),
+            const SizedBox(width: 10),
 
-                  const SizedBox(height: 12),
-                ],
-              ],
-            );
-          }),
+            Expanded(
+              child: TranslatedText(
+                "Withdraw physical bullion or sell holdings when required",
+                style: const TextStyle(color: AppColors.black, fontSize: 12),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -913,6 +1255,107 @@ class _JscScreenState extends State<JscScreen> {
               width: double.infinity,
               height: 225,
               fit: BoxFit.cover,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class GoalCard extends StatelessWidget {
+  final Map<String, dynamic> goal;
+
+  const GoalCard({super.key, required this.goal});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 320,
+      width: MediaQuery.of(context).size.width * .58,
+      decoration: BoxDecoration(
+        gradient: AppColors.BgGradient,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.asset(
+              goal["image"],
+              height: 140,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Center(
+            child: TranslatedText(
+              goal["title"],
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          TranslatedText(
+            goal["description"],
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              height: 1.4,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          Expanded(
+            child: Column(
+              children: List<String>.from(goal["points"]).map((point) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 5),
+                        child: CircleAvatar(
+                          radius: 3,
+                          backgroundColor: Colors.red,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      Expanded(
+                        child: TranslatedText(
+                          point,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -1031,17 +1474,16 @@ class _JscProductCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 3),
+          // const SizedBox(height: 3),
 
-          TranslatedText(
-            isInStock ? "In Stock" : "Out of Stock",
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: isInStock ? Colors.green : Colors.red,
-            ),
-          ),
-
+          // TranslatedText(
+          //   isInStock ? "In Stock" : "Out of Stock",
+          //   style: TextStyle(
+          //     fontSize: 12,
+          //     fontWeight: FontWeight.w600,
+          //     color: isInStock ? Colors.green : Colors.red,
+          //   ),
+          // ),
           const SizedBox(height: 4),
 
           SizedBox(

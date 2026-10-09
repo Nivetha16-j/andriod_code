@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -26,13 +27,17 @@ class _JscPurchasesScreenState extends State<JscPurchasesScreen> {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: PlansLayout(
-        plans: Plans.jsc,
-        selectedMenu: 'Your Purchases',
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
-          child: const JscPurchasesContent(),
-        ),
+      // body: PlansLayout(
+      //   plans: Plans.jsc,
+      //   selectedMenu: 'Your Purchases',
+      //   child: SingleChildScrollView(
+      //     padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+      //     child: const JscPurchasesContent(),
+      //   ),
+      // ),
+      body: SingleChildScrollView(
+        // padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+        child: const JscPurchasesContent(),
       ),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: currentIndex,
@@ -58,27 +63,34 @@ class JscPurchasesContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TranslatedText(
-          'Your Purchases',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(gradient: AppColors.BgGradient),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TranslatedText(
+                'Your Purchases',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const TranslatedText(
+                "Review digital metal purchases from your JSC and GSP wallets.",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.white,
+                ),
+              ),
+            ],
           ),
         ),
 
-        const SizedBox(height: 12),
-
-        const TranslatedText(
-          "Track each digital purchase against today's market price.",
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-            color: Colors.black,
-          ),
-        ),
-
-        const SizedBox(height: 25),
+        const SizedBox(height: 15),
 
         const JscPurchasesSection(),
       ],

@@ -6,7 +6,9 @@ import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/services/gsp_service.dart';
 import 'package:junubullion/services/jsc_services.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
@@ -23,12 +25,16 @@ class JscConvertPhysicalSection extends StatefulWidget {
 class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
   Timer? _timer;
 
-  Map<String, dynamic>? gold;
-  Map<String, dynamic>? silver;
+  Map<String, dynamic>? jscGold;
+  Map<String, dynamic>? jscSilver;
+
+  Map<String, dynamic>? gspGold;
+  Map<String, dynamic>? gspSilver;
 
   bool isLoading = false;
   bool isStartingOrder = false;
   bool _isUnlocked = false;
+  int selectedTab = 0; // 0 = JSC, 1 = GSP
 
   // Keeps track of which metal is currently being converted.
   String? _startingMetal;
@@ -78,8 +84,11 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
         _stopConvertRefresh();
 
         setState(() {
-          gold = null;
-          silver = null;
+          jscGold = null;
+          jscSilver = null;
+
+          gspGold = null;
+          gspSilver = null;
 
           _goldAmountError = null;
           _silverAmountError = null;
@@ -124,95 +133,39 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     _timer = null;
   }
 
+  Map<String, dynamic>? get gold {
+    return selectedTab == 0 ? jscGold : gspGold;
+  }
+
+  Map<String, dynamic>? get silver {
+    return selectedTab == 0 ? jscSilver : gspSilver;
+  }
+
   Future<void> fetchConvertPhysical() async {
     if (!_isUnlocked) return;
 
-    // Prevent overlapping API calls.
     if (isLoading) return;
 
     try {
-      final currencyProvider = Provider.of<CurrencyProvider>(
-        context,
-        listen: false,
-      );
+      setState(() {
+        isLoading = true;
+      });
+
+      final currencyProvider = context.read<CurrencyProvider>();
 
       final currency = currencyProvider.selectedCurrency;
 
-      log('Fetching JSC convert physical with currency: $currency');
+      await _fetchJscConvertPhysical(currency);
 
-      if (mounted) {
-        setState(() {
-          isLoading = true;
-        });
-      }
+      await _fetchGspConvertPhysical(currency);
 
-      final response = await JscService.fetchConvertPhysicalDetails(
-        currency: currency,
-      );
-
-      debugPrint('🔥 JSC CONVERT API RESPONSE = $response');
-
-      final data = response['data'] as Map<String, dynamic>?;
-
-      final summary = data?['summary'] as Map<String, dynamic>?;
-
-      final fetchedGold = summary?['gold'] as Map<String, dynamic>?;
-
-      final fetchedSilver = summary?['silver'] as Map<String, dynamic>?;
-
-      debugPrint('🔥 JSC GOLD = $fetchedGold');
-
-      debugPrint('🔥 JSC SILVER = $fetchedSilver');
+      _setDefaultAmounts();
 
       if (!mounted) return;
 
-      setState(() {
-        gold = fetchedGold;
-        silver = fetchedSilver;
-      });
-
-      // ============================================================
-      // DEFAULT GOLD AMOUNT
-      // ============================================================
-
-      final goldBalance =
-          double.tryParse('${fetchedGold?['balance'] ?? 0}') ?? 0;
-
-      final goldMinimum =
-          double.tryParse('${fetchedGold?['minimum_balance'] ?? 50}') ?? 50;
-
-      // ============================================================
-      // DEFAULT SILVER AMOUNT
-      // ============================================================
-
-      final silverBalance =
-          double.tryParse('${fetchedSilver?['balance'] ?? 0}') ?? 0;
-
-      final silverMinimum =
-          double.tryParse('${fetchedSilver?['minimum_balance'] ?? 1000}') ??
-          1000;
-
-      // ============================================================
-      // SET DEFAULT GOLD VALUE
-      // ============================================================
-
-      if (_goldAmountController.text.isEmpty) {
-        if (goldBalance >= goldMinimum) {
-          _goldAmountController.text = goldMinimum.toStringAsFixed(4);
-        }
-      }
-
-      // ============================================================
-      // SET DEFAULT SILVER VALUE
-      // ============================================================
-
-      if (_silverAmountController.text.isEmpty) {
-        if (silverBalance >= silverMinimum) {
-          _silverAmountController.text = silverMinimum.toStringAsFixed(4);
-        }
-      }
+      setState(() {});
     } catch (e) {
-      debugPrint('❌ JSC Convert Physical Error: $e');
+      debugPrint('❌ Convert Physical Error: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -222,123 +175,259 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
     }
   }
 
+  Future<void> _fetchJscConvertPhysical(String currency) async {
+    final response = await JscService.fetchConvertPhysicalDetails(
+      currency: currency,
+    );
+
+    final data = response['data'] as Map<String, dynamic>?;
+
+    final summary = data?['summary'] as Map<String, dynamic>?;
+
+    jscGold = summary?['gold'] as Map<String, dynamic>?;
+
+    jscSilver = summary?['silver'] as Map<String, dynamic>?;
+  }
+
+  Future<void> _fetchGspConvertPhysical(String currency) async {
+    final response = await GspService.fetchConvertPhysicalDetails(
+      currency: currency,
+    );
+
+    final data = response['data'] as Map<String, dynamic>?;
+
+    final summary = data?['summary'] as Map<String, dynamic>?;
+
+    gspGold = summary?['gold'] as Map<String, dynamic>?;
+
+    gspSilver = summary?['silver'] as Map<String, dynamic>?;
+  }
+
+  void _setDefaultAmounts() {
+    final goldBalance = double.tryParse('${gold?['balance'] ?? 0}') ?? 0;
+
+    final goldMinimum =
+        double.tryParse('${gold?['minimum_balance'] ?? 50}') ?? 50;
+
+    final silverBalance = double.tryParse('${silver?['balance'] ?? 0}') ?? 0;
+
+    final silverMinimum =
+        double.tryParse('${silver?['minimum_balance'] ?? 1000}') ?? 1000;
+
+    if (_goldAmountController.text.isEmpty && goldBalance >= goldMinimum) {
+      _goldAmountController.text = goldMinimum.toStringAsFixed(4);
+    }
+
+    if (_silverAmountController.text.isEmpty &&
+        silverBalance >= silverMinimum) {
+      _silverAmountController.text = silverMinimum.toStringAsFixed(4);
+    }
+  }
   // ============================================================
   // BUILD
   // ============================================================
 
   @override
   Widget build(BuildContext context) {
-    return _buildContainer(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const TranslatedText(
-            'Convert to Physical',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          ),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedTab = 0;
 
-          const SizedBox(height: 8),
+                    _goldAmountController.clear();
+                    _silverAmountController.clear();
 
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF9E8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.13),
-                  blurRadius: 3,
-                  offset: const Offset(1, 2),
-                ),
-              ],
-            ),
-            child: TranslatedText(
-              _isUnlocked
-                  ? 'Convert part or all of your digital holdings '
-                        'into physical products. Minimum balance to '
-                        'convert: $_goldThresholdLabel of gold or '
-                        '$_silverThresholdLabel of silver.'
-                  : 'Convert part or all of your digital holdings '
-                        'into physical products. Minimum balance to '
-                        'convert: 50 g of gold or 1 kg of silver.',
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
-            ),
-          ),
+                    _goldAmountError = null;
+                    _silverAmountError = null;
+                  });
 
-          const SizedBox(height: 9),
-
-          // ========================================================
-          // LOCKED
-          // ========================================================
-          if (!_isUnlocked) ...[
-            _convertRow(
-              metal: 'Gold',
-              available: 'Available: .... · Min: 50 g',
-              enabled: false,
-              controller: _goldAmountController,
-              errorText: null,
-              onAmountChanged: (_) {},
-              onPressed: null,
-            ),
-
-            const SizedBox(height: 8),
-
-            _convertRow(
-              metal: 'Silver',
-              available: 'Available: .... · Min: 1 kg',
-              enabled: false,
-              controller: _silverAmountController,
-              errorText: null,
-              onAmountChanged: (_) {},
-              onPressed: null,
-            ),
-          ]
-          // ========================================================
-          // FIRST LOAD
-          // ========================================================
-          else if (isLoading && gold == null && silver == null)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  _setDefaultAmounts();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selectedTab == 0
+                        ? AppColors.primaryRed
+                        : const Color(0xFFF0F2F5),
+                    borderRadius: BorderRadius.circular(17),
+                  ),
+                  child: TranslatedText(
+                    'JSC Conversion',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: selectedTab == 0 ? Colors.white : Colors.black,
+                    ),
+                  ),
                 ),
               ),
-            )
-          // ========================================================
-          // UNLOCKED
-          // ========================================================
-          else ...[
-            _convertRow(
-              metal: 'Gold',
-              available:
-                  'Available: $_goldAvailableText · '
-                  'Min: $_goldThresholdLabel',
-              enabled: _canConvertGold,
-              controller: _goldAmountController,
-              errorText: _goldAmountError,
-              onAmountChanged: _onGoldAmountChanged,
-              onPressed: _canConvertGold ? _openGoldConversion : null,
-            ),
 
-            const SizedBox(height: 8),
+              const SizedBox(width: 8),
 
-            _convertRow(
-              metal: 'Silver',
-              available:
-                  'Available: $_silverAvailableText · '
-                  'Min: $_silverThresholdLabel',
-              enabled: _canConvertSilver,
-              controller: _silverAmountController,
-              errorText: _silverAmountError,
-              onAmountChanged: _onSilverAmountChanged,
-              onPressed: _canConvertSilver ? _openSilverConversion : null,
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedTab = 1;
+
+                    _goldAmountController.clear();
+                    _silverAmountController.clear();
+
+                    _goldAmountError = null;
+                    _silverAmountError = null;
+                  });
+
+                  _setDefaultAmounts();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selectedTab == 1
+                        ? AppColors.primaryRed
+                        : const Color(0xFFF0F2F5),
+                    borderRadius: BorderRadius.circular(17),
+                  ),
+                  child: TranslatedText(
+                    'GSP Conversion',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: selectedTab == 1 ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _buildContainer(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const TranslatedText(
+                  'Convert to Physical',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightRed,
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: TranslatedText(
+                    _isUnlocked
+                        ? 'Convert part or all of your digital holdings '
+                              'into physical products. Minimum balance to '
+                              'convert: $_goldThresholdLabel of gold or '
+                              '$_silverThresholdLabel of silver.'
+                        : 'Convert part or all of your digital holdings '
+                              'into physical products. Minimum balance to '
+                              'convert: 50 g of gold or 1 kg of silver.',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 9),
+
+                // ========================================================
+                // LOCKED
+                // ========================================================
+                if (!_isUnlocked) ...[
+                  _convertRow(
+                    metal: 'Gold',
+                    available: 'Available: .... · Min: 50 g',
+                    enabled: false,
+                    controller: _goldAmountController,
+                    errorText: null,
+                    onAmountChanged: (_) {},
+                    onPressed: null,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  _convertRow(
+                    metal: 'Silver',
+                    available: 'Available: .... · Min: 1 kg',
+                    enabled: false,
+                    controller: _silverAmountController,
+                    errorText: null,
+                    onAmountChanged: (_) {},
+                    onPressed: null,
+                  ),
+                ]
+                // ========================================================
+                // FIRST LOAD
+                // ========================================================
+                else if (isLoading && gold == null && silver == null)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  )
+                // ========================================================
+                // UNLOCKED
+                // ========================================================
+                else ...[
+                  _convertRow(
+                    metal: 'Gold',
+                    available:
+                        'Available: $_goldAvailableText · '
+                        'Min: $_goldThresholdLabel',
+                    enabled: _canConvertGold,
+                    controller: _goldAmountController,
+                    errorText: _goldAmountError,
+                    onAmountChanged: _onGoldAmountChanged,
+                    onPressed: _canConvertGold ? _openGoldConversion : null,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  _convertRow(
+                    metal: 'Silver',
+                    available:
+                        'Available: $_silverAvailableText · '
+                        'Min: $_silverThresholdLabel',
+                    enabled: _canConvertSilver,
+                    controller: _silverAmountController,
+                    errorText: _silverAmountError,
+                    onAmountChanged: _onSilverAmountChanged,
+                    onPressed: _canConvertSilver ? _openSilverConversion : null,
+                  ),
+                ],
+              ],
             ),
-          ],
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -418,13 +507,10 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
   Widget _buildContainer({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(15, 12, 15, 14),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFEF9),
-        border: Border.all(color: const Color(0xFFD20D2D), width: 1),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 2),
-        ],
+        gradient: AppColors.BgGradient,
+        borderRadius: BorderRadius.circular(7),
       ),
       child: child,
     );
@@ -472,7 +558,7 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: Color.fromRGBO(120, 112, 112, 1),
+                  color: AppColors.white,
                 ),
               ),
             ),
@@ -494,11 +580,11 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  style: const TextStyle(fontSize: 11),
+                  style: const TextStyle(fontSize: 11, color: AppColors.white),
                   decoration: InputDecoration(
                     label: const TranslatedText(
                       'AMOUNT TO CONVERT (g)',
-                      style: TextStyle(fontSize: 10),
+                      style: TextStyle(fontSize: 10, color: AppColors.white),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -506,12 +592,24 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(7),
+                      borderSide: const BorderSide(
+                        color: AppColors.white,
+                        width: 0.7,
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(7),
+                      borderSide: const BorderSide(
+                        color: AppColors.white,
+                        width: 0.7,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(7),
+                      borderSide: const BorderSide(
+                        color: AppColors.white,
+                        width: 0.7,
+                      ),
                     ),
                     errorText: errorText,
                   ),
@@ -532,14 +630,24 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF168A3D),
                     foregroundColor: Colors.white,
+
+                    disabledBackgroundColor: const Color(0xFFBDBDBD),
+                    disabledForegroundColor: const Color(0xFFE0E0E0),
+
+                    elevation: 0,
+
                     padding: const EdgeInsets.symmetric(horizontal: 16),
+
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(7),
                     ),
                   ),
                   child: TranslatedText(
                     isThisMetalStarting ? 'Starting...' : 'Start Order',
-                    style: const TextStyle(fontSize: 11),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.white,
+                    ),
                   ),
                 ),
               ),
@@ -576,7 +684,7 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF555555),
+                    color: AppColors.black,
                   ),
                 ),
               ),
@@ -720,11 +828,17 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
       // STEP 1: CALL CONVERT API
       // ==========================================================
 
-      final convertResponse = await JscService.convertToPhysical(
-        metal: metal,
-        amount: amount,
-        currency: currency,
-      );
+      final convertResponse = selectedTab == 0
+          ? await JscService.convertToPhysical(
+              metal: metal,
+              amount: amount,
+              currency: currency,
+            )
+          : await GspService.convertToPhysical(
+              metal: metal,
+              amount: amount,
+              currency: currency,
+            );
 
       log(
         '🔥 JSC CONVERT RESPONSE: '

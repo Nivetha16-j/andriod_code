@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/screens/plans/form.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_transaction.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/jsc_services.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -12,6 +14,8 @@ import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:junubullion/widgets/jsc/jsc_balance_section.dart';
 import 'package:junubullion/widgets/jsc/jsc_convert_to_physical_section.dart';
 import 'package:junubullion/widgets/jsc/jsc_purchases_section.dart';
+import 'package:junubullion/widgets/jsc/jsc_transaction_section.dart';
+import 'package:junubullion/widgets/jsc/quick_actions.dart';
 import 'package:provider/provider.dart';
 
 class JscDashboardScreen extends StatefulWidget {
@@ -34,15 +38,19 @@ class _JscDashboardScreenState extends State<JscDashboardScreen> {
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
 
-      body: PlansLayout(
-        plans: Plans.jsc,
-        selectedMenu: 'Dashboard',
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
-          child: const _DashboardContent(),
-        ),
+      body: SingleChildScrollView(
+        // padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+        child: const _DashboardContent(),
       ),
 
+      // PlansLayout(
+      //   plans: Plans.jsc,
+      //   selectedMenu: 'Dashboard',
+      //   child: SingleChildScrollView(
+      //     padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+      //     child: const _DashboardContent(),
+      //   ),
+      // ),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: currentIndex,
         onTap: _switchToTab,
@@ -103,37 +111,79 @@ class _DashboardContentState extends State<_DashboardContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TranslatedText(
-          'Bullion Dashboard',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          decoration: BoxDecoration(gradient: AppColors.BgGradient),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TranslatedText(
+                'Bullion Dashboard',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              const TranslatedText(
+                'Manage your digital gold and silver holdings across JSC Bullion and GSP Savings plans.',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.white,
+                ),
+              ),
+            ],
+          ),
         ),
 
+        // const SizedBox(height: 7),
+
+        // _buildJscApplicationButton(),
         const SizedBox(height: 10),
-
-        const TranslatedText(
-          'Your accumulated digital gold and silver holdings.',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        ),
-
-        const SizedBox(height: 7),
-
-        _buildJscApplicationButton(),
-
-        const SizedBox(height: 20),
 
         const JscBalanceSection(),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
 
-        JscPurchasesSection(
-          isUnlocked: context.watch<JscBalanceProvider>().isBalancesUnlocked,
+        QuickActions(),
+
+        const SizedBox(height: 10),
+
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: const TranslatedText(
+                'Recent Transactions',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+
+            // const SizedBox(height: 6),
+            JscTransactionHistoryScreen(
+              isUnlocked: context
+                  .watch<JscBalanceProvider>()
+                  .isBalancesUnlocked,
+            ),
+          ],
         ),
+        // JscPurchasesSection(
+        //   isUnlocked: context.watch<JscBalanceProvider>().isBalancesUnlocked,
+        // ),
 
-        const SizedBox(height: 20),
+        // const SizedBox(height: 20),
 
-        JscConvertPhysicalSection(
-          isUnlocked: context.watch<JscBalanceProvider>().isBalancesUnlocked,
-        ),
+        // JscConvertPhysicalSection(
+        //   isUnlocked: context.watch<JscBalanceProvider>().isBalancesUnlocked,
+        // ),
       ],
     );
   }
@@ -162,8 +212,7 @@ class _DashboardContentState extends State<_DashboardContent> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) =>
-                    const ApplicationForm(isEdit: true, applicationType: 'JSC'),
+                builder: (_) => const ApplicationForm(isEdit: true),
               ),
             );
           },
@@ -192,8 +241,7 @@ class _DashboardContentState extends State<_DashboardContent> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                const ApplicationForm(isEdit: false, applicationType: 'JSC'),
+            builder: (_) => const ApplicationForm(isEdit: false),
           ),
         );
       },

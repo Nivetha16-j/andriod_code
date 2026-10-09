@@ -281,7 +281,7 @@ class JscService {
       final token = await SessionManager.getToken();
 
       final uri = Uri.parse(
-        '$baseUrl/my-account/transactions',
+        '$baseUrl/my-account/digital-wallet/transactions',
       ).replace(queryParameters: {'currency': currency});
 
       final response = await http.get(

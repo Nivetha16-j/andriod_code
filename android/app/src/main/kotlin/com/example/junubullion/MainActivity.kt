@@ -1,4 +1,4 @@
-package com.example.junubullion
+package com.junubullion.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

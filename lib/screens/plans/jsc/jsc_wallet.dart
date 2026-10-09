@@ -2,9 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/providers/gsp_balance_provider.dart';
+import 'package:junubullion/providers/jsc_balance_provider.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_wallet_balance_section.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -31,13 +35,17 @@ class _JscWalletScreenState extends State<JscWalletScreen> {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: PlansLayout(
-        plans: Plans.jsc,
-        selectedMenu: 'My Wallet',
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
-          child: const JscWallet(),
-        ),
+      // body: PlansLayout(
+      //   plans: Plans.jsc,
+      //   selectedMenu: 'My Wallet',
+      //   child: SingleChildScrollView(
+      //     padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+      //     child: const JscWallet(),
+      //   ),
+      // ),
+      body: SingleChildScrollView(
+        // padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+        child: const JscWallet(),
       ),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: currentIndex,
@@ -173,40 +181,74 @@ class _JscWalletState extends State<JscWallet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TranslatedText(
-          'My Wallet',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          decoration: BoxDecoration(gradient: AppColors.BgGradient),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TranslatedText(
+                'My Wallet',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              const TranslatedText(
+                'View your digital gold and silver balances and live market prices.',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.white,
+                ),
+              ),
+            ],
           ),
         ),
 
-        const SizedBox(height: 14),
+        const SizedBox(height: 15),
 
-        const TranslatedText(
-          'View your digital gold and silver balances and live market prices.',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-            height: 1.25,
-            color: Colors.black,
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: AppColors.BgGradient,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const JscBalanceSection(),
+                // JscWalletBalanceSection(
+                //   jscGoldBalance: context.watch<JscBalanceProvider>().jscGoldBalance,
+                //   jscGoldUnit: context.watch<JscBalanceProvider>().jscGoldUnit,
+
+                //   jscSilverBalance: context.watch<JscBalanceProvider>().jscSilverBalance,
+                //   jscSilverUnit: context.watch<JscBalanceProvider>().jscSilverUnit,
+
+                //   gspGoldBalance: context.watch<GspBalanceProvider>().gspGoldBalance,
+                //   gspGoldUnit: context.watch<GspBalanceProvider>().gspGoldUnit,
+
+                //   gspSilverBalance: context.watch<GspBalanceProvider>().gspSilverBalance,
+                //   gspSilverUnit: context.watch<GspBalanceProvider>().gspSilverUnit,
+                // ),
+                const SizedBox(height: 20),
+
+                _LiveSpotPrices(
+                  goldPrice: goldPrice,
+                  goldUnit: goldUnit,
+                  silverPrice: silverPrice,
+                  silverUnit: silverUnit,
+                  currencySymbol: currencySymbol,
+                  isLoading: isLoading,
+                ),
+              ],
+            ),
           ),
-        ),
-
-        const SizedBox(height: 25),
-
-        const JscBalanceSection(),
-
-        const SizedBox(height: 20),
-
-        _LiveSpotPrices(
-          goldPrice: goldPrice,
-          goldUnit: goldUnit,
-          silverPrice: silverPrice,
-          silverUnit: silverUnit,
-          currencySymbol: currencySymbol,
-          isLoading: isLoading,
         ),
       ],
     );
@@ -239,15 +281,9 @@ class _LiveSpotPrices extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 14, 10, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFD9D9),
+        gradient: AppColors.BgGradient,
         borderRadius: BorderRadius.circular(7),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.22),
-            blurRadius: 5,
-            offset: const Offset(1, 4),
-          ),
-        ],
+        border: Border.all(color: AppColors.primaryRed, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,9 +296,9 @@ class _LiveSpotPrices extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF9E2424),
+                    color: AppColors.white,
                   ),
                 ),
               ),
@@ -275,34 +311,18 @@ class _LiveSpotPrices extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFB7BD),
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.lightRed,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 6,
-                      height: 6,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Color(0xFFD5162A),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 5),
-                    TranslatedText(
-                      'LIVE',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFFD5162A),
-                      ),
-                    ),
-                  ],
+                child: TranslatedText(
+                  'LIVE',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.primaryRed,
+                  ),
                 ),
               ),
             ],
@@ -331,7 +351,7 @@ class _LiveSpotPrices extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black,
+                    color: AppColors.white,
                   ),
                 ),
               ),
@@ -343,7 +363,7 @@ class _LiveSpotPrices extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFFA52525),
+                  color: AppColors.white,
                 ),
               ),
 
@@ -351,7 +371,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
               TranslatedText(
                 '/ $goldUnit',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF9E4A4A)),
+                style: const TextStyle(fontSize: 12, color: AppColors.white),
               ),
             ],
           ),
@@ -383,7 +403,7 @@ class _LiveSpotPrices extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black,
+                    color: AppColors.white,
                   ),
                 ),
               ),
@@ -395,7 +415,7 @@ class _LiveSpotPrices extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFFA52525),
+                  color: AppColors.white,
                 ),
               ),
 
@@ -403,7 +423,7 @@ class _LiveSpotPrices extends StatelessWidget {
 
               TranslatedText(
                 '/ $silverUnit',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF9E4A4A)),
+                style: const TextStyle(fontSize: 12, color: AppColors.white),
               ),
             ],
           ),
@@ -419,7 +439,7 @@ class _LiveSpotPrices extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w400,
-              color: Color(0xFFAD6262),
+              color: AppColors.white,
             ),
           ),
         ],

@@ -1,12 +1,13 @@
 import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/currency_provider.dart';
-import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
-import 'package:junubullion/screens/plans/layout.dart';
+import 'package:junubullion/services/gsp_service.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/session_manager.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -35,14 +36,15 @@ class _JscSellBackScreenState extends State<JscSellBackScreen> {
       key: scaffoldKey,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
-      body: PlansLayout(
-        plans: Plans.jsc,
-        selectedMenu: 'Sell Back Request',
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
-          child: const JscSellBackContent(),
-        ),
-      ),
+      // body: PlansLayout(
+      //   plans: Plans.jsc,
+      //   selectedMenu: 'Sell Back Request',
+      //   child: SingleChildScrollView(
+      //     padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+      //     child: const JscSellBackContent(),
+      //   ),
+      // ),
+      body: SingleChildScrollView(child: const JscSellBackContent()),
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: currentIndex,
         onTap: _switchToTab,
@@ -69,10 +71,11 @@ class JscSellBackContent extends StatefulWidget {
 class _JscSellBackContentState extends State<JscSellBackContent> {
   bool isLoadingSellBack = false;
 
-  Map<String, dynamic>? sellBackData;
+  Map<String, dynamic>? jscSellBackData;
+  Map<String, dynamic>? gspSellBackData;
 
   bool isBalancesUnlocked = false;
-
+  int selectedTab = 0; // 0 = JSC, 1 = GSP
   bool isLoading = true;
 
   String? errorMessage;
@@ -97,61 +100,71 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     super.dispose();
   }
 
+  Map<String, dynamic>? get sellBackData {
+    return selectedTab == 0 ? jscSellBackData : gspSellBackData;
+  }
+
   Future<void> _fetchSellBackData({bool isRefresh = false}) async {
     try {
       if (!isRefresh && mounted) {
         setState(() {
           isLoading = true;
-          errorMessage = null;
         });
       }
 
-      final currencyProvider = Provider.of<CurrencyProvider>(
-        context,
-        listen: false,
-      );
+      await _fetchJscSellBackDetails();
 
-      final currency = currencyProvider.selectedCurrency;
-
-      log('Fetching JSC sell back data - currency: $currency');
-
-      final result = await JscService.getSellBackDetails(currency: currency);
-
-      log('JSC Sell Back Response: $result');
+      await _fetchGspSellBackDetails();
 
       if (!mounted) return;
 
-      if (result['status'] == true) {
-        final data = result['data'];
-
-        setState(() {
-          sellBackData = data is Map ? Map<String, dynamic>.from(data) : {};
-
-          isLoading = false;
-          errorMessage = null;
-        });
-      } else {
-        if (!isRefresh) {
-          setState(() {
-            errorMessage =
-                result['message']?.toString() ??
-                'Unable to fetch sell back details.';
-
-            isLoading = false;
-          });
-        }
-      }
-    } catch (e, stackTrace) {
-      log('JSC Sell Back Error: $e', stackTrace: stackTrace);
-
+      setState(() {
+        isLoading = false;
+        errorMessage = null;
+      });
+    } catch (e) {
       if (!mounted) return;
 
-      if (!isRefresh) {
-        setState(() {
-          errorMessage = 'Unable to load sell back details.';
-          isLoading = false;
-        });
-      }
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Unable to load sell back details.';
+      });
+    }
+  }
+
+  Future<void> _fetchJscSellBackDetails() async {
+    final currencyProvider = context.read<CurrencyProvider>();
+
+    final currency = currencyProvider.selectedCurrency;
+
+    final result = await JscService.getSellBackDetails(currency: currency);
+
+    if (result['status'] == true) {
+      final data = result['data'];
+
+      log("JSC SELL BACK -> API RESULT: $data");
+
+      jscSellBackData = data is Map<String, dynamic>
+          ? Map<String, dynamic>.from(data)
+          : {};
+    }
+  }
+
+  Future<void> _fetchGspSellBackDetails() async {
+    final currencyProvider = context.read<CurrencyProvider>();
+
+    final currency = currencyProvider.selectedCurrency;
+
+    final result = await GspService.getSellBackDetails(currency: currency);
+
+    if (result['status'] == true) {
+      final data = result['data'];
+
+      log("GSP SELL BACK -> API RESULT: $data");
+
+      gspSellBackData = data is Map<String, dynamic>
+          ? Map<String, dynamic>.from(data)
+          : {};
     }
   }
 
@@ -165,7 +178,8 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     if (!unlocked) {
       setState(() {
         isBalancesUnlocked = false;
-        sellBackData = null;
+        jscSellBackData = null;
+        gspSellBackData = null;
         isLoadingSellBack = false;
       });
 
@@ -208,7 +222,8 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
         if (!stillUnlocked) {
           setState(() {
             isBalancesUnlocked = false;
-            sellBackData = null;
+            jscSellBackData = null;
+            gspSellBackData = null;
           });
 
           debugPrint('SELL BACK -> Session became locked. Data discarded.');
@@ -218,23 +233,12 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
         setState(() {
           isBalancesUnlocked = true;
-          sellBackData = parsedData;
+          jscSellBackData = parsedData;
         });
-
-        debugPrint('SELL BACK -> Screen refreshed successfully.');
-
-        debugPrint(
-          'SELL BACK -> New GOLD: '
-          '${sellBackData?['gold']?['balance']}',
-        );
-
-        debugPrint(
-          'SELL BACK -> New SILVER: '
-          '${sellBackData?['silver']?['balance']}',
-        );
       } else {
         setState(() {
-          sellBackData = null;
+          jscSellBackData = null;
+          gspSellBackData = null;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -252,7 +256,8 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       if (!mounted) return;
 
       setState(() {
-        sellBackData = null;
+        jscSellBackData = null;
+        gspSellBackData = null;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -274,28 +279,35 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TranslatedText(
-          'Sell Back Request',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          decoration: BoxDecoration(gradient: AppColors.BgGradient),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TranslatedText(
+                'Sell Back Request',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              const TranslatedText(
+                'Request to sell back your digital gold or silver holdings for cash.',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.white,
+                ),
+              ),
+            ],
           ),
         ),
 
-        const SizedBox(height: 14),
-
-        TranslatedText(
-          'Sell your digital holdings and track bank transfer payouts.',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-            height: 1.25,
-            color: Colors.black,
-          ),
-        ),
-
-        const SizedBox(height: 25),
+        const SizedBox(height: 15),
 
         JscBalanceSection(
           showBalances: false,
@@ -307,82 +319,152 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
             setState(() {
               isBalancesUnlocked = true;
-              sellBackData = null;
+              jscSellBackData = null;
+              gspSellBackData = null;
             });
 
-            await _fetchSellBackDetails();
+            if (selectedTab == 0) {
+              await _fetchJscSellBackDetails();
+            } else {
+              await _fetchGspSellBackDetails();
+            }
           },
         ),
 
-        const SizedBox(height: 20),
-
+        // const SizedBox(height: 20),
         _buildSellBackCard(),
       ],
     );
   }
 
   Widget _buildSellBackCard() {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFFF202E), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 5,
-            offset: const Offset(1, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const TranslatedText(
-            'Sell Back for Cash',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF9E2828),
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(10, 17, 10, 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF8E7),
-              border: Border.all(color: const Color(0xFFFFB52E), width: 1.2),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const TranslatedText(
-              'Sell your digital holdings back to Junu Bullion at the live spot price. Enter your bank details and confirm the amount — we will transfer the payout to your account.',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w400,
-                height: 1.25,
-                color: Colors.black,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedTab = 0;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selectedTab == 0
+                        ? AppColors.primaryRed
+                        : const Color(0xFFF0F2F5),
+                    borderRadius: BorderRadius.circular(17),
+                  ),
+                  child: TranslatedText(
+                    'JSC Sell Back',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: selectedTab == 0 ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
               ),
+
+              const SizedBox(width: 8),
+
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedTab = 1;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selectedTab == 1
+                        ? AppColors.primaryRed
+                        : const Color(0xFFF0F2F5),
+                    borderRadius: BorderRadius.circular(17),
+                  ),
+                  child: TranslatedText(
+                    'GSP Sell Back',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: selectedTab == 1 ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: AppColors.primaryRed,
+              borderRadius: BorderRadius.all(Radius.circular(7)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const TranslatedText(
+                  'Sell Back for Cash',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(10, 17, 10, 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightRed,
+                    // border: Border.all(color: const Color(0xFFFFB52E), width: 1.2),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const TranslatedText(
+                    'Sell your digital holdings back to Junu Bullion at the live spot price. Enter your bank details and confirm the amount — we will transfer the payout to your account.',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      height: 1.25,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                if (isLoadingSellBack)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 25),
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                else if (!isBalancesUnlocked)
+                  _buildLockedMessage()
+                else if (sellBackData != null)
+                  _buildSellBackDetails()
+                else
+                  const SizedBox.shrink(),
+              ],
             ),
           ),
-
-          const SizedBox(height: 14),
-
-          if (isLoadingSellBack)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 25),
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-            )
-          else if (!isBalancesUnlocked)
-            _buildLockedMessage()
-          else if (sellBackData != null)
-            _buildSellBackDetails()
-          else
-            const SizedBox.shrink(),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -391,8 +473,8 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(10, 17, 10, 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E7),
-        border: Border.all(color: const Color(0xFFFFB52E), width: 1.2),
+        color: AppColors.lightRed,
+        // border: Border.all(color: const Color(0xFFFFB52E), width: 1.2),
         borderRadius: BorderRadius.circular(14),
       ),
       child: const TranslatedText(
@@ -408,28 +490,40 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
   }
 
   Widget _buildSellBackDetails() {
-    final gold = sellBackData?['gold'] as Map<String, dynamic>? ?? {};
+    final bool isJsc = selectedTab == 0;
 
-    final silver = sellBackData?['silver'] as Map<String, dynamic>? ?? {};
+    final gold = isJsc
+        ? (sellBackData?['gold'] as Map<String, dynamic>? ?? {})
+        : (sellBackData?['summary']?['gold'] as Map<String, dynamic>? ?? {});
+
+    final silver = isJsc
+        ? (sellBackData?['silver'] as Map<String, dynamic>? ?? {})
+        : (sellBackData?['summary']?['silver'] as Map<String, dynamic>? ?? {});
+
+    final List<dynamic> sellBacks = isJsc
+        ? (sellBackData?['sell_backs'] as List<dynamic>? ?? [])
+        : (sellBackData?['sellBackRequests'] as List<dynamic>? ?? []);
 
     final goldBalance = gold['balance']?.toString() ?? '0.0000';
 
     final goldUnit = gold['unit']?.toString() ?? 'gram';
+    final goldMarketRate = (gold['market_rate'] ?? gold['spot_price'] ?? 0)
+        .toString();
 
-    final goldMarketRate = gold['market_rate']?.toString() ?? '0';
+    final silverMarketRate =
+        (silver['market_rate'] ?? silver['spot_price'] ?? 0).toString();
 
     final silverBalance = silver['balance']?.toString() ?? '0.0000';
 
     final silverUnit = silver['unit']?.toString() ?? 'gram';
 
-    final silverMarketRate = silver['market_rate']?.toString() ?? '0';
-
     final currency = sellBackData?['currency']?.toString() ?? '';
 
     final currencySymbol = _currencySymbol(currency);
 
-    final List<dynamic> sellBacks =
-        sellBackData?['sell_backs'] as List<dynamic>? ?? [];
+    debugPrint('ACTIVE TAB => ${selectedTab == 0 ? 'JSC' : 'GSP'}');
+
+    debugPrint('ACTIVE DATA => $sellBackData');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,23 +583,18 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.white,
                     ),
                   ),
 
                   TranslatedText(
                     'Available: $balance $unit',
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF807878),
-                    ),
+                    style: const TextStyle(fontSize: 9, color: AppColors.white),
                   ),
 
                   TranslatedText(
                     'Spot: $spotPrice / $unit',
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: Color(0xFF807878),
-                    ),
+                    style: const TextStyle(fontSize: 9, color: AppColors.white),
                   ),
                 ],
               ),
@@ -524,7 +613,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                           barrierDismissible: false,
                           builder: (dialogContext) {
                             return SellBackDialog(
-                              plan: Plans.jsc,
+                              plan: selectedTab == 0 ? Plans.jsc : Plans.gsp,
                               metal: metal,
                               balance: balance,
                               unit: unit,
@@ -541,8 +630,15 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                             'Request submitted successfully.',
                           );
 
-                          await _fetchSellBackDetails();
+                          // await _fetchSellBackDetails();
 
+                          if (selectedTab == 0) {
+                            await _fetchJscSellBackDetails();
+                          } else {
+                            await _fetchGspSellBackDetails();
+                          }
+
+                          setState(() {});
                           if (!mounted) return;
 
                           ScaffoldMessenger.of(context)
@@ -570,7 +666,11 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                 ),
                 child: const TranslatedText(
                   'Sell Back',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white,
+                  ),
                 ),
               ),
             ),
@@ -593,7 +693,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: AppColors.white,
           ),
         ),
 
@@ -604,7 +704,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w400,
-            color: Colors.black,
+            color: AppColors.white,
           ),
         ),
 

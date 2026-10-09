@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:developer';
-
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
+import 'package:junubullion/services/gsp_service.dart';
 
 class JscPurchasesSection extends StatefulWidget {
   final bool? isUnlocked;
@@ -20,10 +21,14 @@ class JscPurchasesSection extends StatefulWidget {
 class _JscPurchasesSectionState extends State<JscPurchasesSection> {
   Timer? _timer;
 
-  List<Map<String, dynamic>> purchases = [];
+  List<Map<String, dynamic>> jscPurchases = [];
+  List<Map<String, dynamic>> gspPurchases = [];
 
   bool isLoading = false;
-
+  bool isInitialLoading = true;
+  int currentPage = 1;
+  final int itemsPerPage = 10;
+  int selectedTab = 0; // 0 = JSC, 1 = GSP
   // This is the actual unlock state used by this widget
   bool _isUnlocked = false;
 
@@ -107,7 +112,7 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
     _fetchPurchases();
 
     // Then every second
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
       _fetchPurchases();
     });
   }
@@ -129,6 +134,12 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
     if (!_isUnlocked) return;
 
     try {
+      if (isInitialLoading) {
+        setState(() {
+          isLoading = true;
+        });
+      }
+
       final currencyProvider = Provider.of<CurrencyProvider>(
         context,
         listen: false,
@@ -136,24 +147,92 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
 
       final currency = currencyProvider.selectedCurrency;
 
-      log('Fetching purchases with currency: $currency');
+      final previousPage = currentPage;
 
-      final result = await JscService.getPurchases(currency: currency);
+      await _fetchJscPurchases(currency);
+      await _fetchGspPurchases(currency);
 
       if (!mounted) return;
 
-      log('Purchases response: $result');
+      setState(() {
+        currentPage = previousPage;
 
-      if (result['status'] == true) {
-        final data = result['data'];
+        if (currentPage > totalPages) {
+          currentPage = totalPages;
+        }
 
-        setState(() {
-          purchases = data is List ? List<Map<String, dynamic>>.from(data) : [];
-        });
-      }
+        if (currentPage < 1) {
+          currentPage = 1;
+        }
+
+        isLoading = false;
+        isInitialLoading = false;
+      });
     } catch (e) {
       log('Purchases API error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
     }
+  }
+
+  Future<void> _fetchJscPurchases(String currency) async {
+    try {
+      final result = await JscService.getPurchases(currency: currency);
+
+      if (result['status'] != true) {
+        return;
+      }
+
+      final data = result['data'];
+
+      if (data is List) {
+        jscPurchases = List<Map<String, dynamic>>.from(data);
+      }
+    } catch (e) {
+      log('JSC PURCHASE ERROR => $e');
+    }
+  }
+
+  Future<void> _fetchGspPurchases(String currency) async {
+    try {
+      final result = await GspService.getPurchases(currency: currency);
+
+      if (result['status'] != true) {
+        return;
+      }
+
+      final Map<String, dynamic> data = Map<String, dynamic>.from(
+        result['data'],
+      );
+
+      final purchasesData = data['purchases'];
+
+      if (purchasesData is List) {
+        gspPurchases = List<Map<String, dynamic>>.from(purchasesData);
+      }
+    } catch (e) {
+      log('GSP PURCHASE ERROR => $e');
+    }
+  }
+
+  List<Map<String, dynamic>> get purchases {
+    return selectedTab == 0 ? jscPurchases : gspPurchases;
+  }
+
+  List<Map<String, dynamic>> get paginatedPurchases {
+    final start = (currentPage - 1) * itemsPerPage;
+    final end = (start + itemsPerPage).clamp(0, purchases.length);
+
+    return purchases.sublist(start, end);
+  }
+
+  int get totalPages {
+    if (purchases.isEmpty) return 1;
+    return (purchases.length / itemsPerPage).ceil();
   }
 
   @override
@@ -168,46 +247,38 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(15, 12, 15, 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFEF9),
-        border: Border.all(color: const Color(0xFFD20D2D), width: 1),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 2),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const TranslatedText(
-            'Your Purchases',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          ),
+          // const TranslatedText(
+          //   'Recent Purchases',
+          //   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          // ),
 
-          const SizedBox(height: 8),
+          // const SizedBox(height: 8),
 
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF9E8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
-                  blurRadius: 3,
-                  offset: const Offset(1, 2),
-                ),
-              ],
-            ),
-            child: const TranslatedText(
-              "Track each digital purchase against today's market price.",
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
-            ),
-          ),
+          // Container(
+          //   width: double.infinity,
+          //   padding: const EdgeInsets.all(8),
+          //   decoration: BoxDecoration(
+          //     color: const Color(0xFFFFF9E8),
+          //     boxShadow: [
+          //       BoxShadow(
+          //         color: Colors.black.withOpacity(0.12),
+          //         blurRadius: 3,
+          //         offset: const Offset(1, 2),
+          //       ),
+          //     ],
+          //   ),
+          //   child: const TranslatedText(
+          //     "Track each digital purchase against today's market price.",
+          //     style: TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
+          //   ),
+          // ),
 
-          const SizedBox(height: 8),
+          // const SizedBox(height: 8),
 
           // ======================================================
           // LOCKED
@@ -217,7 +288,17 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
               child: TranslatedText(
                 'Unlock your balances to view your purchases.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 10, color: Colors.grey),
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            )
+          else if (isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 30),
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primaryRed,
+                ),
               ),
             )
           // ======================================================
@@ -239,9 +320,119 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
           // PURCHASE TABLE
           // ======================================================
           else
-            _PurchaseTable(purchases: purchases),
+            Column(
+              children: [
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedTab = 0;
+                          currentPage = 1;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: selectedTab == 0
+                              ? AppColors.primaryRed
+                              : const Color(0xFFF0F2F5),
+                          borderRadius: BorderRadius.circular(17),
+                        ),
+                        child: TranslatedText(
+                          'JSC Purchases',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: selectedTab == 0
+                                ? Colors.white
+                                : Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedTab = 1;
+                          currentPage = 1;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: selectedTab == 1
+                              ? AppColors.primaryRed
+                              : const Color(0xFFF0F2F5),
+                          borderRadius: BorderRadius.circular(17),
+                        ),
+                        child: TranslatedText(
+                          'GSP Purchases',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: selectedTab == 1
+                                ? Colors.white
+                                : Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _PurchaseTable(purchases: paginatedPurchases),
+
+                const SizedBox(height: 16),
+
+                _buildPagination(),
+              ],
+            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPagination() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          onPressed: currentPage > 1
+              ? () {
+                  setState(() {
+                    currentPage--;
+                  });
+                }
+              : null,
+          icon: const Icon(Icons.chevron_left),
+        ),
+
+        Text(
+          'Page $currentPage of $totalPages',
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+
+        IconButton(
+          onPressed: currentPage < totalPages
+              ? () {
+                  setState(() {
+                    currentPage++;
+                  });
+                }
+              : null,
+          icon: const Icon(Icons.chevron_right),
+        ),
+      ],
     );
   }
 }
@@ -257,111 +448,104 @@ class _PurchaseTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE4E4E4), width: 0.7),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        child: SizedBox(
-          width: 870,
-          child: Column(
-            children: [
-              // ================================
-              // TABLE HEADER
-              // ================================
-              Container(
-                height: 32,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                color: const Color(0xFFF5F6F8),
-                child: const Row(
-                  children: [
-                    SizedBox(
-                      width: 110,
-                      child: TranslatedText(
-                        'PURCHASE DATE',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF666666),
-                        ),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: SizedBox(
+        width: 870,
+        child: Column(
+          children: [
+            // ================================
+            // TABLE HEADER
+            // ================================
+            Container(
+              height: 32,
+              // padding: const EdgeInsets.symmetric(horizontal: 8),
+              // color: const Color(0xFFF5F6F8),
+              child: const Row(
+                children: [
+                  SizedBox(
+                    width: 110,
+                    child: TranslatedText(
+                      'PURCHASE DATE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF666666),
                       ),
                     ),
+                  ),
 
-                    SizedBox(
-                      width: 75,
-                      child: TranslatedText(
-                        'METAL',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF666666),
-                        ),
+                  SizedBox(
+                    width: 75,
+                    child: TranslatedText(
+                      'METAL',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF666666),
                       ),
                     ),
+                  ),
 
-                    SizedBox(
-                      width: 160,
-                      child: TranslatedText(
-                        'PRODUCT NAME',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF666666),
-                        ),
+                  SizedBox(
+                    width: 160,
+                    child: TranslatedText(
+                      'PRODUCT NAME',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF666666),
                       ),
                     ),
+                  ),
 
-                    SizedBox(
-                      width: 140,
-                      child: TranslatedText(
-                        'PURCHASED AMOUNT',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF666666),
-                        ),
+                  SizedBox(
+                    width: 140,
+                    child: TranslatedText(
+                      'PURCHASED AMOUNT',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF666666),
                       ),
                     ),
+                  ),
 
-                    SizedBox(
-                      width: 150,
-                      child: TranslatedText(
-                        "TODAY'S MARKET PRICE",
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF666666),
-                        ),
+                  SizedBox(
+                    width: 150,
+                    child: TranslatedText(
+                      "TODAY'S MARKET PRICE",
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF666666),
                       ),
                     ),
+                  ),
 
-                    SizedBox(
-                      width: 160,
-                      child: TranslatedText(
-                        'MARKET STATUS',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF666666),
-                        ),
+                  SizedBox(
+                    width: 160,
+                    child: TranslatedText(
+                      'MARKET STATUS',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF666666),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-
-              // ================================
-              // PURCHASE ROWS
-              // ================================
-              ...purchases.map(
-                (purchase) => _PurchaseTableRow(purchase: purchase),
-              ),
-            ],
-          ),
+            ),
+            Divider(height: 0, color: AppColors.grey),
+            // ================================
+            // PURCHASE ROWS
+            // ================================
+            ...purchases.map(
+              (purchase) => _PurchaseTableRow(purchase: purchase),
+            ),
+          ],
         ),
       ),
     );
@@ -420,7 +604,6 @@ class _PurchaseTableRow extends StatelessWidget {
 
     final isUp = status == 'up';
     final isDown = status == 'down';
-    final isFlat = status == 'flat';
 
     final statusColor = isUp
         ? const Color(0xFF168B3A)
@@ -431,12 +614,12 @@ class _PurchaseTableRow extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(minHeight: 120),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFFFEFF),
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE5E5E5), width: 0.7),
-        ),
+      // decoration: const BoxDecoration(
+      // color: Color(0xFFFFFEFF),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.grey)),
       ),
+      // ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

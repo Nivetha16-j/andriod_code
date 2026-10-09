@@ -12,7 +12,6 @@ import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custon_appbar.dart';
 import 'package:provider/provider.dart';
-import 'package:junubullion/screens/plans/form.dart';
 
 class GspScreen extends StatefulWidget {
   const GspScreen({super.key});
@@ -28,6 +27,9 @@ class _GspScreenState extends State<GspScreen> {
 
   bool isLoadingApplication = true;
   bool hasGspRegistration = false;
+
+  bool isMonthly = true;
+  double selectedAmount = 160;
 
   @override
   void initState() {
@@ -66,160 +68,220 @@ class _GspScreenState extends State<GspScreen> {
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Container(
+            //   width: double.infinity,
+            //   color: const Color(0xFF790000),
+            //   padding: const EdgeInsets.fromLTRB(24, 28, 24, 26),
+            //   child: Column(
+            //     crossAxisAlignment: CrossAxisAlignment.start,
+            //     children: [
+            //       const TranslatedText(
+            //         'Your Trusted Insurance\nConsulting Partner',
+            //         style: TextStyle(
+            //           color: Colors.white,
+            //           fontSize: 22,
+            //           fontWeight: FontWeight.w700,
+            //           height: 1.15,
+            //         ),
+            //       ),
+
+            //       const SizedBox(height: 10),
+
+            //       const TranslatedText(
+            //         'They analyze existing insurance policies or help clients select the most suitable policies for health, life, property, liability, and auto insurance.',
+            //         style: TextStyle(
+            //           color: Colors.white,
+            //           fontSize: 14,
+            //           fontWeight: FontWeight.w400,
+            //           height: 1.15,
+            //         ),
+            //       ),
+
+            //       const SizedBox(height: 18),
+
+            //       SizedBox(
+            //         width: double.infinity,
+            //         height: 44,
+            //         child: ElevatedButton(
+            //           onPressed: () {
+            //             hasGspRegistration
+            //                 ? Navigator.push(
+            //                     context,
+            //                     MaterialPageRoute(
+            //                       builder: (_) => const ApplicationForm(
+            //                         isEdit: true,
+            //                         applicationType: 'GSP',
+            //                       ),
+            //                     ),
+            //                   )
+            //                 : Navigator.push(
+            //                     context,
+            //                     MaterialPageRoute(
+            //                       builder: (_) =>
+            //                           ApplicationForm(applicationType: 'GSP'),
+            //                     ),
+            //                   );
+            //           },
+            //           style: ElevatedButton.styleFrom(
+            //             backgroundColor: const Color(0xFFFFB83F),
+            //             foregroundColor: Colors.black,
+            //             elevation: 0,
+            //             shape: RoundedRectangleBorder(
+            //               borderRadius: BorderRadius.circular(13),
+            //             ),
+            //           ),
+            //           child: hasGspRegistration
+            //               ? TranslatedText(
+            //                   "View Your Gsp Application",
+            //                   style: TextStyle(
+            //                     fontWeight: FontWeight.w600,
+            //                     fontSize: 14,
+            //                   ),
+            //                 )
+            //               : TranslatedText(
+            //                   "Open Your Gsp Account",
+            //                   style: TextStyle(
+            //                     fontWeight: FontWeight.w600,
+            //                     fontSize: 14,
+            //                   ),
+            //                 ),
+            //         ),
+            //       ),
+
+            //       const SizedBox(height: 16),
+
+            //       _quoteBox('"Start with ₹1,475.69. Build a Golden Future"'),
+
+            //       const SizedBox(height: 12),
+
+            //       _quoteBox(
+            //         '"Small Savings Today, Golden Opportunities Tomorrow."',
+            //       ),
+
+            //       const SizedBox(height: 12),
+
+            //       _quoteBox(
+            //         '"Junu Bullion GSP – Making Gold Ownership Simple and Affordable."',
+            //       ),
+            //     ],
+            //   ),
+            // ),
             Container(
-              width: double.infinity,
-              color: const Color(0xFF790000),
-              padding: const EdgeInsets.fromLTRB(24, 28, 24, 26),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const TranslatedText(
-                    'Your Trusted Insurance\nConsulting Partner',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      height: 1.15,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  const TranslatedText(
-                    'They analyze existing insurance policies or help clients select the most suitable policies for health, life, property, liability, and auto insurance.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      height: 1.15,
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        hasGspRegistration
-                            ? Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ApplicationForm(
-                                    isEdit: true,
-                                    applicationType: 'GSP',
-                                  ),
-                                ),
-                              )
-                            : Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      ApplicationForm(applicationType: 'GSP'),
-                                ),
-                              );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFB83F),
-                        foregroundColor: Colors.black,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(13),
-                        ),
-                      ),
-                      child: hasGspRegistration
-                          ? TranslatedText(
-                              "View Your Gsp Application",
+              decoration: BoxDecoration(gradient: AppColors.BgGradient),
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
+                height: 280,
+                decoration: BoxDecoration(
+                  gradient: AppColors.BgGradient,
+                  borderRadius: BorderRadius.circular(18),
+                  // border: Border.all(color: const Color(0xffD4A017), width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TranslatedText(
+                              "Invest Your Gold For ",
                               style: TextStyle(
+                                color: AppColors.white,
                                 fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            )
-                          : TranslatedText(
-                              "Open Your Gsp Account",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                                fontSize: 20,
                               ),
                             ),
+                            TranslatedText(
+                              "The Future",
+                              style: TextStyle(
+                                color: AppColors.mustard,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: const [
+                            TranslatedText(
+                              "GOLD BALANCE",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            TranslatedText(
+                              "\$1000.25",
+                              style: TextStyle(
+                                color: Color(0xffE8C45A),
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
 
-                  const SizedBox(height: 16),
+                    // const SizedBox(height: 24),
+                    const SizedBox(height: 12),
 
-                  _quoteBox('"Start with ₹1,475.69. Build a Golden Future"'),
+                    const TranslatedText(
+                      "Start Building Wealth From Just 1 Gram",
+                      style: TextStyle(
+                        color: Color(0xffA7A9B4),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
 
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 30),
 
-                  _quoteBox(
-                    '"Small Savings Today, Golden Opportunities Tomorrow."',
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _quoteBox(
-                    '"Junu Bullion GSP – Making Gold Ownership Simple and Affordable."',
-                  ),
-                ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.mustard,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const TranslatedText(
+                            "INVEST NOW",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Image.asset("assets/GI.png", width: 150),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(14, 16, 14, 20),
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFDFCF6),
-                borderRadius: BorderRadius.circular(2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0),
+              child: const TranslatedText(
+                "Featured Assets",
+                // textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.black,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const TranslatedText(
-                    'Junu Bullion Gold Savings Plan',
-                    style: TextStyle(
-                      color: Color(0xFF981B1B),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  TranslatedText(
-                    'The Junu Bullion Gold Savings Plan (GSP) is a smart and affordable savings program that allows customers to accumulate gold gradually through regular savings. Starting from only ₹1,475.69 (equivalent to S\$20.00), GSP helps individuals and families build long-term wealth, protect their savings from inflation, and achieve important financial goals.',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 13,
-                      height: 1.15,
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  const TranslatedText(
-                    'Whether you are planning for your child\'s education, retirement, wealth preservation, or future investments, GSP provides a simple and disciplined way to own gold over time.',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 13,
-                      height: 1.15,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const TranslatedText(
-              'Start Small, Grow Big\nStart Your Gold Savings Journey Today',
-              style: TextStyle(color: AppColors.primaryRed, fontSize: 20),
             ),
             Consumer<ExclusiveProductProvider>(
               builder: (context, exclusiveProvider, child) {
@@ -285,11 +347,39 @@ class _GspScreenState extends State<GspScreen> {
                 );
               },
             ),
+            // const SizedBox(height: ),
+            // Padding(
+            //   padding: const EdgeInsets.only(left: 16.0),
+            //   child: const TranslatedText(
+            //     "Your Gold Growth",
+            //     // textAlign: TextAlign.center,
+            //     style: TextStyle(
+            //       color: AppColors.black,
+            //       fontWeight: FontWeight.w600,
+            //       fontSize: 16,
+            //     ),
+            //   ),
+            // ),
+            // const SizedBox(height: 16),
+            // _buildPlanSimulator(),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0),
+              child: const TranslatedText(
+                "Product Description",
+                // textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.black,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+            ),
             _buildProductDescription(),
-            _buildCustomerBenefits(),
-            _buildWhoItUseFor(),
-            _buildPlanFeatures(),
-            _buildHowMoneyConverts(),
+            // _buildCustomerBenefits(),
+            // _buildWhoItUseFor(),
+            // _buildPlanFeatures(),
+            // _buildHowMoneyConverts(),
           ],
         ),
       ),
@@ -305,6 +395,256 @@ class _GspScreenState extends State<GspScreen> {
       context,
       MaterialPageRoute(builder: (_) => MainScreen(initialIndex: index)),
       (route) => false,
+    );
+  }
+
+  Widget _buildToggleButton({
+    required String title,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xffD9B429) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          title,
+          style: TextStyle(
+            color: selected ? Colors.black : Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlanSimulator() {
+    final amounts = [20, 50, 100, 250];
+
+    final totalSaved = selectedAmount * 12;
+    final estimatedGold = (selectedAmount * 12) / 106.0;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: AppColors.BgGradient,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: TranslatedText(
+                  "Plan Simulator",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Row(
+                  children: [
+                    _buildToggleButton(
+                      title: "Monthly",
+                      selected: isMonthly,
+                      onTap: () {
+                        setState(() {
+                          isMonthly = true;
+                        });
+                      },
+                    ),
+
+                    _buildToggleButton(
+                      title: "Weekly",
+                      selected: !isMonthly,
+                      onTap: () {
+                        setState(() {
+                          isMonthly = false;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 25),
+
+          Row(
+            children: amounts.map((amount) {
+              final selected = selectedAmount == amount;
+
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedAmount = amount.toDouble();
+                      });
+                    },
+                    child: Container(
+                      height: 45,
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? const Color(0xffB86060)
+                            : const Color(0xff8C3737),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "S\$$amount",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 28),
+
+          Row(
+            children: [
+              const Expanded(
+                child: TranslatedText(
+                  "Recurring Amount",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+              Text(
+                "S\$${selectedAmount.toInt()}/month",
+                style: const TextStyle(
+                  color: Color(0xffD9B429),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: const Color(0xffD9B429),
+              inactiveTrackColor: Colors.white,
+              thumbColor: Colors.white,
+              overlayColor: Colors.transparent,
+            ),
+            child: Slider(
+              value: selectedAmount,
+              min: 20,
+              max: 500,
+              onChanged: (value) {
+                setState(() {
+                  selectedAmount = value;
+                });
+              },
+            ),
+          ),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: const [
+              Text("S\$20 min", style: TextStyle(color: Colors.white70)),
+              Text(
+                "S\$500+",
+                style: TextStyle(
+                  color: Color(0xffD9B429),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 28),
+
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              color: Colors.white.withOpacity(.08),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Est. 12-Month Accumulation",
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Text(
+                        "~${estimatedGold.toStringAsFixed(2)}g",
+                        style: const TextStyle(
+                          color: Color(0xffFFD54A),
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const Text(
+                        "Pure Gold",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text(
+                      "Total Saved",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Text(
+                      "S\$${totalSaved.toStringAsFixed(2)}",
+                      style: const TextStyle(
+                        color: Color(0xffFFD54A),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -882,93 +1222,96 @@ class _GspScreenState extends State<GspScreen> {
   Widget _buildProductDescription() {
     final features = [
       {
-        'icon': Icons.touch_app_outlined,
-        'title': 'Start saving from as little as SGD 20',
+        'icon': "assets/gsp1.png",
+        'title': 'Start Saving From As Little As S\$20',
       },
       {
-        'icon': Icons.code,
-        'title': 'Accumulate gold regularly without a large initial investment',
+        'icon': "assets/gsp2.png",
+        'title': 'Accumulate Gold Regularly Without A Large Initial Investment',
       },
       {
-        'icon': Icons.description_outlined,
-        'title': 'Build a long-term savings portfolio backed by gold',
+        'icon': "assets/gsp3.png",
+        'title': 'Build A Long-Term Savings Portfolio Backed By Gold',
       },
       {
-        'icon': Icons.desktop_windows_outlined,
-        'title': 'Enjoy a flexible and convenient savings approach',
+        'icon': "assets/gsp4.png",
+        'title': 'Enjoy A Flexible And Convenient Savings Approach',
       },
       {
-        'icon': Icons.headset_mic_outlined,
-        'title': 'Monitor their growing gold holdings over time',
+        'icon': "assets/gsp5.png",
+        'title': 'Monitor Their Growing Gold Holdings Over Time',
       },
     ];
 
     return Container(
       width: double.infinity,
-      color: const Color(0xFF951B1F),
-      padding: const EdgeInsets.fromLTRB(30, 50, 30, 45),
+      color: const Color(0xFFFAFAF8),
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          const TranslatedText(
-            'Product Description',
-            textAlign: TextAlign.center,
-            style: TextStyle(
+          // const TranslatedText(
+          //   'Product Description',
+          //   textAlign: TextAlign.center,
+          //   style: TextStyle(
+          //     color: AppColors.primaryRed,
+          //     fontSize: 16,
+          //     fontWeight: FontWeight.w700,
+          //   ),
+          // ),
+
+          // const SizedBox(height: 12),
+
+          // const TranslatedText(
+          //   'With Junu Bullion GSP, customers can:',
+          //   textAlign: TextAlign.center,
+          //   style: TextStyle(
+          //     color: Colors.black87,
+          //     fontSize: 15,
+          //     fontWeight: FontWeight.w600,
+          //   ),
+          // ),
+
+          // const SizedBox(height: 20),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            decoration: BoxDecoration(
               color: Colors.white,
-              fontSize: 25,
-              fontWeight: FontWeight.w700,
-              height: 1.1,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.primaryRed, width: 1),
             ),
-          ),
+            child: Column(
+              children: [
+                for (int i = 0; i < features.length; i++) ...[
+                  _buildFeatureItem(
+                    icon: features[i]['icon'] as String,
+                    title: features[i]['title'] as String,
+                  ),
 
-          const SizedBox(height: 12),
-
-          const TranslatedText(
-            'With Junu Bullion GSP, customers can:',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              height: 1.2,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          const TranslatedText(
-            'GSP is designed for anyone who wants to convert small regular savings into a valuable long-term asset.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              height: 1.25,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          SizedBox(
-            height: 250,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (int i = 0; i < features.length; i++) ...[
-                    SizedBox(
-                      width: 100,
-                      child: _buildDescriptionFeature(
-                        icon: features[i]['icon'] as IconData,
-                        title: features[i]['title'] as String,
-                      ),
-                    ),
-
-                    if (i != features.length - 1) const SizedBox(width: 18),
-                  ],
+                  if (i != features.length - 1) const SizedBox(height: 15),
                 ],
-              ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem({required String icon, required String title}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Image.asset(icon, width: 24, height: 24),
+
+          const SizedBox(width: 16),
+
+          Expanded(
+            child: TranslatedText(
+              title,
+              style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
           ),
         ],
@@ -1106,15 +1449,15 @@ class _GspProductCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: AppColors.BgGradient,
         borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.18),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Colors.black.withOpacity(.18),
+        //     blurRadius: 14,
+        //     offset: const Offset(0, 6),
+        //   ),
+        // ],
       ),
       padding: const EdgeInsets.all(5),
       child: Column(
@@ -1152,7 +1495,11 @@ class _GspProductCard extends StatelessWidget {
             productName,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.white,
+            ),
           ),
 
           const SizedBox(height: 5),
@@ -1161,22 +1508,25 @@ class _GspProductCard extends StatelessWidget {
             priceText,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.white,
+            ),
           ),
 
           const SizedBox(height: 4),
 
-          TranslatedText(
-            isInStock ? "In Stock" : "Out of Stock",
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: isInStock ? Colors.green : Colors.red,
-            ),
-          ),
+          // TranslatedText(
+          //   isInStock ? "In Stock" : "Out of Stock",
+          //   style: TextStyle(
+          //     fontSize: 12,
+          //     fontWeight: FontWeight.w600,
+          //     color: isInStock ? Colors.green : Colors.red,
+          //   ),
+          // ),
 
-          const SizedBox(height: 5),
-
+          // const SizedBox(height: 5),
           SizedBox(
             width: double.infinity,
             height: 45,

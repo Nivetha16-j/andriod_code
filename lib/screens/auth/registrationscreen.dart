@@ -21,7 +21,6 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final emailController = TextEditingController();
@@ -29,13 +28,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final countryController = TextEditingController();
   // final passwordController = TextEditingController();
   // final confirmPasswordController = TextEditingController();
-
-  dynamic selectedCountryId;
-
-  late Future<List<Country>> _countriesFuture;
-
-  // bool obscurePassword = true;
+  //// bool obscurePassword = true;
   // bool obscureConfirmPassword = true;
+  dynamic selectedCountryId;
+  late Future<List<Country>> _countriesFuture;
 
   @override
   void initState() {
@@ -321,6 +317,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             const SizedBox(height: 8),
             DropdownButtonFormField<dynamic>(
               initialValue: selectedCountryId,
+              dropdownColor: Colors.white,
               style: const TextStyle(color: AppColors.black, fontSize: 14),
               icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
               decoration: InputDecoration(
@@ -357,7 +354,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   value: country.id,
                   child: Text(
                     country.name,
-                    style: const TextStyle(fontSize: 14, color: Colors.black87),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.black,
+                    ),
                   ),
                 );
               }).toList(),

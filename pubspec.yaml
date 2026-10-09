@@ -94,6 +94,7 @@ flutter:
     - assets/i2.png
     - assets/i3.png
     - assets/i4.png
+    - assets/investment1.png
     - .env
   #   - images/a_dot_ham.jpeg
 

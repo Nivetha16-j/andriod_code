@@ -47,4 +47,6 @@ class AppColors {
   static const Color offWhite = Color.fromRGBO(255, 248, 230, 1);
   static const Color sandal = Color.fromRGBO(252, 252, 244, 1);
   static const Color lightYellow = Color.fromRGBO(255, 186, 73, 1);
+  static const Color lightBlue = Color.fromRGBO(227, 236, 248, 1);
+  static const Color yellowBg = Color.fromRGBO(255, 246, 215, 1);
 }

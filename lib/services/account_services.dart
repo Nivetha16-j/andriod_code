@@ -89,4 +89,18 @@ class AccountService {
 
     return jsonDecode(response.body);
   }
+
+  Future<Map<String, dynamic>> fetchBrands() async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.get(
+      Uri.parse("$baseUrl/brands"),
+      headers: {"Accept": "application/json", "Authorization": "Bearer $token"},
+    );
+
+    log("Fetch Brands Status : ${response.statusCode}");
+    log("Fetch Brands Response : ${response.body}");
+
+    return jsonDecode(response.body);
+  }
 }

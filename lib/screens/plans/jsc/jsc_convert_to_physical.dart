@@ -3,6 +3,7 @@ import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/plans/layout.dart';
+import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -33,13 +34,17 @@ class _JscConvertToPhysicalScreenState
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
 
-      body: PlansLayout(
-        plans: Plans.jsc,
-        selectedMenu: 'Convert To Physical',
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
-          child: const JscConvertToPhysicalContent(),
-        ),
+      // body: PlansLayout(
+      //   plans: Plans.jsc,
+      //   selectedMenu: 'Convert To Physical',
+      //   child: SingleChildScrollView(
+      //     padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+      //     child: const JscConvertToPhysicalContent(),
+      //   ),
+      // ),
+      body: SingleChildScrollView(
+        // padding: const EdgeInsets.fromLTRB(16, 10, 14, 20),
+        child: const JscConvertToPhysicalContent(),
       ),
 
       bottomNavigationBar: CustomBottomNavigationBar(
@@ -114,28 +119,35 @@ class _JscConvertToPhysicalContentState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TranslatedText(
-          'Convert To Physical',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          decoration: BoxDecoration(gradient: AppColors.BgGradient),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TranslatedText(
+                'Convert To Physical',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              const TranslatedText(
+                'Convert your digital gold or silver holdings into physical bullion products.',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.white,
+                ),
+              ),
+            ],
           ),
         ),
 
-        const SizedBox(height: 12),
-
-        const TranslatedText(
-          'Convert your digital gold or silver holdings into physical bullion products.',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-            color: Colors.black,
-          ),
-        ),
-
-        const SizedBox(height: 25),
-
+        // const SizedBox(height: 15),
         JscBalanceSection(
           showBalances: false,
 
@@ -144,8 +156,7 @@ class _JscConvertToPhysicalContentState
           },
         ),
 
-        const SizedBox(height: 20),
-
+        // const SizedBox(height: 20),
         JscConvertPhysicalSection(isUnlocked: isUnlocked),
       ],
     );

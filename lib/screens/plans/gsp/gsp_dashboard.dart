@@ -172,13 +172,13 @@ class _DashboardContentState extends State<_DashboardContent> {
         height: 40,
         child: ElevatedButton.icon(
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) =>
-                    const ApplicationForm(isEdit: true, applicationType: 'GSP'),
-              ),
-            );
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(
+            //     builder: (_) =>
+            //         const ApplicationForm(isEdit: true, applicationType: 'GSP'),
+            //   ),
+            // );
           },
           icon: const Icon(Icons.description_outlined, size: 16),
           label: const TranslatedText(
@@ -205,8 +205,7 @@ class _DashboardContentState extends State<_DashboardContent> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                const ApplicationForm(isEdit: false, applicationType: 'GSP'),
+            builder: (_) => const ApplicationForm(isEdit: false),
           ),
         );
       },
