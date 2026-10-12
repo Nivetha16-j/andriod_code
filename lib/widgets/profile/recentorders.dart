@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/providers/order_provider.dart';
@@ -45,6 +47,8 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
     final displayOrders = allOrders.isEmpty
         ? <dynamic>[]
         : allOrders.sublist(startIndex, endIndex);
+
+    log("Disssssssss $displayOrders");
 
     return Container(
       width: double.infinity,
