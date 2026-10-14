@@ -8,10 +8,10 @@ class InventorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Map<String, String>> content = [
-      {"image": "assets/gold.png", "description": "Buy Gold Coins"},
-      {"image": "assets/gold.png", "description": "Buy Silver Coins"},
-      {"image": "assets/gold.png", "description": "Buy Gold Bars"},
-      {"image": "assets/gold.png", "description": "Buy Silver Bars"},
+      {"image": "assets/inventory1.png", "description": "Buy Gold Coins"},
+      {"image": "assets/inventory2.png", "description": "Buy Silver Coins"},
+      {"image": "assets/inventory3.png", "description": "Buy Gold Bars"},
+      {"image": "assets/inventory4.png", "description": "Buy Silver Bars"},
     ];
 
     return Padding(

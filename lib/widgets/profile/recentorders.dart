@@ -1,10 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/providers/order_provider.dart';
+import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/profile/profile.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
+import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
+import 'package:junubullion/widgets/home/custom_drawer.dart';
+import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/profile/order_details.dart';
 import 'package:provider/provider.dart';
+
+class RecentOrderScreen extends StatefulWidget {
+  const RecentOrderScreen({super.key});
+
+  @override
+  State<RecentOrderScreen> createState() => _RecentOrderScreenState();
+}
+
+class _RecentOrderScreenState extends State<RecentOrderScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+    int _currentIndex = 3;
+
+    void _switchToTab(int index) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => MainScreen(initialIndex: index)),
+        (route) => false,
+      );
+    }
+
+    return Scaffold(
+      key: scaffoldKey,
+      drawer: const CustomDrawer(),
+      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _switchToTab,
+      ),
+      body: Container(
+        width: double.infinity,
+        height: MediaQuery.of(context).size.height,
+        decoration: BoxDecoration(gradient: AppColors.BgGradient),
+        child: SingleChildScrollView(child: RecentOrdersSection(showAll: true)),
+      ),
+    );
+  }
+}
 
 class RecentOrdersSection extends StatefulWidget {
   final bool showAll;
@@ -47,149 +91,152 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
         ? <dynamic>[]
         : allOrders.sublist(startIndex, endIndex);
 
-    return Container(
-      width: double.infinity,
+    return Padding(
       padding: widget.showAll
-          ? const EdgeInsets.all(24)
-          : const EdgeInsets.all(16),
-      decoration: widget.showAll
-          ? BoxDecoration(
-              gradient: AppColors.pinkGradient,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color.fromARGB(
-                    255,
-                    14,
-                    7,
-                    7,
-                  ).withValues(alpha: .06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            )
-          : BoxDecoration(
-              gradient: AppColors.pinkGradient,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.black.withValues(alpha: .06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: TranslatedText(
-                    widget.showAll ? "Orders" : "Recent orders",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+          ? const EdgeInsets.all(8)
+          : const EdgeInsets.all(0),
+      child: Container(
+        width: double.infinity,
+        padding: widget.showAll
+            ? const EdgeInsets.all(24)
+            : const EdgeInsets.all(16),
+        decoration: widget.showAll
+            ? BoxDecoration(
+                gradient: AppColors.pinkGradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color.fromARGB(
+                      255,
+                      14,
+                      7,
+                      7,
+                    ).withValues(alpha: .06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              )
+            : BoxDecoration(
+                gradient: AppColors.pinkGradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.black.withValues(alpha: .06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: TranslatedText(
+                      widget.showAll ? "Orders" : "Recent orders",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
 
-                if (!widget.showAll) ...[
-                  const SizedBox(width: 8),
-
-                  Flexible(
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const OrderScreen(),
+                  if (!widget.showAll) ...[
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const OrderScreen(),
+                            ),
+                          );
+                        },
+                        child: const TranslatedText(
+                          "View all",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            color: AppColors.primaryRed,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
                           ),
-                        );
-                      },
-                      child: const TranslatedText(
-                        "View all",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                          color: AppColors.primaryRed,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
-            ),
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            if (provider.isLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 30),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (allOrders.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 30),
-                  child: TranslatedText("No orders found"),
-                ),
-              )
-            else ...[
-              Row(
-                children: [
-                  const Expanded(
-                    flex: 3,
-                    child: TranslatedText(
-                      "Order",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+              if (provider.isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 30),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (allOrders.isEmpty)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 30),
+                    child: TranslatedText("No orders found"),
+                  ),
+                )
+              else ...[
+                Row(
+                  children: [
+                    const Expanded(
+                      flex: 3,
+                      child: TranslatedText(
+                        "Order",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                  ),
-                  const Expanded(
-                    flex: 3,
-                    child: TranslatedText(
-                      "Date",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                    const Expanded(
+                      flex: 3,
+                      child: TranslatedText(
+                        "Date",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                  ),
-                  const Expanded(
-                    flex: 2,
-                    child: TranslatedText(
-                      "Status",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                    const Expanded(
+                      flex: 2,
+                      child: TranslatedText(
+                        "Status",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                  ),
-                  const Expanded(
-                    flex: 2,
-                    child: TranslatedText(
-                      "Total",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                    const Expanded(
+                      flex: 2,
+                      child: TranslatedText(
+                        "Total",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                  ),
-                  if (!widget.showAll)
+                    // if (!widget.showAll)
                     const Expanded(
                       flex: 2,
                       child: TranslatedText(
@@ -201,93 +248,93 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ],
+                ),
 
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // const Divider(),
-              ...displayOrders.map((order) {
-                final orderNumber = order["order_number"]?.toString() ?? "-";
+                // const Divider(),
+                ...displayOrders.map((order) {
+                  final orderNumber = order["order_number"]?.toString() ?? "-";
 
-                final status = order["status"]?.toString() ?? "-";
+                  final status = order["status"]?.toString() ?? "-";
 
-                final createdAt = order["created_at"]?.toString();
+                  final createdAt = order["created_at"]?.toString();
 
-                String date = "-";
+                  String date = "-";
 
-                if (createdAt != null && createdAt.isNotEmpty) {
-                  try {
-                    date = DateFormat(
-                      "dd MMM yyyy",
-                    ).format(DateTime.parse(createdAt));
-                  } catch (_) {
-                    date = "-";
+                  if (createdAt != null && createdAt.isNotEmpty) {
+                    try {
+                      date = DateFormat(
+                        "dd MMM yyyy",
+                      ).format(DateTime.parse(createdAt));
+                    } catch (_) {
+                      date = "-";
+                    }
                   }
-                }
 
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // ORDER NUMBER
-                          Expanded(
-                            flex: 3,
-                            child: TranslatedText(
-                              orderNumber,
-                              style: const TextStyle(fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-
-                          // DATE
-                          Expanded(
-                            flex: 3,
-                            child: TranslatedText(
-                              date,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-
-                          // STATUS
-                          Expanded(
-                            flex: 2,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: status.toLowerCase() == "pending"
-                                    ? AppColors.yellow
-                                    : AppColors.green,
-                                borderRadius: BorderRadius.circular(4),
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // ORDER NUMBER
+                            Expanded(
+                              flex: 3,
+                              child: TranslatedText(
+                                orderNumber,
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TranslatedText(
-                                  status.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.black,
+                            ),
+
+                            // DATE
+                            Expanded(
+                              flex: 3,
+                              child: TranslatedText(
+                                date,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+
+                            // STATUS
+                            Expanded(
+                              flex: 2,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: status.toLowerCase() == "pending"
+                                      ? AppColors.yellow
+                                      : AppColors.green,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: TranslatedText(
+                                    status.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.black,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ),
-                          ),
 
-                          // TOTAL
-                          Expanded(
-                            flex: 2,
-                            child: TranslatedText(
-                              order["grand_total"]?.toString() ?? "0.00",
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
+                            // TOTAL
+                            Expanded(
+                              flex: 2,
+                              child: TranslatedText(
+                                order["grand_total"]?.toString() ?? "0.00",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
 
-                          if (!widget.showAll)
+                            // if (!widget.showAll)
                             Expanded(
                               flex: 2,
                               child: InkWell(
@@ -295,7 +342,8 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => const OrderScreen(),
+                                      builder: (_) =>
+                                          OrderDetailsScreen(order: order),
                                     ),
                                   );
                                 },
@@ -311,102 +359,106 @@ class _RecentOrdersSectionState extends State<RecentOrdersSection> {
                                 ),
                               ),
                             ),
-                        ],
-                      ),
-                    ),
-
-                    // const Divider(height: 1, color: AppColors.lightGrey),
-                  ],
-                );
-              }),
-
-              const SizedBox(height: 20),
-
-              if (totalPages > 1)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // PREVIOUS
-                    SizedBox(
-                      height: 38,
-                      child: OutlinedButton(
-                        onPressed: currentPage > 0
-                            ? () {
-                                setState(() {
-                                  currentPage--;
-                                });
-                              }
-                            : null,
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          side: const BorderSide(color: AppColors.primaryRed),
-                        ),
-                        child: const TranslatedText(
-                          "Previous",
-                          style: TextStyle(fontSize: 12),
+                          ],
                         ),
                       ),
-                    ),
 
-                    const SizedBox(width: 15),
+                      // const Divider(height: 1, color: AppColors.lightGrey),
+                    ],
+                  );
+                }),
 
-                    // PAGE NUMBER
-                    Container(
-                      height: 38,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryRed,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: TranslatedText(
-                        "${currentPage + 1} / $totalPages",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                const SizedBox(height: 20),
+
+                if (totalPages > 1)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // PREVIOUS
+                      SizedBox(
+                        height: 38,
+                        child: OutlinedButton(
+                          onPressed: currentPage > 0
+                              ? () {
+                                  setState(() {
+                                    currentPage--;
+                                  });
+                                }
+                              : null,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            side: const BorderSide(color: AppColors.primaryRed),
+                          ),
+                          child: const TranslatedText(
+                            "Previous",
+                            style: TextStyle(fontSize: 12),
+                          ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(width: 15),
+                      const SizedBox(width: 15),
 
-                    // NEXT
-                    SizedBox(
-                      height: 38,
-                      child: OutlinedButton(
-                        onPressed: currentPage < totalPages - 1
-                            ? () {
-                                setState(() {
-                                  currentPage++;
-                                });
-                              }
-                            : null,
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          side: const BorderSide(color: AppColors.primaryRed),
+                      // PAGE NUMBER
+                      Container(
+                        height: 38,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryRed,
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const TranslatedText(
-                          "Next",
-                          style: TextStyle(fontSize: 12),
+                        child: TranslatedText(
+                          "${currentPage + 1} / $totalPages",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
 
-              const SizedBox(height: 10),
+                      const SizedBox(width: 15),
 
-              if (totalPages > 1)
-                Center(
-                  child: TranslatedText(
-                    "Showing ${startIndex + 1}–$endIndex "
-                    "of ${allOrders.length} orders",
-                    style: const TextStyle(fontSize: 11, color: AppColors.grey),
+                      // NEXT
+                      SizedBox(
+                        height: 38,
+                        child: OutlinedButton(
+                          onPressed: currentPage < totalPages - 1
+                              ? () {
+                                  setState(() {
+                                    currentPage++;
+                                  });
+                                }
+                              : null,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            side: const BorderSide(color: AppColors.primaryRed),
+                          ),
+                          child: const TranslatedText(
+                            "Next",
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+
+                const SizedBox(height: 10),
+
+                if (totalPages > 1)
+                  Center(
+                    child: TranslatedText(
+                      "Showing ${startIndex + 1}–$endIndex "
+                      "of ${allOrders.length} orders",
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.grey,
+                      ),
+                    ),
+                  ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

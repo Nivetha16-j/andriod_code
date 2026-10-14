@@ -156,7 +156,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const OrderScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const RecentOrderScreen(),
+                        ),
                       );
                     },
                   ),

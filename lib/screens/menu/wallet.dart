@@ -5,6 +5,7 @@ import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/screens/plans/gsp/gsp_monthly_investment_plan.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_convert_to_physical.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_dashboard.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_monthly_investment_plan.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_purchases.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_sellback.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_transaction.dart';
@@ -197,7 +198,7 @@ class _CustomWalletState extends State<CustomWallet> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => JscDashboardScreen(),
+                          builder: (context) => JscMonthlyInvestmentPlan(),
                         ),
                       );
                     },

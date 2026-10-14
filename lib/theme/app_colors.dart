@@ -24,8 +24,8 @@ class AppColors {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Color.fromRGBO(252, 216, 216, 1),
       Color.fromRGBO(252, 252, 244, 1),
+      Color.fromRGBO(252, 216, 216, 1),
     ],
   );
   static const LinearGradient blueGradient = LinearGradient(
