@@ -482,4 +482,75 @@ class JscService {
       rethrow;
     }
   }
+
+  static Future<Map<String, dynamic>> fetchMonthlyPlan(String currency) async {
+    try {
+      final token = await SessionManager.getToken();
+
+      final response = await http.get(
+        Uri.parse(
+          '$baseUrl/my-account/jsc/monthly-plan',
+        ).replace(queryParameters: {'currency': currency}),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      log('Jsc MONTHLY PLAN STATUS: ${response.statusCode}');
+
+      log('Jsc MONTHLY PLAN RESPONSE: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+
+      return {
+        'status': false,
+        'message': 'Failed to fetch Jsc monthly plan (${response.statusCode})',
+      };
+    } catch (e) {
+      log('Jsc MONTHLY PLAN ERROR: $e');
+
+      return {'status': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> createMonthlyPayment({
+    required double amount,
+    required String shippingAddress,
+    required String paymentMethod,
+    required String currency,
+  }) async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/my-account/jsc/monthly-plan/pay'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'amount': amount,
+        'shipping_address': shippingAddress,
+        'payment_method': paymentMethod,
+        "currency": currency,
+      }),
+    );
+
+    final responseData = jsonDecode(response.body);
+
+    log("resssssssssssssd: $responseData");
+
+    if (response.statusCode >= 200 &&
+        response.statusCode < 300 &&
+        responseData['status'] == true) {
+      return responseData;
+    }
+
+    throw Exception(
+      responseData['message'] ?? 'Unable to create Stripe payment session.',
+    );
+  }
 }

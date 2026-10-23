@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/graph_provider.dart';
 import 'package:junubullion/services/home_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'dart:developer';
 import 'dart:async';
 
 import 'package:junubullion/widgets/custom_translated_text.dart';
+import 'package:junubullion/widgets/home/custom_homegraph.dart';
+import 'package:junubullion/widgets/home/custom_moregraphs.dart';
+import 'package:provider/provider.dart';
 
 class LiveSpotPriceCard extends StatefulWidget {
   final Map<String, dynamic>? spotPricesData;
@@ -38,6 +42,10 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       _fetchSpotPrice();
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<GraphProvider>().fetchSingleGraph();
+    });
   }
 
   @override
@@ -61,6 +69,10 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
 
   // String selectedCurrency = 'USD';
   // String selectedUnit = 'Gram';
+
+  int selectedIndex = 1; // 1 Month selected by default
+
+  final List<String> tabs = ['1 Day', '1 Month', 'Year-to-Date', '1 Year'];
 
   final List<String> currencies = [
     'USD',
@@ -187,6 +199,14 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
     final String goldPriceText = _getPrice('gold');
     final String silverPriceText = _getPrice('silver');
 
+    final provider = context.watch<GraphProvider>();
+
+    if (provider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final graphData = provider.graphData;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(gradient: AppColors.BgGradient),
@@ -308,23 +328,96 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
 
             const SizedBox(height: 20),
 
-            // ==========================================
-            // MARKETING TREND
-            // ==========================================
-            // Align(
-            //   alignment: Alignment.centerRight,
-            //   child: GestureDetector(
-            //     onTap: () {},
-            //     child: const TranslatedText(
-            //       'Marketing Trend',
-            //       style: TextStyle(
-            //         color: lightGoldText,
-            //         fontSize: 16.0,
-            //         fontWeight: FontWeight.bold,
-            //       ),
-            //     ),
-            //   ),
-            // ),
+            Column(
+              children: [
+                Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFDAA520),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    children: List.generate(
+                      tabs.length,
+                      (index) => Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedIndex = index;
+                            });
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: selectedIndex == index
+                                  ? const Color(0xFFDAA520)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              tabs[index],
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: selectedIndex == index
+                                    ? Colors.white
+                                    : const Color(0xFF8AB4F8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CustomMoreGraphs(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    height: 42,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFDAA520)),
+                    ),
+                    child: Row(
+                      children: const [
+                        Text(
+                          'More Charts',
+                          style: TextStyle(
+                            color: Color(0xFFFFB800),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Spacer(),
+                        Icon(
+                          Icons.arrow_forward,
+                          color: Color(0xFFFFB800),
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                HomeGraph(chartData: graphData!),
+              ],
+            ),
           ],
         ),
       ),

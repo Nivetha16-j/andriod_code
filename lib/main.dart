@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/account_provider.dart';
 import 'package:junubullion/providers/address_provider.dart';
+import 'package:junubullion/providers/balance_provider.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/checkout_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
+import 'package:junubullion/providers/graph_provider.dart';
 import 'package:junubullion/providers/gsp_balance_provider.dart';
 import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
+import 'package:junubullion/providers/jsc_monthly_plan_provider.dart';
 import 'package:junubullion/providers/kyc_provider.dart';
 import 'package:junubullion/providers/language_provider.dart';
 import 'package:junubullion/providers/order_provider.dart';
@@ -17,6 +20,7 @@ import 'package:junubullion/providers/product_detail_provider.dart';
 import 'package:junubullion/providers/review_provider.dart';
 import 'package:junubullion/providers/testimonial_provider.dart';
 import 'package:junubullion/routes/app_routes.dart';
+import 'package:junubullion/screens/balance/balancescreen.dart';
 import 'package:junubullion/services/app_bootstrap.dart';
 import 'package:provider/provider.dart';
 
@@ -47,6 +51,9 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => JscBalanceProvider()),
         ChangeNotifierProvider(create: (_) => GspBalanceProvider()),
         ChangeNotifierProvider(create: (_) => GspMonthlyPlanProvider()),
+        ChangeNotifierProvider(create: (_) => JscMonthlyPlanProvider()),
+        ChangeNotifierProvider(create: (_) => GraphProvider()),
+        ChangeNotifierProvider(create: (_) => BalanceProvider()),
         ChangeNotifierProvider<LanguageProvider>.value(value: languageProvider),
       ],
       child: const MyApp(),

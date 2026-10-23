@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_monthly_investment_plan.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_convert_to_physical.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_purchases.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_sellback.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_transaction.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_wallet.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
+import 'package:junubullion/widgets/profile/dashboard/wallet.dart';
 
 class QuickActions extends StatefulWidget {
   const QuickActions({super.key});
@@ -39,12 +46,36 @@ class ActionContainers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actions = [
-      {"icon": "assets/ac1.png", "title": "View All Balances"},
-      {"icon": "assets/ac2.png", "title": "Your Purchases"},
-      {"icon": "assets/ac3.png", "title": "Transaction History"},
-      {"icon": "assets/ac4.png", "title": "Convert To Physical"},
-      {"icon": "assets/ac5.png", "title": "Sell Back Request"},
-      {"icon": "assets/ac6.png", "title": "Gsp Monthly Plan"},
+      {
+        "icon": "assets/ac1.png",
+        "title": "View All Balances",
+        "route": JscWalletScreen(),
+      },
+      {
+        "icon": "assets/ac2.png",
+        "title": "Your Purchases",
+        "route": const JscPurchasesScreen(),
+      },
+      {
+        "icon": "assets/ac3.png",
+        "title": "Transaction History",
+        "route": const JscTransactionSection(),
+      },
+      {
+        "icon": "assets/ac4.png",
+        "title": "Convert To Physical",
+        "route": const JscConvertToPhysicalScreen(),
+      },
+      {
+        "icon": "assets/ac5.png",
+        "title": "Sell Back Request",
+        "route": const JscSellBackScreen(),
+      },
+      {
+        "icon": "assets/ac6.png",
+        "title": "Gsp Monthly Plan",
+        "route": const GspMonthlyInvestmentPlan(),
+      },
     ];
 
     return SizedBox(
@@ -57,7 +88,12 @@ class ActionContainers extends StatelessWidget {
           final item = actions[index];
 
           return InkWell(
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => item["route"] as Widget),
+              );
+            },
             borderRadius: BorderRadius.circular(16),
             child: Container(
               width: 100,

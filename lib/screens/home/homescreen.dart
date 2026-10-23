@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/home_provider.dart';
+import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/widgets/home/custom_exclusivecollections.dart';
+import 'package:junubullion/widgets/home/custom_homegraph.dart';
 import 'package:junubullion/widgets/home/custom_inventory.dart';
 import 'package:junubullion/widgets/home/custom_investment.dart';
 import 'package:junubullion/widgets/home/custom_livespot.dart';
+import 'package:junubullion/widgets/product/custom_productlist.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
@@ -73,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final currencyProvider = context.watch<CurrencyProvider>();
     final bannerData = homeProvider.homeData?['data']?['banner'];
+    int initialIndex = 0;
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
@@ -113,7 +117,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 5),
 
-            const InventorySection(),
+            InventorySection(
+              onCategoryTap: (categoryIndex) {
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (_) => ProductListScreen(
+                //       initialCategoryIndex: categoryIndex,
+                //       scrollController: ScrollController(),
+                //     ),
+                //   ),
+                // );
+
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MainScreen(
+                      initialIndex: 3,
+                      productCategoryIndex: categoryIndex,
+                    ),
+                  ),
+                  (route) => false,
+                );
+              },
+            ),
 
             const SizedBox(height: 5),
 

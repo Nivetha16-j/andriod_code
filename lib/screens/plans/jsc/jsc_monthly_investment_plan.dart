@@ -1,20 +1,19 @@
 import 'dart:async';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
-import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
+import 'package:junubullion/providers/jsc_monthly_plan_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
-import 'package:junubullion/services/gsp_service.dart';
+import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
-import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/home/custom_appbar.dart';
 import 'package:provider/provider.dart';
 
 class JscMonthlyInvestmentPlan extends StatefulWidget {
@@ -72,19 +71,19 @@ class _JscMonthlyInvestmentPlanContentState
 
   double get minimumInvestment {
     return context
-            .read<GspMonthlyPlanProvider>()
+            .read<JscMonthlyPlanProvider>()
             .monthlyPlan
-            ?.gspMinimumAmount ??
+            ?.jscMinimumAmount ??
         0;
   }
 
   String get currencySymbol {
-    return context.read<GspMonthlyPlanProvider>().monthlyPlan?.currencySymbol ??
+    return context.read<JscMonthlyPlanProvider>().monthlyPlan?.currencySymbol ??
         '\$';
   }
 
   double get goldPricePerGram {
-    return context.read<GspMonthlyPlanProvider>().monthlyPlan?.pricePerGram ??
+    return context.read<JscMonthlyPlanProvider>().monthlyPlan?.pricePerGram ??
         0;
   }
 
@@ -119,14 +118,14 @@ class _JscMonthlyInvestmentPlanContentState
   Future<void> _fetchMonthlyPlan() async {
     if (!mounted) return;
 
-    final provider = context.read<GspMonthlyPlanProvider>();
+    final provider = context.read<JscMonthlyPlanProvider>();
     final currencyProvider = context.read<CurrencyProvider>();
 
     await provider.fetchMonthlyPlan(
       currency: currencyProvider.selectedCurrency,
     );
 
-    final minimum = provider.monthlyPlan?.gspMinimumAmount;
+    final minimum = provider.monthlyPlan?.jscMinimumAmount;
 
     if (minimum != null &&
         (_amountController.text.isEmpty ||
@@ -146,7 +145,7 @@ class _JscMonthlyInvestmentPlanContentState
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _fetchMonthlyPlan();
 
-      _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
         _fetchMonthlyPlan();
       });
     });
@@ -222,7 +221,7 @@ class _JscMonthlyInvestmentPlanContentState
     );
 
     try {
-      final response = await GspService.createMonthlyPayment(
+      final response = await JscService.createMonthlyPayment(
         amount: amount,
 
         shippingAddress: shippingAddress,
@@ -347,7 +346,7 @@ class _JscMonthlyInvestmentPlanContentState
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GspMonthlyPlanProvider>(
+    return Consumer<JscMonthlyPlanProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.monthlyPlan == null) {
           return const Center(
@@ -778,10 +777,10 @@ class _JscMonthlyInvestmentPlanContentState
                     ),
                   ),
                   Divider(color: AppColors.grey, height: 1),
-                  ...List.generate(provider.monthlyPlan?.gspTiers.length ?? 0, (
+                  ...List.generate(provider.monthlyPlan?.jscTiers.length ?? 0, (
                     index,
                   ) {
-                    final tier = provider.monthlyPlan!.gspTiers[index];
+                    final tier = provider.monthlyPlan!.jscTiers[index];
 
                     return Column(
                       children: [
@@ -790,7 +789,7 @@ class _JscMonthlyInvestmentPlanContentState
                           tier.formatted,
                         ),
 
-                        if (index < provider.monthlyPlan!.gspTiers.length - 1)
+                        if (index < provider.monthlyPlan!.jscTiers.length - 1)
                           const Divider(color: AppColors.grey, height: 1),
                       ],
                     );

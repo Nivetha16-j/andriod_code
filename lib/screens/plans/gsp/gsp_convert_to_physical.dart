@@ -8,7 +8,7 @@ import 'package:junubullion/widgets/gsp/gsp_balance_section.dart';
 import 'package:junubullion/widgets/gsp/gsp_convert_to_physical_section.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
-import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/home/custom_appbar.dart';
 import 'package:provider/provider.dart';
 
 class GspConvertToPhysicalScreen extends StatefulWidget {

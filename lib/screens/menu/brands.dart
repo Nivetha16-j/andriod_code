@@ -5,7 +5,8 @@ import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
-import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/home/custom_appbar.dart';
+import 'package:marquee/marquee.dart';
 
 class BrandScreen extends StatefulWidget {
   const BrandScreen({super.key});
@@ -199,19 +200,8 @@ class _BrandScreenState extends State<BrandScreen> {
                     // BRAND LOGOS
                     // --------------------------------------------------
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 20,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _brandLogo("assets/b1.png"),
-                          _brandLogo("assets/b2.png"),
-                          _brandLogo("assets/b3.png"),
-                          _brandLogo("assets/b4.png"),
-                        ],
-                      ),
+                      padding: const EdgeInsets.all(9),
+                      child: const BrandMarquee(),
                     ),
 
                     // --------------------------------------------------
@@ -446,21 +436,6 @@ class _BrandScreenState extends State<BrandScreen> {
     );
   }
 
-  Widget _brandLogo(String asset) {
-    return SizedBox(
-      width: 65,
-      height: 55,
-      child: Image.asset(
-        asset,
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          debugPrint("Brand asset error: $asset");
-          return const Icon(Icons.image_not_supported, size: 35);
-        },
-      ),
-    );
-  }
-
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
       context,
@@ -615,6 +590,83 @@ class FeatureCard extends StatelessWidget {
             style: const TextStyle(fontSize: 10, height: 1.4),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class BrandMarquee extends StatefulWidget {
+  const BrandMarquee({super.key});
+
+  @override
+  State<BrandMarquee> createState() => _BrandMarqueeState();
+}
+
+class _BrandMarqueeState extends State<BrandMarquee> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _autoScroll();
+  }
+
+  Future<void> _autoScroll() async {
+    while (mounted) {
+      await Future.delayed(const Duration(milliseconds: 30));
+
+      if (!_scrollController.hasClients) continue;
+
+      if (_scrollController.offset >=
+          _scrollController.position.maxScrollExtent) {
+        _scrollController.jumpTo(0);
+      } else {
+        _scrollController.jumpTo(_scrollController.offset + 1);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 70,
+      child: ListView(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        children: [
+          _brandLogo("assets/brand1.png"),
+          _brandLogo("assets/b2.webp"),
+          _brandLogo("assets/b3.webp"),
+          _brandLogo("assets/b4.webp"),
+
+          // duplicate for seamless looping
+          _brandLogo("assets/brand1.png"),
+          _brandLogo("assets/b2.webp"),
+          _brandLogo("assets/b3.webp"),
+          _brandLogo("assets/b4.webp"),
+        ],
+      ),
+    );
+  }
+
+  Widget _brandLogo(String asset) {
+    return SizedBox(
+      width: 100,
+      height: 65,
+      child: Image.asset(
+        asset,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint("Brand asset error: $asset");
+          return const Icon(Icons.image_not_supported, size: 35);
+        },
       ),
     );
   }

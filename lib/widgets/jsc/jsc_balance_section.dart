@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/gsp_balance_provider.dart';
 import 'package:junubullion/providers/jsc_balance_provider.dart';
+import 'package:junubullion/screens/plans/form.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_monthly_investment_plan.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_monthly_investment_plan.dart';
 import 'package:junubullion/services/gsp_service.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/session_manager.dart';
@@ -654,8 +657,22 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
                   silverBalance: jscSilverBalance,
                   silverUnit: jscSilverUnit,
 
-                  onInvestTap: () {},
-                  onViewApplicationTap: () {},
+                  onInvestTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const JscMonthlyInvestmentPlan(),
+                      ),
+                    );
+                  },
+                  onViewApplicationTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ApplicationForm(initialTab: 0),
+                      ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 16),
@@ -672,8 +689,22 @@ class _JscBalanceSectionState extends State<JscBalanceSection> {
                   silverBalance: gspSilverBalance,
                   silverUnit: gspSilverUnit,
 
-                  onInvestTap: () {},
-                  onViewApplicationTap: () {},
+                  onInvestTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const GspMonthlyInvestmentPlan(),
+                      ),
+                    );
+                  },
+                  onViewApplicationTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ApplicationForm(initialTab: 1),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

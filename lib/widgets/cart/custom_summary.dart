@@ -36,9 +36,17 @@ class SummaryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CartProvider>();
+    final bool isPickup =
+        provider.selectedDeliveryMethod.toLowerCase() == 'pickup';
 
-    // Show delivery-related charges only when the cart
-    // contains at least one physical product.
+    double subtotalValue = _toDouble(subtotal);
+
+    double courierValue = _toDouble(courier_fee);
+
+    double displayTotal = isPickup
+        ? subtotalValue
+        : subtotalValue + courierValue;
+
     final bool showDeliveryDetails = _shouldShowDeliveryMethod(provider);
 
     return Container(
@@ -54,10 +62,7 @@ class SummaryWidget extends StatelessWidget {
 
             const SizedBox(height: 15),
 
-            // ============================================================
-            // DELIVERY / PHYSICAL PRODUCT CHARGES
-            // ============================================================
-            if (showDeliveryDetails) ...[
+            if (showDeliveryDetails && !isPickup) ...[
               _row(
                 "Courier charge (${deliveryMethod} delivery)",
                 "+ ${_formatCurrency(courier_fee)}",
@@ -77,23 +82,20 @@ class SummaryWidget extends StatelessWidget {
                 _row("Discount Price", _formatCurrency(discountPrice)),
               ],
 
-              const SizedBox(height: 15),
+              // const SizedBox(height: 15),
 
-              _row(
-                "Transaction fee (4%)",
-                "+ ${_formatCurrency(transaction_fee)}",
-              ),
+              // _row(
+              //   "Transaction fee (4%)",
+              //   "+ ${_formatCurrency(transaction_fee)}",
+              // ),
 
-              if (provider.showTax) ...[
-                const SizedBox(height: 15),
+              // if (provider.showTax) ...[
+              //   const SizedBox(height: 15),
 
-                _row("GST (21%)", "+ ${_formatCurrency(gst)}"),
-              ],
+              //   _row("GST (21%)", "+ ${_formatCurrency(gst)}"),
+              // ],
             ],
 
-            // ============================================================
-            // TOTAL
-            // ============================================================
             const SizedBox(height: 20),
 
             CustomPaint(
@@ -103,7 +105,11 @@ class SummaryWidget extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            _row("Total", _formatCurrency(total), bold: true),
+            _row(
+              "Total",
+              _formatCurrency(displayTotal.toStringAsFixed(2)),
+              bold: true,
+            ),
             const SizedBox(height: 25),
 
             SizedBox(
@@ -138,29 +144,17 @@ class SummaryWidget extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // DELIVERY METHOD VISIBILITY
-  // ============================================================
-
   bool _shouldShowDeliveryMethod(CartProvider cartProvider) {
     if (cartProvider.cartItems.isEmpty) {
       return false;
     }
 
-    // If ALL products are digital plans (JSC/GSP),
-    // hide delivery-related details.
     final bool allDigitalPlans = cartProvider.cartItems.every((item) {
       return item["is_digital_plan"] == true;
     });
 
-    // Show delivery details when at least one physical
-    // product exists in the cart.
     return !allDigitalPlans;
   }
-
-  // ============================================================
-  // CURRENCY HANDLING
-  // ============================================================
 
   String _formatCurrency(String value) {
     final String trimmedValue = value.trim();
@@ -169,30 +163,16 @@ class SummaryWidget extends StatelessWidget {
       return '$currency 0.00';
     }
 
-    // Normal cart values already contain the currency.
-    //
-    // Example:
-    // ₹ 100.00
-    // $ 100.00
-    // USD 100.00
-    //
-    // In these cases, return the value exactly as it is.
     if (_hasCurrency(trimmedValue)) {
       return trimmedValue;
     }
 
-    // Physical conversion values are plain:
-    //
-    // 0.00
-    //
-    // So add the currently selected currency.
     return '$currency $trimmedValue';
   }
 
   bool _hasCurrency(String value) {
     final String upperValue = value.toUpperCase();
 
-    // Currency codes
     final List<String> currencyCodes = [
       'USD',
       'INR',
@@ -214,7 +194,6 @@ class SummaryWidget extends StatelessWidget {
       }
     }
 
-    // Common currency symbols
     final List<String> currencySymbols = [
       '₹',
       '\$',
@@ -239,9 +218,9 @@ class SummaryWidget extends StatelessWidget {
     return false;
   }
 
-  // ============================================================
-  // SUMMARY ROW
-  // ============================================================
+  double _toDouble(String value) {
+    return double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+  }
 
   Widget _row(
     String title,

@@ -6,7 +6,7 @@ import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
-import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/home/custom_appbar.dart';
 
 class BankTransferSuccessScreen extends StatefulWidget {
   final Map<String, dynamic> order;

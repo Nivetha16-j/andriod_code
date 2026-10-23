@@ -1,8 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:junubullion/providers/balance_provider.dart';
+import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/screens/menu/wallet.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_dashboard.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:provider/provider.dart';
 
-class BalanceScreen extends StatelessWidget {
+class BalanceScreen extends StatefulWidget {
   const BalanceScreen({super.key});
+
+  @override
+  State<BalanceScreen> createState() => _BalanceScreenState();
+}
+
+class _BalanceScreenState extends State<BalanceScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      final currency = context.read<CurrencyProvider>().selectedCurrency;
+
+      context.read<BalanceProvider>().fetchBalance(currency: currency);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,20 +68,29 @@ class BalanceScreen extends StatelessWidget {
 
                       const SizedBox(height: 8),
 
-                      const Text(
-                        "\$1000.25",
-                        style: TextStyle(
-                          color: AppColors.mustard,
-                          fontSize: 35,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Consumer<BalanceProvider>(
+                        builder: (context, provider, child) {
+                          return Text(
+                            provider
+                                    .balanceData
+                                    ?.formattedTotalDigitalBalance ??
+                                "\$0.00",
+                            style: const TextStyle(
+                              color: AppColors.mustard,
+                              fontSize: 35,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        },
                       ),
 
                       const SizedBox(height: 18),
 
                       ElevatedButton(
                         onPressed: () {
-                          // Start investing
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => CustomWallet()),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryRed,
@@ -111,15 +141,25 @@ class BalanceScreen extends StatelessWidget {
                 _SchemeCard(
                   title: "GSP Gold Savings Passbook",
                   balanceLabel: "GSP Balance",
-                  balance: "\$21,120.00",
-                  profit: "+\$120.86",
-                  profitPercentage: "-\$120.86 %",
-                  ownedText: "Total Gold Owned: 42.56g",
+                  balance:
+                      context
+                          .watch<BalanceProvider>()
+                          .balanceData
+                          ?.gspFormattedTotalValue ??
+                      "\$0.00",
+                  // profit: "+\$120.86",
+                  // profitPercentage: "-\$120.86 %",
+                  // ownedText: "Total Gold Owned: 42.56g",
                   image: "assets/images/gold_bars.png",
                   isGsp: true,
 
                   onKnowMore: () {
-                    // Navigate to GSP
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => JscDashboardScreen(),
+                      ),
+                    );
                   },
                 ),
 
@@ -131,14 +171,24 @@ class BalanceScreen extends StatelessWidget {
                 _SchemeCard(
                   title: "JSC Junu Saving Capital",
                   balanceLabel: "JSC Balance",
-                  balance: "\$21,120.00",
-                  profit: "+\$120.86",
-                  profitPercentage: "-\$120.86 %",
-                  ownedText: "Total Gold Owned: 42.56g",
+                  balance:
+                      context
+                          .watch<BalanceProvider>()
+                          .balanceData
+                          ?.jscFormattedTotalValue ??
+                      "\$0.00",
+                  // profit: "+\$120.86",
+                  // profitPercentage: "-\$120.86 %",
+                  // ownedText: "Total Gold Owned: 42.56g",
                   image: "assets/images/silver_bars.png",
                   isGsp: false,
                   onKnowMore: () {
-                    // Navigate to JSC
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => JscDashboardScreen(),
+                      ),
+                    );
                   },
                 ),
 
@@ -160,9 +210,6 @@ class _SchemeCard extends StatelessWidget {
   final String title;
   final String balanceLabel;
   final String balance;
-  final String profit;
-  final String profitPercentage;
-  final String ownedText;
   final String image;
   final bool isGsp;
   final VoidCallback onKnowMore;
@@ -171,9 +218,6 @@ class _SchemeCard extends StatelessWidget {
     required this.title,
     required this.balanceLabel,
     required this.balance,
-    required this.profit,
-    required this.profitPercentage,
-    required this.ownedText,
     required this.image,
     required this.isGsp,
     required this.onKnowMore,
@@ -266,79 +310,28 @@ class _SchemeCard extends StatelessWidget {
                         // =========================
                         // BALANCE LABEL + PROFIT
                         // =========================
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                balanceLabel,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: AppColors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ),
-
-                            // const SizedBox(width: 8),
-                            Text(
-                              profit,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: AppColors.green,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // =========================
-                        // BALANCE + PROFIT %
-                        // =========================
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                balance,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: AppColors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-
-                            // const SizedBox(width: 8),
-                            Text(
-                              profitPercentage,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: AppColors.red,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // =========================
-                        // TOTAL GOLD
-                        // =========================
                         Text(
-                          ownedText,
+                          balanceLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: AppColors.white,
                             fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+
+                        // =========================
+                        // BALANCE + PROFIT %
+                        // =========================
+                        Text(
+                          balance,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
 

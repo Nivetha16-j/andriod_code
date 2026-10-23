@@ -14,9 +14,10 @@ import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
-import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/home/custom_appbar.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
+import 'package:junubullion/providers/account_provider.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -32,6 +33,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int _currentIndex = 3;
   String? digitalSubtype;
   final TextEditingController addressController = TextEditingController();
+
+  final TextEditingController cityController = TextEditingController();
+  final TextEditingController stateController = TextEditingController();
+  final TextEditingController zipController = TextEditingController();
+
+  final TextEditingController contactPersonController = TextEditingController();
+
+  final TextEditingController emailController = TextEditingController();
+
+  final TextEditingController phoneController = TextEditingController();
   bool isTermsAccepted = false;
   bool _isPlacingOrder = false;
   bool showAddressForm = false;
@@ -72,6 +83,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       final cartProvider = context.read<CartProvider>();
       await cartProvider.fetchCart();
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<AccountProvider>();
+
+      await provider.fetchAccountDetails();
+
+      if (!mounted) return;
+
+      contactPersonController.text = provider.name;
+      emailController.text = provider.email;
+      phoneController.text = provider.phone;
+
+      setState(() {});
     });
   }
 
@@ -118,6 +143,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void dispose() {
     addressController.dispose();
+    cityController.dispose();
+    stateController.dispose();
+    zipController.dispose();
+    contactPersonController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
     super.dispose();
   }
 
@@ -144,6 +175,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         transactionAmount +
         gstAmount;
 
+    final bool isPickup =
+        cartProvider.selectedDeliveryMethod.toLowerCase() == 'pickup';
     return Scaffold(
       key: scaffoldKey,
       drawer: const CustomDrawer(),
@@ -160,13 +193,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const TranslatedText(
-                  'Shipping To',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 12),
-                _buildShippingAddress(),
-                const SizedBox(height: 14),
+                if (!isPickup) ...[
+                  const TranslatedText(
+                    'Shipping To',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  _buildShippingAddress(),
+
+                  const SizedBox(height: 14),
+                ],
                 if (isPhysicalConversion) ...[
                   _buildConversionInfo(physicalProvider),
                   const SizedBox(height: 18),
@@ -221,10 +259,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _sendPhysicalOrder({required String plan}) async {
     final cartProvider = context.read<CartProvider>();
     final physicalProvider = context.read<PhysicalConversionProvider>();
-    final String shippingAddress = addressController.text.trim();
-    log("CHECKOUT SHIPPING ADDRESS -> $shippingAddress");
+    final bool isPickup =
+        cartProvider.selectedDeliveryMethod.toLowerCase() == 'pickup';
 
-    if (shippingAddress.isEmpty) {
+    final String shippingAddress = isPickup
+        ? ''
+        : addressController.text.trim();
+
+    if (!isPickup && shippingAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: TranslatedText("Please add your shipping address"),
@@ -422,39 +464,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  Widget _buildBackButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: (_isPlacingOrder || _isCancellingConversion)
-            ? null
-            : () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                } else {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const MainScreen(initialIndex: 3),
-                    ),
-                    (route) => false,
-                  );
-                }
-              },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.grey.shade300,
-          foregroundColor: Colors.black,
-          disabledBackgroundColor: Colors.grey.shade300,
-          disabledForegroundColor: Colors.black45,
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-        ),
-        child: const TranslatedText('Back', style: TextStyle(fontSize: 14)),
-      ),
-    );
-  }
-
   Widget _buildDeliverySection({bool isPhysicalConversion = false}) {
     final cartProvider = context.watch<CartProvider>();
 
@@ -488,67 +497,95 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         const SizedBox(height: 8),
 
-        Row(
-          children: [
-            Radio<String>(
-              activeColor: AppColors.primaryRed,
-              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return AppColors.primaryRed;
-                }
+        Container(
+          width: double.infinity,
+          // padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xffE9D7D7)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Radio<String>(
+                    activeColor: AppColors.primaryRed,
+                    fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                      if (states.contains(WidgetState.selected)) {
+                        return AppColors.primaryRed;
+                      }
 
-                return Colors.black;
-              }),
-              value: "physical",
-              groupValue: effectiveDelivery,
-              onChanged: isPhysical || isDigital
-                  ? null
-                  : (value) {
-                      if (value == null) return;
+                      return Colors.black;
+                    }),
+                    value: "physical",
+                    groupValue: effectiveDelivery,
+                    onChanged: isPhysical || isDigital
+                        ? null
+                        : (value) {
+                            if (value == null) return;
 
-                      setState(() {
-                        delivery = value;
-                      });
-                    },
-            ),
+                            setState(() {
+                              delivery = value;
+                            });
+                          },
+                  ),
 
-            TranslatedText("Physical"),
+                  TranslatedText("Physical"),
 
-            const SizedBox(width: 20),
+                  const SizedBox(width: 20),
 
-            Radio<String>(
-              activeColor: AppColors.primaryRed,
-              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return AppColors.primaryRed;
-                }
+                  Radio<String>(
+                    activeColor: AppColors.primaryRed,
+                    fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                      if (states.contains(WidgetState.selected)) {
+                        return AppColors.primaryRed;
+                      }
 
-                return Colors.black;
-              }),
-              value: "digital",
-              groupValue: effectiveDelivery,
-              onChanged: isPhysical || isDigital
-                  ? null
-                  : (value) {
-                      if (value == null) return;
+                      return Colors.black;
+                    }),
+                    value: "digital",
+                    groupValue: effectiveDelivery,
+                    onChanged: isPhysical || isDigital
+                        ? null
+                        : (value) {
+                            if (value == null) return;
 
-                      setState(() {
-                        delivery = value;
-                      });
-                    },
-            ),
+                            setState(() {
+                              delivery = value;
+                            });
+                          },
+                  ),
 
-            TranslatedText("Digital"),
-          ],
-        ),
+                  TranslatedText("Digital"),
+                ],
+              ),
 
-        TranslatedText(
-          isPhysical
-              ? "Physical delivery is required for the products in your cart. Digital JSC is only available for JSC plan products."
-              : isDigital
-              ? "Your cart contains ${digitalSubtype?.toUpperCase()} plan products, which are digital only and credited to your wallet."
-              : "Select your preferred delivery option.",
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 18.0,
+                  right: 18,
+                  top: 8,
+                  bottom: 18,
+                ),
+                child: TranslatedText(
+                  isPhysical
+                      ? "Physical delivery is required for the products in your cart. Digital JSC is only available for JSC plan products."
+                      : isDigital
+                      ? "Your cart contains ${digitalSubtype?.toUpperCase()} plan products, which are digital only and credited to your wallet."
+                      : "Select your preferred delivery option.",
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -704,11 +741,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // final addressProvider = context.read<AddressProvider>();
     final cartProvider = context.read<CartProvider>();
     final currencyProvider = context.read<CurrencyProvider>();
-    final String shippingAddress = addressController.text.trim();
+    final bool isPickup =
+        cartProvider.selectedDeliveryMethod.toLowerCase() == 'pickup';
 
-    log("CHECKOUT SHIPPING ADDRESS -> $shippingAddress");
+    final String shippingAddress = isPickup
+        ? ''
+        : addressController.text.trim();
 
-    if (shippingAddress.trim().isEmpty) {
+    if (!isPickup && shippingAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: TranslatedText("Please add your shipping address"),
@@ -974,81 +1014,280 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildShippingAddress() {
     return Consumer<AddressProvider>(
       builder: (context, addressProvider, child) {
-        if (addressProvider.isLoading) {
-          return const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 48,
-                child: Center(child: CircularProgressIndicator()),
+        // if (addressProvider.isLoading) {
+        //   return const Column(
+        //     crossAxisAlignment: CrossAxisAlignment.start,
+        //     children: [
+        //       SizedBox(
+        //         height: 48,
+        //         child: Center(child: CircularProgressIndicator()),
+        //       ),
+        //     ],
+        //   );
+        // }
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xffE9D7D7)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
-          );
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // const TranslatedText(
-            //   'Shipping address',
-            //   style: TextStyle(
-            //     fontSize: 20,
-            //     fontWeight: FontWeight.w400,
-            //     color: Colors.black,
-            //   ),
-            // ),
-
-            // const SizedBox(height: 10),
-            TextField(
-              controller: addressController,
-
-              // User can edit the API address.
-              maxLines: 3,
-              minLines: 1,
-
-              style: const TextStyle(fontSize: 14, color: Colors.black),
-
-              decoration: InputDecoration(
-                hintText: 'Enter your shipping address',
-
-                hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 13,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "ADDRESS DETAILS",
+                style: TextStyle(
+                  color: AppColors.primaryRed,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
+              ),
 
-                suffixIcon: Image.asset("assets/Edit.png"),
+              const SizedBox(height: 18),
 
-                filled: false,
+              const Text(
+                "Street Address",
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
 
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: AppColors.lightRed,
-                    // width: 1.5,
-                  ),
-                ),
+              const SizedBox(height: 8),
 
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: AppColors.lightRed,
-                    // width: 1.5,
-                  ),
-                ),
-
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(
-                    color: AppColors.lightRed,
-                    // width: 1.5,
+              TextFormField(
+                controller: addressController,
+                maxLines: 1,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xffF7EEEA),
+                  hintText: "House no., street, area",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              const Text(
+                "City",
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: cityController,
+                maxLines: 1,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xffF7EEEA),
+                  hintText: "Enter city",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              const Text(
+                "State / Province / Region",
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: stateController,
+                maxLines: 1,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xffF7EEEA),
+                  hintText: "Enter state / province / region",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              const Text(
+                "Postal / ZIP Code",
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: zipController,
+                maxLines: 1,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xffF7EEEA),
+                  hintText: "Enter postal / zip code",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              const Text(
+                "CONTACT PERSON DETAILS",
+                style: TextStyle(
+                  color: AppColors.primaryRed,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              const Text(
+                "Contact Person",
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: contactPersonController,
+                maxLines: 1,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xffF7EEEA),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              const Text(
+                "Email",
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: emailController,
+                maxLines: 1,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xffF7EEEA),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              const Text(
+                "Contact Number",
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: phoneController,
+                maxLines: 1,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xffF7EEEA),
+                  hintText: "+91XXXXXXXXXX",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
+
+        // return Column(
+        //   crossAxisAlignment: CrossAxisAlignment.start,
+        //   children: [
+        //     // const TranslatedText(
+        //     //   'Shipping address',
+        //     //   style: TextStyle(
+        //     //     fontSize: 20,
+        //     //     fontWeight: FontWeight.w400,
+        //     //     color: Colors.black,
+        //     //   ),
+        //     // ),
+
+        //     // const SizedBox(height: 10),
+        //     TextField(
+        //       controller: addressController,
+
+        //       // User can edit the API address.
+        //       maxLines: 3,
+        //       minLines: 1,
+
+        //       style: const TextStyle(fontSize: 14, color: Colors.black),
+
+        //       decoration: InputDecoration(
+        //         hintText: 'Enter your shipping address',
+
+        //         hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+
+        //         contentPadding: const EdgeInsets.symmetric(
+        //           horizontal: 14,
+        //           vertical: 13,
+        //         ),
+
+        //         suffixIcon: Image.asset("assets/Edit.png"),
+
+        //         filled: false,
+
+        //         border: OutlineInputBorder(
+        //           borderRadius: BorderRadius.circular(8),
+        //           borderSide: const BorderSide(
+        //             color: AppColors.lightRed,
+        //             // width: 1.5,
+        //           ),
+        //         ),
+
+        //         enabledBorder: OutlineInputBorder(
+        //           borderRadius: BorderRadius.circular(8),
+        //           borderSide: const BorderSide(
+        //             color: AppColors.lightRed,
+        //             // width: 1.5,
+        //           ),
+        //         ),
+
+        //         focusedBorder: OutlineInputBorder(
+        //           borderRadius: BorderRadius.circular(8),
+        //           borderSide: const BorderSide(
+        //             color: AppColors.lightRed,
+        //             // width: 1.5,
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //   ],
+        // );
       },
     );
   }
@@ -1061,54 +1300,300 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           "Payment",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
-
-        Row(
-          children: [
-            Radio<String>(
-              activeColor: AppColors.primaryRed,
-              value: "Card",
-              groupValue: payment,
-              onChanged: (value) {
-                if (value == null) return;
-
-                setState(() {
-                  payment = value;
-                });
-              },
-            ),
-
-            const TranslatedText("Card"),
-
-            Radio<String>(
-              activeColor: AppColors.primaryRed,
-              value: "Bank",
-              groupValue: payment,
-              onChanged: (value) {
-                if (value == null) return;
-
-                setState(() {
-                  payment = value;
-                });
-              },
-            ),
-
-            const Expanded(child: TranslatedText("Direct Bank Transfer")),
-          ],
-        ),
-
-        if (payment == "Card") ...[
-          const SizedBox(height: 10),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              paymentBox("assets/visa.png"),
-              paymentBox("assets/mastercard.png"),
-              paymentBox("assets/googlepay.png"),
-              paymentBox("assets/applepay.png"),
+        SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          // padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xffE9D7D7)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
             ],
           ),
-        ],
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Radio<String>(
+                    activeColor: AppColors.primaryRed,
+                    value: "Card",
+                    groupValue: payment,
+                    onChanged: (value) {
+                      if (value == null) return;
+
+                      setState(() {
+                        payment = value;
+                      });
+                    },
+                  ),
+
+                  const TranslatedText("Card"),
+
+                  Radio<String>(
+                    activeColor: AppColors.primaryRed,
+                    value: "Bank",
+                    groupValue: payment,
+                    onChanged: (value) {
+                      if (value == null) return;
+
+                      setState(() {
+                        payment = value;
+                      });
+                    },
+                  ),
+
+                  const Expanded(child: TranslatedText("Direct Bank Transfer")),
+                ],
+              ),
+              const SizedBox(height: 5),
+              if (payment == "Card") ...[
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: 18.0,
+                    right: 18,
+                    // top: 8,
+                    bottom: 18,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      paymentBox("assets/visa.png"),
+                      paymentBox("assets/mastercard.png"),
+                      paymentBox("assets/googlepay.png"),
+                      paymentBox("assets/applepay.png"),
+                    ],
+                  ),
+                ),
+              ],
+              if (payment == "Bank") ...[
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xffE9D7D7)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(
+                              Icons.account_balance,
+                              color: AppColors.primaryRed,
+                              size: 22,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              "Select your bank",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 15),
+
+                        const Text(
+                          "Choose your bank, then pay directly from your net banking or mobile app to our account below. No payment gateway, you log in at your bank's website.",
+                          style: TextStyle(fontSize: 13, color: Colors.black54),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        Container(
+                          width: 170,
+                          padding: const EdgeInsets.only(top: 8, bottom: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xffE9D7D7)),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              Radio<String>(
+                                value: "CIMB",
+                                groupValue: selectedCard,
+                                activeColor: AppColors.primaryRed,
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedCard = value;
+                                  });
+                                },
+                              ),
+
+                              Container(
+                                height: 34,
+                                width: 34,
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  "CIMB",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 10),
+
+                              const Expanded(
+                                child: Text(
+                                  "CIMB\nBank\nBerhad",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+                        if (selectedCard == "CIMB") ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xffD9D9D9),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Transfer to our account",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 10),
+
+                                const Text(
+                                  "JUNU SG PTE LTD",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+
+                                const SizedBox(height: 6),
+
+                                const Text(
+                                  "Bank: CIMB BANK BERHAD",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xff5B6B84),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 4),
+
+                                const Text(
+                                  "Account number: 2001093941",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xff5B6B84),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 4),
+
+                                const Text(
+                                  "BIC / SWIFT: CIBBSGSGXXX",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xff5B6B84),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 10),
+
+                                const Text(
+                                  "Use your order number as payment reference after you place the order.",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xff5B6B84),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 20),
+
+                                const Text(
+                                  "1. Confirm your shipping address and agree to the Terms & Conditions.\n"
+                                  "2. Click the button below. Your order is placed and you are taken to the thank-you page while net banking opens in a new tab.\n"
+                                  "3. Log in at your bank, transfer the exact order total using the details on the thank-you page, then email your receipt to us.",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    height: 1.5,
+                                    color: Color(0xff394150),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 24),
+
+                                SizedBox(
+                                  height: 48,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      // launch bank url later
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primaryRed,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    icon: const Icon(
+                                      Icons.open_in_new,
+                                      color: Colors.white,
+                                    ),
+                                    label: const Text(
+                                      "Open CIMB Bank Berhad net banking",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -1130,6 +1615,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final Map<String, dynamic>? coupon = provider.coupon;
 
     final bool showDeliveryDetails = _shouldShowDeliveryMethod(provider);
+    final bool isPickup =
+        provider.selectedDeliveryMethod.toLowerCase() == "pickup";
+
+    final double subtotalValue = provider.subtotalAmount;
+
+    final double courierValue = isPickup ? 0.0 : provider.courierAmount;
+
+    final double displayTotal = subtotalValue + courierValue;
 
     return Container(
       width: double.infinity,
@@ -1195,7 +1688,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 15),
 
-          if (showDeliveryDetails) ...[
+          if (showDeliveryDetails && !isPickup) ...[
             _checkoutSummaryRow(
               "Courier charge (${deliveryMethod} delivery)",
               "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedCourierFee, currencySymbol)}",
@@ -1222,11 +1715,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
             const SizedBox(height: 15),
 
-            _checkoutSummaryRow(
-              "Transaction fee (4%)",
-              "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedTransactionFee, currencySymbol)}",
-            ),
-
+            // _checkoutSummaryRow(
+            //   "Transaction fee (4%)",
+            //   "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedTransactionFee, currencySymbol)}",
+            // ),
             if (provider.showTax) ...[
               const SizedBox(height: 15),
 
@@ -1240,12 +1732,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           _checkoutSummaryRow(
             "Total",
-            _formatCheckoutCurrency(
-              isDigital
-                  ? provider.formattedSubtotal
-                  : provider.formattedOrderTotal,
-              currencySymbol,
-            ),
+            "$currencySymbol ${displayTotal.toStringAsFixed(2)}",
             bold: true,
             valueColor: AppColors.primaryRed,
           ),

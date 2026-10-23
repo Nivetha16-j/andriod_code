@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
-import 'package:junubullion/screens/checkout/checkout.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/cart/custom_cartitem.dart';
 import 'package:junubullion/widgets/cart/custom_summary.dart';
@@ -362,17 +361,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                 ),
               ],
             )
-          // : ListView(
-          //     padding: const EdgeInsets.all(16),
-          //     children: [
-          //       // Show physical conversion status even when cart is empty
-          //       if (isPhysicalActive) ...[
-          //         _buildPhysicalConversionHeader(physicalProvider),
-          //         const SizedBox(height: 30),
-          //       ],
-          //       _buildEmptyCart(),
-          //     ],
-          //   ),
           : Column(
               children: [
                 // Keep physical conversion header exactly as it is
@@ -384,7 +372,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                   const SizedBox(height: 10),
                 ],
 
-                // Center empty cart content in the remaining screen
                 Expanded(child: Center(child: _buildEmptyCart())),
               ],
             ),
@@ -408,7 +395,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            // crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
@@ -419,8 +405,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Icon(Icons.sync, size: 15, color: Colors.white),
-                    // SizedBox(width: 6),
                     Flexible(
                       child: TranslatedText(
                         'PHYSICAL CONVERSION ACTIVE',
@@ -521,102 +505,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                         ),
                 ),
               ),
-              // const SizedBox(width: 8),
-              // OutlinedButton(
-              //   onPressed: _isClearingConversion
-              //       ? null
-              //       : () async {
-              //           log('Clicked cancel conversion');
-
-              //           setState(() {
-              //             _isClearingConversion = true;
-              //           });
-
-              //           try {
-              //             final cartProvider = context.read<CartProvider>();
-              //             final currencyProvider = context
-              //                 .read<CurrencyProvider>();
-
-              //             final success = await provider.cancelConversion(
-              //               cartProvider: cartProvider,
-              //               currencyProvider: currencyProvider,
-              //             );
-
-              //             if (!mounted) return;
-
-              //             setState(() {
-              //               _isClearingConversion = false;
-              //             });
-
-              //             if (!success) {
-              //               ScaffoldMessenger.of(context).showSnackBar(
-              //                 const SnackBar(
-              //                   content: TranslatedText(
-              //                     'Unable to cancel physical conversion. Please try again.',
-              //                   ),
-              //                 ),
-              //               );
-              //             }
-              //           } catch (e, stackTrace) {
-              //             log(
-              //               'Error clearing conversion: $e',
-              //               stackTrace: stackTrace,
-              //             );
-
-              //             if (!mounted) return;
-
-              //             setState(() {
-              //               _isClearingConversion = false;
-              //             });
-
-              //             ScaffoldMessenger.of(context).showSnackBar(
-              //               const SnackBar(
-              //                 content: TranslatedText(
-              //                   'Unable to cancel physical conversion. Please try again.',
-              //                 ),
-              //               ),
-              //             );
-              //           }
-              //         },
-              //   style: OutlinedButton.styleFrom(
-              //     foregroundColor: const Color(0xFF981B1B),
-              //     disabledForegroundColor: Colors.grey,
-              //     side: BorderSide(
-              //       color: _isClearingConversion
-              //           ? Colors.grey
-              //           : const Color(0xFF981B1B),
-              //     ),
-              //     padding: const EdgeInsets.symmetric(
-              //       horizontal: 10,
-              //       vertical: 8,
-              //     ),
-              //   ),
-              //   child: AnimatedSwitcher(
-              //     duration: const Duration(milliseconds: 200),
-              //     child: _isClearingConversion
-              //         ? const Row(
-              //             key: ValueKey('clearing'),
-              //             mainAxisSize: MainAxisSize.min,
-              //             children: [
-              //               SizedBox(
-              //                 width: 14,
-              //                 height: 14,
-              //                 child: CircularProgressIndicator(strokeWidth: 2),
-              //               ),
-              //               SizedBox(width: 8),
-              //               TranslatedText(
-              //                 'Clearing...',
-              //                 style: TextStyle(fontSize: 11),
-              //               ),
-              //             ],
-              //           )
-              //         : const TranslatedText(
-              //             'Cancel conversion',
-              //             key: ValueKey('cancel'),
-              //             style: TextStyle(fontSize: 11),
-              //           ),
-              //   ),
-              // ),
             ],
           ),
           const SizedBox(height: 16),
@@ -663,53 +551,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
       ),
     );
   }
-
-  // Widget _buildEmptyCart() {
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(horizontal: 20),
-  //     child: Column(
-  //       mainAxisSize: MainAxisSize.min,
-  //       children: [
-  //         Image.asset('assets/no_product.png', height: 80, width: 80),
-
-  //         const SizedBox(height: 20),
-
-  //         const TranslatedText(
-  //           'There Is No Item Here',
-  //           textAlign: TextAlign.center,
-  //           style: TextStyle(fontSize: 18, color: Colors.white),
-  //         ),
-
-  //         const SizedBox(height: 30),
-
-  //         SizedBox(
-  //           width: double.infinity,
-  //           height: 52,
-  //           child: ElevatedButton(
-  //             onPressed: () {
-  //               Navigator.pushNamed(context, '/home');
-  //             },
-  //             style: ElevatedButton.styleFrom(
-  //               backgroundColor: AppColors.red,
-  //               // foregroundColor: const Color(0xFF981B1B),
-  //               shape: RoundedRectangleBorder(
-  //                 borderRadius: BorderRadius.circular(10),
-  //               ),
-  //             ),
-  //             child: const TranslatedText(
-  //               'CONTINUE SHOPPING',
-  //               style: TextStyle(
-  //                 fontSize: 14,
-  //                 fontWeight: FontWeight.bold,
-  //                 color: AppColors.white,
-  //               ),
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   Widget _buildEmptyCart() {
     return Padding(
@@ -766,12 +607,10 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
       return false;
     }
 
-    // Hide delivery method when ALL cart items are digital plans
     final bool allDigitalPlans = cartProvider.cartItems.every((item) {
       return item["is_digital_plan"] == true;
     });
 
-    // Show delivery method if there is at least one physical product
     return !allDigitalPlans;
   }
 
@@ -793,38 +632,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildCheckoutButton() {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: SizedBox(
-        height: 60,
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CheckoutScreen()),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryRed,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          child: const TranslatedText(
-            'CheckOut',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildCouponSection({required CartProvider provider}) {
     final bool couponApplied = provider.coupon != null;
     return Container(
@@ -832,7 +639,6 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
       padding: const EdgeInsets.only(left: 12),
       decoration: BoxDecoration(
         color: AppColors.lightRed,
-        // border: Border.all(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(

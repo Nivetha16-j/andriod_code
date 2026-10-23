@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:junubullion/services/session_manager.dart';
 
@@ -16,6 +17,8 @@ class OrdersService {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
+
+      log("orrrrrrr $json");
 
       return {
         "orders": json["data"] ?? [],

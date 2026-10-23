@@ -10,7 +10,7 @@ class CartProvider extends ChangeNotifier {
   bool isLoading = false;
   final Set<int> addingProducts = {};
   int get cartCount => cartItems.length;
-  String selectedDeliveryMethod = "Standard";
+  String selectedDeliveryMethod = "Pickup";
   bool isCouponRemoved = false;
   String subTotal = "";
   String formattedSubtotal = "";

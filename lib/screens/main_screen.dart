@@ -15,7 +15,7 @@ import 'package:junubullion/screens/search/search.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
-import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/home/custom_appbar.dart';
 import 'package:junubullion/widgets/product/custom_productlist.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/account_provider.dart';

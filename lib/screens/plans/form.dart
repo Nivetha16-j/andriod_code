@@ -8,17 +8,13 @@ import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
-import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/home/custom_appbar.dart';
 
 class ApplicationForm extends StatefulWidget {
   final bool isEdit;
-  // final String applicationType;
+  final int initialTab; // 0 = JSC, 1 = GSP
 
-  const ApplicationForm({
-    super.key,
-    this.isEdit = false,
-    // required this.applicationType,
-  });
+  const ApplicationForm({super.key, this.isEdit = false, this.initialTab = 0});
 
   @override
   State<ApplicationForm> createState() => _ApplicationFormState();
@@ -108,9 +104,12 @@ class _ApplicationFormState extends State<ApplicationForm> {
   //     loadApplication();
   //   }
   // }
+
   @override
   void initState() {
     super.initState();
+
+    selectedTab = widget.initialTab;
 
     loadUser();
     loadApplication();

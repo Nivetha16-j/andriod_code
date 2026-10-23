@@ -11,7 +11,7 @@ import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
-import 'package:junubullion/widgets/home/custon_appbar.dart';
+import 'package:junubullion/widgets/home/custom_appbar.dart';
 import 'package:provider/provider.dart';
 
 class ProductListScreen extends StatefulWidget {
@@ -66,11 +66,16 @@ class _ProductListScreenState extends State<ProductListScreen> {
   void initState() {
     super.initState();
 
-    // Make sure the index is always valid.
     _selectedCategoryIndex = widget.initialCategoryIndex.clamp(
       0,
       _categories.length - 1,
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _fetchProducts();
+      }
+    });
   }
 
   @override
