@@ -7,15 +7,20 @@ import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custom_appbar.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BankTransferSuccessScreen extends StatefulWidget {
   final Map<String, dynamic> order;
+  final Map<String, dynamic> summary;
   final String currencySymbol;
+  final String bankName;
 
   const BankTransferSuccessScreen({
     super.key,
     required this.order,
+    required this.summary,
     required this.currencySymbol,
+    required this.bankName,
   });
 
   @override
@@ -43,6 +48,81 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
     });
   }
 
+  String? _getBankUrl(String bank) {
+    const bankUrls = {
+      "ICICI Bank": "https://www.icicibank.com/internet-banking",
+      "HDFC Bank": "https://netbanking.hdfcbank.com/netbanking/",
+      "Axis Bank": "https://www.axis.bank.in/bank-smart/internet-banking",
+      "Federal Bank": "https://www.federalbank.co.in/fednet",
+      "Canara Bank": "https://www.canarabank.bank.in/pages/net-banking",
+      "State Bank Of India": "https://retail.onlinesbi.sbi/retail/login.html",
+      "Central Bank Of India":
+          "https://centralbank.bank.in/en/internet-banking",
+      "CIMB Bank Berhad": "https://www.cimbclicks.com.sg/",
+      "United Overseas Bank": "https://pib.uob.com.sg/auth/login",
+      "Maybank":
+          "https://sslsecure.maybank.com.sg/cgi-bin/mbs/scripts/mbb_login.jsp",
+      "OCBC Bank":
+          "https://internet.ocbc.com/internet-banking/digital/web/sg/cfo/login/login",
+      "DBS Bank": "https://internet-banking.dbs.bank.in/login",
+      "HSBC Bank":
+          "https://www.us.hsbc.com/auth/?returnUrl=https://www.us.hsbc.com/bin/epep/postback.html?url=/online/dashboard",
+      "Canadian Imperial Bank Of Commerce": "https://secure.cibc.com",
+      "Royal Bank Of Canada": "https://www.rbcroyalbank.com/personal.html",
+    };
+
+    return bankUrls[bank];
+  }
+
+  Future<void> _openBankUrl() async {
+    // if (widget.bankName == null) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(
+    //       content: Text("Please select a bank"),
+    //     ),
+    //   );
+    //   return;
+    // }
+
+    final url = _getBankUrl(widget.bankName);
+
+    if (url == null || url.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Bank URL not available")));
+      return;
+    }
+
+    final uri = Uri.tryParse(url);
+
+    if (uri == null ||
+        (uri.scheme != 'https' && uri.scheme != 'http') ||
+        uri.host.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Invalid bank website URL")));
+      return;
+    }
+
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Unable to open bank website")),
+        );
+      }
+    } catch (e, stackTrace) {
+      log("OPEN BANK URL ERROR: $e", stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Unable to open bank website")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String date = widget.order['created_at'] != null
@@ -51,6 +131,7 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
           ).format(DateTime.parse(widget.order['created_at']))
         : "";
     final total = widget.order['grand_total'];
+    final items = widget.summary["items"] ?? [];
 
     return Scaffold(
       key: scaffoldKey,
@@ -82,7 +163,72 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
 
               const SizedBox(height: 20),
 
-              bankTransferCard(context),
+              orderItemsCard(items, widget.currencySymbol),
+
+              const SizedBox(height: 20),
+
+              widget.order['payment_method'] == 'upi'
+                  ? Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const TranslatedText(
+                            "If you have any questions or need assistance, feel free to contact us.",
+                            style: TextStyle(height: 1.5),
+                          ),
+
+                          const SizedBox(height: 16),
+                          const TranslatedText(
+                            "After payment, please email your transfer receipt to ",
+                            style: TextStyle(height: 1.5),
+                          ),
+                          const SizedBox(height: 8),
+                          const TranslatedText(
+                            "customer@junubullion.com.",
+                            style: TextStyle(
+                              height: 1.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : bankTransferCard(
+                      context,
+                      widget.bankName,
+                      widget.order['order_number'] ?? '',
+                      _openBankUrl,
+                    ),
+              const SizedBox(height: 20),
+              SizedBox(
+                // width: 180,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff8B1E1E),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/home',
+                      (route) => false,
+                    );
+                  },
+                  child: const TranslatedText(
+                    "Continue Shopping",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -161,7 +307,91 @@ Widget _orderInfoRow(
   );
 }
 
-Widget bankTransferCard(BuildContext context) {
+Widget orderItemsCard(List<dynamic> items, String currencySymbol) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: Colors.grey.shade300),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Order items",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+
+        const SizedBox(height: 16),
+
+        const Row(
+          children: [
+            Expanded(
+              flex: 5,
+              child: Text(
+                "Product",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                "Qty",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                "Total",
+                textAlign: TextAlign.right,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+
+        const Divider(),
+
+        ...items.map((item) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Expanded(flex: 5, child: Text(item["name"] ?? "")),
+
+                Expanded(
+                  child: Text(
+                    "${item["quantity"]}",
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    item["formatted_line_total"] ??
+                        "$currencySymbol ${item["line_total"]}",
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ],
+    ),
+  );
+}
+
+Widget bankTransferCard(
+  BuildContext context,
+  String bankName,
+  String orderNumber,
+  Future<void> Function() onOpenBankUrl,
+) {
   return Container(
     width: double.infinity,
     padding: const EdgeInsets.all(20),
@@ -173,81 +403,55 @@ Widget bankTransferCard(BuildContext context) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const TranslatedText(
-          "How to complete Your Bank Transfer",
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        const Row(
+          children: [
+            Icon(Icons.lock_outline, color: Colors.orange, size: 20),
+            SizedBox(width: 8),
+            Text(
+              "Complete your payment",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
 
-        const SizedBox(height: 10),
+        const SizedBox(height: 16),
 
-        const TranslatedText(
-          "Please use the provided bank account details to complete your payment. Follow the steps below based on your location.",
-          style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.5),
+        Text(
+          "You selected $bankName. Log in to your net banking and transfer the order total to our account using the details below. Use order $orderNumber as the payment reference.",
+          style: const TextStyle(height: 1.5),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
-        const TranslatedText(
-          "If You Are In Singapore (Domestic Transfer):",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ElevatedButton(
+          onPressed: onOpenBankUrl,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryRed,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Text(
+            "Open $bankName net banking",
+            style: const TextStyle(color: Colors.white),
+          ),
         ),
 
-        const SizedBox(height: 10),
-
-        const TranslatedText(
-          "1. Log in to your bank's online banking or mobile app\n"
-          "2. Navigate to payment transfers (depending on your bank)\n"
-          "3. Enter the payment details we have provided\n"
-          "4. Confirm and complete the transfer",
-          style: TextStyle(height: 1.6),
-        ),
-
-        const SizedBox(height: 20),
-
-        const TranslatedText(
-          "If You Are Outside Singapore (International Transfer):",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-
-        const SizedBox(height: 10),
-
-        const TranslatedText(
-          "1. Log in to your bank's online banking platform\n"
-          "2. Go to international transfers/wire transfers\n"
-          "3. Enter the recipient account details we have shared with you.\n"
-          "4. Confirm and complete the transfer",
-          style: TextStyle(height: 1.6),
-        ),
-
-        const SizedBox(height: 20),
-
-        const TranslatedText(
-          "Processing Time",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-
-        const SizedBox(height: 8),
-
-        const TranslatedText(
-          "Bank transfers may take 3–5 business days depending on your bank location.",
-          style: TextStyle(height: 1.5),
-        ),
-
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         const TranslatedText(
           "If you have any questions or need assistance, feel free to contact us.",
           style: TextStyle(height: 1.5),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         const TranslatedText(
           "Our Bank Details",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
         const TranslatedText(
           "JUNU SG PTE LTD\n"
@@ -256,43 +460,19 @@ Widget bankTransferCard(BuildContext context) {
           "BIC : CIBBSGSGXXX",
           style: TextStyle(height: 1.6),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         const TranslatedText(
-          "After payment, please email your transfer receipt to customer@junubullion.com.",
+          "After payment, please email your transfer receipt to ",
           style: TextStyle(height: 1.5),
         ),
-
-        const SizedBox(height: 30),
-
-        SizedBox(
-          // width: 180,
-          height: 48,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xff8B1E1E),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/home',
-                (route) => false,
-              );
-            },
-            child: const TranslatedText(
-              "Continue Shopping",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+        const SizedBox(height: 8),
+        const TranslatedText(
+          "customer@junubullion.com.",
+          style: TextStyle(height: 1.5, fontWeight: FontWeight.bold),
         ),
 
-        const SizedBox(height: 30),
+        const SizedBox(height: 16),
       ],
     ),
   );

@@ -60,6 +60,7 @@ dependencies:
 
   google_mlkit_translation: ^0.14.0
   fl_chart: ^1.2.0
+  gal: ^2.3.3
 
 dev_dependencies:
   flutter_test:
@@ -96,6 +97,7 @@ flutter:
     - assets/i3.png
     - assets/i4.png
     - assets/investment1.png
+    - assets/paynow.jpeg
     - .env
   #   - images/a_dot_ham.jpeg
 

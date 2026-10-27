@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
@@ -18,6 +20,8 @@ import 'package:junubullion/widgets/home/custom_appbar.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/account_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -28,7 +32,7 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   String? delivery;
-  String payment = "Card";
+  // String payment = "Card";
   String? fulfillment;
   int _currentIndex = 3;
   String? digitalSubtype;
@@ -47,10 +51,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _isPlacingOrder = false;
   bool showAddressForm = false;
   // String? localAddress;
-  String? selectedCard;
+  // String? selectedCard;
   bool _isCancellingConversion = false;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   // bool _initialAddressLoaded = false;
+  String paymentMethod = "Card";
+  String? selectedCard;
+  String? selectedBank;
+  String? upiQrUrl;
+  bool _isGeneratingUpiQr = false;
+  String? upiQrCode;
+  String? upiId;
+  double? upiAmount;
+  bool upiQrGenerated = false;
 
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
@@ -100,45 +113,140 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
-  // Future<void> _loadLocalAddress() async {
-  //   final prefs = await SharedPreferences.getInstance();
+  List<String> getPaymentMethods(String currency) {
+    switch (currency.toUpperCase()) {
+      case "SGD":
+        return ["Card", "paynow", "Bank"];
 
-  //   final savedAddress = prefs.getString("checkout_address");
+      case "INR":
+        return ["Card", "upi", "Bank"];
 
-  //   if (!mounted) return;
+      case "CAD":
+      case "USD":
+      case "EUR":
+      case "AED":
+      case "CNY":
+        return ["Card", "Bank"];
 
-  //   setState(() {
-  //     localAddress = savedAddress;
+      default:
+        return ["Card"];
+    }
+  }
 
-  //     if (savedAddress != null) {
-  //       addressController.text = savedAddress;
-  //     }
-  //   });
-  // }
+  List<String> getBanks(String currency) {
+    switch (currency.toUpperCase()) {
+      case "SGD":
+        return [
+          "CIMB Bank Berhad",
+          "United Overseas Bank",
+          "DBS Bank",
+          "OCBC Bank",
+          "HSBC Bank",
+          "Maybank",
+        ];
 
-  // Future<void> _saveAddress() async {
-  //   final address = addressController.text.trim();
+      case "CAD":
+        return [
+          "CIMB Bank Berhad",
+          "Canadian Imperial Bank Of Commerce",
+          "Royal Bank Of Canada",
+          "HSBC Bank",
+        ];
 
-  //   if (address.isEmpty) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: TranslatedText("Please enter a shipping address"),
-  //       ),
-  //     );
-  //     return;
-  //   }
+      case "INR":
+        return [
+          "ICICI Bank",
+          "HDFC Bank",
+          "Axis Bank",
+          "Federal Bank",
+          "Canara Bank",
+          "State Bank Of India",
+          "Central Bank Of India",
+        ];
 
-  //   final prefs = await SharedPreferences.getInstance();
+      case "USD":
+      case "EUR":
+      case "AED":
+      case "CNY":
+        return ["CIMB Bank Berhad"];
 
-  //   await prefs.setString("checkout_address", address);
+      default:
+        return [];
+    }
+  }
 
-  //   if (!mounted) return;
+  String? _getBankUrl(String bank) {
+    const bankUrls = {
+      "ICICI Bank": "https://www.icicibank.com/internet-banking",
+      "HDFC Bank": "https://netbanking.hdfcbank.com/netbanking/",
+      "Axis Bank": "https://www.axis.bank.in/bank-smart/internet-banking",
+      "Federal Bank": "https://www.federalbank.co.in/fednet",
+      "Canara Bank": "https://www.canarabank.bank.in/pages/net-banking",
+      "State Bank Of India": "https://retail.onlinesbi.sbi/retail/login.htm",
+      "Central Bank Of India":
+          "https://centralbank.bank.in/en/internet-banking",
+      "CIMB Bank Berhad": "https://www.cimbclicks.com.sg/",
+      "United Overseas Bank": "https://pib.uob.com.sg/auth/login",
+      "Maybank":
+          "https://sslsecure.maybank.com.sg/cgi-bin/mbs/scripts/mbb_login.jsp",
+      "OCBC Bank":
+          "https://internet.ocbc.com/internet-banking/digital/web/sg/cfo/login/login",
+      "DBS Bank": "https://internet-banking.dbs.bank.in/login",
+      "HSBC Bank":
+          "https://www.us.hsbc.com/auth/?returnUrl=https://www.us.hsbc.com/bin/epep/postback.html?url=/online/dashboard",
+      "Canadian Imperial Bank Of Commerce": "https://secure.cibc.com",
+      "Royal Bank Of Canada": "https://www.rbcroyalbank.com/personal.html",
+    };
 
-  //   setState(() {
-  //     localAddress = address;
-  //     showAddressForm = false;
-  //   });
-  // }
+    return bankUrls[bank];
+  }
+
+  Future<void> _openBankUrl() async {
+    if (selectedBank == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please select a bank")));
+      return;
+    }
+
+    final url = _getBankUrl(selectedBank!);
+
+    if (url == null || url.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Bank URL not available")));
+      return;
+    }
+
+    final uri = Uri.tryParse(url);
+
+    if (uri == null ||
+        (uri.scheme != 'https' && uri.scheme != 'http') ||
+        uri.host.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Invalid bank website URL")));
+      return;
+    }
+
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Unable to open bank website")),
+        );
+      }
+    } catch (e, stackTrace) {
+      log("OPEN BANK URL ERROR: $e", stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Unable to open bank website")),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -160,6 +268,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final bool isPhysicalConversion = physicalProvider.isActive;
     final String currencySymbol = currencyProvider.selectedCurrency;
+
     final String fulfillment =
         cartProvider.fulfillment?.toLowerCase() ?? "physical";
 
@@ -233,11 +342,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     orderTotal,
                     isDigital,
                   ),
-                  // const SizedBox(height: 25),
-                  // _buildActionButtons(currencySymbol, false),
-                  // const SizedBox(height: 25),
-
-                  // _buildBackButton(),
                 ],
               ],
             ),
@@ -265,6 +369,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final String shippingAddress = isPickup
         ? ''
         : addressController.text.trim();
+
+    final String city = isPickup ? '' : cityController.text.trim();
+
+    final String state = isPickup ? '' : stateController.text.trim();
+
+    final String pin = isPickup ? '' : zipController.text.trim();
+
+    final String contactPerson = isPickup
+        ? ''
+        : contactPersonController.text.trim();
+
+    final String contactEmail = isPickup ? '' : emailController.text.trim();
+
+    final String contactPhone = isPickup ? '' : phoneController.text.trim();
 
     if (!isPickup && shippingAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -327,6 +445,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       final response = await CheckoutService.placePhysicalOrder(
         shippingAddress: shippingAddress,
+        city: city,
+        state: state,
+        pin: pin,
+        contactPerson: contactPerson,
+        contactEmail: contactEmail,
+        contactPhone: contactPhone,
         terms: true,
         digitalType: plan,
       );
@@ -404,6 +528,318 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       );
     }
+  }
+
+  Widget _buildBankSelection(String currency) {
+    final banks = getBanks(currency);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xffE9D7D7)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.account_balance, color: AppColors.primaryRed),
+              SizedBox(width: 10),
+              Text(
+                "Select your bank",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 15),
+
+          const Text(
+            "Choose your bank, then pay directly from your net banking or mobile app to our account below.",
+            style: TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+
+          const SizedBox(height: 20),
+
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: banks.map((bank) {
+              final bool isSelected = selectedBank == bank;
+
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedBank = bank;
+                  });
+                },
+                child: Container(
+                  width: 160,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.primaryRed
+                          : const Color(0xffE9D7D7),
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Radio<String>(
+                        value: bank,
+                        groupValue: selectedBank,
+                        activeColor: AppColors.primaryRed,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedBank = value;
+                          });
+                        },
+                      ),
+
+                      Expanded(
+                        child: Text(
+                          bank,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+
+          if (selectedBank != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xffD9D9D9)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Transfer to our account",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  const Text(
+                    "JUNU SG PTE LTD",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  Text(
+                    "Bank: $selectedBank",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xff5B6B84),
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  const Text(
+                    "Account number: 2001093941",
+                    style: TextStyle(fontSize: 14, color: Color(0xff5B6B84)),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  const Text(
+                    "BIC / SWIFT: CIBBSGSGXXX",
+                    style: TextStyle(fontSize: 14, color: Color(0xff5B6B84)),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  const Text(
+                    "Use your order number as payment reference after you place the order.",
+                    style: TextStyle(fontSize: 14, color: Color(0xff5B6B84)),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    "1. Confirm your shipping address and agree to the Terms & Conditions.\n"
+                    "2. Click the button below. Your order is placed and you are taken to the thank-you page while net banking opens in a new tab.\n"
+                    "3. Log in at your bank, transfer the exact order total using the details on the thank-you page, then email your receipt to us.",
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: Color(0xff394150),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  SizedBox(
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: (_isPlacingOrder || selectedBank == null)
+                          ? null
+                          : () async {
+                              await _placeNormalOrder();
+                            },
+
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryRed,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(Icons.open_in_new, color: Colors.white),
+                      label: Text(
+                        "Open $selectedBank net banking",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _generateUpiQr() async {
+    final cartProvider = context.read<CartProvider>();
+    final currencyProvider = context.read<CurrencyProvider>();
+
+    final bool isPickup =
+        cartProvider.selectedDeliveryMethod.toLowerCase() == "pickup";
+
+    Map<String, dynamic> payload;
+
+    if (isPickup) {
+      payload = {
+        "courier_service": "pickup",
+        "terms": true,
+        "payment_type": "upi",
+        "delivery_option": "digital",
+        "digital_type": "jsc",
+        "currency": "INR",
+      };
+    } else {
+      payload = {
+        "courier_service": "standard",
+        "terms": true,
+        "payment_type": "upi",
+        "street_address": addressController.text.trim(),
+        "city": cityController.text.trim(),
+        "state": stateController.text.trim(),
+        "pin": zipController.text.trim(),
+        "contact_person": contactPersonController.text.trim(),
+        "contact_email": emailController.text.trim(),
+        "contact_number": phoneController.text.trim(),
+        "currency": "INR",
+      };
+    }
+
+    setState(() {
+      _isGeneratingUpiQr = true;
+    });
+
+    try {
+      final response = await CheckoutService.generateUpiQr(payload: payload);
+
+      log("UPI PREVIEW RESPONSE => $response");
+
+      if (response["status"] == true) {
+        setState(() {
+          upiQrGenerated = true;
+
+          upiQrCode = response["qr_code"];
+          upiId = response["upi_id"];
+
+          upiAmount = (response["amount"] as num?)?.toDouble();
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response["message"] ?? "Unable to generate QR code"),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      setState(() {
+        _isGeneratingUpiQr = false;
+      });
+    }
+  }
+
+  void _showUpiQrDialog() {
+    if (upiQrCode == null) return;
+
+    final svgBase64 = upiQrCode!.replaceFirst('data:image/svg+xml;base64,', '');
+
+    final svgString = utf8.decode(base64Decode(svgBase64));
+
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Scan UPI QR"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.string(svgString, width: 250, height: 250),
+
+                const SizedBox(height: 16),
+
+                Text(
+                  "Amount: ₹${upiAmount?.toStringAsFixed(2) ?? ''}",
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+
+                const SizedBox(height: 8),
+
+                SelectableText(
+                  upiId ?? "",
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                const Text(
+                  "Scan this QR using Google Pay, PhonePe, Paytm or any UPI app.",
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _cancelPhysicalConversion() async {
@@ -652,6 +1088,58 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  String _getBankCode(String bank) {
+    switch (bank) {
+      case "ICICI Bank":
+        return "icici";
+
+      case "HDFC Bank":
+        return "hdfc";
+
+      case "Axis Bank":
+        return "axis";
+
+      case "Federal Bank":
+        return "federal";
+
+      case "Canara Bank":
+        return "canara";
+
+      case "State Bank Of India":
+        return "sbi";
+
+      case "Central Bank Of India":
+        return "cbi";
+
+      case "CIMB Bank Berhad":
+        return "cimb";
+
+      case "United Overseas Bank":
+        return "uob";
+
+      case "DBS Bank":
+        return "dbs";
+
+      case "OCBC Bank":
+        return "ocbc";
+
+      case "HSBC Bank":
+        return "hsbc";
+
+      case "Maybank":
+        return "maybank";
+
+      case "Canadian Imperial Bank Of Commerce":
+        return "cibc";
+
+      case "Royal Bank Of Canada":
+        return "rbc";
+
+      default:
+        return "";
+    }
+  }
+
   Widget _buildDigitalSubtype() {
     final cartProvider = context.watch<CartProvider>();
 
@@ -748,6 +1236,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ? ''
         : addressController.text.trim();
 
+    final String city = isPickup ? '' : cityController.text.trim();
+
+    final String state = isPickup ? '' : stateController.text.trim();
+
+    final String pin = isPickup ? '' : zipController.text.trim();
+
+    final String contactPerson = isPickup
+        ? ''
+        : contactPersonController.text.trim();
+
+    final String contactEmail = isPickup ? '' : emailController.text.trim();
+
+    final String contactPhone = isPickup ? '' : phoneController.text.trim();
+
     if (!isPickup && shippingAddress.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -773,7 +1275,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    if (payment == "Card" && selectedCard == null) {
+    if (paymentMethod == "Card" && selectedCard == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: TranslatedText("Please select a payment method"),
@@ -800,14 +1302,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         "address=$shippingAddress "
         "delivery=$fulfillment "
         "digitalType=$digitalSubtype "
-        "payment=$payment"
+        "payment=$paymentMethod"
         "isDigital=$isDigital "
         "courierService=$courierService ",
       );
 
-      if (payment == "Bank") {
+      if (paymentMethod == "Bank") {
         final response = await CheckoutService.placeOrder(
+          // shippingAddress: shippingAddress.trim(),
           shippingAddress: shippingAddress.trim(),
+
+          city: city.trim(),
+
+          state: state.trim(),
+
+          pin: pin.trim(),
+
+          contactPerson: contactPerson.trim(),
+
+          contactEmail: contactEmail.trim(),
+
+          contactPhone: contactPhone.trim(),
 
           deliveryOption: fulfillment!.toLowerCase().trim(),
 
@@ -818,6 +1333,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           terms: true,
 
           paymentType: "bank_transfer",
+
+          customerBank: _getBankCode(selectedBank!),
 
           currency: currencyProvider.selectedCurrency,
         );
@@ -838,9 +1355,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             MaterialPageRoute(
               builder: (_) => BankTransferSuccessScreen(
                 order: response["data"],
+                summary: response["summary"],
                 currencySymbol:
                     response["summary"]?["symbol"] ??
                     currencyProvider.selectedCurrency,
+                bankName: selectedBank!,
               ),
             ),
             (route) => false,
@@ -862,7 +1381,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return;
       }
 
-      if (payment == "Card") {
+      if (paymentMethod == "Card") {
         final String stripePaymentMethod = _getStripePaymentMethod(
           selectedCard!,
         );
@@ -914,10 +1433,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           throw Exception("Stripe payment intent ID not received");
         }
 
-        // -----------------------------
-        // MAKE STRIPE PAYMENT
-        // -----------------------------
-
         final bool paymentSuccess = await StripeService.makePayment(
           clientSecret.toString(),
         );
@@ -940,10 +1455,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           return;
         }
 
-        // -----------------------------
-        // PAYMENT SUCCESS API
-        // -----------------------------
-
         log(
           "STRIPE PAYMENT COMPLETED -> "
           "Calling /checkout/stripe/success "
@@ -961,11 +1472,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             successResponse["message"] ?? "Unable to confirm Stripe payment",
           );
         }
-
-        // -----------------------------
-        // CLEAR CART ONLY AFTER
-        // SUCCESS API
-        // -----------------------------
 
         log("STRIPE SUCCESS API COMPLETED -> Clearing cart...");
 
@@ -1014,17 +1520,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _buildShippingAddress() {
     return Consumer<AddressProvider>(
       builder: (context, addressProvider, child) {
-        // if (addressProvider.isLoading) {
-        //   return const Column(
-        //     crossAxisAlignment: CrossAxisAlignment.start,
-        //     children: [
-        //       SizedBox(
-        //         height: 48,
-        //         child: Center(child: CircularProgressIndicator()),
-        //       ),
-        //     ],
-        //   );
-        // }
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(18),
@@ -1224,75 +1719,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
           ),
         );
-
-        // return Column(
-        //   crossAxisAlignment: CrossAxisAlignment.start,
-        //   children: [
-        //     // const TranslatedText(
-        //     //   'Shipping address',
-        //     //   style: TextStyle(
-        //     //     fontSize: 20,
-        //     //     fontWeight: FontWeight.w400,
-        //     //     color: Colors.black,
-        //     //   ),
-        //     // ),
-
-        //     // const SizedBox(height: 10),
-        //     TextField(
-        //       controller: addressController,
-
-        //       // User can edit the API address.
-        //       maxLines: 3,
-        //       minLines: 1,
-
-        //       style: const TextStyle(fontSize: 14, color: Colors.black),
-
-        //       decoration: InputDecoration(
-        //         hintText: 'Enter your shipping address',
-
-        //         hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-
-        //         contentPadding: const EdgeInsets.symmetric(
-        //           horizontal: 14,
-        //           vertical: 13,
-        //         ),
-
-        //         suffixIcon: Image.asset("assets/Edit.png"),
-
-        //         filled: false,
-
-        //         border: OutlineInputBorder(
-        //           borderRadius: BorderRadius.circular(8),
-        //           borderSide: const BorderSide(
-        //             color: AppColors.lightRed,
-        //             // width: 1.5,
-        //           ),
-        //         ),
-
-        //         enabledBorder: OutlineInputBorder(
-        //           borderRadius: BorderRadius.circular(8),
-        //           borderSide: const BorderSide(
-        //             color: AppColors.lightRed,
-        //             // width: 1.5,
-        //           ),
-        //         ),
-
-        //         focusedBorder: OutlineInputBorder(
-        //           borderRadius: BorderRadius.circular(8),
-        //           borderSide: const BorderSide(
-        //             color: AppColors.lightRed,
-        //             // width: 1.5,
-        //           ),
-        //         ),
-        //       ),
-        //     ),
-        //   ],
-        // );
       },
     );
   }
 
   Widget _buildPaymentSection() {
+    final currencyProvider = context.read<CurrencyProvider>();
+    final String currencySymbol = currencyProvider.selectedCurrency;
+
+    final paymentMethods = getPaymentMethods(currencySymbol);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1318,283 +1753,490 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           child: Column(
             children: [
-              Row(
-                children: [
-                  Radio<String>(
-                    activeColor: AppColors.primaryRed,
-                    value: "Card",
-                    groupValue: payment,
-                    onChanged: (value) {
-                      if (value == null) return;
+              ...paymentMethods.map((method) {
+                return Column(
+                  children: [
+                    RadioListTile<String>(
+                      value: method,
+                      groupValue: paymentMethod,
+                      title: Text(
+                        method == "Card"
+                            ? "Card payment"
+                            : method == "paynow"
+                            ? "PayNow"
+                            : method == "upi"
+                            ? "UPI Payment"
+                            : "Direct bank transfer",
+                      ),
+                      onChanged: (value) async {
+                        if (value == "Card") {
+                          await _showCardPaymentInfo();
+                        }
 
-                      setState(() {
-                        payment = value;
-                      });
-                    },
-                  ),
-
-                  const TranslatedText("Card"),
-
-                  Radio<String>(
-                    activeColor: AppColors.primaryRed,
-                    value: "Bank",
-                    groupValue: payment,
-                    onChanged: (value) {
-                      if (value == null) return;
-
-                      setState(() {
-                        payment = value;
-                      });
-                    },
-                  ),
-
-                  const Expanded(child: TranslatedText("Direct Bank Transfer")),
-                ],
-              ),
-              const SizedBox(height: 5),
-              if (payment == "Card") ...[
-                Padding(
-                  padding: const EdgeInsets.only(
-                    left: 18.0,
-                    right: 18,
-                    // top: 8,
-                    bottom: 18,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      paymentBox("assets/visa.png"),
-                      paymentBox("assets/mastercard.png"),
-                      paymentBox("assets/googlepay.png"),
-                      paymentBox("assets/applepay.png"),
-                    ],
-                  ),
-                ),
-              ],
-              if (payment == "Bank") ...[
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xffE9D7D7)),
+                        setState(() {
+                          paymentMethod = value!;
+                        });
+                      },
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: const [
-                            Icon(
-                              Icons.account_balance,
-                              color: AppColors.primaryRed,
-                              size: 22,
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              "Select your bank",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+
+                    // CARD OPTIONS DIRECTLY BELOW CARD
+                    if (method == "Card" && paymentMethod == "Card")
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            paymentBox("assets/visa.png"),
+                            paymentBox("assets/mastercard.png"),
+                            paymentBox("assets/googlepay.png"),
+                            paymentBox("assets/applepay.png"),
                           ],
                         ),
+                      ),
 
-                        const SizedBox(height: 15),
+                    // PAYNOW OPTIONS DIRECTLY BELOW PAYNOW
+                    if (method == "paynow" && paymentMethod == "paynow")
+                      _buildPayNowSection(),
 
-                        const Text(
-                          "Choose your bank, then pay directly from your net banking or mobile app to our account below. No payment gateway, you log in at your bank's website.",
-                          style: TextStyle(fontSize: 13, color: Colors.black54),
-                        ),
+                    if (method == "upi" && paymentMethod == "upi")
+                      upiQrGenerated && upiQrCode != null
+                          ? _buildGeneratedQrSection()
+                          : _buildUpiSection(),
+                    // _buildUpiSection(),
 
-                        const SizedBox(height: 20),
-
-                        Container(
-                          width: 170,
-                          padding: const EdgeInsets.only(top: 8, bottom: 8),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xffE9D7D7)),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              Radio<String>(
-                                value: "CIMB",
-                                groupValue: selectedCard,
-                                activeColor: AppColors.primaryRed,
-                                onChanged: (value) {
-                                  setState(() {
-                                    selectedCard = value;
-                                  });
-                                },
-                              ),
-
-                              Container(
-                                height: 34,
-                                width: 34,
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  "CIMB",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(width: 10),
-
-                              const Expanded(
-                                child: Text(
-                                  "CIMB\nBank\nBerhad",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-                        if (selectedCard == "CIMB") ...[
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xffD9D9D9),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Transfer to our account",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-
-                                const SizedBox(height: 10),
-
-                                const Text(
-                                  "JUNU SG PTE LTD",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-
-                                const SizedBox(height: 6),
-
-                                const Text(
-                                  "Bank: CIMB BANK BERHAD",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xff5B6B84),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 4),
-
-                                const Text(
-                                  "Account number: 2001093941",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xff5B6B84),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 4),
-
-                                const Text(
-                                  "BIC / SWIFT: CIBBSGSGXXX",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xff5B6B84),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 10),
-
-                                const Text(
-                                  "Use your order number as payment reference after you place the order.",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xff5B6B84),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 20),
-
-                                const Text(
-                                  "1. Confirm your shipping address and agree to the Terms & Conditions.\n"
-                                  "2. Click the button below. Your order is placed and you are taken to the thank-you page while net banking opens in a new tab.\n"
-                                  "3. Log in at your bank, transfer the exact order total using the details on the thank-you page, then email your receipt to us.",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    height: 1.5,
-                                    color: Color(0xff394150),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 24),
-
-                                SizedBox(
-                                  height: 48,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      // launch bank url later
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primaryRed,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                    icon: const Icon(
-                                      Icons.open_in_new,
-                                      color: Colors.white,
-                                    ),
-                                    label: const Text(
-                                      "Open CIMB Bank Berhad net banking",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+                    // BANK OPTIONS DIRECTLY BELOW BANK
+                    if (method == "Bank" && paymentMethod == "Bank")
+                      _buildBankSelection(currencySymbol),
+                  ],
+                );
+              }),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Map<String, dynamic> _buildUpiPaymentPayload() {
+    final cartProvider = context.read<CartProvider>();
+
+    final String selectedDelivery =
+        (delivery ?? cartProvider.fulfillment ?? "physical").toLowerCase();
+
+    if (selectedDelivery == "digital") {
+      return {
+        "payment_type": "upi",
+        "delivery_option": "digital",
+        "digital_type": (digitalSubtype ?? cartProvider.digitalSubtype ?? "jsc")
+            .toLowerCase(),
+        "currency": "INR",
+        "terms": true,
+      };
+    }
+
+    return {
+      "payment_type": "upi",
+      "delivery_option": "physical",
+      "currency": "INR",
+      "courier_service": cartProvider.selectedDeliveryMethod.toLowerCase(),
+      "terms": true,
+      "street_address": addressController.text.trim(),
+      "city": cityController.text.trim(),
+      "state": stateController.text.trim(),
+      "pin": zipController.text.trim(),
+      "contact_person": contactPersonController.text.trim(),
+      "contact_email": emailController.text.trim(),
+      "contact_number": phoneController.text.trim(),
+    };
+  }
+
+  Future<void> _completeUpiPayment() async {
+    setState(() {
+      _isPlacingOrder = true;
+    });
+
+    try {
+      final payload = _buildUpiPaymentPayload();
+
+      final response = await CheckoutService.placeOrderUpi(payload: payload);
+
+      log("UPI PAYMENT RESPONSE => $response");
+
+      if (!mounted) return;
+
+      if (response["status"] == true) {
+        final cartProvider = context.read<CartProvider>();
+
+        cartProvider.clearCart();
+
+        await cartProvider.fetchCart();
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BankTransferSuccessScreen(
+              order: response["data"] ?? {},
+              summary: response["summary"] ?? {},
+              currencySymbol: response["summary"]?["symbol"] ?? "INR",
+              bankName: "UPI",
+            ),
+          ),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response["message"] ?? "Unable to place order"),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      log("UPI PAYMENT ERROR => $e");
+      log("STACKTRACE => $stackTrace");
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPlacingOrder = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildGeneratedQrSection() {
+    final svgBase64 = upiQrCode!.replaceFirst('data:image/svg+xml;base64,', '');
+
+    final svgString = utf8.decode(base64Decode(svgBase64));
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xffE0E0E0)),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            "Scan & Pay",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+
+          const SizedBox(height: 10),
+
+          const Text(
+            "Scan this QR code using Google Pay,\nPhonePe, Paytm or any UPI app.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+
+          const SizedBox(height: 25),
+
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: SvgPicture.string(svgString, width: 220, height: 220),
+          ),
+          const SizedBox(height: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text("Amount:", style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 8),
+                  Text(
+                    "₹${upiAmount?.toStringAsFixed(2) ?? ''}",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+
+              //
+              const SizedBox(height: 8),
+
+              const Text(
+                "After complete the payment please click the button below.",
+                style: TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+
+              const SizedBox(height: 10),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isPlacingOrder
+                      ? null
+                      : () async {
+                          await _completeUpiPayment();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                  ),
+                  child: const Text(
+                    "Payment Completed",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+
+              // const SizedBox(height: 12),
+
+              // Text(
+              //   "UPI ID: ${upiId ?? ''}",
+              //   style: const TextStyle(fontWeight: FontWeight.w500),
+              // ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUpiSection() {
+    final cartProvider = context.watch<CartProvider>();
+    final currencyProvider = context.watch<CurrencyProvider>();
+
+    final bool isPickup =
+        cartProvider.selectedDeliveryMethod.toLowerCase() == "pickup";
+
+    final String currency = currencyProvider.selectedCurrency.toUpperCase();
+
+    final String symbol = currency == "INR" ? "₹" : "$currency ";
+
+    final double subtotalValue = cartProvider.subtotalAmount;
+
+    final double courierValue = isPickup ? 0.0 : cartProvider.courierAmount;
+
+    final double displayTotal = subtotalValue + courierValue;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        border: Border.all(color: const Color(0xFFDADDE1)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  "Pay using UPI",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              Image.asset(
+                "assets/googlepay.png",
+                width: 32,
+                height: 32,
+                fit: BoxFit.contain,
+              ),
+              // const SizedBox(width: 10),
+              // Image.asset(
+              //   "assets/phonepe.png",
+              //   width: 28,
+              //   height: 28,
+              //   fit: BoxFit.contain,
+              //   errorBuilder: (_, __, ___) =>
+              //       const Icon(Icons.account_balance_wallet, size: 26),
+              // ),
+              // const SizedBox(width: 10),
+              // Image.asset(
+              //   "assets/paytm.png",
+              //   width: 38,
+              //   height: 28,
+              //   fit: BoxFit.contain,
+              //   errorBuilder: (_, __, ___) =>
+              //       const Icon(Icons.payment, size: 26),
+              // ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          const Text(
+            "Click Pay Now to generate your UPI payment QR code.",
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: Color(0xFF5B6B84),
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  "$symbol${displayTotal.toStringAsFixed(2)}",
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 18),
+
+              SizedBox(
+                height: 44,
+                width: 112,
+                child: ElevatedButton(
+                  onPressed: (_isPlacingOrder || _isGeneratingUpiQr)
+                      ? null
+                      : () async {
+                          await _generateUpiQr();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                  ),
+                  child: _isGeneratingUpiQr
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          "Pay Now",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPayNowSection() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xffE9D7D7)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            "Scan to pay with PayNow",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            "Open your banking app, scan this QR code, "
+            "and complete the payment.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+          const SizedBox(height: 24),
+
+          // Replace with your actual PayNow QR image path.
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xffD9DDE5)),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Image.asset(
+              'assets/paynow.jpeg',
+              width: 180,
+              height: 180,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return const SizedBox(
+                  width: 180,
+                  height: 180,
+                  child: Center(
+                    child: Text(
+                      'PayNow QR image not found',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          const Text(
+            "After completing the payment, please click "
+            "the button below for your Order Confirmation.",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+
+          const SizedBox(height: 24),
+
+          SizedBox(
+            // width: 180,
+            height: 44,
+            child: ElevatedButton(
+              onPressed: _isPlacingOrder
+                  ? null
+                  : () async {
+                      await _completeUpiPayment();
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryRed,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              child: const Text(
+                "Payment Completed",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1715,10 +2357,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
             const SizedBox(height: 15),
 
-            // _checkoutSummaryRow(
-            //   "Transaction fee (4%)",
-            //   "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedTransactionFee, currencySymbol)}",
-            // ),
             if (provider.showTax) ...[
               const SizedBox(height: 15),
 
@@ -1739,7 +2377,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 20),
 
-          _buildProceedButton(currencySymbol, false),
+          if (paymentMethod != "Bank")
+            _buildProceedButton(currencySymbol, false),
         ],
       ),
     );
@@ -1868,8 +2507,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Icon(Icons.sync, size: 15, color: Colors.white),
-                    // SizedBox(width: 6),
                     Flexible(
                       child: TranslatedText(
                         'PHYSICAL CONVERSION ACTIVE',
@@ -1891,22 +2528,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 onTap: (_isPlacingOrder || _isCancellingConversion)
                     ? null
                     : _cancelPhysicalConversion,
-                // style: OutlinedButton.styleFrom(
-                //   foregroundColor: const Color(0xFF981B1B),
-                //   disabledForegroundColor: Colors.grey,
-                //   side: BorderSide(
-                //     color: _isCancellingConversion
-                //         ? Colors.grey
-                //         : const Color(0xFF981B1B),
-                //   ),
-                //   padding: const EdgeInsets.symmetric(
-                //     horizontal: 14,
-                //     vertical: 10,
-                //   ),
-                //   shape: RoundedRectangleBorder(
-                //     borderRadius: BorderRadius.circular(20),
-                //   ),
-                // ),
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -2084,10 +2705,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           _summaryRow("Tax (21%)", "$currencySymbol 0.00"),
 
-          const SizedBox(height: 18),
-
-          _summaryRow("Transaction Fee (4%)", "$currencySymbol 0.00"),
-
           const Divider(height: 30),
 
           _summaryRow(
@@ -2102,6 +2719,67 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _buildProceedButton(currencySymbol, true),
         ],
       ),
+    );
+  }
+
+  Future<void> _showCardPaymentInfo() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.info_outline,
+                size: 70,
+                color: Color(0xFF42B6E6),
+              ),
+
+              const SizedBox(height: 20),
+
+              const Text(
+                "Card payment",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 16),
+
+              const Text(
+                "When you pay by card, an additional processing charge applies and your order total will be higher than with other payment methods.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.black54),
+              ),
+
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: 90,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+
+                    setState(() {
+                      paymentMethod = "Card";
+                    });
+                  },
+                  child: const Text("OK"),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -2177,118 +2855,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Widget _buildActionButtons(String currencySymbol, bool isPhysicalConversion) {
-  //   return Row(
-  //     children: [
-  //       Expanded(
-  //         child: ElevatedButton(
-  //           onPressed: (_isPlacingOrder || _isCancellingConversion)
-  //               ? null
-  //               : () {
-  //                   if (Navigator.canPop(context)) {
-  //                     Navigator.pop(context);
-  //                   } else {
-  //                     Navigator.pushAndRemoveUntil(
-  //                       context,
-  //                       MaterialPageRoute(
-  //                         builder: (_) => const MainScreen(initialIndex: 3),
-  //                       ),
-  //                       (route) => false,
-  //                     );
-  //                   }
-  //                 },
-  //           style: ElevatedButton.styleFrom(
-  //             backgroundColor: Colors.grey.shade300,
-  //             foregroundColor: Colors.black,
-  //             disabledBackgroundColor: Colors.grey.shade300,
-  //             disabledForegroundColor: Colors.black45,
-  //             padding: const EdgeInsets.symmetric(vertical: 15),
-  //             elevation: 0,
-  //             shape: RoundedRectangleBorder(
-  //               borderRadius: BorderRadius.circular(7),
-  //             ),
-  //           ),
-  //           child: const TranslatedText('Back', style: TextStyle(fontSize: 14)),
-  //         ),
-  //       ),
-
-  //       const SizedBox(width: 15),
-
-  //       Expanded(
-  //         flex: 2,
-  //         child: ElevatedButton(
-  //           onPressed: (_isPlacingOrder || _isCancellingConversion)
-  //               ? null
-  //               : () async {
-  //                   try {
-  //                     dynamic plan;
-
-  //                     final res = await JscService.fetchConvertDetails();
-
-  //                     log("fetchConvertPhysicalDetails response: $res");
-
-  //                     log(
-  //                       "fetchConvertPhysicalDetails data: "
-  //                       "${res['data']}",
-  //                     );
-
-  //                     if (res['data'] != null) {
-  //                       final data = Map<String, dynamic>.from(res['data']);
-
-  //                       log("Convert Physical Data: $data");
-
-  //                       log("Golddd: ${data['purchase_subtype']}");
-
-  //                       plan = data['purchase_subtype'];
-  //                     }
-
-  //                     log("Plannn: $plan");
-
-  //                     if (isPhysicalConversion) {
-  //                       await _sendPhysicalOrder(plan: plan);
-  //                     } else {
-  //                       await _placeNormalOrder();
-  //                     }
-  //                   } catch (e, stackTrace) {
-  //                     log("fetchConvertPhysicalDetails error: $e");
-
-  //                     log("StackTrace: $stackTrace");
-  //                   }
-  //                 },
-  //           style: ElevatedButton.styleFrom(
-  //             backgroundColor: AppColors.primaryRed,
-  //             foregroundColor: Colors.white,
-  //             disabledBackgroundColor: Colors.grey.shade400,
-  //             padding: const EdgeInsets.symmetric(vertical: 15),
-  //             elevation: 0,
-  //             shape: RoundedRectangleBorder(
-  //               borderRadius: BorderRadius.circular(7),
-  //             ),
-  //           ),
-  //           child: _isPlacingOrder
-  //               ? const SizedBox(
-  //                   height: 20,
-  //                   width: 20,
-  //                   child: CircularProgressIndicator(
-  //                     strokeWidth: 2,
-  //                     color: Colors.white,
-  //                   ),
-  //                 )
-  //               : TranslatedText(
-  //                   isPhysicalConversion
-  //                       ? 'Send Order $currencySymbol 0.00'
-  //                       : 'Proceed to pay',
-  //                   style: const TextStyle(
-  //                     fontSize: 14,
-  //                     fontWeight: FontWeight.w600,
-  //                   ),
-  //                 ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
-
   Widget paymentBox(String title) {
     final bool isSelected = selectedCard == title;
 
@@ -2298,7 +2864,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           selectedCard = title;
         });
       },
-      child: Image.asset(title, height: 50, width: 65),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? AppColors.primaryRed : Colors.grey.shade300,
+            width: 1.5,
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        padding: const EdgeInsets.all(8),
+        child: Image.asset(title, height: 50, width: 65),
+      ),
     );
   }
 }

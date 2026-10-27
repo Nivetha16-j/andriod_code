@@ -8,23 +8,38 @@ import 'package:junubullion/services/session_manager.dart';
 class CheckoutService {
   static Future<Map<String, dynamic>> placeOrder({
     required String shippingAddress,
+    required String city,
+    required String state,
+    required String pin,
+    required String contactPerson,
+    required String contactEmail,
+    required String contactPhone,
     required String deliveryOption,
     String? digitalType,
     String? courierService,
     required bool terms,
     required String paymentType,
     required String currency,
+    String? customerBank,
   }) async {
     try {
       final token = await SessionManager.getToken();
 
       // Build payload
       final Map<String, dynamic> payload = {
-        "shipping_address": shippingAddress,
+        "street_address": shippingAddress,
+        "city": city,
+        "state": state,
+        "pin": pin,
+        "contact_person": contactPerson,
+        "contact_email": contactEmail,
+        "contact_number": contactPhone,
+        // "shipping_address": shippingAddress,
         "delivery_option": deliveryOption.toLowerCase(),
         "courier_service": courierService,
         "terms": terms,
         "payment_type": paymentType,
+        "customer_bank": customerBank,
         "currency": currency,
       };
 
@@ -104,6 +119,12 @@ class CheckoutService {
 
   static Future<Map<String, dynamic>> placePhysicalOrder({
     required String shippingAddress,
+    required String city,
+    required String state,
+    required String pin,
+    required String contactPerson,
+    required String contactEmail,
+    required String contactPhone,
     required bool terms,
     required String digitalType,
   }) async {
@@ -125,6 +146,12 @@ class CheckoutService {
       "payment_method": "wallet",
       "courier_service": "",
       "shipping_address": shippingAddress,
+      "city": city,
+      "state": state,
+      "pin": pin,
+      "contact_person": contactPerson,
+      "contact_email": contactEmail,
+      "contact_number": contactPhone,
     };
 
     final response = await http.post(
@@ -152,5 +179,79 @@ class CheckoutService {
     throw Exception(
       responseData["message"]?.toString() ?? "Unable to place physical order",
     );
+  }
+
+  static Future<Map<String, dynamic>> generateUpiQr({
+    required Map<String, dynamic> payload,
+  }) async {
+    try {
+      final token = await SessionManager.getToken();
+
+      final response = await http.post(
+        Uri.parse("$baseUrl/checkout/upi/preview"),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(payload),
+      );
+
+      log("UPI QR STATUS => ${response.statusCode}");
+      log("UPI QR RESPONSE => ${response.body}");
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return Map<String, dynamic>.from(body);
+      }
+
+      throw Exception(
+        body["message"]?.toString() ?? "Failed to generate UPI QR",
+      );
+    } on SocketException {
+      throw Exception("No internet connection");
+    } on FormatException {
+      throw Exception("Invalid response from server");
+    } catch (e) {
+      throw Exception("Failed to generate UPI QR: $e");
+    }
+  }
+
+  static Future<Map<String, dynamic>> placeOrderUpi({
+    required Map<String, dynamic> payload,
+  }) async {
+    try {
+      final token = await SessionManager.getToken();
+
+      final response = await http.post(
+        Uri.parse("https://staging.junubullion.com/api/checkout/upi/pay"),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(payload),
+      );
+
+      log("UPI QR STATUS => ${response.statusCode}");
+      log("UPI QR RESPONSE => ${response.body}");
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return Map<String, dynamic>.from(body);
+      }
+
+      throw Exception(
+        body["message"]?.toString() ?? "Failed to generate UPI QR",
+      );
+    } on SocketException {
+      throw Exception("No internet connection");
+    } on FormatException {
+      throw Exception("Invalid response from server");
+    } catch (e) {
+      throw Exception("Failed to generate UPI QR: $e");
+    }
   }
 }
