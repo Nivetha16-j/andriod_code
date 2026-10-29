@@ -40,7 +40,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
               const TranslatedText(
                 "Privacy Policy and Terms & Conditions",
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.w700,
                   height: 1.2,
                   color: AppColors.white,
@@ -52,7 +52,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
               const TranslatedText(
                 "At JunuBullion.com, we respect your privacy and are committed to  ensuring transparency in how we use cookies and handle your personal  data.  This document explains our use of cookies, how we collect and  process personal data, and how you can manage you privacy preferences.",
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 13,
                   color: AppColors.white,
                   fontWeight: FontWeight.w500,
                   height: 1.5,
@@ -91,7 +91,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                       "Contact Us",
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -103,7 +103,7 @@ class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 14,
+                        fontSize: 12,
                         // height: 1.5,
                         fontWeight: FontWeight.w500,
                       ),

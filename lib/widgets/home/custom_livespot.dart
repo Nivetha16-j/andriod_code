@@ -44,7 +44,8 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<GraphProvider>().fetchSingleGraph();
+      if (!mounted) return;
+      _fetchGraph(); // uses rangeCodes[selectedIndex], which is '1d' by default
     });
   }
 
@@ -52,9 +53,15 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
   void didUpdateWidget(covariant LiveSpotPriceCard oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // didUpdateWidget
     if (oldWidget.selectedCurrency != widget.selectedCurrency ||
         oldWidget.selectedUnit != widget.selectedUnit) {
       _fetchSpotPrice();
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _fetchGraph();
+      });
     }
   }
 
@@ -64,15 +71,39 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
     super.dispose();
   }
 
-  static const Color accentGold = Color(0xFFC59800);
-  static const Color lightGoldText = Color(0xFFE0B222);
-
   // String selectedCurrency = 'USD';
   // String selectedUnit = 'Gram';
 
-  int selectedIndex = 1; // 1 Month selected by default
+  int selectedIndex = 0; // 1 Month selected by default
 
-  final List<String> tabs = ['1 Day', '1 Month', 'Year-to-Date', '1 Year'];
+  final List<String> tabs = [
+    '1 Day',
+    '1 Month',
+    'Year-to-Date',
+    '1 Year',
+    '5 Years',
+    '10 Years',
+    'All',
+  ];
+
+  // API range codes, same order as `tabs`
+  final List<String> rangeCodes = [
+    '1d',
+    '1mo',
+    'ytd',
+    '1y',
+    '5y',
+    '10y',
+    'all',
+  ];
+
+  void _fetchGraph() {
+    context.read<GraphProvider>().fetchSingleGraph(
+      currency: widget.selectedCurrency,
+      unit: widget.selectedUnit,
+      range: rangeCodes[selectedIndex],
+    );
+  }
 
   final List<String> currencies = [
     'USD',
@@ -201,7 +232,8 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
 
     final provider = context.watch<GraphProvider>();
 
-    if (provider.isLoading) {
+    // replace: if (provider.isLoading) {
+    if (provider.isLoading && provider.graphData == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -330,50 +362,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
 
             Column(
               children: [
-                Container(
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFFDAA520),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Row(
-                    children: List.generate(
-                      tabs.length,
-                      (index) => Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedIndex = index;
-                            });
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: selectedIndex == index
-                                  ? const Color(0xFFDAA520)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              tabs[index],
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: selectedIndex == index
-                                    ? Colors.white
-                                    : const Color(0xFF8AB4F8),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                _buildTabsGrid(), // <-- replaces the old 42px single-row tab Container
 
                 const SizedBox(height: 12),
 
@@ -388,7 +377,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                   },
                   borderRadius: BorderRadius.circular(14),
                   child: Container(
-                    height: 42,
+                    height: 44,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
                       color: Colors.black,
@@ -401,24 +390,111 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                           'More Charts',
                           style: TextStyle(
                             color: Color(0xFFFFB800),
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         Spacer(),
                         Icon(
-                          Icons.arrow_forward,
+                          Icons.arrow_right_alt, // long arrow like the design
                           color: Color(0xFFFFB800),
-                          size: 18,
+                          size: 32,
                         ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                HomeGraph(chartData: graphData!),
+                // replace: HomeGraph(chartData: graphData!),
+                if (provider.errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      provider.errorMessage!,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                if (graphData != null) HomeGraph(chartData: graphData),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabsGrid() {
+    const gold = Color(0xFFDAA520);
+    const int perRow = 4;
+    final int rowCount = (tabs.length / perRow).ceil();
+    final BorderSide divider = BorderSide(
+      color: gold.withOpacity(0.25),
+      width: 0.8,
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: gold, width: 0.8),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(11),
+        child: Column(
+          children: List.generate(rowCount, (row) {
+            return SizedBox(
+              height: 44,
+              child: Row(
+                children: List.generate(perRow, (col) {
+                  final int index = row * perRow + col;
+
+                  // empty slot to keep the 4-column grid aligned
+                  if (index >= tabs.length) {
+                    return const Expanded(child: SizedBox());
+                  }
+
+                  final bool isSelected = selectedIndex == index;
+
+                  return Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        if (selectedIndex == index)
+                          return; // ignore re-tapping the active tab
+                        setState(() {
+                          selectedIndex = index;
+                        });
+                        _fetchGraph();
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isSelected ? gold : Colors.transparent,
+                          border: Border(
+                            right: col < perRow - 1 ? divider : BorderSide.none,
+                            bottom: row < rowCount - 1
+                                ? divider
+                                : BorderSide.none,
+                          ),
+                        ),
+                        child: Text(
+                          tabs[index],
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFF8AB4F8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            );
+          }),
         ),
       ),
     );

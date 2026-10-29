@@ -58,7 +58,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
           children: [
             const TranslatedText(
               "Reviews from real people",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
 
             const SizedBox(height: 6),
@@ -66,7 +66,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
             const TranslatedText(
               "What our customers are saying",
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 14,
                 color: Colors.black,
                 fontWeight: FontWeight.w500,
               ),
@@ -178,7 +178,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                     const TranslatedText(
                       "We'd love to hear your thoughts",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: AppColors.white,
                       ),
@@ -189,7 +189,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                     const TranslatedText(
                       "Tell us about your vision: which challenges are you facing? We'd love to stay in touch with you, so we are always ready to answer any question that interests you.",
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: AppColors.white,
                       ),
@@ -200,6 +200,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                     const TranslatedText(
                       "What's your name?",
                       style: TextStyle(
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: AppColors.white,
                       ),
@@ -216,6 +217,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: AppColors.white,
+                        fontSize: 13,
                       ),
                     ),
 
@@ -233,6 +235,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: AppColors.white,
+                        fontSize: 13,
                       ),
                     ),
 

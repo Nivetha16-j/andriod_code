@@ -7,6 +7,7 @@ import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/checkout/banktransfersuccess.dart';
 import 'package:junubullion/screens/checkout/physical_ordersuccess.dart';
+import 'package:junubullion/screens/checkout/stripe_otp_dialog.dart';
 import 'package:junubullion/screens/checkout/success.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
@@ -53,9 +54,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   // String? localAddress;
   // String? selectedCard;
   bool _isCancellingConversion = false;
+  bool _isRemovingItem = false;
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   // bool _initialAddressLoaded = false;
-  String paymentMethod = "Card";
+  String paymentMethod = "Bank";
   String? selectedCard;
   String? selectedBank;
   String? upiQrUrl;
@@ -175,78 +177,78 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  String? _getBankUrl(String bank) {
-    const bankUrls = {
-      "ICICI Bank": "https://www.icicibank.com/internet-banking",
-      "HDFC Bank": "https://netbanking.hdfcbank.com/netbanking/",
-      "Axis Bank": "https://www.axis.bank.in/bank-smart/internet-banking",
-      "Federal Bank": "https://www.federalbank.co.in/fednet",
-      "Canara Bank": "https://www.canarabank.bank.in/pages/net-banking",
-      "State Bank Of India": "https://retail.onlinesbi.sbi/retail/login.htm",
-      "Central Bank Of India":
-          "https://centralbank.bank.in/en/internet-banking",
-      "CIMB Bank Berhad": "https://www.cimbclicks.com.sg/",
-      "United Overseas Bank": "https://pib.uob.com.sg/auth/login",
-      "Maybank":
-          "https://sslsecure.maybank.com.sg/cgi-bin/mbs/scripts/mbb_login.jsp",
-      "OCBC Bank":
-          "https://internet.ocbc.com/internet-banking/digital/web/sg/cfo/login/login",
-      "DBS Bank": "https://internet-banking.dbs.bank.in/login",
-      "HSBC Bank":
-          "https://www.us.hsbc.com/auth/?returnUrl=https://www.us.hsbc.com/bin/epep/postback.html?url=/online/dashboard",
-      "Canadian Imperial Bank Of Commerce": "https://secure.cibc.com",
-      "Royal Bank Of Canada": "https://www.rbcroyalbank.com/personal.html",
-    };
+  // String? _getBankUrl(String bank) {
+  //   const bankUrls = {
+  //     "ICICI Bank": "https://www.icicibank.com/internet-banking",
+  //     "HDFC Bank": "https://netbanking.hdfcbank.com/netbanking/",
+  //     "Axis Bank": "https://www.axis.bank.in/bank-smart/internet-banking",
+  //     "Federal Bank": "https://www.federalbank.co.in/fednet",
+  //     "Canara Bank": "https://www.canarabank.bank.in/pages/net-banking",
+  //     "State Bank Of India": "https://retail.onlinesbi.sbi/retail/login.htm",
+  //     "Central Bank Of India":
+  //         "https://centralbank.bank.in/en/internet-banking",
+  //     "CIMB Bank Berhad": "https://www.cimbclicks.com.sg/",
+  //     "United Overseas Bank": "https://pib.uob.com.sg/auth/login",
+  //     "Maybank":
+  //         "https://sslsecure.maybank.com.sg/cgi-bin/mbs/scripts/mbb_login.jsp",
+  //     "OCBC Bank":
+  //         "https://internet.ocbc.com/internet-banking/digital/web/sg/cfo/login/login",
+  //     "DBS Bank": "https://internet-banking.dbs.bank.in/login",
+  //     "HSBC Bank":
+  //         "https://www.us.hsbc.com/auth/?returnUrl=https://www.us.hsbc.com/bin/epep/postback.html?url=/online/dashboard",
+  //     "Canadian Imperial Bank Of Commerce": "https://secure.cibc.com",
+  //     "Royal Bank Of Canada": "https://www.rbcroyalbank.com/personal.html",
+  //   };
 
-    return bankUrls[bank];
-  }
+  //   return bankUrls[bank];
+  // }
 
-  Future<void> _openBankUrl() async {
-    if (selectedBank == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please select a bank")));
-      return;
-    }
+  // Future<void> _openBankUrl() async {
+  //   if (selectedBank == null) {
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(const SnackBar(content: Text("Please select a bank")));
+  //     return;
+  //   }
 
-    final url = _getBankUrl(selectedBank!);
+  //   final url = _getBankUrl(selectedBank!);
 
-    if (url == null || url.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Bank URL not available")));
-      return;
-    }
+  //   if (url == null || url.isEmpty) {
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(const SnackBar(content: Text("Bank URL not available")));
+  //     return;
+  //   }
 
-    final uri = Uri.tryParse(url);
+  //   final uri = Uri.tryParse(url);
 
-    if (uri == null ||
-        (uri.scheme != 'https' && uri.scheme != 'http') ||
-        uri.host.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Invalid bank website URL")));
-      return;
-    }
+  //   if (uri == null ||
+  //       (uri.scheme != 'https' && uri.scheme != 'http') ||
+  //       uri.host.isEmpty) {
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(const SnackBar(content: Text("Invalid bank website URL")));
+  //     return;
+  //   }
 
-    try {
-      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  //   try {
+  //     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
 
-      if (!opened && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Unable to open bank website")),
-        );
-      }
-    } catch (e, stackTrace) {
-      log("OPEN BANK URL ERROR: $e", stackTrace: stackTrace);
+  //     if (!opened && mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text("Unable to open bank website")),
+  //       );
+  //     }
+  //   } catch (e, stackTrace) {
+  //     log("OPEN BANK URL ERROR: $e", stackTrace: stackTrace);
 
-      if (!mounted) return;
+  //     if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Unable to open bank website")),
-      );
-    }
-  }
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text("Unable to open bank website")),
+  //     );
+  //   }
+  // }
 
   @override
   void dispose() {
@@ -346,7 +348,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ],
             ),
           ),
-          if (_isPlacingOrder || _isCancellingConversion)
+          if (_isPlacingOrder || _isCancellingConversion || _isRemovingItem)
             Positioned.fill(
               child: Container(
                 color: Colors.black.withOpacity(0.4),
@@ -358,6 +360,82 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _removeCartItem(dynamic productId) async {
+    if (_isRemovingItem || _isPlacingOrder) return;
+
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xffF7F7F7),
+        title: const TranslatedText("Remove Item"),
+        content: const TranslatedText(
+          "Are you sure you want to remove this product from your cart?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const TranslatedText("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const TranslatedText(
+              "Remove",
+              style: TextStyle(color: AppColors.primaryRed),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true || !mounted) return;
+
+    setState(() => _isRemovingItem = true);
+
+    try {
+      final cartProvider = context.read<CartProvider>();
+      final bool success = await cartProvider.removeFromCart(productId);
+
+      if (!mounted) return;
+
+      setState(() => _isRemovingItem = false);
+
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: TranslatedText(
+              "Unable to remove product. Please try again.",
+            ),
+          ),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: TranslatedText("Product removed from cart")),
+      );
+
+      // Last product removed -> cart is empty -> go to Home
+      if (cartProvider.cartItems.isEmpty) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 0)),
+          (route) => false,
+        );
+      }
+    } catch (e, stackTrace) {
+      log("CHECKOUT -> Remove item error: $e", stackTrace: stackTrace);
+      if (!mounted) return;
+      setState(() => _isRemovingItem = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TranslatedText(
+            "Unable to remove product. Please try again.",
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _sendPhysicalOrder({required String plan}) async {
@@ -1398,6 +1476,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         final stripeResponse = await StripeService.createStripeSession(
           shippingAddress: shippingAddress.trim(),
+          city: city,
+          state: state,
+          pin: pin,
+          contactPerson: contactPerson,
+          contactEmail: contactEmail,
+          contactPhone: contactPhone,
           fulfillmentType: fulfillment!.toLowerCase().trim(),
           courierService: isDigital
               ? null
@@ -1416,27 +1500,96 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           );
         }
 
-        final clientSecret = stripeResponse["data"]?["client_secret"];
+        // final clientSecret = stripeResponse["data"]?["client_secret"];
 
-        // Get payment intent ID from create session response
-        final paymentIntentId = stripeResponse["data"]?["payment_intent_id"];
+        // // Get payment intent ID from create session response
+        // final paymentIntentId = stripeResponse["data"]?["payment_intent_id"];
 
-        log("STRIPE CLIENT SECRET -> $clientSecret");
-        log("STRIPE PAYMENT INTENT ID -> $paymentIntentId");
+        // log("STRIPE CLIENT SECRET -> $clientSecret");
+        // log("STRIPE PAYMENT INTENT ID -> $paymentIntentId");
 
-        if (clientSecret == null || clientSecret.toString().trim().isEmpty) {
-          throw Exception("Stripe client secret not received");
-        }
+        // if (clientSecret == null || clientSecret.toString().trim().isEmpty) {
+        //   throw Exception("Stripe client secret not received");
+        // }
+
+        // if (paymentIntentId == null ||
+        //     paymentIntentId.toString().trim().isEmpty) {
+        //   throw Exception("Stripe payment intent ID not received");
+        // }
+
+        final Map<String, dynamic> stripeData = Map<String, dynamic>.from(
+          stripeResponse["data"] ?? {},
+        );
+
+        String? clientSecret = stripeData["client_secret"]?.toString();
+        final paymentIntentId = stripeData["payment_intent_id"];
+        final bool otpRequired = stripeData["otp_required"] == true;
 
         if (paymentIntentId == null ||
             paymentIntentId.toString().trim().isEmpty) {
           throw Exception("Stripe payment intent ID not received");
         }
 
-        final bool paymentSuccess = await StripeService.makePayment(
-          clientSecret.toString(),
-        );
+        final String otpEmail =
+            (stripeData["default_email"]?.toString().trim().isNotEmpty ?? false)
+            ? stripeData["default_email"].toString().trim()
+            : contactEmail;
 
+        final String stripeCurrency =
+            (stripeData["currency"] ?? currencyProvider.selectedCurrency)
+                .toString();
+
+        final int amountMinor =
+            ((double.tryParse(stripeData["amount"].toString()) ?? 0) * 100)
+                .round();
+
+        bool paymentSuccess;
+
+        if (clientSecret != null && clientSecret.trim().isNotEmpty) {
+          // normal flow: backend already gave a secret
+          paymentSuccess = await StripeService.makePayment(clientSecret);
+        } else if (otpRequired) {
+          // Stripe sheet first -> then email OTP -> then confirm
+          paymentSuccess = await StripeService.payWithDeferredIntent(
+            currency: stripeCurrency,
+            amountMinor: amountMinor,
+            email: otpEmail,
+            otpStep: () async {
+              // Stripe details are done -> NOW trigger the email OTP
+              await StripeService.sendPaymentOtp(
+                paymentIntentId: paymentIntentId.toString(),
+                email: otpEmail,
+              );
+
+              try {
+                await StripeService.paymentOtpStatus(
+                  paymentIntentId: paymentIntentId.toString(),
+                );
+              } catch (e) {
+                log("STRIPE OTP STATUS ERROR -> $e");
+              }
+
+              if (!mounted) return null;
+
+              setState(
+                () => _isPlacingOrder = false,
+              ); // hide page loader for dialog
+
+              final secret = await showStripeOtpDialog(
+                context,
+                paymentIntentId: paymentIntentId.toString(),
+                email: otpEmail,
+              );
+
+              if (mounted && secret != null) {
+                setState(() => _isPlacingOrder = true);
+              }
+              return secret;
+            },
+          );
+        } else {
+          throw Exception("Stripe client secret not received");
+        }
         log("PAYMENT SUCCESS -> $paymentSuccess");
 
         if (!mounted) return;
@@ -2246,6 +2399,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     double orderTotal,
     bool isDigital,
   ) {
+    log("Proooooooooooo ${provider.cartItems}");
     if (provider.cartItems.isEmpty) {
       return const TranslatedText("No items in cart");
     }
@@ -2264,7 +2418,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final double courierValue = isPickup ? 0.0 : provider.courierAmount;
 
-    final double displayTotal = subtotalValue + courierValue;
+    // Card payment: use the backend "total" (includes the card processing fee).
+    // Any other method: subtotal + courier charge.
+    final bool isCardPayment = paymentMethod == "Card";
+
+    final double displayTotal = isCardPayment
+        ? provider.totalAmount
+        : subtotalValue + courierValue;
 
     return Container(
       width: double.infinity,
@@ -2284,7 +2444,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 15),
 
           ...provider.cartItems.map((item) {
-            log("itemmmmmmmm/ $item");
+            log("cartiiiiiiii $item");
             final String name = item["name"]?.toString() ?? "Product";
 
             final int quantity =
@@ -2295,29 +2455,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 item["line_total"]?.toString() ??
                 "0.00";
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TranslatedText(
-                      "$name × $quantity",
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  TranslatedText(
-                    _formatCheckoutCurrency(productPrice, currencySymbol),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+            return _buildSummaryItem(
+              name: name,
+              quantity: quantity,
+              price: _formatCheckoutCurrency(productPrice, currencySymbol),
+              imageUrl: item["image"]?.toString(),
+              onDelete: () => _removeCartItem(item["product_id"]),
             );
           }),
 
@@ -2377,7 +2520,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 20),
 
-          if (paymentMethod != "Bank")
+          if (paymentMethod == "Card")
             _buildProceedButton(currencySymbol, false),
         ],
       ),
@@ -2634,6 +2777,134 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  Widget _buildSummaryItem({
+    required String name,
+    required int quantity,
+    required String price,
+    String? imageUrl,
+    VoidCallback? onDelete,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ---- product image ----
+          Container(
+            width: 84,
+            height: 84,
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xffE6E6E6)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: (imageUrl == null || imageUrl.isEmpty)
+                  ? const Icon(
+                      Icons.image_not_supported_outlined,
+                      color: Colors.grey,
+                    )
+                  : Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      },
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.grey,
+                      ),
+                    ),
+            ),
+          ),
+
+          const SizedBox(width: 14),
+
+          // ---- name, qty, price ----
+          Expanded(
+            child: SizedBox(
+              height: 84,
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: TranslatedText(
+                                name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.3,
+                                  color: Color(0xff1F1F1F),
+                                ),
+                              ),
+                            ),
+                            if (onDelete != null) ...[
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: onDelete,
+                                child: Image.asset(
+                                  "assets/delete.png",
+                                  width: 35,
+                                  height: 35,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Qty: $quantity",
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xff8A94A6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Text(
+                      price,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPhysicalOrderSummary(
     CartProvider cartProvider,
     String currencySymbol,
@@ -2665,28 +2936,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             final int quantity =
                 int.tryParse(item["quantity"]?.toString() ?? "1") ?? 1;
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TranslatedText(
-                      "$name × $quantity",
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  // Physical conversion
-                  // has NO monetary charge.
-                  TranslatedText(
-                    "$currencySymbol 0.00",
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ],
-              ),
+            // Physical conversion has no monetary charge
+            return _buildSummaryItem(
+              name: name,
+              quantity: quantity,
+              price: "$currencySymbol 0.00",
+              imageUrl: item["image"]?.toString(),
+              onDelete: () => _removeCartItem(item["product_id"]),
             );
           }),
 

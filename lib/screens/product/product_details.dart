@@ -380,21 +380,26 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
     final reviewProvider = context.watch<ReviewProvider>();
 
-    if (provider.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    final bool isStale =
+        provider.product != null &&
+        '${provider.product!['id']}' != '${widget.productId}';
 
-    if (provider.product == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (provider.isLoading || provider.product == null || isStale) {
+      return Scaffold(
+        backgroundColor: const Color(0xffFAFAF8),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primaryRed),
+        ),
+      );
     }
 
     final product = provider.product!;
 
     log("pppppppppppppppppppp $product");
 
-    final reviews = provider.reviews ?? [];
+    final reviews = provider.reviews;
 
-    final subcategories = provider.subcategories ?? [];
+    final subcategories = provider.subcategories;
 
     final relatedProducts = provider.relatedProducts;
 

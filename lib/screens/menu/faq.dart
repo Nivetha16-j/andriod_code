@@ -101,7 +101,7 @@ class _FaqScreenState extends State<FaqScreen> {
                       TranslatedText(
                         "Frequently Asked Questions",
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: AppColors.white,
                         ),
@@ -110,7 +110,7 @@ class _FaqScreenState extends State<FaqScreen> {
                       TranslatedText(
                         "We're here to help with any questions you have about plans, pricing and supported features.",
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 13,
                           color: AppColors.white,
                           fontWeight: FontWeight.w500,
                         ),
@@ -138,7 +138,7 @@ class _FaqScreenState extends State<FaqScreen> {
                             style: TextStyle(
                               color: isSelected ? Colors.white : Colors.black87,
                               fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                           selected: isSelected,
@@ -194,7 +194,7 @@ class _FaqScreenState extends State<FaqScreen> {
                                   child: TranslatedText(
                                     item["question"]!,
                                     style: const TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: AppColors.white,
                                     ),
@@ -207,7 +207,7 @@ class _FaqScreenState extends State<FaqScreen> {
                                   child: Icon(
                                     isExpanded ? Icons.close : Icons.add,
                                     color: Colors.black,
-                                    size: 18,
+                                    size: 14,
                                   ),
                                 ),
                               ],
@@ -247,7 +247,7 @@ class _FaqScreenState extends State<FaqScreen> {
                       const TranslatedText(
                         "Need More Help?",
                         style: TextStyle(
-                          fontSize: 30,
+                          fontSize: 25,
                           fontWeight: FontWeight.bold,
                           color: AppColors.white,
                         ),
@@ -256,7 +256,7 @@ class _FaqScreenState extends State<FaqScreen> {
                       const TranslatedText(
                         "If you have any additional questions,\nfeel free to contact us at:",
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16, color: AppColors.white),
+                        style: TextStyle(fontSize: 14, color: AppColors.white),
                       ),
                       const SizedBox(height: 25),
 

@@ -83,17 +83,15 @@ class SummaryWidget extends StatelessWidget {
               ],
 
               // const SizedBox(height: 15),
-
               // _row(
               //   "Transaction fee (4%)",
               //   "+ ${_formatCurrency(transaction_fee)}",
               // ),
+              if (provider.showTax) ...[
+                const SizedBox(height: 15),
 
-              // if (provider.showTax) ...[
-              //   const SizedBox(height: 15),
-
-              //   _row("GST (21%)", "+ ${_formatCurrency(gst)}"),
-              // ],
+                _row("GST (21%)", "+ ${_formatCurrency(gst)}"),
+              ],
             ],
 
             const SizedBox(height: 20),
