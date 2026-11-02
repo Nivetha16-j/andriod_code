@@ -44,20 +44,14 @@ class ExclusiveProductProvider extends ChangeNotifier {
 
       products = newProducts;
     } catch (e) {
-      debugPrint(
-        '❌ fetchProducts error '
-        'endpoint=$endpoint: $e',
-      );
+      debugPrint('❌ fetchProducts error endpoint=$endpoint: $e');
 
-      if (requestId == _productRequestId) {
+      if (requestId == _productRequestId && showLoader) {
         products = [];
       }
     } finally {
       if (requestId == _productRequestId) {
-        if (showLoader) {
-          isLoading = false;
-        }
-
+        isLoading = false; // always clear, whatever showLoader was
         notifyListeners();
       }
     }

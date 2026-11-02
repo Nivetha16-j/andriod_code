@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/account_services.dart';
@@ -315,16 +317,7 @@ class _BrandScreenState extends State<BrandScreen> {
 
                     const SizedBox(height: 28),
 
-                    // --------------------------------------------------
-                    // BRAND CARDS
-                    // --------------------------------------------------
-                    // --------------------------------------------------
-                    // BRAND CARDS
-                    // --------------------------------------------------
-                    // --------------------------------------------------
-                    // BRAND CARDS
-                    // --------------------------------------------------
-                    Container(
+                    SizedBox(
                       // color: Colors.blue,
                       height: 230,
                       child: PageView.builder(
@@ -337,6 +330,8 @@ class _BrandScreenState extends State<BrandScreen> {
                         },
                         itemBuilder: (context, pageIndex) {
                           final int firstIndex = pageIndex * 2;
+
+                          log("filteredBrands $filteredBrands");
 
                           return Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 17),
@@ -356,6 +351,12 @@ class _BrandScreenState extends State<BrandScreen> {
                                       category:
                                           filteredBrands[firstIndex]["type"] ??
                                           "",
+                                      meta:
+                                          filteredBrands[firstIndex]["meta"] ??
+                                          "",
+                                      description:
+                                          filteredBrands[firstIndex]["description"] ??
+                                          "",
                                     ),
                                   ),
 
@@ -367,13 +368,24 @@ class _BrandScreenState extends State<BrandScreen> {
                                         ? _brandCard(
                                             image:
                                                 filteredBrands[firstIndex +
-                                                    1]["image"]!,
+                                                    1]["image"] ??
+                                                "",
                                             brandName:
                                                 filteredBrands[firstIndex +
-                                                    1]["name"]!,
+                                                    1]["name"] ??
+                                                "",
                                             category:
                                                 filteredBrands[firstIndex +
-                                                    1]["type"]!,
+                                                    1]["type"] ??
+                                                "",
+                                            meta:
+                                                filteredBrands[firstIndex +
+                                                    1]["meta"] ??
+                                                "",
+                                            description:
+                                                filteredBrands[firstIndex +
+                                                    1]["description"] ??
+                                                "",
                                           )
                                         : const SizedBox(),
                                   ),
@@ -436,6 +448,101 @@ class _BrandScreenState extends State<BrandScreen> {
     );
   }
 
+  void _showBrandDetails({
+    required String brandName,
+    required String meta,
+    required String description,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 17),
+          child: Container(
+            // padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SizedBox(),
+                      TranslatedText(
+                        brandName,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF981F1F),
+                        ),
+                      ),
+                      Material(
+                        color: const Color(0xFF981F1F),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () {
+                            Navigator.of(dialogContext).pop();
+                          },
+                          child: const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 17,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  if (meta.isNotEmpty)
+                    TranslatedText(
+                      meta,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF981F1F),
+                      ),
+                    ),
+
+                  const SizedBox(height: 4),
+
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: TranslatedText(
+                        description,
+                        textAlign: TextAlign.left,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          height: 1.8,
+                          color: Color(0xFF333333),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _switchToTab(int index) {
     Navigator.pushAndRemoveUntil(
       context,
@@ -482,52 +589,67 @@ class _BrandScreenState extends State<BrandScreen> {
     required String image,
     required String brandName,
     required String category,
+    required String meta,
+    required String description,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: AppColors.sandal,
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: AppColors.mustard, width: 1.3),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Brand/Product Image
-          SizedBox(
-            height: 155,
-            width: double.infinity,
-            child: Image.network(
-              "https://staging.junubullion.com/storage/$image",
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.image_not_supported_outlined, size: 45);
-              },
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        _showBrandDetails(
+          brandName: brandName,
+          meta: meta,
+          description: description,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.sandal,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: AppColors.mustard, width: 1.3),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Brand/Product Image
+            SizedBox(
+              height: 155,
+              width: double.infinity,
+              child: Image.network(
+                "https://staging.junubullion.com/storage/$image",
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(
+                    Icons.image_not_supported_outlined,
+                    size: 45,
+                  );
+                },
+              ),
             ),
-          ),
 
-          const SizedBox(height: 8),
+            const SizedBox(height: 8),
 
-          // Brand Name
-          TranslatedText(
-            brandName,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          ),
+            // Brand Name
+            TranslatedText(
+              brandName,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
 
-          const SizedBox(height: 7),
+            const SizedBox(height: 7),
 
-          // Category
-          TranslatedText(
-            category,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
-          ),
-        ],
+            // Category
+            TranslatedText(
+              category,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w400),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -828,7 +828,7 @@ class _SavingsPlanCard extends StatelessWidget {
                 size: 16,
               ),
               label: const TranslatedText(
-                "Monthly Investment Plan",
+                "Investment Plan",
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13,

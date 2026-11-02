@@ -171,9 +171,9 @@ class _GspScreenState extends State<GspScreen> {
             Container(
               decoration: BoxDecoration(gradient: AppColors.BgGradient),
               child: Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(20),
-                height: 280,
+                margin: const EdgeInsets.all(13),
+                padding: const EdgeInsets.all(15),
+                constraints: const BoxConstraints(minHeight: 240),
                 decoration: BoxDecoration(
                   gradient: AppColors.BgGradient,
                   borderRadius: BorderRadius.circular(18),
@@ -182,33 +182,23 @@ class _GspScreenState extends State<GspScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            TranslatedText(
-                              "Invest Your Gold For ",
-                              style: TextStyle(
-                                color: AppColors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 20,
+                            Expanded(
+                              child: TranslatedText(
+                                "Invest Your Gold For ",
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
-                            TranslatedText(
-                              "The Future",
-                              style: TextStyle(
-                                color: AppColors.mustard,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: const [
                             TranslatedText(
                               "GOLD BALANCE",
                               style: TextStyle(
@@ -216,7 +206,19 @@ class _GspScreenState extends State<GspScreen> {
                                 fontSize: 12,
                               ),
                             ),
-                            SizedBox(height: 4),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TranslatedText(
+                              "The Future",
+                              style: TextStyle(
+                                color: AppColors.mustard,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             TranslatedText(
                               "\$1000.25",
                               style: TextStyle(
@@ -231,7 +233,7 @@ class _GspScreenState extends State<GspScreen> {
                     ),
 
                     // const SizedBox(height: 24),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
 
                     const TranslatedText(
                       "Start Building Wealth From Just 1 Gram",
@@ -242,7 +244,7 @@ class _GspScreenState extends State<GspScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 24),
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -263,7 +265,7 @@ class _GspScreenState extends State<GspScreen> {
                             ),
                           ),
                         ),
-                        Image.asset("assets/GI.png", width: 150),
+                        Image.asset("assets/GI.png", width: 100),
                       ],
                     ),
                   ],
@@ -323,45 +325,38 @@ class _GspScreenState extends State<GspScreen> {
                 }
 
                 return Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: gspProducts.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 18,
-                          childAspectRatio: .60,
-                        ),
-                    itemBuilder: (context, index) {
-                      final product = gspProducts[index];
-                      log(
-                        "gspProducts $gspProducts..............///..........${gspProducts.length}",
-                      );
+                  padding: const EdgeInsets.all(15),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      const double spacing = 12;
+                      final double cellWidth =
+                          (constraints.maxWidth - spacing) / 2;
+                      final double textScale = MediaQuery.of(
+                        context,
+                      ).textScaler.scale(1.0).clamp(1.0, 1.3);
 
-                      return _GspProductCard(product: product);
+                      // image area (~1.0 x width) + room for name, price and button
+                      final double cellHeight =
+                          cellWidth * 0.8 + 130 * textScale;
+
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: gspProducts.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: spacing,
+                          mainAxisSpacing: 18,
+                          mainAxisExtent: cellHeight,
+                        ),
+                        itemBuilder: (context, index) =>
+                            _GspProductCard(product: gspProducts[index]),
+                      );
                     },
                   ),
                 );
               },
             ),
-            // const SizedBox(height: ),
-            // Padding(
-            //   padding: const EdgeInsets.only(left: 16.0),
-            //   child: const TranslatedText(
-            //     "Your Gold Growth",
-            //     // textAlign: TextAlign.center,
-            //     style: TextStyle(
-            //       color: AppColors.black,
-            //       fontWeight: FontWeight.w600,
-            //       fontSize: 16,
-            //     ),
-            //   ),
-            // ),
-            // const SizedBox(height: 16),
-            // _buildPlanSimulator(),
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.only(left: 16.0),
@@ -376,10 +371,6 @@ class _GspScreenState extends State<GspScreen> {
               ),
             ),
             _buildProductDescription(),
-            // _buildCustomerBenefits(),
-            // _buildWhoItUseFor(),
-            // _buildPlanFeatures(),
-            // _buildHowMoneyConverts(),
           ],
         ),
       ),
@@ -1460,89 +1451,82 @@ class _GspProductCard extends StatelessWidget {
         // ],
       ),
       padding: const EdgeInsets.all(5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: SizedBox(
-              height: 180,
-              width: double.infinity,
-              child: imageUrl.isNotEmpty
-                  ? Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
-                        return const Icon(
+      child: Padding(
+        padding: const EdgeInsets.all(5.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // image takes whatever height is left, so nothing overflows
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.image_not_supported,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
+                        )
+                      : const Icon(
                           Icons.image_not_supported,
-                          size: 50,
+                          size: 20,
                           color: Colors.grey,
-                        );
-                      },
-                    )
-                  : const Icon(
-                      Icons.image_not_supported,
-                      size: 50,
-                      color: Colors.grey,
-                    ),
+                        ),
+                ),
+              ),
             ),
-          ),
 
-          const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
-          TranslatedText(
-            productName,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.white,
+            TranslatedText(
+              productName,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.white,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 5),
+            const SizedBox(height: 4),
 
-          TranslatedText(
-            priceText,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppColors.white,
+            TranslatedText(
+              priceText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: AppColors.white,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 4),
+            const SizedBox(height: 6),
 
-          // TranslatedText(
-          //   isInStock ? "In Stock" : "Out of Stock",
-          //   style: TextStyle(
-          //     fontSize: 12,
-          //     fontWeight: FontWeight.w600,
-          //     color: isInStock ? Colors.green : Colors.red,
-          //   ),
-          // ),
-
-          // const SizedBox(height: 5),
-          SizedBox(
-            width: double.infinity,
-            height: 45,
-            child: Consumer2<CartProvider, PhysicalConversionProvider>(
-              builder: (context, cartProvider, physicalProvider, child) {
-                return _buildCartButton(
-                  context: context,
-                  cartProvider: cartProvider,
-                  physicalProvider: physicalProvider,
-                  productId: productId,
-                  isInStock: isInStock,
-                );
-              },
+            // smaller button
+            SizedBox(
+              width: double.infinity,
+              height: 32,
+              child: Consumer2<CartProvider, PhysicalConversionProvider>(
+                builder: (context, cartProvider, physicalProvider, child) {
+                  return _buildCartButton(
+                    context: context,
+                    cartProvider: cartProvider,
+                    physicalProvider: physicalProvider,
+                    productId: productId,
+                    isInStock: isInStock,
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1636,7 +1620,7 @@ class _GspProductCard extends StatelessWidget {
               },
               child: const SizedBox(
                 width: 40,
-                height: 45,
+                // height: 45,
                 child: Center(
                   child: Icon(Icons.remove, color: Colors.white, size: 20),
                 ),
@@ -1661,7 +1645,7 @@ class _GspProductCard extends StatelessWidget {
               },
               child: const SizedBox(
                 width: 40,
-                height: 45,
+                // height: 45,
                 child: Center(
                   child: Icon(Icons.add, color: Colors.white, size: 20),
                 ),

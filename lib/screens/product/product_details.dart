@@ -628,147 +628,245 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       ? cartQuantity
                       : quantity;
 
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                  return Column(
                     children: [
-                      // ======================================================
-                      // PRICE + STOCK
-                      // ======================================================
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: TranslatedText(
-                                price,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 28,
-                                ),
-                              ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TranslatedText(
+                            price,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 28,
                             ),
+                          ),
 
-                            const SizedBox(width: 6),
-
-                            TranslatedText(
-                              canPurchase ? "In Stock" : "Out of Stock",
-                              maxLines: 1,
-                              style: TextStyle(
-                                color: canPurchase ? Colors.green : Colors.red,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
+                          TranslatedText(
+                            canPurchase ? "In Stock" : "Out of Stock",
+                            maxLines: 1,
+                            style: TextStyle(
+                              color: canPurchase ? Colors.green : Colors.red,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-
-                      const SizedBox(width: 10),
-
-                      // ======================================================
-                      // QUANTITY
-                      // ======================================================
-                      Container(
-                        height: 42,
-                        // padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppColors.lightRed,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // MINUS
-                            _quantityButton(
-                              icon: Icons.remove,
-                              onPressed: displayQuantity <= 1
-                                  ? null
-                                  : () async {
-                                      if (isInCart) {
-                                        await cartProvider.updateCartQuantity(
-                                          productId: productId,
-                                          quantity: cartQuantity - 1,
-                                        );
-                                      } else {
-                                        setState(() {
-                                          quantity--;
-                                        });
-                                      }
-                                    },
-                            ),
-
-                            // QUANTITY
-                            SizedBox(
-                              width: 25,
-                              child: Center(
-                                child: TranslatedText(
-                                  '$displayQuantity',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 45,
+                        width: double.infinity,
+                        child: !canPurchase
+                            // ============================================
+                            // OUT OF STOCK
+                            // ============================================
+                            ? ElevatedButton(
+                                onPressed: null,
+                                style: ElevatedButton.styleFrom(
+                                  disabledBackgroundColor: const Color.fromRGBO(
+                                    218,
+                                    218,
+                                    218,
+                                    1,
+                                  ),
+                                  disabledForegroundColor: Colors.black54,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
+                                child: const FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: TranslatedText(
+                                    "OUT OF STOCK",
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : (isInCart && cartQuantity > 0)
+                            ? Container(
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryRed,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    // MINUS
+                                    InkWell(
+                                      onTap: () async {
+                                        if (cartQuantity <= 1) {
+                                          await cartProvider.removeFromCart(
+                                            productId,
+                                          );
+                                        } else {
+                                          await cartProvider.updateCartQuantity(
+                                            productId: productId,
+                                            quantity: cartQuantity - 1,
+                                          );
+                                        }
+                                      },
+                                      child: const Icon(
+                                        Icons.remove,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                    ),
+
+                                    // QUANTITY
+                                    TranslatedText(
+                                      '$cartQuantity',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+
+                                    // PLUS
+                                    InkWell(
+                                      onTap: () async {
+                                        if (physicalProvider.isActive) {
+                                          // Digital product validation
+                                          if (_isDigitalProduct(product)) {
+                                            _showMessage(
+                                              "Digital products cannot be added during physical conversion.",
+                                            );
+                                            return;
+                                          }
+
+                                          // Metal validation
+                                          final error = physicalProvider
+                                              .validateProduct(
+                                                metalType: product['metal_type']
+                                                    ?.toString(),
+                                              );
+
+                                          if (error != null) {
+                                            _showMessage(error);
+                                            return;
+                                          }
+
+                                          // Weight validation
+                                          final weightError =
+                                              _validateConversionWeight(
+                                                cartProvider,
+                                                product: product,
+                                                quantityToAdd: 1,
+                                              );
+
+                                          if (weightError != null) {
+                                            _showMessage(weightError);
+                                            return;
+                                          }
+                                        }
+
+                                        await cartProvider.updateCartQuantity(
+                                          productId: productId,
+                                          quantity: cartQuantity + 1,
+                                        );
+                                      },
+                                      child: const Icon(
+                                        Icons.add,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryRed,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                onPressed: cartProvider.isAdding(productId)
+                                    ? null
+                                    : () async {
+                                        if (physicalProvider.isActive) {
+                                          // Digital product validation
+                                          if (_isDigitalProduct(product)) {
+                                            _showMessage(
+                                              "Digital products cannot be added during physical conversion.",
+                                            );
+                                            return;
+                                          }
+
+                                          // Metal validation
+                                          final error = physicalProvider
+                                              .validateProduct(
+                                                metalType: product['metal_type']
+                                                    ?.toString(),
+                                              );
+
+                                          if (error != null) {
+                                            _showMessage(error);
+                                            return;
+                                          }
+
+                                          // Weight validation
+                                          final weightError =
+                                              _validateConversionWeight(
+                                                cartProvider,
+                                                product: product,
+                                                quantityToAdd: 1,
+                                              );
+
+                                          if (weightError != null) {
+                                            _showMessage(weightError);
+                                            return;
+                                          }
+                                        }
+
+                                        // Add product to cart
+                                        final success = await cartProvider
+                                            .addToCart(
+                                              productId: productId,
+                                              quantity: 1,
+                                            );
+
+                                        if (!context.mounted) return;
+
+                                        _showMessage(
+                                          success
+                                              ? "Added to Cart"
+                                              : "Failed to add product",
+                                        );
+                                      },
+                                child: cartProvider.isAdding(productId)
+                                    ? const SizedBox(
+                                        height: 18,
+                                        width: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const TranslatedText(
+                                        "ADD TO CART",
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                               ),
-                            ),
-
-                            // PLUS
-                            _quantityButton(
-                              icon: Icons.add,
-                              onPressed: () async {
-                                // ============================================
-                                // PHYSICAL CONVERSION VALIDATION
-                                // ============================================
-
-                                if (physicalProvider.isActive) {
-                                  if (_isDigitalProduct(product)) {
-                                    _showMessage(
-                                      "Digital products cannot be added during physical conversion.",
-                                    );
-                                    return;
-                                  }
-
-                                  final error = physicalProvider
-                                      .validateProduct(
-                                        metalType: product['metal_type']
-                                            ?.toString(),
-                                      );
-
-                                  if (error != null) {
-                                    _showMessage(error);
-                                    return;
-                                  }
-
-                                  final weightError = _validateConversionWeight(
-                                    cartProvider,
-                                    product: product,
-                                    quantityToAdd: 1,
-                                  );
-
-                                  if (weightError != null) {
-                                    _showMessage(weightError);
-                                    return;
-                                  }
-                                }
-
-                                // ============================================
-                                // UPDATE QUANTITY
-                                // ============================================
-
-                                if (isInCart) {
-                                  await cartProvider.updateCartQuantity(
-                                    productId: productId,
-                                    quantity: cartQuantity + 1,
-                                  );
-                                } else {
-                                  setState(() {
-                                    quantity++;
-                                  });
-                                }
-                              },
-                            ),
-                          ],
-                        ),
                       ),
                     ],
                   );
@@ -1304,13 +1402,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                       return ElevatedButton(
                                         onPressed: null,
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color.fromRGBO(
-                                            218,
-                                            218,
-                                            218,
-                                            1,
-                                          ),
-                                          foregroundColor: Colors.black54,
+                                          disabledBackgroundColor:
+                                              const Color.fromRGBO(
+                                                218,
+                                                218,
+                                                218,
+                                                1,
+                                              ),
+                                          disabledForegroundColor:
+                                              Colors.black54,
+                                          elevation: 0,
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
                                               20,
@@ -1320,7 +1421,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                         child: const FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: TranslatedText(
-                                            "Out of Stock",
+                                            "OUT OF STOCK",
                                             maxLines: 1,
                                           ),
                                         ),
@@ -1627,28 +1728,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               fontWeight: FontWeight.w600,
               color: isSelected ? AppColors.white : AppColors.black,
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _quantityButton({
-    required IconData icon,
-    required VoidCallback? onPressed,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: SizedBox(
-        width: 35,
-        height: 30,
-        child: Material(
-          color: const Color(0xFF982020),
-          borderRadius: BorderRadius.circular(7),
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(7),
-            child: Center(child: Icon(icon, color: Colors.white, size: 20)),
           ),
         ),
       ),

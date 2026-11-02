@@ -4,14 +4,12 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
-import 'package:junubullion/screens/plans/form.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
 import 'package:junubullion/widgets/home/custom_appbar.dart';
-import 'package:junubullion/widgets/jsc/custom_featurecard.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/services/jsc_services.dart';
@@ -132,10 +130,6 @@ class _JscScreenState extends State<JscScreen> {
       ],
     },
   ];
-
-  final PageController _pageController = PageController();
-
-  int _currentPage = 0;
 
   String? _lastCurrency;
   String? _lastUnit;
@@ -265,176 +259,51 @@ class _JscScreenState extends State<JscScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// Hero Section
-            // Container(
-            //   width: double.infinity,
-            //   decoration: BoxDecoration(gradient: AppColors.BgGradient),
-            //   padding: const EdgeInsets.all(20),
-            //   child: Column(
-            //     crossAxisAlignment: CrossAxisAlignment.start,
-            //     children: [
-            //       /// Tagline
-            //       Container(
-            //         padding: const EdgeInsets.symmetric(
-            //           horizontal: 18,
-            //           vertical: 12,
-            //         ),
-            //         decoration: BoxDecoration(
-            //           color: const Color(0xFF7B0000),
-            //           border: Border.all(
-            //             color: const Color(0xFFFFC107),
-            //             width: 2,
-            //           ),
-            //           boxShadow: [
-            //             BoxShadow(
-            //               color: const Color(0xFFFFC107).withOpacity(0.45),
-            //               blurRadius: 18,
-            //               spreadRadius: 6,
-            //               offset: const Offset(0, 0),
-            //             ),
-            //           ],
-            //         ),
-            //         child: Column(
-            //           crossAxisAlignment: CrossAxisAlignment.start,
-            //           children: [
-            //             const TranslatedText(
-            //               '"Save Smart.Own Gold.',
-            //               style: TextStyle(
-            //                 fontSize: 20,
-            //                 fontWeight: FontWeight.bold,
-            //                 color: Color(0xffFFCC19),
-            //               ),
-            //             ),
-            //             const TranslatedText(
-            //               'Build Your Future."',
-            //               style: TextStyle(
-            //                 fontSize: 20,
-            //                 fontWeight: FontWeight.bold,
-            //                 color: Colors.white,
-            //               ),
-            //             ),
-            //           ],
-            //         ),
-            //       ),
-
-            //       const SizedBox(height: 22),
-
-            //       const TranslatedText(
-            //         "Your Wealth, Backed by Real Gold & Silver",
-            //         style: TextStyle(
-            //           color: Colors.white,
-            //           fontWeight: FontWeight.w700,
-            //           fontSize: 24,
-            //           // height: 1.2,
-            //         ),
-            //       ),
-
-            //       const SizedBox(height: 10),
-
-            //       const TranslatedText(
-            //         "Start building your future with the Junu Savings Capital — own digital gold and silver, starting from just 1 gram.",
-            //         style: TextStyle(
-            //           color: Colors.white,
-            //           fontSize: 15,
-            //           // height: 1.4,
-            //           fontWeight: FontWeight.w500,
-            //         ),
-            //       ),
-
-            //       const SizedBox(height: 10),
-
-            //       SizedBox(
-            //         height: 54,
-            //         child: ElevatedButton(
-            //           style: ElevatedButton.styleFrom(
-            //             backgroundColor: const Color(0xffFFBA49),
-            //             foregroundColor: Colors.black,
-            //             shape: RoundedRectangleBorder(
-            //               borderRadius: BorderRadius.circular(18),
-            //             ),
-            //           ),
-            //           onPressed: () {
-            //             hasJscRegistration
-            //                 ? Navigator.push(
-            //                     context,
-            //                     MaterialPageRoute(
-            //                       builder: (_) => const ApplicationForm(
-            //                         isEdit: true,
-            //                         applicationType: 'JSC',
-            //                       ),
-            //                     ),
-            //                   )
-            //                 : Navigator.push(
-            //                     context,
-            //                     MaterialPageRoute(
-            //                       builder: (_) =>
-            //                           ApplicationForm(applicationType: 'JSC'),
-            //                     ),
-            //                   );
-            //           },
-            //           child: hasJscRegistration
-            //               ? TranslatedText(
-            //                   "View Your Jsc Application",
-            //                   style: TextStyle(
-            //                     fontWeight: FontWeight.w600,
-            //                     fontSize: 14,
-            //                   ),
-            //                 )
-            //               : TranslatedText(
-            //                   "Open Your Jsc Account",
-            //                   style: TextStyle(
-            //                     fontWeight: FontWeight.w600,
-            //                     fontSize: 14,
-            //                   ),
-            //                 ),
-            //         ),
-            //       ),
-
-            //       const SizedBox(height: 30),
-
-            //       Row(
-            //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            //         children: [
-            //           Image.asset("assets/jsc_1.png"),
-            //           Image.asset("assets/jsc_2.png"),
-            //           Image.asset("assets/jsc_1.png"),
-            //         ],
-            //       ),
-            //     ],
-            //   ),
-            // ),
             Container(
               decoration: BoxDecoration(gradient: AppColors.BgGradient),
               child: Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(20),
-                height: 280,
+                margin: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(14),
+                constraints: const BoxConstraints(minHeight: 240),
                 decoration: BoxDecoration(
                   gradient: AppColors.BgGradient,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xffD4A017), width: 1),
+                  // border: Border.all(color: const Color(0xffD4A017), width: 1),
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xffD4A017)),
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          child: const TranslatedText(
-                            "Physical Asset Backed",
-                            style: TextStyle(color: Colors.white, fontSize: 12),
+                        // pill shrinks instead of overflowing
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: const Color(0xffD4A017),
+                              ),
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            child: const TranslatedText(
+                              "Physical Asset Backed",
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
                           ),
                         ),
+
+                        const SizedBox(width: 10),
 
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -460,8 +329,9 @@ class _JscScreenState extends State<JscScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
+                    // RichText wraps by default, so this one is fine
                     RichText(
                       text: const TextSpan(
                         style: TextStyle(
@@ -481,7 +351,7 @@ class _JscScreenState extends State<JscScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
 
                     const TranslatedText(
                       "Start Building Wealth From Just 1 Gram",
@@ -492,28 +362,57 @@ class _JscScreenState extends State<JscScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 22),
 
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xffA72222),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: const TranslatedText(
-                            "START INVESTING",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                        // button takes the remaining width and its label scales down
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xffA72222),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: TranslatedText(
+                                  "START INVESTING",
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                        Image.asset("assets/GS.png", width: 110),
+
+                        const SizedBox(width: 8),
+
+                        // image scales with the screen width, capped at 100
+                        Builder(
+                          builder: (context) {
+                            final double imgWidth =
+                                (MediaQuery.of(context).size.width * 0.25)
+                                    .clamp(70.0, 100.0);
+                            return Image.asset(
+                              "assets/GS.png",
+                              width: imgWidth,
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ],
@@ -655,177 +554,176 @@ class _JscScreenState extends State<JscScreen> {
 
             const SizedBox(height: 16),
 
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 12),
-                  child: TranslatedText(
-                    "Investment Journey",
-                    style: TextStyle(
-                      color: AppColors.black,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
+            // Column(
+            //   crossAxisAlignment: CrossAxisAlignment.start,
+            //   children: [
+            //     const Padding(
+            //       padding: EdgeInsets.only(left: 12),
+            //       child: TranslatedText(
+            //         "Investment Journey",
+            //         style: TextStyle(
+            //           color: AppColors.black,
+            //           fontWeight: FontWeight.w600,
+            //           fontSize: 20,
+            //         ),
+            //       ),
+            //     ),
 
-                const SizedBox(height: 16),
+            //     const SizedBox(height: 16),
 
-                SizedBox(
-                  height: 280,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: journeyData.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 16),
-                    itemBuilder: (context, index) {
-                      final item = journeyData[index];
+            //     SizedBox(
+            //       height: 280,
+            //       child: ListView.separated(
+            //         scrollDirection: Axis.horizontal,
+            //         padding: const EdgeInsets.symmetric(horizontal: 12),
+            //         itemCount: journeyData.length,
+            //         separatorBuilder: (_, __) => const SizedBox(width: 16),
+            //         itemBuilder: (context, index) {
+            //           final item = journeyData[index];
 
-                      return Container(
-                        width: 220,
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: AppColors.sandal,
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: AppColors.mustard,
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEDEFF3),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                item["tag"],
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF64748B),
-                                ),
-                              ),
-                            ),
+            //           return Container(
+            //             width: 220,
+            //             padding: const EdgeInsets.all(18),
+            //             decoration: BoxDecoration(
+            //               color: AppColors.sandal,
+            //               borderRadius: BorderRadius.circular(24),
+            //               border: Border.all(
+            //                 color: AppColors.mustard,
+            //                 width: 1,
+            //               ),
+            //             ),
+            //             child: Column(
+            //               crossAxisAlignment: CrossAxisAlignment.start,
+            //               children: [
+            //                 Container(
+            //                   padding: const EdgeInsets.symmetric(
+            //                     horizontal: 14,
+            //                     vertical: 6,
+            //                   ),
+            //                   decoration: BoxDecoration(
+            //                     color: const Color(0xFFEDEFF3),
+            //                     borderRadius: BorderRadius.circular(20),
+            //                   ),
+            //                   child: Text(
+            //                     item["tag"],
+            //                     style: TextStyle(
+            //                       fontSize: 11,
+            //                       fontWeight: FontWeight.w700,
+            //                       color: const Color(0xFF64748B),
+            //                     ),
+            //                   ),
+            //                 ),
 
-                            const SizedBox(height: 12),
+            //                 const SizedBox(height: 12),
 
-                            Center(
-                              child: Image.asset(
-                                item["icon"],
-                                width: 60,
-                                height: 60,
-                              ),
-                            ),
+            //                 Center(
+            //                   child: Image.asset(
+            //                     item["icon"],
+            //                     width: 60,
+            //                     height: 60,
+            //                   ),
+            //                 ),
 
-                            const SizedBox(height: 6),
+            //                 const SizedBox(height: 6),
 
-                            Center(
-                              child: Text(
-                                item["day"],
-                                style: const TextStyle(
-                                  color: Color(0xFF7A869A),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
+            //                 Center(
+            //                   child: Text(
+            //                     item["day"],
+            //                     style: const TextStyle(
+            //                       color: Color(0xFF7A869A),
+            //                       fontSize: 14,
+            //                     ),
+            //                   ),
+            //                 ),
 
-                            const SizedBox(height: 6),
+            //                 const SizedBox(height: 6),
 
-                            Center(
-                              child: Text(
-                                item["title"],
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF172B4D),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            // const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                                horizontal: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF7F7F9),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        const Text(
-                                          "Minimum",
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          item["min"],
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    height: 35,
-                                    width: 1,
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        const Text(
-                                          "Maximum",
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          item["max"],
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+            //                 Center(
+            //                   child: Text(
+            //                     item["title"],
+            //                     textAlign: TextAlign.center,
+            //                     style: TextStyle(
+            //                       fontSize: 14,
+            //                       fontWeight: FontWeight.w700,
+            //                       color: const Color(0xFF172B4D),
+            //                     ),
+            //                   ),
+            //                 ),
+            //                 const SizedBox(height: 6),
+            //                 // const Spacer(),
+            //                 Container(
+            //                   padding: const EdgeInsets.symmetric(
+            //                     vertical: 14,
+            //                     horizontal: 12,
+            //                   ),
+            //                   decoration: BoxDecoration(
+            //                     color: const Color(0xFFF7F7F9),
+            //                     borderRadius: BorderRadius.circular(16),
+            //                   ),
+            //                   child: Row(
+            //                     mainAxisAlignment:
+            //                         MainAxisAlignment.spaceBetween,
+            //                     children: [
+            //                       Expanded(
+            //                         child: Column(
+            //                           children: [
+            //                             const Text(
+            //                               "Minimum",
+            //                               style: TextStyle(
+            //                                 fontSize: 11,
+            //                                 color: Colors.grey,
+            //                               ),
+            //                             ),
+            //                             const SizedBox(height: 6),
+            //                             Text(
+            //                               item["min"],
+            //                               style: const TextStyle(
+            //                                 fontWeight: FontWeight.w700,
+            //                                 fontSize: 12,
+            //                               ),
+            //                             ),
+            //                           ],
+            //                         ),
+            //                       ),
+            //                       Container(
+            //                         height: 35,
+            //                         width: 1,
+            //                         color: Colors.grey.shade300,
+            //                       ),
+            //                       Expanded(
+            //                         child: Column(
+            //                           children: [
+            //                             const Text(
+            //                               "Maximum",
+            //                               style: TextStyle(
+            //                                 fontSize: 11,
+            //                                 color: Colors.grey,
+            //                               ),
+            //                             ),
+            //                             const SizedBox(height: 6),
+            //                             Text(
+            //                               item["max"],
+            //                               style: const TextStyle(
+            //                                 fontWeight: FontWeight.w700,
+            //                                 fontSize: 12,
+            //                               ),
+            //                             ),
+            //                           ],
+            //                         ),
+            //                       ),
+            //                     ],
+            //                   ),
+            //                 ),
+            //               ],
+            //             ),
+            //           );
+            //         },
+            //       ),
+            //     ),
+            //   ],
+            // ),
 
-            const SizedBox(height: 16),
-
+            // const SizedBox(height: 16),
             Container(
               color: const Color(0xffF8F6F0),
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -930,13 +828,16 @@ class _JscScreenState extends State<JscScreen> {
 
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: targetGoals.map((goal) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: GoalCard(goal: goal),
-                        );
-                      }).toList(),
+                    child: IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: targetGoals.map((goal) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: GoalCard(goal: goal),
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
                   // const SizedBox(height: 16),
@@ -1270,22 +1171,24 @@ class GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+
     return Container(
-      height: 320,
-      width: MediaQuery.of(context).size.width * .58,
+      width: (width * .58).clamp(200.0, 280.0),
       decoration: BoxDecoration(
         gradient: AppColors.BgGradient,
         borderRadius: BorderRadius.circular(24),
       ),
       padding: const EdgeInsets.all(12),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Image.asset(
               goal["image"],
-              height: 140,
+              height: (width * 0.34).clamp(110.0, 150.0), // scales with screen
               width: double.infinity,
               fit: BoxFit.cover,
             ),
@@ -1323,41 +1226,34 @@ class GoalCard extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          Expanded(
-            child: Column(
-              children: List<String>.from(goal["points"]).map((point) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 5),
-                        child: CircleAvatar(
-                          radius: 3,
-                          backgroundColor: Colors.red,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      Expanded(
-                        child: TranslatedText(
-                          point,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                    ],
+          // plain Column (no Expanded) so it takes the height it needs
+          ...List<String>.from(goal["points"]).map((point) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 5),
+                    child: CircleAvatar(radius: 3, backgroundColor: Colors.red),
                   ),
-                );
-              }).toList(),
-            ),
-          ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TranslatedText(
+                      point,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

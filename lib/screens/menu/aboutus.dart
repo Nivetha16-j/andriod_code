@@ -62,6 +62,9 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final offerCardHeight = (screenHeight * 0.58).clamp(350.0, 500.0);
+
     return Scaffold(
       backgroundColor: Color(0xffFAFAF8),
       key: scaffoldKey,
@@ -351,190 +354,188 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                       ),
                     ),
                   ),
-                  Column(
-                    children: [
-                      SizedBox(
-                        height: 430,
-                        child: PageView.builder(
-                          controller: _offerPageController,
-                          itemCount: 2,
+                  SizedBox(
+                    height: offerCardHeight,
+                    child: PageView.builder(
+                      controller: _offerPageController,
+                      itemCount: 2,
 
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentOfferPage = index;
-                            });
-                          },
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentOfferPage = index;
+                        });
+                      },
 
-                          itemBuilder: (context, index) {
-                            final bool isGold = index == 0;
+                      itemBuilder: (context, index) {
+                        final bool isGold = index == 0;
 
-                            return Container(
-                              width: double.infinity,
-                              margin: const EdgeInsets.only(top: 20),
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                gradient: AppColors.BgGradient,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(top: 20),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: AppColors.BgGradient,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
 
-                              child: Stack(
-                                children: [
-                                  // =========================
-                                  // PRODUCT CONTENT
-                                  // =========================
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // PRODUCT IMAGE
-                                      Center(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          child: Image.asset(
-                                            isGold
-                                                ? "assets/gold.png"
-                                                : "assets/silver.png",
-                                            width: 180,
-                                            height: 200,
-                                            fit: BoxFit.contain,
-                                          ),
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 18),
-
-                                      // PRODUCT TITLE
-                                      TranslatedText(
-                                        isGold
-                                            ? "1 Gram Canadian Gold Maple Leaf Coins"
-                                            : "1 Kilogram Royal Canadian Mint Silver Bullion Bar",
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.white,
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 10),
-
-                                      // PRODUCT DESCRIPTION
-                                      TranslatedText(
-                                        isGold
-                                            ? "The 1g Gold MapleGram Coin from The Royal Canadian Mint Offers The Perfect Blend Of Quality, Security, And Investment Potential.Struck From 99.99% Pure Gold, Each Coin Features The Iconic Maple Leaf Design, Micro-Engraved Security Features."
-                                            : "Invest in purity and prestige with the 1 Kilogram Royal Canadian Mint (RCM) Silver Bullion Bar. Minted by one of the world's most respected sovereign mints, this silver bar contains 1 kilogram (32.15 troy ounces) of .9999 fine silver.",
-                                        maxLines: 4,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          height: 1.5,
-                                          color: AppColors.white,
-                                        ),
-                                      ),
-
-                                      const SizedBox(height: 14),
-
-                                      // DISCOVER MORE
-                                      InkWell(
-                                        onTap: () {
-                                          Navigator.pushAndRemoveUntil(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => MainScreen(
-                                                initialIndex: 3,
-                                                productCategoryIndex: isGold
-                                                    ? 1
-                                                    : 4,
-                                              ),
+                            child: Stack(
+                              children: [
+                                // =========================
+                                // PRODUCT CONTENT
+                                // =========================
+                                Positioned.fill(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 30),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        // PRODUCT IMAGE
+                                        Center(
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
                                             ),
-                                            (route) => false,
-                                          );
-                                        },
-                                        child: const TranslatedText(
-                                          "Discover More ›",
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.yellow,
+                                            child: Image.asset(
+                                              isGold
+                                                  ? "assets/gold.png"
+                                                  : "assets/silver.png",
+                                              width: 170,
+                                              height: 170,
+                                              fit: BoxFit.contain,
+                                            ),
                                           ),
                                         ),
+
+                                        // PRODUCT TITLE
+                                        TranslatedText(
+                                          isGold
+                                              ? "1 Gram Canadian Gold Maple Leaf Coins"
+                                              : "1 Kilogram Royal Canadian Mint Silver Bullion Bar",
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.white,
+                                          ),
+                                        ),
+
+                                        // PRODUCT DESCRIPTION
+                                        TranslatedText(
+                                          isGold
+                                              ? "The 1g Gold MapleGram Coin from The Royal Canadian Mint Offers The Perfect Blend Of Quality, Security, And Investment Potential.Struck From 99.99% Pure Gold, Each Coin Features The Iconic Maple Leaf Design, Micro-Engraved Security Features."
+                                              : "Invest in purity and prestige with the 1 Kilogram Royal Canadian Mint (RCM) Silver Bullion Bar. Minted by one of the world's most respected sovereign mints, this silver bar contains 1 kilogram (32.15 troy ounces) of .9999 fine silver.",
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            height: 1.5,
+                                            color: AppColors.white,
+                                          ),
+                                        ),
+
+                                        // DISCOVER MORE
+                                        InkWell(
+                                          onTap: () {
+                                            Navigator.pushAndRemoveUntil(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => MainScreen(
+                                                  initialIndex: 3,
+                                                  productCategoryIndex: isGold
+                                                      ? 1
+                                                      : 4,
+                                                ),
+                                              ),
+                                              (route) => false,
+                                            );
+                                          },
+                                          child: const TranslatedText(
+                                            "Discover More ›",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.yellow,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                                // =========================
+                                // FORWARD ARROW
+                                // =========================
+                                if (index == 0)
+                                  Positioned(
+                                    top: 2,
+                                    right: 0,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        _offerPageController.nextPage(
+                                          duration: const Duration(
+                                            milliseconds: 400,
+                                          ),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      },
+                                      child: Container(
+                                        width: 26,
+                                        height: 26,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.chevron_right,
+                                          color: AppColors.primaryRed,
+                                          size: 22,
+                                        ),
                                       ),
-                                    ],
+                                    ),
                                   ),
 
-                                  // =========================
-                                  // FORWARD ARROW
-                                  // =========================
-                                  if (index == 0)
-                                    Positioned(
-                                      top: 2,
-                                      right: 0,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          _offerPageController.nextPage(
-                                            duration: const Duration(
-                                              milliseconds: 400,
-                                            ),
-                                            curve: Curves.easeInOut,
-                                          );
-                                        },
-                                        child: Container(
-                                          width: 26,
-                                          height: 26,
-                                          decoration: const BoxDecoration(
-                                            color: Colors.white,
-                                            shape: BoxShape.circle,
+                                // =========================
+                                // BACK ARROW
+                                // =========================
+                                if (index == 1)
+                                  Positioned(
+                                    top: 2,
+                                    left: 0,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        _offerPageController.previousPage(
+                                          duration: const Duration(
+                                            milliseconds: 400,
                                           ),
-                                          child: const Icon(
-                                            Icons.chevron_right,
-                                            color: AppColors.primaryRed,
-                                            size: 22,
-                                          ),
+                                          curve: Curves.easeInOut,
+                                        );
+                                      },
+                                      child: Container(
+                                        width: 26,
+                                        height: 26,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.chevron_left,
+                                          color: AppColors.primaryRed,
+                                          size: 22,
                                         ),
                                       ),
                                     ),
-
-                                  // =========================
-                                  // BACK ARROW
-                                  // =========================
-                                  if (index == 1)
-                                    Positioned(
-                                      top: 2,
-                                      left: 0,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          _offerPageController.previousPage(
-                                            duration: const Duration(
-                                              milliseconds: 400,
-                                            ),
-                                            curve: Curves.easeInOut,
-                                          );
-                                        },
-                                        child: Container(
-                                          width: 26,
-                                          height: 26,
-                                          decoration: const BoxDecoration(
-                                            color: Colors.white,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(
-                                            Icons.chevron_left,
-                                            color: AppColors.primaryRed,
-                                            size: 22,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-
-                      // const SizedBox(height: 12),
-                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),

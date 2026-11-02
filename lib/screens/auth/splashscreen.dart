@@ -1,7 +1,5 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/services/app_bootstrap.dart';
 import 'package:junubullion/services/session_manager.dart';
@@ -102,7 +100,7 @@ class _SplashScreenState extends State<SplashScreen>
     log("lllooooo $loggedIn..............$token");
 
     if (!mounted) return;
-
+    // Navigator.pushReplacementNamed(context, AppRoutes.home);
     if (loggedIn) {
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else {
@@ -150,10 +148,16 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SvgPicture.asset(
-                    'assets/logo/logo.svg',
-                    width: 60,
-                    height: 60,
+                  // SvgPicture.asset(
+                  //   'assets/logo/logo.svg',
+                  //   width: 60,
+                  //   height: 60,
+                  //   fit: BoxFit.contain,
+                  // ),
+                  Image.asset(
+                    "assets/logo/logo.png",
+                    width: 80,
+                    height: 80,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 10),

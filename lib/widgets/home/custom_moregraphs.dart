@@ -159,9 +159,13 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
 
   String _xLabel(DateTime d) {
     final code = rangeCodes[rangeIndex];
-    if (code == '1d') return _time(d);
+    if (code == '1d') {
+      final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
+      final m = d.minute.toString().padLeft(2, '0');
+      return '$h:$m\n${d.hour >= 12 ? 'pm' : 'am'}';
+    }
     if (_isLongRange) return '${_months[d.month - 1]}\n${d.year}';
-    return '${d.day} ${_months[d.month - 1]}';
+    return '${d.day}\n${_months[d.month - 1]}'; // day on line 1, month on line 2
   }
 
   String _tooltipDate(DateTime d) =>
@@ -321,7 +325,11 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 10)),
+        Text(
+          title,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 10),
+        ),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -485,7 +493,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
           const Divider(height: 1),
           const SizedBox(height: 16),
 
-          SizedBox(height: 350, child: _chartBody(provider, points, symbol)),
+          SizedBox(height: 320, child: _chartBody(provider, points, symbol)),
         ],
       ),
     );
@@ -603,16 +611,13 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
                     !labelIndexes.contains(index)) {
                   return const SizedBox.shrink();
                 }
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    _xLabel(_date(points[index]['timestamp'])),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      height: 1.3,
-                      color: Colors.black87,
-                    ),
+                return Text(
+                  _xLabel(_date(points[index]['timestamp'])),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    // height: 1.3,
+                    color: Colors.black87,
                   ),
                 );
               },

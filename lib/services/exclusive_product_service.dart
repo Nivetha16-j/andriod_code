@@ -23,7 +23,7 @@ class ExclusiveProductService {
     try {
       log("EXCLUSIVE API URL: $uri");
 
-      final response = await http.get(uri).timeout(const Duration(seconds: 30));
+      final response = await http.get(uri).timeout(const Duration(seconds: 12));
 
       log("EXCLUSIVE API STATUS: ${response.statusCode}");
 

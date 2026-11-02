@@ -139,7 +139,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                 // GSP
                 // =========================
                 _SchemeCard(
-                  title: "GSP Gold Savings Passbook",
+                  title: "GSP Gold Savings Passbook (GSP)",
                   balanceLabel: "GSP Balance",
                   balance:
                       context
@@ -150,7 +150,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                   // profit: "+\$120.86",
                   // profitPercentage: "-\$120.86 %",
                   // ownedText: "Total Gold Owned: 42.56g",
-                  image: "assets/images/gold_bars.png",
+                  image: "assets/gspBalance.png",
                   isGsp: true,
 
                   onKnowMore: () {
@@ -169,7 +169,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                 // JSC
                 // =========================
                 _SchemeCard(
-                  title: "JSC Junu Saving Capital",
+                  title: "Junu Saving Capital (JSC)",
                   balanceLabel: "JSC Balance",
                   balance:
                       context
@@ -180,7 +180,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                   // profit: "+\$120.86",
                   // profitPercentage: "-\$120.86 %",
                   // ownedText: "Total Gold Owned: 42.56g",
-                  image: "assets/images/silver_bars.png",
+                  image: "assets/jscBalance.png",
                   isGsp: false,
                   onKnowMore: () {
                     Navigator.push(
@@ -263,12 +263,12 @@ class _SchemeCard extends StatelessWidget {
                 // LEFT SIDE - IMAGE
                 // =================================================
                 SizedBox(
-                  width: 70,
+                  width: 90,
                   child: Center(
                     child: Image.asset(
                       image,
-                      width: 60,
-                      height: 60,
+                      width: 80,
+                      height: 80,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
@@ -300,8 +300,10 @@ class _SchemeCard extends StatelessWidget {
                           title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.white,
+                          style: TextStyle(
+                            color: isGsp
+                                ? AppColors.gspTitle
+                                : AppColors.jscTitle,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
@@ -315,7 +317,7 @@ class _SchemeCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: AppColors.white,
+                            color: AppColors.black,
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
                           ),
@@ -329,7 +331,7 @@ class _SchemeCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: AppColors.white,
+                            color: AppColors.primaryRed,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),

@@ -672,7 +672,7 @@ class ContactCard extends StatelessWidget {
                 title,
                 style: const TextStyle(
                   color: Color.fromRGBO(200, 157, 8, 1),
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -681,8 +681,9 @@ class ContactCard extends StatelessWidget {
                 value,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

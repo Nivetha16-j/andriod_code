@@ -47,7 +47,7 @@ class StripeService {
       final token = await SessionManager.getToken();
 
       final Map<String, dynamic> payload = {
-        "shipping_address": shippingAddress,
+        "street_address": shippingAddress,
         "city": city,
         "state": state,
         "pin": pin,
@@ -88,7 +88,17 @@ class StripeService {
         return body;
       }
 
-      throw Exception(body["message"] ?? "Failed to create Stripe session.");
+      final errors = body["errors"];
+      String details = "";
+      if (errors is Map) {
+        details = errors.values.expand((v) => v is List ? v : [v]).join("\n");
+      }
+
+      throw Exception(
+        details.isNotEmpty
+            ? details
+            : (body["message"] ?? "Failed to create Stripe session."),
+      );
     } catch (e) {
       log("Stripe Session Error : $e");
       rethrow;
@@ -222,7 +232,7 @@ class StripeService {
     required Future<String?> Function() otpStep,
   }) async {
     String? secret;
-
+    log("ppppppppppppppppp");
     try {
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(

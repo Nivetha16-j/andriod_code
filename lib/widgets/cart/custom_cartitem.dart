@@ -210,14 +210,14 @@ class CartItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // ============================================================
           // PRODUCT IMAGE
           // ============================================================
           Container(
-            width: 120,
-            height: 100,
+            width: 90,
+            height: 90,
             decoration: BoxDecoration(
               gradient: AppColors.BgGradient,
               borderRadius: BorderRadius.circular(8),
@@ -248,249 +248,224 @@ class CartItemCard extends StatelessWidget {
           // RIGHT CONTENT
           // ============================================================
           Expanded(
-            child: SizedBox(
-              height: 100,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ======================================================
-                  // PRODUCT NAME + DELETE
-                  // ======================================================
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ======================================================
+                // PRODUCT NAME + DELETE
+                // ======================================================
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TranslatedText(
+                        item["name"] ?? "",
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    GestureDetector(
+                      onTap: () async {
+                        final shouldDelete = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            backgroundColor: const Color(0xffF7F7F7),
+                            title: const TranslatedText("Remove Item"),
+                            content: const TranslatedText(
+                              "Are you sure you want to remove this product from your cart?",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context, false);
+                                },
+                                child: const TranslatedText("Cancel"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context, true);
+                                },
+                                child: const TranslatedText(
+                                  "Remove",
+                                  style: TextStyle(color: AppColors.primaryRed),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (shouldDelete == true) {
+                          final success = await context
+                              .read<CartProvider>()
+                              .removeFromCart(item["product_id"]);
+
+                          if (success && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: TranslatedText(
+                                  "Product removed from cart",
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      child: Image.asset(
+                        "assets/delete.png",
+                        width: 35,
+                        height: 35,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 5),
+
+                // ======================================================
+                // SHIPPING
+                // ======================================================
+                const TranslatedText(
+                  "Free 2 - 4 day shipping",
+                  style: TextStyle(fontSize: 12),
+                ),
+
+                const SizedBox(height: 5),
+
+                // ======================================================
+                // PRICE + QUANTITY
+                // ======================================================
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (showDiscount)
+                      TranslatedText(
+                        item["formatted_compare_price"],
+                        style: const TextStyle(
+                          decoration: TextDecoration.lineThrough,
+                          color: Colors.grey,
+                          fontSize: 16,
+                        ),
+                      ),
+
+                    TranslatedText(
+                      displayPrice,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Container(
+                  height: 32,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1E3E6),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: TranslatedText(
-                          item["name"] ?? "",
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
+                      // MINUS
+                      _quantityButton(
+                        icon: Icons.remove,
+                        onPressed: canPurchase
+                            ? () async {
+                                final provider = context.read<CartProvider>();
+
+                                final qty = _getQuantity(item["quantity"]);
+
+                                if (qty == 1) {
+                                  await provider.removeFromCart(
+                                    item["product_id"],
+                                  );
+                                } else {
+                                  await provider.updateCartQuantity(
+                                    productId: item["product_id"],
+                                    quantity: qty - 1,
+                                  );
+                                }
+                              }
+                            : null,
+                      ),
+
+                      // QUANTITY
+                      SizedBox(
+                        width: 25,
+                        child: Center(
+                          child: TranslatedText(
+                            item["quantity"].toString(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(width: 8),
+                      // PLUS
+                      _quantityButton(
+                        icon: Icons.add,
+                        onPressed: canPurchase
+                            ? () async {
+                                final cartProvider = context
+                                    .read<CartProvider>();
 
-                      GestureDetector(
-                        onTap: () async {
-                          final shouldDelete = await showDialog<bool>(
-                            context: context,
-                            builder: (_) => AlertDialog(
-                              backgroundColor: const Color(0xffF7F7F7),
-                              title: const TranslatedText("Remove Item"),
-                              content: const TranslatedText(
-                                "Are you sure you want to remove this product from your cart?",
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context, false);
-                                  },
-                                  child: const TranslatedText("Cancel"),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context, true);
-                                  },
-                                  child: const TranslatedText(
-                                    "Remove",
-                                    style: TextStyle(
-                                      color: AppColors.primaryRed,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
+                                if (isPhysicalConversion) {
+                                  final physicalProvider = context
+                                      .read<PhysicalConversionProvider>();
 
-                          if (shouldDelete == true) {
-                            final success = await context
-                                .read<CartProvider>()
-                                .removeFromCart(item["product_id"]);
+                                  final canIncrease =
+                                      _canIncreasePhysicalQuantity(
+                                        context,
+                                        cartProvider,
+                                        physicalProvider,
+                                      );
 
-                            if (success && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: TranslatedText(
-                                    "Product removed from cart",
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: Image.asset(
-                          "assets/delete.png",
-                          width: 35,
-                          height: 35,
-                          fit: BoxFit.contain,
-                        ),
+                                  if (!canIncrease) {
+                                    return;
+                                  }
+                                }
+
+                                final qty = _getQuantity(item["quantity"]);
+
+                                await cartProvider.updateCartQuantity(
+                                  productId: item["product_id"],
+                                  quantity: qty + 1,
+                                );
+                              }
+                            : null,
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 2),
-
-                  // ======================================================
-                  // SHIPPING
-                  // ======================================================
-                  const TranslatedText(
-                    "Free 2 - 4 day shipping",
-                    style: TextStyle(fontSize: 12),
-                  ),
-
-                  const Spacer(),
-
-                  // ======================================================
-                  // PRICE + QUANTITY
-                  // ======================================================
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // --------------------------------------------------
-                      // PRICE
-                      // --------------------------------------------------
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (showDiscount)
-                              TranslatedText(
-                                item["formatted_compare_price"],
-                                style: const TextStyle(
-                                  decoration: TextDecoration.lineThrough,
-                                  color: Colors.grey,
-                                  fontSize: 16,
-                                ),
-                              ),
-
-                            TranslatedText(
-                              displayPrice,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // const SizedBox(width: 15),
-
-                      // --------------------------------------------------
-                      // QUANTITY CONTROL
-                      // --------------------------------------------------
-                      Container(
-                        height: 35,
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1E3E6),
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // MINUS
-                            _quantityButton(
-                              icon: Icons.remove,
-                              onPressed: canPurchase
-                                  ? () async {
-                                      final provider = context
-                                          .read<CartProvider>();
-
-                                      final qty = _getQuantity(
-                                        item["quantity"],
-                                      );
-
-                                      if (qty == 1) {
-                                        await provider.removeFromCart(
-                                          item["product_id"],
-                                        );
-                                      } else {
-                                        await provider.updateCartQuantity(
-                                          productId: item["product_id"],
-                                          quantity: qty - 1,
-                                        );
-                                      }
-                                    }
-                                  : null,
-                            ),
-
-                            // QUANTITY
-                            SizedBox(
-                              width: 25,
-                              child: Center(
-                                child: TranslatedText(
-                                  item["quantity"].toString(),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            // PLUS
-                            _quantityButton(
-                              icon: Icons.add,
-                              onPressed: canPurchase
-                                  ? () async {
-                                      final cartProvider = context
-                                          .read<CartProvider>();
-
-                                      if (isPhysicalConversion) {
-                                        final physicalProvider = context
-                                            .read<PhysicalConversionProvider>();
-
-                                        final canIncrease =
-                                            _canIncreasePhysicalQuantity(
-                                              context,
-                                              cartProvider,
-                                              physicalProvider,
-                                            );
-
-                                        if (!canIncrease) {
-                                          return;
-                                        }
-                                      }
-
-                                      final qty = _getQuantity(
-                                        item["quantity"],
-                                      );
-
-                                      await cartProvider.updateCartQuantity(
-                                        productId: item["product_id"],
-                                        quantity: qty + 1,
-                                      );
-                                    }
-                                  : null,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // ======================================================
-                  // COUPON
-                  // ======================================================
-                  if (!isPhysicalConversion &&
-                      hasCoupon &&
-                      provider.coupon != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: TranslatedText(
-                        "Coupon ${provider.coupon!["code"]} applied",
-                        style: const TextStyle(color: Colors.red, fontSize: 12),
-                      ),
+                ),
+                // ======================================================
+                // COUPON
+                // ======================================================
+                if (!isPhysicalConversion &&
+                    hasCoupon &&
+                    provider.coupon != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: TranslatedText(
+                      "Coupon ${provider.coupon!["code"]} applied",
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ],

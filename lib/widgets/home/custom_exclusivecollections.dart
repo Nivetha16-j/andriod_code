@@ -334,20 +334,23 @@ class _ExclusiveCollectionsSectionState
                         .take(2)
                         .toList();
 
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: _ExclusiveProductCard(product: products[0]),
-                        ),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _ExclusiveProductCard(product: products[0]),
+                          ),
 
-                        const SizedBox(width: 14),
+                          const SizedBox(width: 14),
 
-                        Expanded(
-                          child: products.length > 1
-                              ? _ExclusiveProductCard(product: products[1])
-                              : const SizedBox(),
-                        ),
-                      ],
+                          Expanded(
+                            child: products.length > 1
+                                ? _ExclusiveProductCard(product: products[1])
+                                : const SizedBox(),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),

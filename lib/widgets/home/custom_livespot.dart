@@ -241,7 +241,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
 
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(gradient: AppColors.BgGradient),
+      decoration: BoxDecoration(gradient: AppColors.pinkGradient),
       child: Padding(
         padding: const EdgeInsets.all(14.0),
         child: Column(
@@ -256,7 +256,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                 const TranslatedText(
                   'Spot price',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: 24.0,
                     fontWeight: FontWeight.w600,
                   ),
@@ -288,7 +288,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
             const TranslatedText(
               'Live precious metals prices',
               style: TextStyle(
-                color: Colors.white,
+                color: Colors.black,
                 fontSize: 16.0,
                 fontWeight: FontWeight.w600,
               ),
@@ -340,7 +340,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                   ),
                 ),
 
-                const SizedBox(width: 13),
+                const SizedBox(width: 10),
 
                 Expanded(
                   child: _buildDropdownContainer(
@@ -510,10 +510,10 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
       height: 130,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
       decoration: BoxDecoration(
-        color: const Color(0xFF70282A),
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isGold ? AppColors.mustard : Colors.white70,
+          color: isGold ? AppColors.mustard : AppColors.silver,
           width: 2.2,
         ),
       ),
@@ -528,7 +528,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
               TranslatedText(
                 metalName.toUpperCase(),
                 style: TextStyle(
-                  color: isGold ? AppColors.mustard : Colors.white,
+                  color: isGold ? AppColors.mustard : Colors.black,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -540,7 +540,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
               Text(
                 priceText,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.primaryRed,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   height: 1,
@@ -553,7 +553,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
               Text(
                 '${widget.selectedCurrency}/${widget.selectedUnit}',
                 style: const TextStyle(
-                  color: AppColors.grey,
+                  color: AppColors.black,
                   fontSize: 17,
                   fontWeight: FontWeight.w500,
                 ),
@@ -569,7 +569,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
               width: 13,
               height: 13,
               decoration: BoxDecoration(
-                color: isGold ? AppColors.mustard : Colors.white,
+                color: isGold ? AppColors.mustard : AppColors.silver,
                 shape: BoxShape.circle,
               ),
             ),
@@ -604,14 +604,14 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
         child: Row(
           children: [
             // const SizedBox(width: 12),
-            Icon(icon, color: const Color(0xFFD2A900), size: 21),
+            Icon(icon, color: const Color(0xFFD2A900), size: 18),
 
             // const SizedBox(width: 5),
             Text(
               label,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -621,17 +621,36 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
             DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: items.contains(value) ? value : null,
-                dropdownColor: const Color(0xFF3A2022),
+                dropdownColor: AppColors.white,
                 icon: const Icon(
                   Icons.keyboard_arrow_down,
                   color: Colors.white,
                   size: 20,
                 ),
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
+                  color:
+                      Colors.black, // menu items stay black on the white menu
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
+
+                // what is shown in the closed button: white text
+                selectedItemBuilder: (context) {
+                  return items.map((item) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }).toList();
+                },
+
                 onChanged: onChanged,
                 items: items.map((item) {
                   return DropdownMenuItem<String>(

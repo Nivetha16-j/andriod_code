@@ -1314,6 +1314,8 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
                   DropdownButtonFormField<String>(
                     value: selectedIdType,
+                    dropdownColor: Colors.white,
+                    style: const TextStyle(color: Colors.black, fontSize: 14),
                     decoration: const InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -1849,6 +1851,8 @@ class _ApplicationFormState extends State<ApplicationForm> {
 
                   DropdownButtonFormField<String>(
                     value: selectedRelationship,
+                    dropdownColor: Colors.white,
+                    style: const TextStyle(color: Colors.black, fontSize: 14),
                     decoration: const InputDecoration(
                       filled: true,
                       fillColor: Color(0xffFCFBF6),

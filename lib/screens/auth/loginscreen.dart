@@ -181,14 +181,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    child: SvgPicture.asset(
-                      'assets/logo/logo.svg',
-                      width: 60,
-                      height: 60,
+                    child: Image.asset(
+                      'assets/logo/logo.png',
+                      width: 100,
+                      height: 100,
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  // const SizedBox(height: 10),
                   Center(
                     child: Text(
                       'Sign In To Your Account',

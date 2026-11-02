@@ -115,6 +115,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
     return Scaffold(
       backgroundColor: Color(0xffFAFAF8),
       key: scaffoldKey,
+      resizeToAvoidBottomInset: false,
       drawer: const CustomDrawer(),
       appBar: CustomAppBar(scaffoldKey: scaffoldKey),
       body: Stack(
@@ -123,321 +124,329 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
           // BACKGROUND - 75% GRADIENT + 25% WHITE
           // ============================================================
           Positioned.fill(
-            child: Column(
+            child: Stack(
               children: [
-                // --------------------------------------------------------
-                // TOP 75% - GRADIENT
-                // --------------------------------------------------------
-                SizedBox(
-                  width: double.infinity,
-                  height: MediaQuery.of(context).size.height * 0.50,
+                Container(color: Colors.white),
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: MediaQuery.of(context).size.height * 0.55,
                   child: const DecoratedBox(
                     decoration: BoxDecoration(gradient: AppColors.BgGradient),
                   ),
                 ),
-
-                // --------------------------------------------------------
-                // BOTTOM 25% - WHITE
-                // --------------------------------------------------------
-                Expanded(
-                  child: Container(width: double.infinity, color: Colors.white),
-                ),
               ],
             ),
           ),
-
           // ============================================================
           // SCROLLABLE CONTENT
           // ============================================================
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                // ========================================================
-                // CONTACT HERO SECTION
-                // ========================================================
-                Container(
-                  width: double.infinity,
-                  color: Colors.transparent,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ==================================================
-                      // HERO IMAGE + OVERLAY CONTENT
-                      // ==================================================
-                      SizedBox(
-                        height: 250,
-                        child: Stack(
-                          children: [
-                            // ------------------------------------------------
-                            // BACKGROUND IMAGE
-                            // ------------------------------------------------
-                            Positioned.fill(
-                              child: Image.asset(
-                                "assets/contact.png",
-                                fit: BoxFit.cover,
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                children: [
+                  // ========================================================
+                  // CONTACT HERO SECTION
+                  // ========================================================
+                  Container(
+                    width: double.infinity,
+                    color: Colors.transparent,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ==================================================
+                        // HERO IMAGE + OVERLAY CONTENT
+                        // ==================================================
+                        SizedBox(
+                          height: 250,
+                          child: Stack(
+                            children: [
+                              // ------------------------------------------------
+                              // BACKGROUND IMAGE
+                              // ------------------------------------------------
+                              Positioned.fill(
+                                child: Image.asset(
+                                  "assets/contact.png",
+                                  fit: BoxFit.cover,
+                                ),
                               ),
-                            ),
 
-                            // ------------------------------------------------
-                            // RED OVERLAY
-                            // ------------------------------------------------
-                            Positioned.fill(
-                              child: Container(
-                                color: AppColors.primaryRed.withOpacity(0.55),
+                              // ------------------------------------------------
+                              // RED OVERLAY
+                              // ------------------------------------------------
+                              Positioned.fill(
+                                child: Container(
+                                  color: AppColors.primaryRed.withOpacity(0.55),
+                                ),
                               ),
-                            ),
 
-                            // ------------------------------------------------
-                            // CONTACT US + CALL + EMAIL
-                            // ------------------------------------------------
-                            Positioned.fill(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              // ------------------------------------------------
+                              // CONTACT US + CALL + EMAIL
+                              // ------------------------------------------------
+                              Positioned.fill(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // CONTACT US
+                                    const TranslatedText(
+                                      "CONTACT US",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 35),
+
+                                    // CALL + EMAIL
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          // ==================================================
+                                          // CALL US
+                                          // ==================================================
+                                          Expanded(
+                                            child: Container(
+                                              height: 52,
+                                              margin: const EdgeInsets.only(
+                                                right: 5,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.primaryRed
+                                                    .withOpacity(0.55),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                  color: AppColors.mustard
+                                                      .withOpacity(0.6),
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  const TranslatedText(
+                                                    "CALL US",
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+
+                                                  const SizedBox(height: 5),
+
+                                                  const TranslatedText(
+                                                    "9947532323",
+                                                    style: TextStyle(
+                                                      color: AppColors.yellow,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+
+                                          // ==================================================
+                                          // EMAIL US
+                                          // ==================================================
+                                          Expanded(
+                                            child: Container(
+                                              height: 52,
+                                              margin: const EdgeInsets.only(
+                                                left: 5,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.primaryRed
+                                                    .withOpacity(0.55),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                  color: AppColors.mustard
+                                                      .withOpacity(0.6),
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  const TranslatedText(
+                                                    "EMAIL US",
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+
+                                                  const SizedBox(height: 5),
+
+                                                  const TranslatedText(
+                                                    "customer@junubullion.com",
+                                                    style: TextStyle(
+                                                      color: AppColors.yellow,
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // ==================================================
+                        // LET'S GET IN TOUCH
+                        // ==================================================
+                        const SizedBox(height: 12),
+
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            left: 14.0,
+                            top: 8,
+                            bottom: 8,
+                          ),
+                          child: const TranslatedText(
+                            "Let's Get in Touch",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 9),
+
+                        // ==================================================
+                        // CONTACT / MAP SECTION
+                        // ==================================================
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(horizontal: 10),
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 18),
+                          decoration: BoxDecoration(
+                            gradient: AppColors.BgGradient,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // ==================================================
+                              // CONTACT + MAP BUTTONS
+                              // ==================================================
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // CONTACT US
-                                  const TranslatedText(
-                                    "CONTACT US",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
+                                  // ------------------------------------------------
+                                  // CONTACT BUTTON
+                                  // ------------------------------------------------
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _showMap = false;
+                                      });
+                                    },
+                                    child: Container(
+                                      width: 44,
+                                      height: 38,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      padding: const EdgeInsets.all(4),
+                                      child: Image.asset(
+                                        "assets/email.png",
+                                        fit: BoxFit.contain,
+                                      ),
                                     ),
                                   ),
 
-                                  const SizedBox(height: 35),
-
-                                  // CALL + EMAIL
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        // ==================================================
-                                        // CALL US
-                                        // ==================================================
-                                        Expanded(
-                                          child: Container(
-                                            height: 52,
-                                            margin: const EdgeInsets.only(
-                                              right: 5,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primaryRed
-                                                  .withOpacity(0.55),
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              border: Border.all(
-                                                color: AppColors.mustard
-                                                    .withOpacity(0.6),
-                                                width: 1,
-                                              ),
-                                            ),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                const TranslatedText(
-                                                  "CALL US",
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-
-                                                const SizedBox(height: 5),
-
-                                                const TranslatedText(
-                                                  "9947532323",
-                                                  style: TextStyle(
-                                                    color: AppColors.yellow,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-
-                                        // ==================================================
-                                        // EMAIL US
-                                        // ==================================================
-                                        Expanded(
-                                          child: Container(
-                                            height: 52,
-                                            margin: const EdgeInsets.only(
-                                              left: 5,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primaryRed
-                                                  .withOpacity(0.55),
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              border: Border.all(
-                                                color: AppColors.mustard
-                                                    .withOpacity(0.6),
-                                                width: 1,
-                                              ),
-                                            ),
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                const TranslatedText(
-                                                  "EMAIL US",
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                                ),
-
-                                                const SizedBox(height: 5),
-
-                                                const TranslatedText(
-                                                  "info@junubullion.com",
-                                                  style: TextStyle(
-                                                    color: AppColors.yellow,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                  // ------------------------------------------------
+                                  // MAP BUTTON
+                                  // ------------------------------------------------
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _showMap = true;
+                                      });
+                                    },
+                                    child: Container(
+                                      width: 44,
+                                      height: 38,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      padding: const EdgeInsets.all(4),
+                                      child: Image.asset(
+                                        "assets/location.png",
+                                        fit: BoxFit.contain,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
 
-                      // ==================================================
-                      // LET'S GET IN TOUCH
-                      // ==================================================
-                      const SizedBox(height: 12),
+                              const SizedBox(height: 8),
 
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: 14.0,
-                          top: 8,
-                          bottom: 8,
-                        ),
-                        child: const TranslatedText(
-                          "Let's Get in Touch",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                              // ==================================================
+                              // FORM / MAP SWITCH
+                              // ==================================================
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 300),
+                                transitionBuilder:
+                                    (
+                                      Widget child,
+                                      Animation<double> animation,
+                                    ) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    },
+                                child: _showMap
+                                    ? _buildMapSection()
+                                    : _buildContactFormSection(),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
 
-                      const SizedBox(height: 9),
-
-                      // ==================================================
-                      // CONTACT / MAP SECTION
-                      // ==================================================
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.symmetric(horizontal: 10),
-                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 18),
-                        decoration: BoxDecoration(
-                          gradient: AppColors.BgGradient,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // ==================================================
-                            // CONTACT + MAP BUTTONS
-                            // ==================================================
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // ------------------------------------------------
-                                // CONTACT BUTTON
-                                // ------------------------------------------------
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _showMap = false;
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 44,
-                                    height: 38,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    padding: const EdgeInsets.all(4),
-                                    child: Image.asset(
-                                      "assets/email.png",
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                ),
-
-                                // ------------------------------------------------
-                                // MAP BUTTON
-                                // ------------------------------------------------
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _showMap = true;
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 44,
-                                    height: 38,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    padding: const EdgeInsets.all(4),
-                                    child: Image.asset(
-                                      "assets/location.png",
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 8),
-
-                            // ==================================================
-                            // FORM / MAP SWITCH
-                            // ==================================================
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 300),
-                              transitionBuilder:
-                                  (Widget child, Animation<double> animation) {
-                                    return FadeTransition(
-                                      opacity: animation,
-                                      child: child,
-                                    );
-                                  },
-                              child: _showMap
-                                  ? _buildMapSection()
-                                  : _buildContactFormSection(),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-                    ],
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -446,56 +455,6 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
         currentIndex: _currentIndex,
         onTap: _switchToTab,
       ),
-    );
-  }
-
-  Widget _buildContactForm() {
-    return Column(
-      key: const ValueKey("contactForm"),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 30),
-
-        _field(controller: firstName, hint: "First name"),
-
-        const SizedBox(height: 12),
-
-        _field(controller: lastName, hint: "Last name"),
-
-        const SizedBox(height: 12),
-
-        _field(controller: email, hint: "Your email"),
-
-        const SizedBox(height: 12),
-
-        _field(controller: message, hint: "How can we help you?", maxLines: 5),
-
-        const SizedBox(height: 22),
-
-        SizedBox(
-          width: double.infinity,
-          height: 45,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryRed,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: _isSubmitting ? null : _submitContactForm,
-            child: const TranslatedText(
-              "Submit",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 10),
-      ],
     );
   }
 

@@ -1643,11 +1643,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _isPlacingOrder = false;
         });
 
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const OrderSuccessScreen()),
-          (route) => false,
-        );
+        // Navigator.pushAndRemoveUntil(
+        //   context,
+        //   MaterialPageRoute(builder: (_) => const OrderSuccessScreen()),
+        //   (route) => false,
+        // );
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
 
         return;
       }
@@ -1933,11 +1934,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
 
                     // CARD OPTIONS DIRECTLY BELOW CARD
+                    // CARD OPTIONS DIRECTLY BELOW CARD
                     if (method == "Card" && paymentMethod == "Card")
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 8,
+                          runSpacing: 8,
                           children: [
                             paymentBox("assets/visa.png"),
                             paymentBox("assets/mastercard.png"),
@@ -3121,6 +3125,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         });
       },
       child: Container(
+        width: 65,
+        height: 65,
         decoration: BoxDecoration(
           border: Border.all(
             color: isSelected ? AppColors.primaryRed : Colors.grey.shade300,
@@ -3128,8 +3134,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           borderRadius: BorderRadius.circular(10),
         ),
-        padding: const EdgeInsets.all(8),
-        child: Image.asset(title, height: 50, width: 65),
+        padding: const EdgeInsets.all(6),
+        child: Image.asset(title, fit: BoxFit.contain),
       ),
     );
   }

@@ -793,8 +793,9 @@ class _ProductGridCard extends StatelessWidget {
       return ElevatedButton(
         onPressed: null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromRGBO(218, 218, 218, 1),
-          foregroundColor: Colors.black54,
+          disabledBackgroundColor: const Color.fromRGBO(218, 218, 218, 1),
+          disabledForegroundColor: Colors.black54,
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -993,7 +994,7 @@ class _ProductGridCard extends StatelessWidget {
         ),
         padding: const EdgeInsets.all(12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // =====================================================

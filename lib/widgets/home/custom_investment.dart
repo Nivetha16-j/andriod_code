@@ -13,7 +13,7 @@ class InvestmentSection extends StatelessWidget {
       {
         "image": "assets/gold.png",
         "title": "GSP - GOLD Savings Passbook",
-        "bgColor": AppColors.mustard,
+        "bgColor": AppColors.gspInvestment,
         "button": AppColors.yellow,
         "description":
             "Starting from just 1 gram, GSP provides a simple, secure, and flexible way to save for retirement, children's education, and future financial goals while benefiting from the long-term value of precious metals.",
@@ -21,7 +21,7 @@ class InvestmentSection extends StatelessWidget {
       {
         "image": "assets/gold.png",
         "title": "JSC - Junu Savings Capital",
-        "bgColor": AppColors.grey,
+        "bgColor": AppColors.jscInvestment,
         "button": AppColors.lightGrey,
         "description":
             "Starting from just 1 gram, JSC provides a simple, secure, and flexible way to save for retirement, children's education, and future financial goals while benefiting from the long-term value of precious metals.",
@@ -87,7 +87,7 @@ class _InvestmentCard extends StatelessWidget {
   final String image;
   final String title;
   final String description;
-  final Color bgColor;
+  final Gradient bgColor;
   final Color buttonColor;
   final VoidCallback onTap;
 
@@ -105,7 +105,7 @@ class _InvestmentCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: bgColor,
+        gradient: bgColor,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(

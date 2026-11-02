@@ -318,10 +318,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             DropdownButtonFormField<dynamic>(
               initialValue: selectedCountryId,
               dropdownColor: Colors.white,
-              style: const TextStyle(color: AppColors.black, fontSize: 14),
-              icon: const Icon(Icons.arrow_drop_down, color: Colors.black54),
+              hint: const Text(
+                "Select Country",
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+              selectedItemBuilder: (BuildContext context) {
+                return countries.map((Country country) {
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      country.name,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
+                  );
+                }).toList();
+              },
+              style: const TextStyle(color: AppColors.white, fontSize: 14),
+              icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
               decoration: InputDecoration(
-                hintText: "Select Country",
+                // hintText: "Select Country",
                 // hintStyle: const TextStyle(
                 //   color: AppColors.white,
                 //   fontSize: 14,
@@ -423,14 +438,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(
-                      child: SvgPicture.asset(
-                        'assets/logo/logo.svg',
-                        width: 60,
-                        height: 60,
+                      child: Image.asset(
+                        'assets/logo/logo.png',
+                        width: 100,
+                        height: 100,
                         fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    // const SizedBox(height: 4),
                     Center(
                       child: Text(
                         'Sign Up To Your Account',

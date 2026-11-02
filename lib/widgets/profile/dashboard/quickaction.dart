@@ -80,20 +80,20 @@ class QuickActionsSection extends StatelessWidget {
                 // gradientColors: [AppColors.primaryRed, AppColors.mustard],
               ),
             ),
-            GestureDetector(
-              onTap: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(builder: (_) => const PaymentMethodsScreen()),
-                // );
-              },
-              child: const ActionTile(
-                "assets/pay.png",
-                "Payment methods",
-                "Manage saved payment options",
-                // gradientColors: [AppColors.green, AppColors.offWhite],
-              ),
-            ),
+            // GestureDetector(
+            //   onTap: () {
+            //     // Navigator.push(
+            //     //   context,
+            //     //   MaterialPageRoute(builder: (_) => const PaymentMethodsScreen()),
+            //     // );
+            //   },
+            //   child: const ActionTile(
+            //     "assets/pay.png",
+            //     "Payment methods",
+            //     "Manage saved payment options",
+            //     // gradientColors: [AppColors.green, AppColors.offWhite],
+            //   ),
+            // ),
             GestureDetector(
               onTap: () {
                 Navigator.push(

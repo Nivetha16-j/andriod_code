@@ -282,10 +282,21 @@ class _OTPScreenState extends State<OTPScreen> {
                           width: double.infinity,
                           child: OtpTextField(
                             numberOfFields: numberOfFields,
-
                             margin: const EdgeInsets.only(right: spacing),
-                            borderColor: AppColors.lightRed,
-                            focusedBorderColor: AppColors.lightRed,
+                            // borderColor: Colors.yellow,
+                            // borderColor: const Color(0xFFFFD700),
+                            focusedBorderColor: Color.fromRGBO(
+                              255,
+                              255,
+                              255,
+                              0.5,
+                            ),
+                            enabledBorderColor: Color.fromRGBO(
+                              255,
+                              255,
+                              255,
+                              0.5,
+                            ),
 
                             fieldWidth: fieldWidth,
                             fieldHeight: 48,
@@ -293,11 +304,12 @@ class _OTPScreenState extends State<OTPScreen> {
                             borderRadius: BorderRadius.circular(10),
                             filled: true,
                             fillColor: AppColors.lightRed,
-                            cursorColor: AppColors.red,
+                            cursorColor: AppColors.white,
 
                             textStyle: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
+                              color: AppColors.white,
                             ),
 
                             onCodeChanged: (String code) {

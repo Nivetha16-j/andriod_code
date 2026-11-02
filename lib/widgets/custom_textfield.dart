@@ -56,20 +56,19 @@ class CustomTextField extends StatelessWidget {
           validator: validator,
           keyboardType: keyboardType,
           obscureText: obscureText,
-          cursorColor: AppColors.black,
+          cursorColor: AppColors.white,
           maxLength: maxLength,
 
-          style: const TextStyle(fontSize: 13),
+          style: const TextStyle(fontSize: 13, color: AppColors.white),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: AppColors.black),
+            hintStyle: TextStyle(color: AppColors.white),
             filled: true,
             fillColor: AppColors.lightRed,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 13,
               vertical: 13,
             ),
-
             suffixIcon: suffixIcon,
 
             border: OutlineInputBorder(
