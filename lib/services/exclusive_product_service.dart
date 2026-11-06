@@ -32,7 +32,26 @@ class ExclusiveProductService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        return data["products"] ?? [];
+        // return data["products"] ?? [];
+
+        final productList = data["products"] ?? [];
+
+        for (final product in productList) {
+          log(
+            'PRODUCT: ${product['name']} | '
+            'CATEGORY ID: ${product['category_id']} | '
+            'SUBCATEGORY ID: ${product['subcategory_id']} | '
+            'SUBCATEGORY: ${product['subcategory']?['name']}',
+          );
+        }
+
+        log("REQUESTED ENDPOINT: $endpoint");
+        log("RETURNED PRODUCT COUNT: ${productList.length}");
+        log(
+          "FIRST PRODUCT: ${productList.isNotEmpty ? productList.first : 'No products'}",
+        );
+
+        return productList;
       }
 
       throw Exception(

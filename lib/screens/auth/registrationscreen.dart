@@ -26,10 +26,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
   final countryController = TextEditingController();
-  // final passwordController = TextEditingController();
-  // final confirmPasswordController = TextEditingController();
-  //// bool obscurePassword = true;
-  // bool obscureConfirmPassword = true;
   dynamic selectedCountryId;
   late Future<List<Country>> _countriesFuture;
 
@@ -79,23 +75,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return null;
   }
 
-  // String? _validatePassword(String? value) {
-  //   if (value == null || value.isEmpty) {
-  //     return 'Password is required';
-  //   }
-  //   return null;
-  // }
-
-  // String? _validateConfirmPassword(String? value) {
-  //   if (value == null || value.isEmpty) {
-  //     return 'Please confirm your password';
-  //   }
-  //   if (value != passwordController.text) {
-  //     return 'Passwords do not match';
-  //   }
-  //   return null;
-  // }
-
   void _showToast(String message, {bool isError = false}) {
     Fluttertoast.showToast(
       msg: message,
@@ -135,8 +114,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           "phone_number": fullPhoneNumber,
           "country_id": selectedCountryId,
           "address": countryController.text,
-          // "password": passwordController.text,
-          // "password_confirmation": confirmPasswordController.text,
         }),
       );
 
@@ -219,8 +196,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   countryId: selectedCountryId,
                   fname: firstNameController.text.trim(),
                   lname: lastNameController.text.trim(),
-                  // password: passwordController.text,
-                  // passwordConfirmation: confirmPasswordController.text,
                 ),
               ),
             );
@@ -336,11 +311,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               style: const TextStyle(color: AppColors.white, fontSize: 14),
               icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
               decoration: InputDecoration(
-                // hintText: "Select Country",
-                // hintStyle: const TextStyle(
-                //   color: AppColors.white,
-                //   fontSize: 14,
-                // ),
                 filled: true,
                 fillColor: AppColors.lightRed, // Light gray field fill
                 contentPadding: const EdgeInsets.symmetric(
@@ -513,51 +483,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                     _buildCountryDropdown(),
 
-                    // const SizedBox(height: 20),
-
-                    // CustomTextField(
-                    //   label: "Password",
-                    //   hintText: "Enter Password",
-                    //   controller: passwordController,
-                    //   validator: _validatePassword,
-                    //   obscureText: obscurePassword,
-                    //   suffixIcon: IconButton(
-                    //     icon: Icon(
-                    //       obscurePassword
-                    //           ? Icons.visibility_off
-                    //           : Icons.visibility,
-                    //       size: 20,
-                    //     ),
-                    //     onPressed: () {
-                    //       setState(() {
-                    //         obscurePassword = !obscurePassword;
-                    //       });
-                    //     },
-                    //   ),
-                    // ),
-
-                    // const SizedBox(height: 15),
-
-                    // CustomTextField(
-                    //   label: "Confirm Password",
-                    //   hintText: "Confirm Password",
-                    //   controller: confirmPasswordController,
-                    //   validator: _validateConfirmPassword,
-                    //   obscureText: obscureConfirmPassword,
-                    //   suffixIcon: IconButton(
-                    //     icon: Icon(
-                    //       obscureConfirmPassword
-                    //           ? Icons.visibility_off
-                    //           : Icons.visibility,
-                    //       size: 20,
-                    //     ),
-                    //     onPressed: () {
-                    //       setState(() {
-                    //         obscureConfirmPassword = !obscureConfirmPassword;
-                    //       });
-                    //     },
-                    //   ),
-                    // ),
                     const SizedBox(height: 25),
 
                     CustomButton(

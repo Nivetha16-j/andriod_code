@@ -396,56 +396,82 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF981B1B),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: TranslatedText(
-                        'PHYSICAL CONVERSION ACTIVE',
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
+              Expanded(
+                flex: 3,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF981B1B),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: TranslatedText(
+                      'PHYSICAL CONVERSION ACTIVE',
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-              GestureDetector(
-                onTap: _isClearingConversion
-                    ? null
-                    : () async {
-                        log('Clicked cancel conversion');
+              const SizedBox(width: 10),
 
-                        setState(() {
-                          _isClearingConversion = true;
-                        });
-
-                        try {
-                          final cartProvider = context.read<CartProvider>();
-                          final currencyProvider = context
-                              .read<CurrencyProvider>();
-
-                          final success = await provider.cancelConversion(
-                            cartProvider: cartProvider,
-                            currencyProvider: currencyProvider,
-                          );
-
-                          if (!mounted) return;
+              Expanded(
+                flex: 2,
+                child: GestureDetector(
+                  onTap: _isClearingConversion
+                      ? null
+                      : () async {
+                          log('Clicked cancel conversion');
 
                           setState(() {
-                            _isClearingConversion = false;
+                            _isClearingConversion = true;
                           });
 
-                          if (!success) {
+                          try {
+                            final cartProvider = context.read<CartProvider>();
+                            final currencyProvider = context
+                                .read<CurrencyProvider>();
+
+                            final success = await provider.cancelConversion(
+                              cartProvider: cartProvider,
+                              currencyProvider: currencyProvider,
+                            );
+
+                            if (!mounted) return;
+
+                            setState(() {
+                              _isClearingConversion = false;
+                            });
+
+                            if (!success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: TranslatedText(
+                                    'Unable to cancel physical conversion. Please try again.',
+                                  ),
+                                ),
+                              );
+                            }
+                          } catch (e, stackTrace) {
+                            log(
+                              'Error clearing conversion: $e',
+                              stackTrace: stackTrace,
+                            );
+
+                            if (!mounted) return;
+
+                            setState(() {
+                              _isClearingConversion = false;
+                            });
+
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: TranslatedText(
@@ -454,55 +480,39 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                               ),
                             );
                           }
-                        } catch (e, stackTrace) {
-                          log(
-                            'Error clearing conversion: $e',
-                            stackTrace: stackTrace,
-                          );
-
-                          if (!mounted) return;
-
-                          setState(() {
-                            _isClearingConversion = false;
-                          });
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: TranslatedText(
-                                'Unable to cancel physical conversion. Please try again.',
+                        },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.yellow,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: _isClearingConversion
+                        ? const Row(
+                            key: ValueKey('clearing'),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              TranslatedText('Clearing...'),
+                            ],
+                          )
+                        : Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: const TranslatedText(
+                                'Cancel conversion',
+                                key: ValueKey('cancel'),
                               ),
                             ),
-                          );
-                        }
-                      },
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.yellow,
-                    borderRadius: BorderRadius.circular(12),
+                          ),
                   ),
-                  child: _isClearingConversion
-                      ? const Row(
-                          key: ValueKey('clearing'),
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                            SizedBox(width: 8),
-                            TranslatedText(
-                              'Clearing...',
-                              style: TextStyle(fontSize: 11),
-                            ),
-                          ],
-                        )
-                      : const TranslatedText(
-                          'Cancel conversion',
-                          key: ValueKey('cancel'),
-                          style: TextStyle(fontSize: 11),
-                        ),
                 ),
               ),
             ],
@@ -513,14 +523,18 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
             children: [
               const TranslatedText(
                 'Add ',
-                style: TextStyle(fontSize: 14, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(width: 5),
               TranslatedText(
                 metal,
                 style: const TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF981B1B),
+                  color: AppColors.primaryRed,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -528,7 +542,11 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
 
               const TranslatedText(
                 ' products up to ',
-                style: TextStyle(fontSize: 14, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(width: 5),
 
@@ -536,7 +554,7 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
                 '$amount g.',
                 style: const TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF981B1B),
+                  color: AppColors.primaryRed,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -545,7 +563,11 @@ class _CartScreenState extends State<CartScreen> with WidgetsBindingObserver {
           const SizedBox(height: 8),
           const TranslatedText(
             'No payment will be required at checkout.',
-            style: TextStyle(fontSize: 12, color: Colors.black),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.black,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),

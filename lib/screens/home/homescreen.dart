@@ -62,10 +62,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (!mounted) return;
 
-      await exclusiveProductProvider.fetchProducts(
-        currency: currency,
-        unit: unit,
-      );
+      // Only load the home list if no other category has been requested meanwhile
+      if (exclusiveProductProvider.currentEndpoint == "exclusive-products") {
+        await exclusiveProductProvider.fetchProducts(
+          currency: currency,
+          unit: unit,
+        );
+      }
     });
   }
 

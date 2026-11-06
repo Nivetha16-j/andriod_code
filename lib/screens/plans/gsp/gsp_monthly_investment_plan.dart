@@ -7,7 +7,9 @@ import 'package:junubullion/models/plans.dart';
 import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/gsp_monthly_plan_provider.dart';
+import 'package:junubullion/providers/jsc_monthly_plan_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/plans/gsp/gsp_investment_list.dart';
 import 'package:junubullion/screens/plans/layout.dart';
 import 'package:junubullion/services/gsp_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
@@ -284,7 +286,7 @@ class _GspMonthlyInvestmentPlanContentState
         ),
       );
 
-      await _fetchMonthlyPlan();
+      await GspMonthlyPlanProvider().monthlyPlanSuccess(paymentIntentId);
 
       if (!mounted) return;
 
@@ -426,6 +428,38 @@ class _GspMonthlyInvestmentPlanContentState
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: AppColors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  SizedBox(
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const GspInvestmentList(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffA90020),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      // icon: const Icon(Icons.credit_card, size: 18),
+                      label: const TranslatedText(
+                        'View Investments',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],

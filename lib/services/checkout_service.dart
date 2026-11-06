@@ -254,4 +254,112 @@ class CheckoutService {
       throw Exception("Failed to generate UPI QR: $e");
     }
   }
+
+  static Future<Map<String, dynamic>> placeOrderPayNow({
+    required Map<String, dynamic> payload,
+  }) async {
+    try {
+      final token = await SessionManager.getToken();
+
+      final response = await http.post(
+        Uri.parse("https://staging.junubullion.com/api/checkout/paynow/pay"),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(payload),
+      );
+
+      log("PAY NOW QR STATUS => ${response.statusCode}");
+      log("PAY NOW QR RESPONSE => ${response.body}");
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return Map<String, dynamic>.from(body);
+      }
+
+      throw Exception(
+        body["message"]?.toString() ?? "Failed to generate PayNow QR",
+      );
+    } on SocketException {
+      throw Exception("No internet connection");
+    } on FormatException {
+      throw Exception("Invalid response from server");
+    } catch (e) {
+      throw Exception("Failed to generate PayNow QR: $e");
+    }
+  }
+
+  static Future<Map<String, dynamic>> upiPaymentCompleted({
+    required dynamic orderId,
+  }) async {
+    try {
+      final token = await SessionManager.getToken();
+
+      final response = await http.post(
+        Uri.parse("$baseUrl/checkout/upi/payment-completed"),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({"order_id": orderId}),
+      );
+
+      log("UPI COMPLETED STATUS => ${response.statusCode}");
+      log("UPI COMPLETED RESPONSE => ${response.body}");
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return Map<String, dynamic>.from(body);
+      }
+
+      throw Exception(
+        body["message"]?.toString() ?? "Failed to confirm UPI payment",
+      );
+    } on SocketException {
+      throw Exception("No internet connection");
+    } on FormatException {
+      throw Exception("Invalid response from server");
+    }
+  }
+
+  static Future<Map<String, dynamic>> payNowPaymentCompleted({
+    required dynamic orderId,
+  }) async {
+    try {
+      log("PAY NOW COMPLETED ORDER ID => $orderId");
+      final token = await SessionManager.getToken();
+
+      final response = await http.post(
+        Uri.parse("$baseUrl/checkout/paynow/payment-completed"),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({"order_id": orderId}),
+      );
+
+      log("PAY NOW COMPLETED STATUS => ${response.statusCode}");
+      log("PAY NOW COMPLETED RESPONSE => ${response.body}");
+
+      final body = jsonDecode(response.body);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return Map<String, dynamic>.from(body);
+      }
+
+      throw Exception(
+        body["message"]?.toString() ?? "Failed to confirm PayNow payment",
+      );
+    } on SocketException {
+      throw Exception("No internet connection");
+    } on FormatException {
+      throw Exception("Invalid response from server");
+    }
+  }
 }

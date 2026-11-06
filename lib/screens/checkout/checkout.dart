@@ -23,6 +23,7 @@ import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/account_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -112,6 +113,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       phoneController.text = provider.phone;
 
       setState(() {});
+
+      // Resume pending card payment automatically.
+      await _resumePendingStripePayment();
     });
   }
 
@@ -269,7 +273,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final physicalProvider = context.watch<PhysicalConversionProvider>();
 
     final bool isPhysicalConversion = physicalProvider.isActive;
-    final String currencySymbol = currencyProvider.selectedCurrency;
+    final String currencySymbol = cartProvider.currencySymbol.isNotEmpty
+        ? cartProvider.currencySymbol
+        : currencyProvider.selectedCurrency;
 
     final String fulfillment =
         cartProvider.fulfillment?.toLowerCase() ?? "physical";
@@ -288,6 +294,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final bool isPickup =
         cartProvider.selectedDeliveryMethod.toLowerCase() == 'pickup';
+
     return Scaffold(
       key: scaffoldKey,
       drawer: const CustomDrawer(),
@@ -318,9 +325,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ],
                 if (isPhysicalConversion) ...[
                   _buildConversionInfo(physicalProvider),
-                  const SizedBox(height: 18),
-                  _buildDeliverySection(isPhysicalConversion: true),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 25),
+                  // _buildDeliverySection(isPhysicalConversion: true),
+                  _buildPhysicalSection(),
+                  const SizedBox(height: 25),
                   _buildTerms(),
                   const SizedBox(height: 18),
                   _buildPhysicalOrderSummary(cartProvider, currencySymbol),
@@ -865,60 +873,60 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  void _showUpiQrDialog() {
-    if (upiQrCode == null) return;
+  // void _showUpiQrDialog() {
+  //   if (upiQrCode == null) return;
 
-    final svgBase64 = upiQrCode!.replaceFirst('data:image/svg+xml;base64,', '');
+  //   final svgBase64 = upiQrCode!.replaceFirst('data:image/svg+xml;base64,', '');
 
-    final svgString = utf8.decode(base64Decode(svgBase64));
+  //   final svgString = utf8.decode(base64Decode(svgBase64));
 
-    showDialog(
-      context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: const Text("Scan UPI QR"),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SvgPicture.string(svgString, width: 250, height: 250),
+  //   showDialog(
+  //     context: context,
+  //     builder: (_) {
+  //       return AlertDialog(
+  //         title: const Text("Scan UPI QR"),
+  //         content: SingleChildScrollView(
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               SvgPicture.string(svgString, width: 250, height: 250),
 
-                const SizedBox(height: 16),
+  //               const SizedBox(height: 16),
 
-                Text(
-                  "Amount: ₹${upiAmount?.toStringAsFixed(2) ?? ''}",
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
+  //               Text(
+  //                 "Amount: ₹${upiAmount?.toStringAsFixed(2) ?? ''}",
+  //                 style: const TextStyle(fontWeight: FontWeight.w600),
+  //               ),
 
-                const SizedBox(height: 8),
+  //               const SizedBox(height: 8),
 
-                SelectableText(
-                  upiId ?? "",
-                  style: const TextStyle(
-                    color: Colors.blue,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+  //               SelectableText(
+  //                 upiId ?? "",
+  //                 style: const TextStyle(
+  //                   color: Colors.blue,
+  //                   fontWeight: FontWeight.w500,
+  //                 ),
+  //               ),
 
-                const SizedBox(height: 12),
+  //               const SizedBox(height: 12),
 
-                const Text(
-                  "Scan this QR using Google Pay, PhonePe, Paytm or any UPI app.",
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  //               const Text(
+  //                 "Scan this QR using Google Pay, PhonePe, Paytm or any UPI app.",
+  //                 textAlign: TextAlign.center,
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.pop(context),
+  //             child: const Text("Close"),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   Future<void> _cancelPhysicalConversion() async {
     if (_isCancellingConversion || _isPlacingOrder) {
@@ -976,6 +984,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       );
     }
+  }
+
+  Widget _buildPhysicalSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const TranslatedText(
+          "Physical Conversion Order",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+
+        const SizedBox(height: 8),
+
+        const TranslatedText(
+          "No payment is required. Review your order and send it when ready.",
+          style: TextStyle(fontSize: 12),
+        ),
+      ],
+    );
   }
 
   Widget _buildDeliverySection({bool isPhysicalConversion = false}) {
@@ -1303,6 +1330,94 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  Future<void> _resumePendingStripePayment() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final paymentIntentId = prefs.getString('pending_stripe_payment_intent');
+    final email = prefs.getString('pending_stripe_email');
+
+    if (paymentIntentId == null ||
+        paymentIntentId.isEmpty ||
+        email == null ||
+        email.isEmpty) {
+      return;
+    }
+
+    if (!mounted) return;
+
+    log('RESUMING PENDING STRIPE PAYMENT -> $paymentIntentId');
+
+    // Open the existing OTP dialog.
+    final secret = await showStripeOtpDialog(
+      context,
+      paymentIntentId: paymentIntentId,
+      email: email,
+    );
+
+    if (!mounted || secret == null || secret.isEmpty) return;
+
+    try {
+      setState(() => _isPlacingOrder = true);
+
+      // Continue payment using the client secret returned by OTP verification.
+      final paymentSuccess = await StripeService.makePayment(secret);
+
+      if (!mounted) return;
+
+      if (!paymentSuccess) {
+        setState(() => _isPlacingOrder = false);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment was not completed. Please try again.'),
+          ),
+        );
+        return;
+      }
+
+      log('RESUMED STRIPE PAYMENT CONFIRMED');
+
+      // Confirm the same PaymentIntent with your backend.
+      final successResponse = await StripeService.stripePaymentSuccess(
+        paymentIntentId: paymentIntentId,
+      );
+
+      log('RESUMED PAYMENT SUCCESS RESPONSE -> $successResponse');
+
+      if (successResponse['status'] == false) {
+        throw Exception(
+          successResponse['message'] ?? 'Unable to confirm payment',
+        );
+      }
+
+      // Clear pending details only after backend success.
+      await prefs.remove('pending_stripe_payment_intent');
+      await prefs.remove('pending_stripe_email');
+
+      final cartProvider = context.read<CartProvider>();
+
+      cartProvider.clearCart();
+      await cartProvider.fetchCart();
+
+      if (!mounted) return;
+
+      setState(() => _isPlacingOrder = false);
+
+      // Same destination as your normal successful payment.
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    } catch (e, stackTrace) {
+      log('RESUME STRIPE PAYMENT ERROR -> $e', stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      setState(() => _isPlacingOrder = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
+  }
+
   Future<void> _placeNormalOrder() async {
     // final addressProvider = context.read<AddressProvider>();
     final cartProvider = context.read<CartProvider>();
@@ -1561,6 +1676,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 email: otpEmail,
               );
 
+              final prefs = await SharedPreferences.getInstance();
+
+              await prefs.setString(
+                'pending_stripe_payment_intent',
+                paymentIntentId.toString(),
+              );
+
+              await prefs.setString('pending_stripe_email', otpEmail);
+
               try {
                 await StripeService.paymentOtpStatus(
                   paymentIntentId: paymentIntentId.toString(),
@@ -1627,6 +1751,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         }
 
         log("STRIPE SUCCESS API COMPLETED -> Clearing cart...");
+
+        final prefs = await SharedPreferences.getInstance();
+
+        await prefs.remove('pending_stripe_payment_intent');
+        await prefs.remove('pending_stripe_email');
 
         cartProvider.clearCart();
 
@@ -2007,7 +2136,49 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     };
   }
 
+  Map<String, dynamic> _buildPayNowPaymentPayload() {
+    final cartProvider = context.read<CartProvider>();
+
+    final String selectedDelivery =
+        (delivery ?? cartProvider.fulfillment ?? "physical").toLowerCase();
+
+    if (selectedDelivery == "digital") {
+      return {
+        "payment_type": "paynow",
+        "delivery_option": "digital",
+        "digital_type": (digitalSubtype ?? cartProvider.digitalSubtype ?? "jsc")
+            .toLowerCase(),
+        "currency": "SGD",
+        "terms": true,
+      };
+    }
+
+    return {
+      "payment_type": "paynow",
+      "delivery_option": "physical",
+      "currency": "SGD",
+      "courier_service": cartProvider.selectedDeliveryMethod.toLowerCase(),
+      "terms": true,
+      "street_address": addressController.text.trim(),
+      "city": cityController.text.trim(),
+      "state": stateController.text.trim(),
+      "pin": zipController.text.trim(),
+      "contact_person": contactPersonController.text.trim(),
+      "contact_email": emailController.text.trim(),
+      "contact_number": phoneController.text.trim(),
+    };
+  }
+
   Future<void> _completeUpiPayment() async {
+    if (!isTermsAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TranslatedText("Please agree to the Terms & Conditions"),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isPlacingOrder = true;
     });
@@ -2022,6 +2193,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!mounted) return;
 
       if (response["status"] == true) {
+        final dynamic orderId =
+            response["data"]?["id"] ??
+            response["data"]?["order_id"] ??
+            response["order_id"];
+
+        if (orderId == null) {
+          throw Exception("Order id not received from server");
+        }
+
+        // Tell the backend the user has paid
+        final completed = await CheckoutService.upiPaymentCompleted(
+          orderId: orderId,
+        );
+
+        if (completed["status"] == false) {
+          throw Exception(
+            completed["message"] ?? "Unable to confirm UPI payment",
+          );
+        }
+
+        if (!mounted) return;
+
         final cartProvider = context.read<CartProvider>();
 
         cartProvider.clearCart();
@@ -2063,6 +2256,99 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  Future<void> _completePayNowPayment() async {
+    if (!isTermsAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: TranslatedText("Please agree to the Terms & Conditions"),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isPlacingOrder = true;
+    });
+
+    try {
+      final payload = _buildPayNowPaymentPayload();
+
+      log("Pay now PAYMENT PAYLOAD => $payload");
+
+      final response = await CheckoutService.placeOrderPayNow(payload: payload);
+
+      log("Pay now PAYMENT RESPONSE => $response");
+
+      if (!mounted) return;
+
+      if (response["status"] == true) {
+        final dynamic orderId =
+            response["data"]?["id"] ??
+            response["data"]?["order_id"] ??
+            response["order_id"];
+
+        log("Pay now PAYMENT ORDER ID => $orderId");
+
+        if (orderId == null) {
+          throw Exception("Order id not received from server");
+        }
+
+        // Tell the backend the user has paid
+        final completed = await CheckoutService.payNowPaymentCompleted(
+          orderId: orderId,
+        );
+
+        log("Pay now PAYMENT COMPLETED RESPONSE => $completed");
+
+        if (completed["status"] == false) {
+          throw Exception(
+            completed["message"] ?? "Unable to confirm PayNow payment",
+          );
+        }
+
+        if (!mounted) return;
+
+        final cartProvider = context.read<CartProvider>();
+
+        cartProvider.clearCart();
+
+        await cartProvider.fetchCart();
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BankTransferSuccessScreen(
+              order: response["data"] ?? {},
+              summary: response["summary"] ?? {},
+              currencySymbol: response["currency"] ?? "SGD",
+              bankName: "PayNow",
+            ),
+          ),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response["message"] ?? "Unable to place order"),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      log("pay now PAYMENT ERROR => $e");
+      log("pp STACKTRACE => $stackTrace");
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPlacingOrder = false;
+        });
+      }
+    }
+  }
+
   Widget _buildGeneratedQrSection() {
     final svgBase64 = upiQrCode!.replaceFirst('data:image/svg+xml;base64,', '');
 
@@ -2087,7 +2373,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 10),
 
           const Text(
-            "Scan this QR code using Google Pay,\nPhonePe, Paytm or any UPI app.",
+            "Scan this QR code using Google Pay, PhonePe, Paytm or any UPI app.",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
@@ -2318,14 +2604,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Column(
         children: [
           const Text(
-            "Scan to pay with PayNow",
+            "Scan to pay with PayNoww",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           const Text(
-            "Open your banking app, scan this QR code, "
-            "and complete the payment.",
+            "Open your banking app, scan this QR code, and complete the payment.",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: Colors.black54),
           ),
@@ -2362,8 +2647,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           const SizedBox(height: 20),
 
           const Text(
-            "After completing the payment, please click "
-            "the button below for your Order Confirmation.",
+            "After completing the payment, please click the button below for your Order Confirmation.",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
@@ -2377,7 +2661,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               onPressed: _isPlacingOrder
                   ? null
                   : () async {
-                      await _completeUpiPayment();
+                      await _completePayNowPayment();
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryRed,
@@ -2426,9 +2710,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // Any other method: subtotal + courier charge.
     final bool isCardPayment = paymentMethod == "Card";
 
+    // final double displayTotal = isCardPayment
+    //     ? provider.totalAmount
+    //     : subtotalValue + courierValue;
+    final double gstValue = (provider.showTax && !isDigital)
+        ? provider.gstAmount
+        : 0.0;
+
     final double displayTotal = isCardPayment
         ? provider.totalAmount
-        : subtotalValue + courierValue;
+        : subtotalValue + courierValue + gstValue;
+
+    String _symbolPrefix(String formatted) =>
+        RegExp(r'^[^\d]*').firstMatch(formatted.trim())?.group(0) ?? '';
 
     return Container(
       width: double.infinity,
@@ -2442,7 +2736,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           const TranslatedText(
             "Order Summary",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
           ),
 
           const SizedBox(height: 15),
@@ -2485,14 +2779,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
             if (coupon != null) ...[
               const SizedBox(height: 15),
-
               _checkoutSummaryRow(
                 "Discount (${coupon["code"] ?? ""})",
                 "- ${_formatCheckoutCurrency(provider.formattedDiscount, currencySymbol)}",
               ),
-
               const SizedBox(height: 15),
-
               _checkoutSummaryRow(
                 "Discount Price",
                 _formatCheckoutCurrency(
@@ -2503,21 +2794,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ],
 
             const SizedBox(height: 15),
+          ],
 
-            if (provider.showTax) ...[
-              const SizedBox(height: 15),
-
-              _checkoutSummaryRow(
-                "GST (21%)",
-                "+ ${_formatCheckoutCurrency(isDigital ? "0.00" : provider.formattedGST, currencySymbol)}",
-              ),
-            ],
+          // Tax shows whenever the backend says it applies (INR), pickup or delivery
+          if (provider.showTax && !isDigital) ...[
+            _checkoutSummaryRow(
+              "Tax (21%)",
+              "+ ${_formatCheckoutCurrency(provider.formattedGST, currencySymbol)}",
+            ),
+            const SizedBox(height: 15),
           ],
           const Divider(height: 35),
 
+          // _checkoutSummaryRow(
+          //   "Total",
+          //   "$currencySymbol ${displayTotal.toStringAsFixed(2)}",
+          //   bold: true,
+          //   valueColor: AppColors.primaryRed,
+          // ),
           _checkoutSummaryRow(
             "Total",
-            "$currencySymbol ${displayTotal.toStringAsFixed(2)}",
+            _symbolPrefix(provider.formattedSubtotal).isEmpty
+                ? "$currencySymbol ${displayTotal.toStringAsFixed(2)}"
+                : "${_symbolPrefix(provider.formattedSubtotal)}${displayTotal.toStringAsFixed(2)}",
             bold: true,
             valueColor: AppColors.primaryRed,
           ),
@@ -2645,64 +2944,71 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF981B1B),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: TranslatedText(
-                        'PHYSICAL CONVERSION ACTIVE',
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 10),
-
-              GestureDetector(
-                onTap: (_isPlacingOrder || _isCancellingConversion)
-                    ? null
-                    : _cancelPhysicalConversion,
+              Expanded(
+                flex: 3,
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: AppColors.yellow,
+                    color: const Color(0xFF981B1B),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: _isCancellingConversion
-                      ? const Row(
-                          key: ValueKey('clearing'),
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: TranslatedText(
+                      'PHYSICAL CONVERSION ACTIVE',
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+
+              Expanded(
+                flex: 2,
+                child: GestureDetector(
+                  onTap: (_isPlacingOrder || _isCancellingConversion)
+                      ? null
+                      : _cancelPhysicalConversion,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.yellow,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: _isCancellingConversion
+                        ? const Row(
+                            key: ValueKey('clearing'),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              TranslatedText('Clearing...'),
+                            ],
+                          )
+                        : Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: const TranslatedText(
+                                'Cancel conversion',
+                                key: ValueKey('cancel'),
+                              ),
                             ),
-                            SizedBox(width: 8),
-                            TranslatedText(
-                              'Clearing...',
-                              style: TextStyle(fontSize: 11),
-                            ),
-                          ],
-                        )
-                      : const TranslatedText(
-                          'Cancel conversion',
-                          key: ValueKey('cancel'),
-                          style: TextStyle(fontSize: 11),
-                        ),
+                          ),
+                  ),
                 ),
               ),
             ],
@@ -2917,6 +3223,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return const TranslatedText("No items in cart");
     }
 
+    String _money0(String symbol) =>
+        symbol.length <= 2 ? '${symbol}0.00' : '$symbol 0.00';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -2929,7 +3238,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           const TranslatedText(
             'Order Summary',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
           ),
 
           const SizedBox(height: 20),
@@ -2944,7 +3253,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             return _buildSummaryItem(
               name: name,
               quantity: quantity,
-              price: "$currencySymbol 0.00",
+              price: _money0(currencySymbol),
               imageUrl: item["image"]?.toString(),
               onDelete: () => _removeCartItem(item["product_id"]),
             );
@@ -2954,22 +3263,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           _summaryRow(
             "Courier charge (Standard delivery)",
-            "$currencySymbol 0.00",
+            _money0(currencySymbol),
           ),
-
           const SizedBox(height: 18),
-
-          _summaryRow("Total (ex tax)", "$currencySymbol 0.00"),
-
+          _summaryRow("Total (ex tax)", _money0(currencySymbol)),
           const SizedBox(height: 18),
-
-          _summaryRow("Tax (21%)", "$currencySymbol 0.00"),
-
+          _summaryRow("Tax (21%)", _money0(currencySymbol)),
           const Divider(height: 30),
-
           _summaryRow(
             "Order Total",
-            "$currencySymbol 0.00",
+            _money0(currencySymbol),
             bold: true,
             valueColor: AppColors.primaryRed,
           ),

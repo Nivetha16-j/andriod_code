@@ -475,13 +475,16 @@ class _BrandScreenState extends State<BrandScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       SizedBox(),
-                      TranslatedText(
-                        brandName,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF981F1F),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: TranslatedText(
+                          brandName,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF981F1F),
+                          ),
                         ),
                       ),
                       Material(

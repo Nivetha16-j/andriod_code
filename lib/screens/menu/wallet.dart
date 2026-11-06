@@ -193,7 +193,7 @@ class _CustomWalletState extends State<CustomWallet> {
                 if (_isJscExpanded) ...[
                   WalletSubMenuItem(
                     icon: Icons.dashboard_outlined,
-                    title: 'Monthly Investment',
+                    title: 'JSC Investment',
                     onTap: () {
                       Navigator.push(
                         context,
@@ -238,7 +238,7 @@ class _CustomWalletState extends State<CustomWallet> {
                 if (_isGspExpanded) ...[
                   WalletSubMenuItem(
                     icon: Icons.dashboard_outlined,
-                    title: 'Monthly Investment',
+                    title: 'GSP Investment',
                     onTap: () {
                       Navigator.push(
                         context,

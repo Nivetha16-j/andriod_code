@@ -170,6 +170,7 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                 ],
               ),
             ),
+            _buildBeginningOfExcellence(),
 
             // White Content Section
             Container(
@@ -546,6 +547,159 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
       bottomNavigationBar: CustomBottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _switchToTab,
+      ),
+    );
+  }
+
+  Widget _buildBeginningOfExcellence() {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // HEADING
+          TranslatedText(
+            "The Beginning Of Excellence",
+            // textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // SERVICE SINCE + LOGO
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const TranslatedText(
+                "Service Since 2015",
+                style: TextStyle(
+                  color: AppColors.primaryRed,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Image.asset(
+                "assets/certi_logo.png",
+                height: 48,
+                width: 48,
+                fit: BoxFit.contain,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // PRECIOUS METALS IMAGE
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: Image.asset(
+              "assets/certi.png",
+              width: double.infinity,
+              height: 230,
+              fit: BoxFit.cover,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // COMPANY DESCRIPTION
+          const TranslatedText(
+            "Junu Bullion Is A Precious Metals Trading Company Specializing In Gold, Silver, And Other Bullion Products. We Are Committed To Providing Clients With Secure, Transparent, And Reliable Precious Metals Solutions For Wealth Preservation And Investment Purposes. We Strive To Offer Competitive Pricing, Efficient Transactions, And Trusted Support To Individual Investors, Businesses And Institutional Clients.",
+            style: TextStyle(fontSize: 13, height: 1.35, color: Colors.black),
+          ),
+
+          const SizedBox(height: 12),
+
+          const TranslatedText(
+            "At Junu Bullion, We Build Long-Term Relationships Through Integrity And Exceptional Customer Service, Offering Competitive Pricing.",
+            style: TextStyle(fontSize: 13, height: 1.35, color: Colors.black),
+          ),
+
+          const SizedBox(height: 20),
+
+          // OUR MISSION
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.track_changes,
+                color: AppColors.primaryRed,
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const TranslatedText(
+                      "Our Mission",
+                      style: TextStyle(
+                        color: AppColors.primaryRed,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const TranslatedText(
+                      "Our Mission Is To Make Bullion Trading Accessible, Secure, And Straightforward For Every Client.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // OUR VISION
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.visibility,
+                color: AppColors.primaryRed,
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const TranslatedText(
+                      "Our Vision",
+                      style: TextStyle(
+                        color: AppColors.primaryRed,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const TranslatedText(
+                      "We Believe Precious Metals Play An Important Role In Protecting And Diversifying Wealth, Ensuring Security For Our Clients.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:junubullion/screens/checkout/checkout.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
@@ -135,10 +136,10 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
           // Status Card
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AppColors.sandal,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.black),
               // boxShadow: [
               //   BoxShadow(
@@ -177,21 +178,82 @@ class _OrderDetailsContentState extends State<OrderDetailsContent> {
                     ],
                   ),
                 ),
-                SizedBox(height: 4),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: "Shipping address : ",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextSpan(text: "${widget.order['shipping_address']}"),
-                    ],
+                if (widget.order['shipping_address'] != null &&
+                    widget.order['shipping_address'].toString().isNotEmpty)
+                  SizedBox(height: 4),
+                if (widget.order['shipping_address'] != null &&
+                    widget.order['shipping_address'].toString().isNotEmpty)
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "Shipping address : ",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: "${widget.order['shipping_address']}"),
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
           ),
+
+          widget.order['payment_method'] == 'card' &&
+                  widget.order['payment_status'] == 'pending'
+              ? const SizedBox(height: 24)
+              : const SizedBox.shrink(),
+
+          widget.order['payment_method'] == 'card' &&
+                  widget.order['payment_status'] == 'pending'
+              ? Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.yellowBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.gspTitle),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TranslatedText(
+                        "This order is awaiting payment. You can return to checkout to pay securely by card.",
+                        style: TextStyle(fontSize: 14, color: AppColors.black),
+                      ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CheckoutScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryRed,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          "Complete Payment",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : const SizedBox.shrink(),
 
           const SizedBox(height: 32),
 

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/screens/checkout/checkout.dart';
@@ -36,6 +38,9 @@ class SummaryWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CartProvider>();
+    log(
+      "SummaryWidget: Building widget with subtotal=$subtotal, courier_fee=$courier_fee, transaction_fee=$transaction_fee, total=$total, deliveryMethod=$deliveryMethod, gst=$gst, currency=$currency, coupon=${coupon?.toString() ?? 'null'}, discount=$discount, discountPrice=$discountPrice, isPhysicalActive=$isPhysicalActive",
+    );
     final bool isPickup =
         provider.selectedDeliveryMethod.toLowerCase() == 'pickup';
 
@@ -43,11 +48,22 @@ class SummaryWidget extends StatelessWidget {
 
     double courierValue = _toDouble(courier_fee);
 
-    double displayTotal = isPickup
-        ? subtotalValue
-        : subtotalValue + courierValue;
+    // double displayTotal = isPickup
+    //     ? subtotalValue
+    //     : subtotalValue + courierValue;
+
+    double gstValue = provider.showTax ? _toDouble(gst) : 0.0;
+
+    double displayTotal =
+        (isPickup ? subtotalValue : subtotalValue + courierValue) + gstValue;
 
     final bool showDeliveryDetails = _shouldShowDeliveryMethod(provider);
+
+    // "$2.17" -> "$", "₹1,200.00" -> "₹"
+    String _symbolPrefix(String formatted) {
+      final match = RegExp(r'^[^\d]*').firstMatch(formatted.trim());
+      return match?.group(0) ?? '';
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -68,30 +84,21 @@ class SummaryWidget extends StatelessWidget {
                 "+ ${_formatCurrency(courier_fee)}",
               ),
 
-              // Coupon
               if (coupon != null) ...[
                 const SizedBox(height: 15),
-
                 _row(
                   "Discount (${coupon!["code"]})",
                   "- ${_formatCurrency(discount)}",
                 ),
-
                 const SizedBox(height: 15),
-
                 _row("Discount Price", _formatCurrency(discountPrice)),
               ],
+            ],
 
-              // const SizedBox(height: 15),
-              // _row(
-              //   "Transaction fee (4%)",
-              //   "+ ${_formatCurrency(transaction_fee)}",
-              // ),
-              if (provider.showTax) ...[
-                const SizedBox(height: 15),
-
-                _row("GST (21%)", "+ ${_formatCurrency(gst)}"),
-              ],
+            // GST shows whenever the backend says tax applies (INR), pickup or delivery
+            if (provider.showTax) ...[
+              const SizedBox(height: 15),
+              _row("Tax (21%)", "${_formatCurrency(gst)}"),
             ],
 
             const SizedBox(height: 20),
@@ -103,9 +110,18 @@ class SummaryWidget extends StatelessWidget {
 
             const SizedBox(height: 20),
 
+            // _row(
+            //   "Total",
+            //   _formatCurrency(displayTotal.toStringAsFixed(2)),
+            //   bold: true,
+            // ),
             _row(
               "Total",
-              _formatCurrency(displayTotal.toStringAsFixed(2)),
+              isPhysicalActive
+                  ? _formatCurrency(displayTotal.toStringAsFixed(2))
+                  : _symbolPrefix(subtotal).isEmpty
+                  ? _formatCurrency(displayTotal.toStringAsFixed(2))
+                  : '${_symbolPrefix(subtotal)}${displayTotal.toStringAsFixed(2)}',
               bold: true,
             ),
             const SizedBox(height: 25),
@@ -154,9 +170,54 @@ class SummaryWidget extends StatelessWidget {
     return !allDigitalPlans;
   }
 
+  String _getCurrencySymbol(String currency) {
+    switch (currency.toUpperCase()) {
+      case 'USD':
+        return '\$';
+      case 'INR':
+        return '₹';
+      case 'SGD':
+        return 'S\$';
+      case 'CAD':
+        return 'C\$';
+      case 'EUR':
+        return '€';
+      case 'AED':
+        return 'د.إ';
+      case 'CNY':
+        return '¥';
+      default:
+        return currency;
+    }
+  }
+
+  // String _formatCurrency(String value) {
+  //   final String trimmedValue = value.trim();
+
+  //   if (trimmedValue.isEmpty) {
+  //     return '$currency 0.00';
+  //   }
+
+  //   if (_hasCurrency(trimmedValue)) {
+  //     return trimmedValue;
+  //   }
+  //   log("Formatting currency: $currency $trimmedValue");
+  //   return '$currency $trimmedValue';
+  // }
+
   String _formatCurrency(String value) {
     final String trimmedValue = value.trim();
 
+    if (isPhysicalActive) {
+      final String symbol = _getCurrencySymbol(currency);
+      final String amount = trimmedValue.isEmpty
+          ? '0.00'
+          : _toDouble(trimmedValue).toStringAsFixed(2);
+
+      return '$symbol $amount';
+    }
+
+    // Existing normal cart formatting — unchanged
     if (trimmedValue.isEmpty) {
       return '$currency 0.00';
     }
@@ -165,6 +226,7 @@ class SummaryWidget extends StatelessWidget {
       return trimmedValue;
     }
 
+    log("Formatting currency: $currency $trimmedValue");
     return '$currency $trimmedValue';
   }
 

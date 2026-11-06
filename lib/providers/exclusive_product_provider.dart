@@ -5,12 +5,11 @@ class ExclusiveProductProvider extends ChangeNotifier {
   final ExclusiveProductService _service = ExclusiveProductService();
 
   bool isLoading = false;
-
   List<dynamic> products = [];
 
   String _currentEndpoint = "exclusive-products";
-
   String get currentEndpoint => _currentEndpoint;
+
   int _productRequestId = 0;
 
   Future<void> fetchProducts({
@@ -36,29 +35,27 @@ class ExclusiveProductProvider extends ChangeNotifier {
         unit: unit,
       );
 
-      // Ignore an older request if a newer category request
-      // has already started.
-      if (requestId != _productRequestId) {
-        return;
-      }
+      if (requestId != _productRequestId) return;
 
       products = newProducts;
     } catch (e) {
       debugPrint('❌ fetchProducts error endpoint=$endpoint: $e');
 
-      if (requestId == _productRequestId && showLoader) {
+      if (requestId == _productRequestId) {
         products = [];
       }
     } finally {
       if (requestId == _productRequestId) {
-        isLoading = false; // always clear, whatever showLoader was
+        isLoading = false;
         notifyListeners();
       }
     }
   }
 
   void clearProducts() {
+    _productRequestId++;
     products = [];
+    isLoading = false;
     notifyListeners();
   }
 }

@@ -392,7 +392,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.phone, color: accentGold),
+                                  Icon(
+                                    Icons.phone,
+                                    color: AppColors.primaryRed,
+                                  ),
                                   SizedBox(height: 8),
                                   TranslatedText(
                                     "+65 83125775",

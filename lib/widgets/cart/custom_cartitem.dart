@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
@@ -46,6 +48,27 @@ class CartItemCard extends StatelessWidget {
     }
 
     return int.tryParse(value.toString()) ?? 0;
+  }
+
+  String _getCurrencySymbol(String currency) {
+    switch (currency.toUpperCase()) {
+      case 'USD':
+        return '\$';
+      case 'INR':
+        return '₹';
+      case 'SGD':
+        return 'S\$';
+      case 'CAD':
+        return 'C\$';
+      case 'EUR':
+        return '€';
+      case 'AED':
+        return 'د.إ';
+      case 'CNY':
+        return '¥';
+      default:
+        return currency;
+    }
   }
 
   // ============================================================
@@ -175,6 +198,7 @@ class CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    log("CartItemCard: Building widget for product_id=.........$item");
     final bool canPurchase = item["stock_status"] == "in_stock";
 
     final provider = context.watch<CartProvider>();
@@ -193,7 +217,8 @@ class CartItemCard extends StatelessWidget {
         item["formatted_compare_price"] != null;
 
     final String displayPrice = isPhysicalConversion
-        ? "${currencyProvider.selectedCurrency} 0.00"
+        ? "${_getCurrencySymbol(currencyProvider.selectedCurrency)} 0.00"
+        // ? item["formatted_unit_price"]
         : showDiscount
         ? (item["formatted_effective_unit_price"] ?? "0.00")
         : item["formatted_compare_price"] ??
@@ -361,7 +386,7 @@ class CartItemCard extends StatelessWidget {
                       displayPrice,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
                     ),

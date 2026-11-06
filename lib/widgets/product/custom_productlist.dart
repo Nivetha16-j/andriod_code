@@ -199,6 +199,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
       );
     }
 
+    // The shared provider may have been overwritten by another screen
+    // (e.g. Home loading "exclusive-products"). Reload our category.
+    final String expectedEndpoint = _endpoints[_selectedCategoryIndex];
+    if (productProvider.currentEndpoint != expectedEndpoint) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _fetchProducts();
+      });
+    }
+
     // ============================================================
     // PRODUCTS
     // ============================================================
@@ -834,8 +843,8 @@ class _ProductGridCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/Cart.png', height: 24),
-            const SizedBox(width: 6),
+            Image.asset('assets/Cart.png', height: 18),
+            const SizedBox(width: 4),
             Flexible(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
@@ -947,8 +956,8 @@ class _ProductGridCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/Cart.png', height: 24),
-                const SizedBox(width: 6),
+                Image.asset('assets/Cart.png', height: 18),
+                const SizedBox(width: 4),
                 Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,

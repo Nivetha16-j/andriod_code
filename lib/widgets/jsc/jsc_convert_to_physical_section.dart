@@ -345,8 +345,9 @@ class _JscConvertPhysicalSectionState extends State<JscConvertPhysicalSection> {
                               'into physical products. Minimum balance to '
                               'convert: 50 g of gold or 1 kg of silver.',
                     style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
                     ),
                   ),
                 ),

@@ -140,58 +140,58 @@ class _SplashScreenState extends State<SplashScreen>
                   )
                 : const ColoredBox(color: Colors.black),
           ),
-          Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(0.25)),
-          ),
-          Positioned.fill(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // SvgPicture.asset(
-                  //   'assets/logo/logo.svg',
-                  //   width: 60,
-                  //   height: 60,
-                  //   fit: BoxFit.contain,
-                  // ),
-                  Image.asset(
-                    "assets/logo/logo.png",
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 10),
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: ShaderMask(
-                        shaderCallback: (Rect bounds) {
-                          return const LinearGradient(
-                            colors: [
-                              Color.fromRGBO(223, 174, 2, 1),
-                              Color.fromRGBO(251, 230, 157, 1),
-                            ],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ).createShader(bounds);
-                        },
-                        child: const Text(
-                          "Build a Better Future with JUNU Investment",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // Positioned.fill(
+          //   child: Container(color: Colors.black.withOpacity(0.25)),
+          // ),
+          // Positioned.fill(
+          //   child: Center(
+          //     child: Column(
+          //       mainAxisAlignment: MainAxisAlignment.center,
+          //       children: [
+          //         // SvgPicture.asset(
+          //         //   'assets/logo/logo.svg',
+          //         //   width: 60,
+          //         //   height: 60,
+          //         //   fit: BoxFit.contain,
+          //         // ),
+          //         // Image.asset(
+          //         //   "assets/logo/logo.png",
+          //         //   width: 80,
+          //         //   height: 80,
+          //         //   fit: BoxFit.contain,
+          //         // ),
+          //         // const SizedBox(height: 10),
+          //         // FadeTransition(
+          //         //   opacity: _fadeAnimation,
+          //         //   child: ScaleTransition(
+          //         //     scale: _scaleAnimation,
+          //         //     child: ShaderMask(
+          //         //       shaderCallback: (Rect bounds) {
+          //         //         return const LinearGradient(
+          //         //           colors: [
+          //         //             Color.fromRGBO(223, 174, 2, 1),
+          //         //             Color.fromRGBO(251, 230, 157, 1),
+          //         //           ],
+          //         //           begin: Alignment.centerLeft,
+          //         //           end: Alignment.centerRight,
+          //         //         ).createShader(bounds);
+          //         //       },
+          //         //       child: const Text(
+          //         //         "Build a Better Future with JUNU Investment",
+          //         //         textAlign: TextAlign.center,
+          //         //         style: TextStyle(
+          //         //           fontSize: 14,
+          //         //           fontWeight: FontWeight.bold,
+          //         //           color: Colors.white,
+          //         //         ),
+          //         //       ),
+          //         //     ),
+          //         //   ),
+          //         // ),
+          //       ],
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );

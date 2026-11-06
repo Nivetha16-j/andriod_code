@@ -8,6 +8,7 @@ import 'package:junubullion/providers/address_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/jsc_monthly_plan_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/plans/jsc/jsc_investment_list.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
@@ -282,7 +283,7 @@ class _JscMonthlyInvestmentPlanContentState
         ),
       );
 
-      await _fetchMonthlyPlan();
+      await JscMonthlyPlanProvider().monthlyPlanSuccess(paymentIntentId);
 
       if (!mounted) return;
 
@@ -424,6 +425,38 @@ class _JscMonthlyInvestmentPlanContentState
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
                       color: AppColors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  SizedBox(
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const JscInvestmentList(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xffA90020),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      // icon: const Icon(Icons.credit_card, size: 18),
+                      label: const TranslatedText(
+                        'View Investments',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],

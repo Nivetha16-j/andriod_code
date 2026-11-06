@@ -5,6 +5,8 @@ import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/menu/wallet.dart';
+import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
@@ -372,7 +374,14 @@ class _JscScreenState extends State<JscScreen> {
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CustomWallet(),
+                                  ),
+                                );
+                              },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xffA72222),
                                 padding: const EdgeInsets.symmetric(
@@ -1300,104 +1309,120 @@ class _JscProductCard extends StatelessWidget {
 
     final bool isInStock = stockStatus == 'in_stock';
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: AppColors.BgGradient,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.18),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailsScreen(productId: productId),
           ),
-        ],
-      ),
-      padding: const EdgeInsets.all(5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: SizedBox(
-                height: 180,
-                width: double.infinity,
-                child: imageUrl.isNotEmpty
-                    ? Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) {
-                          return const Icon(
-                            Icons.image_not_supported,
-                            size: 40,
-                            color: Colors.grey,
-                          );
-                        },
-                      )
-                    : const Icon(
-                        Icons.image_not_supported,
-                        size: 40,
-                        color: Colors.grey,
-                      ),
+        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (_) => ProductDetailsScreen(productId: product["id"]),
+        //   ),
+        // );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: AppColors.BgGradient,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.18),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(5),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: SizedBox(
+                  height: 180,
+                  width: double.infinity,
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) {
+                            return const Icon(
+                              Icons.image_not_supported,
+                              size: 40,
+                              color: Colors.grey,
+                            );
+                          },
+                        )
+                      : const Icon(
+                          Icons.image_not_supported,
+                          size: 40,
+                          color: Colors.grey,
+                        ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 6),
+            const SizedBox(height: 6),
 
-          TranslatedText(
-            productName,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.white,
-              fontWeight: FontWeight.w500,
+            TranslatedText(
+              productName,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.white,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 4),
+            const SizedBox(height: 4),
 
-          TranslatedText(
-            priceText,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.white,
-              fontWeight: FontWeight.bold,
+            TranslatedText(
+              priceText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
 
-          // const SizedBox(height: 3),
+            // const SizedBox(height: 3),
 
-          // TranslatedText(
-          //   isInStock ? "In Stock" : "Out of Stock",
-          //   style: TextStyle(
-          //     fontSize: 12,
-          //     fontWeight: FontWeight.w600,
-          //     color: isInStock ? Colors.green : Colors.red,
-          //   ),
-          // ),
-          const SizedBox(height: 4),
+            // TranslatedText(
+            //   isInStock ? "In Stock" : "Out of Stock",
+            //   style: TextStyle(
+            //     fontSize: 12,
+            //     fontWeight: FontWeight.w600,
+            //     color: isInStock ? Colors.green : Colors.red,
+            //   ),
+            // ),
+            const SizedBox(height: 4),
 
-          SizedBox(
-            width: double.infinity,
-            height: 40,
-            child: Consumer2<CartProvider, PhysicalConversionProvider>(
-              builder: (context, cartProvider, physicalProvider, child) {
-                return _buildCartButton(
-                  context: context,
-                  cartProvider: cartProvider,
-                  physicalProvider: physicalProvider,
-                  productId: productId,
-                  isInStock: isInStock,
-                );
-              },
+            SizedBox(
+              width: double.infinity,
+              height: 40,
+              child: Consumer2<CartProvider, PhysicalConversionProvider>(
+                builder: (context, cartProvider, physicalProvider, child) {
+                  return _buildCartButton(
+                    context: context,
+                    cartProvider: cartProvider,
+                    physicalProvider: physicalProvider,
+                    productId: productId,
+                    isInStock: isInStock,
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1442,13 +1467,26 @@ class _JscProductCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(25),
           ),
         ),
-        child: const TranslatedText(
-          "ADD TO CART",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/Cart.png', height: 18),
+            const SizedBox(width: 4),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: TranslatedText(
+                  "ADD TO CART",
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontSize: 23,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -1559,13 +1597,19 @@ class _JscProductCard extends StatelessWidget {
                 color: Colors.white,
               ),
             )
-          : const TranslatedText(
-              "ADD TO CART",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/Cart.png', height: 18),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: TranslatedText("ADD TO CART", maxLines: 1),
+                  ),
+                ),
+              ],
             ),
     );
   }

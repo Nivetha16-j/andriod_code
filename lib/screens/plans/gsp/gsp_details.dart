@@ -5,6 +5,8 @@ import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/screens/menu/wallet.dart';
+import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
@@ -250,7 +252,14 @@ class _GspScreenState extends State<GspScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CustomWallet(),
+                              ),
+                            );
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.mustard,
                             shape: RoundedRectangleBorder(
@@ -1438,94 +1447,104 @@ class _GspProductCard extends StatelessWidget {
 
     final bool isInStock = stockStatus == 'in_stock';
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: AppColors.BgGradient,
-        borderRadius: BorderRadius.circular(25),
-        // boxShadow: [
-        //   BoxShadow(
-        //     color: Colors.black.withOpacity(.18),
-        //     blurRadius: 14,
-        //     offset: const Offset(0, 6),
-        //   ),
-        // ],
-      ),
-      padding: const EdgeInsets.all(5),
-      child: Padding(
-        padding: const EdgeInsets.all(5.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // image takes whatever height is left, so nothing overflows
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ProductDetailsScreen(productId: productId),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: AppColors.BgGradient,
+          borderRadius: BorderRadius.circular(25),
+          // boxShadow: [
+          //   BoxShadow(
+          //     color: Colors.black.withOpacity(.18),
+          //     blurRadius: 14,
+          //     offset: const Offset(0, 6),
+          //   ),
+          // ],
+        ),
+        padding: const EdgeInsets.all(5),
+        child: Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // image takes whatever height is left, so nothing overflows
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: imageUrl.isNotEmpty
+                        ? Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.image_not_supported,
+                              size: 20,
+                              color: Colors.grey,
+                            ),
+                          )
+                        : const Icon(
                             Icons.image_not_supported,
                             size: 20,
                             color: Colors.grey,
                           ),
-                        )
-                      : const Icon(
-                          Icons.image_not_supported,
-                          size: 20,
-                          color: Colors.grey,
-                        ),
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
-            TranslatedText(
-              productName,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.white,
+              TranslatedText(
+                productName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.white,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 4),
+              const SizedBox(height: 4),
 
-            TranslatedText(
-              priceText,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
+              TranslatedText(
+                priceText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.white,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 6),
+              const SizedBox(height: 6),
 
-            // smaller button
-            SizedBox(
-              width: double.infinity,
-              height: 32,
-              child: Consumer2<CartProvider, PhysicalConversionProvider>(
-                builder: (context, cartProvider, physicalProvider, child) {
-                  return _buildCartButton(
-                    context: context,
-                    cartProvider: cartProvider,
-                    physicalProvider: physicalProvider,
-                    productId: productId,
-                    isInStock: isInStock,
-                  );
-                },
+              // smaller button
+              SizedBox(
+                width: double.infinity,
+                height: 32,
+                child: Consumer2<CartProvider, PhysicalConversionProvider>(
+                  builder: (context, cartProvider, physicalProvider, child) {
+                    return _buildCartButton(
+                      context: context,
+                      cartProvider: cartProvider,
+                      physicalProvider: physicalProvider,
+                      productId: productId,
+                      isInStock: isInStock,
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1571,13 +1590,19 @@ class _GspProductCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(25),
           ),
         ),
-        child: const TranslatedText(
-          "ADD TO CART",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/Cart.png', height: 18),
+            const SizedBox(width: 4),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: TranslatedText("ADD TO CART", maxLines: 1),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -1688,13 +1713,19 @@ class _GspProductCard extends StatelessWidget {
                 color: Colors.white,
               ),
             )
-          : const TranslatedText(
-              "ADD TO CART",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/Cart.png', height: 18),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: TranslatedText("ADD TO CART", maxLines: 1),
+                  ),
+                ),
+              ],
             ),
     );
   }

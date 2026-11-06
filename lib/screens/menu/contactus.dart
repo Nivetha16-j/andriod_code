@@ -299,13 +299,20 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
 
                                                   const SizedBox(height: 5),
 
-                                                  const TranslatedText(
-                                                    "customer@junubullion.com",
-                                                    style: TextStyle(
-                                                      color: AppColors.yellow,
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w500,
+                                                  Flexible(
+                                                    child: FittedBox(
+                                                      fit: BoxFit.scaleDown,
+                                                      child: TranslatedText(
+                                                        "customer@junubullion.com",
+                                                        maxLines: 1,
+                                                        style: TextStyle(
+                                                          color:
+                                                              AppColors.yellow,
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
                                                 ],

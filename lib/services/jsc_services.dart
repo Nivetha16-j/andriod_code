@@ -516,6 +516,72 @@ class JscService {
     }
   }
 
+  static Future<Map<String, dynamic>> getJscMonthlyPlan(String currency) async {
+    try {
+      final token = await SessionManager.getToken();
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/my-account/jsc/monthly-investments'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      log('Jsc invest MONTHLY PLAN STATUS: ${response.statusCode}');
+
+      log('Jsc invest MONTHLY PLAN RESPONSE: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+
+      return {
+        'status': false,
+        'message': 'Failed to fetch Jsc monthly plan (${response.statusCode})',
+      };
+    } catch (e) {
+      log('Jsc MONTHLY PLAN ERROR: $e');
+
+      return {'status': false, 'message': e.toString()};
+    }
+  }
+
+  static Future<Map<String, dynamic>> monthlyPlanSuccess(
+    String paymentIntentId,
+  ) async {
+    try {
+      final token = await SessionManager.getToken();
+
+      final response = await http.get(
+        Uri.parse(
+          '$baseUrl/my-account/jsc/monthly-plan/payment-success',
+        ).replace(queryParameters: {'payment_intent_id': paymentIntentId}),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      log('Jsc MONTHLY PLAN Success STATUS: ${response.statusCode}');
+
+      log('Jsc MONTHLY PLAN SUCCESS RESPONSE: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+
+      return {
+        'status': false,
+        'message': 'Failed to fetch Jsc monthly plan (${response.statusCode})',
+      };
+    } catch (e) {
+      log('Jsc MONTHLY PLAN ERROR: $e');
+
+      return {'status': false, 'message': e.toString()};
+    }
+  }
+
   static Future<Map<String, dynamic>> createMonthlyPayment({
     required double amount,
     required String shippingAddress,

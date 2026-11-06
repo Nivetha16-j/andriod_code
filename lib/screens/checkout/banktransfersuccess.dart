@@ -167,7 +167,8 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
 
               const SizedBox(height: 20),
 
-              widget.order['payment_method'] == 'upi'
+              widget.order['payment_method'] == 'upi' ||
+                      widget.order['payment_method'] == 'paynow'
                   ? Padding(
                       padding: const EdgeInsets.all(10),
                       child: Column(

@@ -223,8 +223,11 @@ class _OTPScreenState extends State<OTPScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isEmailOtp = widget.email != null && widget.email!.isNotEmpty;
+    // Email OTP is used ONLY when logging in with email.
+    final bool isEmailOtp =
+        widget.isLogin && widget.email != null && widget.email!.isNotEmpty;
 
+    // Display email or phone based on the actual OTP method.
     final String displayValue = isEmailOtp ? widget.email! : widget.phoneNumber;
 
     return Scaffold(

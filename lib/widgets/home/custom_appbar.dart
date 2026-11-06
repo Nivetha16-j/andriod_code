@@ -70,7 +70,12 @@ class _CustomAppBarState extends State<CustomAppBar> {
             ),
 
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.only(
+                left: 12,
+                right: 12,
+                top: 8,
+                bottom: 8,
+              ),
 
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -98,10 +103,10 @@ class _CustomAppBarState extends State<CustomAppBar> {
                       );
                     },
 
-                    child: SvgPicture.asset(
-                      'assets/logo/logo.svg',
-                      width: 40,
-                      height: 40,
+                    child: Image.asset(
+                      'assets/logo/logo.png',
+                      width: 48,
+                      height: 48,
                       fit: BoxFit.contain,
                     ),
                   ),

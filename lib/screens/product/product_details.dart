@@ -858,13 +858,26 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                           color: Colors.white,
                                         ),
                                       )
-                                    : const TranslatedText(
-                                        "ADD TO CART",
-                                        maxLines: 1,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                    : Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Image.asset(
+                                            'assets/Cart.png',
+                                            height: 18,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Flexible(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: TranslatedText(
+                                                "ADD TO CART",
+                                                maxLines: 1,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                               ),
                       ),
@@ -1663,9 +1676,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                               children: [
                                                 Image.asset(
                                                   'assets/Cart.png',
-                                                  height: 24,
+                                                  height: 18,
                                                 ),
-                                                const SizedBox(width: 6),
+                                                const SizedBox(width: 4),
                                                 Flexible(
                                                   child: FittedBox(
                                                     fit: BoxFit.scaleDown,

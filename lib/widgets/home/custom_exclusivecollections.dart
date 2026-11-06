@@ -567,8 +567,8 @@ class _ExclusiveProductCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset("assets/addtocart.svg", height: 25, width: 25),
-          const SizedBox(width: 6),
+          Image.asset('assets/Cart.png', height: 18),
+          const SizedBox(width: 4),
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -885,8 +885,8 @@ class _ExclusiveProductCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SvgPicture.asset("assets/addtocart.svg", height: 25, width: 25),
-                const SizedBox(width: 6),
+                Image.asset('assets/Cart.png', height: 18),
+                const SizedBox(width: 4),
                 Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,

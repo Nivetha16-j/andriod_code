@@ -437,10 +437,10 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                   child: const TranslatedText(
                     'Sell your digital holdings back to Junu Bullion at the live spot price. Enter your bank details and confirm the amount — we will transfer the payout to your account.',
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                       height: 1.25,
-                      color: Colors.black,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -480,10 +480,10 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       child: const TranslatedText(
         'Unlock your balances to sell back holdings.',
         style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w400,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
           height: 1.25,
-          color: Colors.black,
+          color: Colors.white,
         ),
       ),
     );
@@ -581,7 +581,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                   TranslatedText(
                     metal,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.white,
                     ),
@@ -589,12 +589,18 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
 
                   TranslatedText(
                     'Available: $balance $unit',
-                    style: const TextStyle(fontSize: 9, color: AppColors.white),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.white,
+                    ),
                   ),
 
                   TranslatedText(
                     'Spot: $spotPrice / $unit',
-                    style: const TextStyle(fontSize: 9, color: AppColors.white),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.white,
+                    ),
                   ),
                 ],
               ),
@@ -667,7 +673,7 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
                 child: const TranslatedText(
                   'Sell Back',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.white,
                   ),
@@ -1032,8 +1038,8 @@ class _JscSellBackContentState extends State<JscSellBackContent> {
       child: const TranslatedText(
         'Minimum balance required for a Sell Back request: 50 g of Gold or 1 kg of Silver. Please increase your balance to become eligible for a Sell Back request.',
         style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w400,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
           height: 1.25,
           color: Color(0xFF8A5A00),
         ),
