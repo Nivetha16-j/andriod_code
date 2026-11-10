@@ -62,10 +62,10 @@ class GspMonthlyPlanProvider extends ChangeNotifier {
     required String currency,
     bool forceRefresh = false,
   }) async {
-    // Prevent duplicate requests
+    // Prevent overlapping requests
     if (_isInvestmentsLoading) return;
 
-    // Avoid fetching again if data is already available
+    // Skip only when refresh is not requested
     if (_hasLoadedInvestments && !forceRefresh) return;
 
     _isInvestmentsLoading = true;
@@ -97,11 +97,10 @@ class GspMonthlyPlanProvider extends ChangeNotifier {
       } else {
         _investmentsErrorMessage =
             response['message']?.toString() ??
-            'Unable to fetch JSC investments.';
+            'Unable to fetch GSP investments.';
       }
     } catch (e, stackTrace) {
-      log('JSC INVESTMENTS ERROR: $e', stackTrace: stackTrace);
-
+      log('GSP INVESTMENTS ERROR: $e', stackTrace: stackTrace);
       _investmentsErrorMessage = e.toString();
     } finally {
       _isInvestmentsLoading = false;

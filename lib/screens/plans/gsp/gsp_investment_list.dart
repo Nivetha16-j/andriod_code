@@ -21,10 +21,12 @@ class _GspInvestmentListState extends State<GspInvestmentList> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<GspMonthlyPlanProvider>(
-        context,
-        listen: false,
-      ).getGspMonthlyPlan(currency: 'USD');
+      if (!mounted) return;
+
+      context.read<GspMonthlyPlanProvider>().getGspMonthlyPlan(
+        currency: 'USD',
+        forceRefresh: true,
+      );
     });
   }
 
@@ -184,7 +186,7 @@ class _GspInvestmentListContentState extends State<GspInvestmentListContent> {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(30),
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: AppColors.white),
             ),
           );
         }

@@ -21,10 +21,12 @@ class _JscInvestmentListState extends State<JscInvestmentList> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<JscMonthlyPlanProvider>(
-        context,
-        listen: false,
-      ).getJscMonthlyPlan(currency: 'USD');
+      if (!mounted) return;
+
+      context.read<JscMonthlyPlanProvider>().getJscMonthlyPlan(
+        currency: 'USD',
+        forceRefresh: true,
+      );
     });
   }
 
@@ -184,7 +186,7 @@ class _JscInvestmentListContentState extends State<JscInvestmentListContent> {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(30),
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: AppColors.white),
             ),
           );
         }

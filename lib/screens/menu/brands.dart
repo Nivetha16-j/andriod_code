@@ -472,21 +472,25 @@ class _BrandScreenState extends State<BrandScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      SizedBox(),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: TranslatedText(
-                          brandName,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF981F1F),
+                      const SizedBox(width: 20), // balances the close button
+
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: TranslatedText(
+                            brandName,
+                            maxLines: 12,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF981F1F),
+                            ),
                           ),
                         ),
                       ),
+
                       Material(
                         color: const Color(0xFF981F1F),
                         shape: const CircleBorder(),

@@ -1581,8 +1581,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         log(
           "CHECKOUT -> Stripe payment method: "
-          "$shippingAddress "
+          "$digitalSubtype != null ? ${shippingAddress.trim()} : null"
+          "$city "
+          "$state "
+          "$pin "
+          "$contactPerson "
+          "$contactEmail "
+          "$contactPhone "
           "$fulfillment "
+          "${cartProvider.selectedDeliveryMethod} "
           "$isDigital ? null : ${cartProvider.selectedDeliveryMethod} "
           "${currencyProvider.selectedCurrency} "
           "$digitalSubtype "
@@ -1590,13 +1597,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
 
         final stripeResponse = await StripeService.createStripeSession(
-          shippingAddress: shippingAddress.trim(),
-          city: city,
-          state: state,
-          pin: pin,
-          contactPerson: contactPerson,
-          contactEmail: contactEmail,
-          contactPhone: contactPhone,
+          shippingAddress: digitalSubtype == null
+              ? shippingAddress.trim()
+              : "null",
+          city: digitalSubtype == null ? city : "null",
+          state: digitalSubtype == null ? state : "null",
+          pin: digitalSubtype == null ? pin : "null",
+          contactPerson: digitalSubtype == null ? contactPerson : "null",
+          contactEmail: digitalSubtype == null ? contactEmail : "",
+          contactPhone: digitalSubtype == null ? contactPhone : "null",
           fulfillmentType: fulfillment!.toLowerCase().trim(),
           courierService: isDigital
               ? null

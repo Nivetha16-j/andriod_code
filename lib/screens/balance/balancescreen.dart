@@ -268,7 +268,7 @@ class _SchemeCard extends StatelessWidget {
                     child: Image.asset(
                       image,
                       width: 80,
-                      height: 80,
+                      height: 130,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(

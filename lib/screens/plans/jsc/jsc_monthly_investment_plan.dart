@@ -146,7 +146,7 @@ class _JscMonthlyInvestmentPlanContentState
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _fetchMonthlyPlan();
 
-      _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
         _fetchMonthlyPlan();
       });
     });

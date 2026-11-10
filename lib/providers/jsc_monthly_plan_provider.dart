@@ -77,10 +77,8 @@ class JscMonthlyPlanProvider extends ChangeNotifier {
     required String currency,
     bool forceRefresh = false,
   }) async {
-    // Prevent duplicate requests
     if (_isInvestmentsLoading) return;
 
-    // Avoid fetching again if data is already available
     if (_hasLoadedInvestments && !forceRefresh) return;
 
     _isInvestmentsLoading = true;
@@ -116,7 +114,6 @@ class JscMonthlyPlanProvider extends ChangeNotifier {
       }
     } catch (e, stackTrace) {
       log('JSC INVESTMENTS ERROR: $e', stackTrace: stackTrace);
-
       _investmentsErrorMessage = e.toString();
     } finally {
       _isInvestmentsLoading = false;
