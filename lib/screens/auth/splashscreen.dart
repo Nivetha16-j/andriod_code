@@ -97,14 +97,23 @@ class _SplashScreenState extends State<SplashScreen>
     final loggedIn = await SessionManager.isLoggedIn();
     final token = await SessionManager.getToken();
 
-    log("lllooooo $loggedIn..............$token");
+    log("Logged In: $loggedIn");
+    log("Token: $token");
 
     if (!mounted) return;
-    // Navigator.pushReplacementNamed(context, AppRoutes.home);
+
     if (loggedIn) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.home,
+        (route) => false,
+      );
     } else {
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login,
+        (route) => false,
+      );
     }
   }
 

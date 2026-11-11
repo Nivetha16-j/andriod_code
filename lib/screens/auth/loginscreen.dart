@@ -202,7 +202,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   Center(
                     child: Text(
-                      "To get full profile and unlimited \n searches, please login or register.",
+                      "To get full profile and unlimited searches, please login or register.",
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w400,
