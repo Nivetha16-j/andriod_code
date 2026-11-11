@@ -205,7 +205,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             });
                           },
                           leading: Image.network(
-                            "https://staging.junubullion.com/storage/${product['image_path']}",
+                            "https://junubullion.com/storage/${product['image_path']}",
                             width: 50,
                             height: 50,
                             fit: BoxFit.cover,
@@ -405,7 +405,7 @@ class _RecentlyViewedCard extends StatelessWidget {
                         top: Radius.circular(8),
                       ),
                       child: Image.network(
-                        "https://staging.junubullion.com/storage/${product["image_path"]}",
+                        "https://junubullion.com/storage/${product["image_path"]}",
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) {
                           return const Icon(

@@ -1274,7 +1274,7 @@ class _JscProductCard extends StatelessWidget {
 
   const _JscProductCard({required this.product});
 
-  static const String imageBaseUrl = 'https://staging.junubullion.com/storage/';
+  static const String imageBaseUrl = 'https://junubullion.com/storage/';
 
   void _showMessage(String message) {
     Fluttertoast.showToast(

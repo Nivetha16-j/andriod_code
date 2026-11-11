@@ -623,7 +623,7 @@ class _BrandScreenState extends State<BrandScreen> {
               height: 155,
               width: double.infinity,
               child: Image.network(
-                "https://staging.junubullion.com/storage/$image",
+                "https://junubullion.com/storage/$image",
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   return const Icon(

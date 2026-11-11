@@ -5,7 +5,7 @@ import 'package:junubullion/theme/app_colors.dart';
 
 class BannerSlider extends StatefulWidget {
   final Map<String, dynamic>? bannerData;
-  static const String imageBaseUrl = 'https://staging.junubullion.com/storage/';
+  static const String imageBaseUrl = 'https://junubullion.com/storage/';
 
   const BannerSlider({super.key, this.bannerData});
 

@@ -18,8 +18,7 @@ class Country {
 }
 
 class CountryService {
-  static const String _baseUrl =
-      'https://staging.junubullion.com/api/countries';
+  static const String _baseUrl = 'https://junubullion.com/api/countries';
 
   static Future<List<Country>> fetchCountries() async {
     try {

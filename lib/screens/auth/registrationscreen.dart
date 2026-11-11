@@ -99,7 +99,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     log("Submitting registration pre-check.");
 
     try {
-      final url = Uri.parse("https://staging.junubullion.com/api/register");
+      final url = Uri.parse("https://junubullion.com/api/register");
 
       final response = await http.post(
         url,

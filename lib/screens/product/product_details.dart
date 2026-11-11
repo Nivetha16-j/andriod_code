@@ -418,7 +418,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     final bool isDigitalProduct = _isDigitalProduct(product);
 
     final String imageUrl =
-        "https://staging.junubullion.com/storage/${product['image_path']}";
+        "https://junubullion.com/storage/${product['image_path']}";
 
     String description = product['description'] ?? '';
 
@@ -1318,7 +1318,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     log("related product $relatedProduct");
 
                     final String image =
-                        "https://staging.junubullion.com/storage/${relatedProduct['image_path'] ?? ''}";
+                        "https://junubullion.com/storage/${relatedProduct['image_path'] ?? ''}";
 
                     final String relatedName =
                         relatedProduct['name']?.toString() ?? '';

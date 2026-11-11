@@ -24,7 +24,7 @@ class TrendingProductsSection extends StatefulWidget {
     required this.unit,
   });
 
-  static const String imageBaseUrl = 'https://staging.junubullion.com/storage/';
+  static const String imageBaseUrl = 'https://junubullion.com/storage/';
 
   @override
   State<TrendingProductsSection> createState() =>

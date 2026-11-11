@@ -70,7 +70,7 @@ class _OTPScreenState extends State<OTPScreen> {
     try {
       if (widget.isLogin && widget.email != null && widget.email!.isNotEmpty) {
         final response = await http.post(
-          Uri.parse("https://staging.junubullion.com/api/verify-login-otp"),
+          Uri.parse("https://junubullion.com/api/verify-login-otp"),
           headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",
@@ -167,7 +167,7 @@ class _OTPScreenState extends State<OTPScreen> {
       };
 
       final response = await http.post(
-        Uri.parse("https://staging.junubullion.com/api/verify-register-otp"),
+        Uri.parse("https://junubullion.com/api/verify-register-otp"),
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",

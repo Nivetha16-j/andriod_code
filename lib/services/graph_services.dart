@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:junubullion/services/session_manager.dart';
 
 class GraphServices {
-  static const String _baseUrl = 'https://staging.junubullion.com/api';
+  static const String _baseUrl = 'https://junubullion.com/api';
 
   static Future<Map<String, dynamic>> fetchGraph({
     required String currency,

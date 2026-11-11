@@ -17,7 +17,7 @@ class ExclusiveProductService {
         : "gram";
 
     final uri = Uri.parse(
-      "https://staging.junubullion.com/api/$endpoint",
+      "https://junubullion.com/api/$endpoint",
     ).replace(queryParameters: {"currency": currency, "unit": apiUnit});
 
     try {

@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:junubullion/services/session_manager.dart';
 
 class GspService {
-  static const String baseUrl = "https://staging.junubullion.com/api";
+  static const String baseUrl = "https://junubullion.com/api";
 
   static Future<Map<String, dynamic>> unlockWallet({
     required String unlockPassword,
@@ -165,7 +165,7 @@ class GspService {
     final token = await SessionManager.getToken();
 
     final url = Uri.parse(
-      'https://staging.junubullion.com/api/my-account/gsp/wallet/convert',
+      'https://junubullion.com/api/my-account/gsp/wallet/convert',
     );
 
     final response = await http.post(

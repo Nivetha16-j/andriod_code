@@ -1411,7 +1411,7 @@ class _GspProductCard extends StatelessWidget {
 
   const _GspProductCard({required this.product});
 
-  static const String imageBaseUrl = 'https://staging.junubullion.com/storage/';
+  static const String imageBaseUrl = 'https://junubullion.com/storage/';
 
   void _showMessage(String message) {
     Fluttertoast.showToast(

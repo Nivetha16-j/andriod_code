@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:junubullion/services/session_manager.dart';
 
 class JscService {
-  static const String baseUrl = "https://staging.junubullion.com/api";
+  static const String baseUrl = "https://junubullion.com/api";
 
   static Future<Map<String, dynamic>> submitApplication({
     required String applicationType,
@@ -359,7 +359,7 @@ class JscService {
     final token = await SessionManager.getToken();
 
     final url = Uri.parse(
-      'https://staging.junubullion.com/api/my-account/wallet/convert',
+      'https://junubullion.com/api/my-account/wallet/convert',
     );
 
     final response = await http.post(
@@ -402,9 +402,7 @@ class JscService {
     final token = await SessionManager.getToken();
 
     final response = await http.post(
-      Uri.parse(
-        'https://staging.junubullion.com/api/my-account/wallet/convert/cancel',
-      ),
+      Uri.parse('https://junubullion.com/api/my-account/wallet/convert/cancel'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

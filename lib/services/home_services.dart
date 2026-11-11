@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String _baseUrl = 'https://staging.junubullion.com/api';
+  static const String _baseUrl = 'https://junubullion.com/api';
 
   /// Fetches home screen data from the API.
   static Future<Map<String, dynamic>> fetchHomeData({

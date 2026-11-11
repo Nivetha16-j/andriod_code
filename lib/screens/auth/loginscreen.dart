@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse("https://staging.junubullion.com/api/login"),
+        Uri.parse("https://junubullion.com/api/login"),
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",

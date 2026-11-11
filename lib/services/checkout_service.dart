@@ -57,7 +57,7 @@ class CheckoutService {
 
       final response = await http
           .post(
-            Uri.parse("https://staging.junubullion.com/api/checkout/place"),
+            Uri.parse("https://junubullion.com/api/checkout/place"),
             headers: {
               "Accept": "application/json",
               "Content-Type": "application/json",
@@ -93,7 +93,7 @@ class CheckoutService {
     }
   }
 
-  static const String baseUrl = "https://staging.junubullion.com/api";
+  static const String baseUrl = "https://junubullion.com/api";
 
   Future<List<String>> fetchPaymentMethods() async {
     final token = await SessionManager.getToken();
@@ -136,7 +136,7 @@ class CheckoutService {
       return {"status": false, "message": "Invalid digital type."};
     }
 
-    final uri = Uri.parse('https://staging.junubullion.com/api/checkout/place');
+    final uri = Uri.parse('https://junubullion.com/api/checkout/place');
 
     final body = {
       "delivery_option": "physical",
@@ -225,7 +225,7 @@ class CheckoutService {
       final token = await SessionManager.getToken();
 
       final response = await http.post(
-        Uri.parse("https://staging.junubullion.com/api/checkout/upi/pay"),
+        Uri.parse("https://junubullion.com/api/checkout/upi/pay"),
         headers: {
           "Accept": "application/json",
           "Content-Type": "application/json",
@@ -262,7 +262,7 @@ class CheckoutService {
       final token = await SessionManager.getToken();
 
       final response = await http.post(
-        Uri.parse("https://staging.junubullion.com/api/checkout/paynow/pay"),
+        Uri.parse("https://junubullion.com/api/checkout/paynow/pay"),
         headers: {
           "Accept": "application/json",
           "Content-Type": "application/json",

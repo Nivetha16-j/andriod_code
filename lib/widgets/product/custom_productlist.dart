@@ -982,7 +982,7 @@ class _ProductGridCard extends StatelessWidget {
     final String? imagePath = product['image_path']?.toString();
 
     final String fullImageUrl = (imagePath != null && imagePath.isNotEmpty)
-        ? 'https://staging.junubullion.com/storage/$imagePath'
+        ? 'https://junubullion.com/storage/$imagePath'
         : '';
 
     final bool canPurchase = product['stock_status'] == 'in_stock';

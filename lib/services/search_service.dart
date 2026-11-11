@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class SearchService {
-  static const String baseUrl = "https://staging.junubullion.com/api";
+  static const String baseUrl = "https://junubullion.com/api";
 
   static Future<List<dynamic>> searchProducts(String keyword) async {
     final response = await http.get(

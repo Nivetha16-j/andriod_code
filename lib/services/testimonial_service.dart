@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:junubullion/services/session_manager.dart';
 
 class TestimonialService {
-  static const String baseUrl = "https://staging.junubullion.com/api";
+  static const String baseUrl = "https://junubullion.com/api";
 
   Future<List<dynamic>> fetchTestimonials() async {
     final token = await SessionManager.getToken();

@@ -22,7 +22,7 @@ class AddressProvider extends ChangeNotifier {
       final token = await SessionManager.getToken();
 
       final response = await http.get(
-        Uri.parse("https://staging.junubullion.com/api/my-account/addresses"),
+        Uri.parse("https://junubullion.com/api/my-account/addresses"),
         headers: {
           "Accept": "application/json",
           "Authorization": "Bearer $token",

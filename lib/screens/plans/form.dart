@@ -590,7 +590,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
       return path;
     }
 
-    return "https://staging.junubullion.com/storage/$path";
+    return "https://junubullion.com/storage/$path";
   }
 
   String _formatApiDate(String? date) {

@@ -4,7 +4,7 @@ import 'package:junubullion/services/session_manager.dart';
 
 class ContactService {
   // Use your existing API base URL here
-  static const String baseUrl = "https://staging.junubullion.com/api";
+  static const String baseUrl = "https://junubullion.com/api";
 
   static Future<Map<String, dynamic>> submitContact({
     required String firstName,

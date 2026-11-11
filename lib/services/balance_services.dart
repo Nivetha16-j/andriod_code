@@ -5,7 +5,7 @@ import 'package:junubullion/models/wallet_dashboard_model.dart';
 import 'package:junubullion/services/session_manager.dart';
 
 class BalanceApi {
-  static const String baseUrl = "https://staging.junubullion.com/api";
+  static const String baseUrl = "https://junubullion.com/api";
 
   static Future<WalletDashboardModel> fetchBalanceData(String currency) async {
     log("fetchBalanceData started");

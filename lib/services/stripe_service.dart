@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:junubullion/services/session_manager.dart';
 
 class StripeService {
-  static const String baseUrl = "https://staging.junubullion.com/api";
+  static const String baseUrl = "https://junubullion.com/api";
 
   static Future<bool> makePayment(String clientSecret) async {
     try {

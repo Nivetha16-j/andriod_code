@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:junubullion/services/session_manager.dart';
 
 class AddressService {
-  static const String baseUrl = "https://staging.junubullion.com/api";
+  static const String baseUrl = "https://junubullion.com/api";
 
   Future<Map<String, dynamic>> updateAddress(String address) async {
     final token = await SessionManager.getToken();

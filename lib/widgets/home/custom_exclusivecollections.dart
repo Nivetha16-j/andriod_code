@@ -28,7 +28,7 @@ class ExclusiveCollectionsSection extends StatefulWidget {
 
   static const Color primaryDarkRed = Color(0xFF7A1C1C);
   static const Color accentGold = Color(0xFFC59800);
-  static const String imageBaseUrl = 'https://staging.junubullion.com/storage/';
+  static const String imageBaseUrl = 'https://junubullion.com/storage/';
 
   @override
   State<ExclusiveCollectionsSection> createState() =>
