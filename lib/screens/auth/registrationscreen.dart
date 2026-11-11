@@ -28,6 +28,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final countryController = TextEditingController();
   dynamic selectedCountryId;
   late Future<List<Country>> _countriesFuture;
+  String selectedCountryDialCode = '';
 
   @override
   void initState() {
@@ -65,11 +66,29 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return 'Phone number is required';
     }
 
-    final trimmed = value.trim();
-    final phoneWithCodeRegex = RegExp(r'^\+[0-9]{7,15}$');
+    final phone = value.trim();
 
-    if (!phoneWithCodeRegex.hasMatch(trimmed)) {
-      return 'Enter full number with country code (e.g., +6570903029)';
+    final Map<String, int> maxLengths = {
+      '+91': 10, // India
+      '+1': 10, // Canada
+      '+86': 11, // China
+      '+971': 9, // UAE
+      '+65': 8, // Singapore
+      '+886': 10, // Taiwan
+    };
+
+    final maxLength = maxLengths[selectedCountryDialCode];
+
+    if (maxLength == null) {
+      return 'Country dialing code is unavailable';
+    }
+
+    if (!RegExp(r'^[0-9]+$').hasMatch(phone)) {
+      return 'Enter numbers only';
+    }
+
+    if (phone.length != maxLength) {
+      return 'Enter a valid $maxLength-digit phone number';
     }
 
     return null;
@@ -93,10 +112,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       _isLoading = true;
     });
 
-    final String fullPhoneNumber = phoneController.text.trim();
+    final selectedCountry = (await _countriesFuture).firstWhere(
+      (country) => country.id == selectedCountryId,
+    );
+
+    if (selectedCountry.dialCode.isEmpty) {
+      setState(() => _isLoading = false);
+      _showToast("Country dialing code is unavailable.", isError: true);
+      return;
+    }
+
+    final String fullPhoneNumber =
+        '$selectedCountryDialCode${phoneController.text.trim()}';
+
+    // final String fullPhoneNumber = phoneController.text.trim();
     final String email = emailController.text.trim();
 
-    log("Submitting registration pre-check.");
+    log(
+      "Submitting registration pre-check. Full Phone: $fullPhoneNumber, Email: $email, Country ID: $selectedCountryId",
+    );
 
     try {
       final url = Uri.parse("https://junubullion.com/api/register");
@@ -241,7 +275,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     SizedBox(
                       height: 18,
                       width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     ),
                     SizedBox(width: 12),
                     Text(
@@ -349,10 +386,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               onChanged: (newValue) {
                 setState(() {
                   selectedCountryId = newValue;
+
                   final selectedCountry = countries.firstWhere(
                     (c) => c.id == newValue,
                   );
+
                   countryController.text = selectedCountry.name;
+                  selectedCountryDialCode = selectedCountry.dialCode;
+
+                  // Clear previously entered phone number
+                  phoneController.clear();
+
+                  log("Selected: ${selectedCountry.name}");
+                  log("Dial code: ${selectedCountryDialCode}");
                 });
               },
               validator: (val) {
@@ -470,18 +516,31 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                     const SizedBox(height: 20),
 
-                    CustomTextField(
-                      label: "Phone Number",
-                      hintText: "+6570903029",
-                      helperText: "Include country code (e.g., +91 or +65)",
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      validator: _validatePhone,
-                    ),
+                    _buildCountryDropdown(),
 
                     const SizedBox(height: 20),
 
-                    _buildCountryDropdown(),
+                    CustomTextField(
+                      label: "Phone Number",
+                      hintText: "Enter Phone Number",
+                      controller: phoneController,
+                      keyboardType: TextInputType.number,
+                      maxLength:
+                          selectedCountryDialCode == '+91' ||
+                              selectedCountryDialCode == '+1' ||
+                              selectedCountryDialCode == '+886'
+                          ? 10
+                          : selectedCountryDialCode == '+86'
+                          ? 11
+                          : selectedCountryDialCode == '+971'
+                          ? 9
+                          : selectedCountryDialCode == '+65'
+                          ? 8
+                          : null,
+                      prefixText: selectedCountryDialCode,
+                      helperText: "Enter phone number without country code",
+                      validator: _validatePhone,
+                    ),
 
                     const SizedBox(height: 25),
 

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/theme/app_colors.dart';
 
@@ -11,6 +13,7 @@ class CustomTextField extends StatelessWidget {
   final String? hintText;
   final String? Function(String?)? validator;
   final int? maxLength;
+  final String? prefixText;
 
   const CustomTextField({
     super.key,
@@ -23,14 +26,15 @@ class CustomTextField extends StatelessWidget {
     this.hintText,
     this.validator,
     this.maxLength,
+    this.prefixText,
   });
 
   @override
   Widget build(BuildContext context) {
+    log("CustomTextField: Building widget with label: $prefixText");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label
         RichText(
           text: TextSpan(
             text: label,
@@ -50,7 +54,6 @@ class CustomTextField extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        // Text Field
         TextFormField(
           controller: controller,
           validator: validator,
@@ -58,11 +61,37 @@ class CustomTextField extends StatelessWidget {
           obscureText: obscureText,
           cursorColor: AppColors.white,
           maxLength: maxLength,
-
           style: const TextStyle(fontSize: 13, color: AppColors.white),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(color: AppColors.white),
+            hintStyle: const TextStyle(color: AppColors.white),
+
+            prefixIcon: prefixText != null && prefixText!.isNotEmpty
+                ? Padding(
+                    padding: const EdgeInsets.only(left: 13, right: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          prefixText!,
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(height: 22, width: 1, color: Colors.white54),
+                      ],
+                    ),
+                  )
+                : null,
+
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
+
             filled: true,
             fillColor: AppColors.lightRed,
             contentPadding: const EdgeInsets.symmetric(
@@ -75,12 +104,10 @@ class CustomTextField extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: AppColors.lightRed),
             ),
-
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: AppColors.lightRed),
             ),
-
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: AppColors.lightRed),
