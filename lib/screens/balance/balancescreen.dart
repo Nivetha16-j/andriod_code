@@ -4,6 +4,7 @@ import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/menu/wallet.dart';
 import 'package:junubullion/screens/plans/jsc/jsc_dashboard.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class BalanceScreen extends StatefulWidget {
@@ -56,7 +57,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      const TranslatedText(
                         "TOTAL DIGITAL BALANCE",
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -70,7 +71,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
 
                       Consumer<BalanceProvider>(
                         builder: (context, provider, child) {
-                          return Text(
+                          return TranslatedText(
                             provider
                                     .balanceData
                                     ?.formattedTotalDigitalBalance ??
@@ -103,7 +104,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: const Text(
+                          child: const TranslatedText(
                             "START INVESTING",
                             style: TextStyle(
                               fontSize: 13,
@@ -123,7 +124,7 @@ class _BalanceScreenState extends State<BalanceScreen> {
                 // =========================
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
+                  child: TranslatedText(
                     "Our Schemes",
                     style: TextStyle(
                       color: Colors.white,
@@ -296,7 +297,7 @@ class _SchemeCard extends StatelessWidget {
                         // =========================
                         // TITLE
                         // =========================
-                        Text(
+                        TranslatedText(
                           title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -312,7 +313,7 @@ class _SchemeCard extends StatelessWidget {
                         // =========================
                         // BALANCE LABEL + PROFIT
                         // =========================
-                        Text(
+                        TranslatedText(
                           balanceLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -326,7 +327,7 @@ class _SchemeCard extends StatelessWidget {
                         // =========================
                         // BALANCE + PROFIT %
                         // =========================
-                        Text(
+                        TranslatedText(
                           balance,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -353,7 +354,7 @@ class _SchemeCard extends StatelessWidget {
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: const Text(
+                            child: const TranslatedText(
                               "Know More",
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

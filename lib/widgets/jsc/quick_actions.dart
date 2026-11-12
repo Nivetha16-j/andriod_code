@@ -111,7 +111,7 @@ class ActionContainers extends StatelessWidget {
                   Spacer(),
                   // const SizedBox(height: 10),
                   Expanded(
-                    child: Text(
+                    child: TranslatedText(
                       item["title"] as String,
                       textAlign: TextAlign.center,
                       style: const TextStyle(

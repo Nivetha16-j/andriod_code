@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:provider/provider.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
@@ -82,7 +83,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
-                                child: Text(
+                                child: TranslatedText(
                                   count > 99 ? '99+' : count.toString(),
                                   style: const TextStyle(
                                     color: Colors.white,

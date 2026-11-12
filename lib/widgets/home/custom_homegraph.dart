@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class HomeGraph extends StatelessWidget {
   final Map<String, dynamic> chartData;
@@ -66,7 +67,7 @@ class HomeGraph extends StatelessWidget {
         height: 200,
         alignment: Alignment.center,
         decoration: _cardDecoration,
-        child: const Text(
+        child: const TranslatedText(
           'No chart data available',
           style: TextStyle(color: Colors.white70),
         ),
@@ -169,7 +170,7 @@ class HomeGraph extends StatelessWidget {
                       interval: yInterval,
                       reservedSize: leftReserved,
                       getTitlesWidget: (value, meta) {
-                        return Text(
+                        return TranslatedText(
                           value.toStringAsFixed(2),
                           style: const TextStyle(
                             fontSize: 10,
@@ -202,7 +203,7 @@ class HomeGraph extends StatelessWidget {
 
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
-                          child: Text(
+                          child: TranslatedText(
                             _formatXLabel(date),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
@@ -257,7 +258,7 @@ class HomeGraph extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              const TranslatedText(
                 'Current Price',
                 style: TextStyle(color: Colors.white, fontSize: 11),
               ),
@@ -268,7 +269,7 @@ class HomeGraph extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text(
+                  TranslatedText(
                     formattedPrice,
                     style: const TextStyle(
                       color: Colors.white,
@@ -278,7 +279,7 @@ class HomeGraph extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Flexible(
-                    child: Text(
+                    child: TranslatedText(
                       '${chartData['currency']} / ${chartData['unit_label']}',
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -292,7 +293,7 @@ class HomeGraph extends StatelessWidget {
 
               const SizedBox(height: 4),
 
-              Text(
+              TranslatedText(
                 '${isUp ? '▲' : '▼'} ${chartData['formatted_change']} '
                 '($symbol${changeAmount.toStringAsFixed(2)})',
                 style: TextStyle(
@@ -308,12 +309,12 @@ class HomeGraph extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(
+            TranslatedText(
               _formatUpdatedAt(chartData['updated_at']?.toString()),
               style: const TextStyle(color: Colors.white70, fontSize: 10),
             ),
             const SizedBox(height: 4),
-            Text(
+            TranslatedText(
               formattedPrice,
               style: const TextStyle(
                 color: Colors.white,

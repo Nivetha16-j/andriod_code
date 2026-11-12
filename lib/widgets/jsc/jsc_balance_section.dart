@@ -775,7 +775,7 @@ class _SavingsPlanCard extends StatelessWidget {
                   color: tagColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(
+                child: TranslatedText(
                   tag,
                   style: TextStyle(
                     color: tagColor,
@@ -892,7 +892,7 @@ class _SavingsPlanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          TranslatedText(
             title,
             style: const TextStyle(
               color: Color(0xff8A8A8A),

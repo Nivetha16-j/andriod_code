@@ -239,7 +239,7 @@ class _DeliveryMethodWidgetState extends State<DeliveryMethodWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  TranslatedText(
                     title,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
@@ -247,7 +247,7 @@ class _DeliveryMethodWidgetState extends State<DeliveryMethodWidget> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  TranslatedText(
                     subtitle,
                     style: TextStyle(fontSize: 12, color: AppColors.black),
                   ),
@@ -265,7 +265,7 @@ class _DeliveryMethodWidgetState extends State<DeliveryMethodWidget> {
                   color: const Color(0xffe7f7eb),
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: Text(
+                child: TranslatedText(
                   trailingText,
                   style: TextStyle(
                     fontSize: 13,

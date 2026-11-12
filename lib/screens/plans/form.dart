@@ -716,7 +716,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                                       : const Color(0xFFF7F7F7),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Text(
+                                child: TranslatedText(
                                   'JSC FORM',
                                   style: TextStyle(
                                     color: selectedTab == 0
@@ -751,7 +751,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                                       : const Color(0xFFF7F7F7),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Text(
+                                child: TranslatedText(
                                   'GSP FORM',
                                   style: TextStyle(
                                     color: selectedTab == 1
@@ -1534,7 +1534,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Text(
+                                    // TranslatedText(
                                     //   index == 0
                                     //       ? "Front Document"
                                     //       : "Back Document",
@@ -1637,7 +1637,7 @@ class _ApplicationFormState extends State<ApplicationForm> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      // Text(
+                                      // TranslatedText(
                                       //   index == 0
                                       //       ? "Front Document"
                                       //       : "Back Document",

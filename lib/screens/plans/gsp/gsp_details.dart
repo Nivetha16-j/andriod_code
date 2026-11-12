@@ -411,7 +411,7 @@ class _GspScreenState extends State<GspScreen> {
           color: selected ? const Color(0xffD9B429) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(
+        child: TranslatedText(
           title,
           style: TextStyle(
             color: selected ? Colors.black : Colors.white,
@@ -507,7 +507,7 @@ class _GspScreenState extends State<GspScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: Text(
+                        child: TranslatedText(
                           "S\$$amount",
                           style: const TextStyle(
                             color: Colors.white,
@@ -532,7 +532,7 @@ class _GspScreenState extends State<GspScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
-              Text(
+              TranslatedText(
                 "S\$${selectedAmount.toInt()}/month",
                 style: const TextStyle(
                   color: Color(0xffD9B429),
@@ -565,8 +565,11 @@ class _GspScreenState extends State<GspScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: const [
-              Text("S\$20 min", style: TextStyle(color: Colors.white70)),
-              Text(
+              TranslatedText(
+                "S\$20 min",
+                style: TextStyle(color: Colors.white70),
+              ),
+              TranslatedText(
                 "S\$500+",
                 style: TextStyle(
                   color: Color(0xffD9B429),
@@ -590,14 +593,14 @@ class _GspScreenState extends State<GspScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      const TranslatedText(
                         "Est. 12-Month Accumulation",
                         style: TextStyle(color: Colors.white70, fontSize: 13),
                       ),
 
                       const SizedBox(height: 8),
 
-                      Text(
+                      TranslatedText(
                         "~${estimatedGold.toStringAsFixed(2)}g",
                         style: const TextStyle(
                           color: Color(0xffFFD54A),
@@ -606,7 +609,7 @@ class _GspScreenState extends State<GspScreen> {
                         ),
                       ),
 
-                      const Text(
+                      const TranslatedText(
                         "Pure Gold",
                         style: TextStyle(
                           color: Colors.white,
@@ -620,7 +623,7 @@ class _GspScreenState extends State<GspScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Text(
+                    const TranslatedText(
                       "Total Saved",
                       style: TextStyle(
                         color: Colors.white,
@@ -630,7 +633,7 @@ class _GspScreenState extends State<GspScreen> {
 
                     const SizedBox(height: 8),
 
-                    Text(
+                    TranslatedText(
                       "S\$${totalSaved.toStringAsFixed(2)}",
                       style: const TextStyle(
                         color: Color(0xffFFD54A),

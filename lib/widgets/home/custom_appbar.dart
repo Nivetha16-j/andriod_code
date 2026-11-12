@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:junubullion/providers/home_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:marquee/marquee.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
@@ -181,7 +182,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 return DropdownMenuItem<String>(
                   value: currency,
 
-                  child: Text(
+                  child: TranslatedText(
                     currency,
                     style: const TextStyle(
                       color: Colors.black,

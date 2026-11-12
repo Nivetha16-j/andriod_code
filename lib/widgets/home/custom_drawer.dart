@@ -414,21 +414,29 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
                     const SizedBox(height: 30),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Divider(thickness: 2, color: Colors.yellow),
-                        const TranslatedText(
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.center,
+                    //   children: [
+                    // Divider(thickness: 2, color: Colors.yellow),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Center(
+                        child: TranslatedText(
                           "Connect with Us",
-                          style: TextStyle(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 24,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Divider(thickness: 2, color: Colors.yellow),
-                      ],
+                      ),
                     ),
+                    // Divider(thickness: 2, color: Colors.yellow),
+                    //   ],
+                    // ),
 
                     // const SizedBox(height: 8),
 

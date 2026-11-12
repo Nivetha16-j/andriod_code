@@ -590,7 +590,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           isDescriptionExpanded = !isDescriptionExpanded;
                         });
                       },
-                      child: Text(
+                      child: TranslatedText(
                         isDescriptionExpanded ? "View Less" : "View More",
                         style: const TextStyle(
                           color: AppColors.primaryRed,

@@ -417,7 +417,7 @@ class _JscPurchasesSectionState extends State<JscPurchasesSection> {
           icon: const Icon(Icons.chevron_left),
         ),
 
-        Text(
+        TranslatedText(
           'Page $currentPage of $totalPages',
           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
         ),

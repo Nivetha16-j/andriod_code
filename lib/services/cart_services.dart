@@ -57,6 +57,9 @@ class CartService {
       },
     );
 
+    log("Add to Cart Status: ${response.statusCode}");
+    log("Add to Cart Response: ${response.body}");
+
     return jsonDecode(response.body);
   }
 

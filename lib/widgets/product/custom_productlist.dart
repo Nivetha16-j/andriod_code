@@ -905,7 +905,7 @@ class _ProductGridCard extends StatelessWidget {
               ),
             ),
 
-            Text(
+            TranslatedText(
               '$cartQuantity',
               style: const TextStyle(
                 color: Colors.white,
@@ -1070,7 +1070,7 @@ class _ProductGridCard extends StatelessWidget {
             // =====================================================
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(
+              child: TranslatedText(
                 priceText,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,

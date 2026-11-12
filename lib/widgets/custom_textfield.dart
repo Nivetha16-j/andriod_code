@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 class CustomTextField extends StatelessWidget {
   final String label;
@@ -72,7 +73,7 @@ class CustomTextField extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
+                        TranslatedText(
                           prefixText!,
                           style: const TextStyle(
                             color: AppColors.white,
