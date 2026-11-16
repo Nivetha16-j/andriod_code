@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/providers/graph_provider.dart';
 import 'package:junubullion/screens/main_screen.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 import 'package:junubullion/widgets/home/custom_appbar.dart';
 import 'package:junubullion/widgets/home/custom_bottomnavigationbar.dart';
 import 'package:junubullion/widgets/home/custom_drawer.dart';
@@ -239,7 +240,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              const TranslatedText(
                 "Customize Your Chart",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
@@ -263,7 +264,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
+          const TranslatedText(
             "Measure and analyze precious metal prices in real-time.",
             style: TextStyle(color: Colors.grey),
           ),
@@ -325,7 +326,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        TranslatedText(
           title,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 10),
@@ -346,7 +347,9 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
               isExpanded: true,
               onChanged: (v) => onChanged(v),
               items: items
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .map(
+                    (e) => DropdownMenuItem(value: e, child: TranslatedText(e)),
+                  )
                   .toList(),
             ),
           ),
@@ -405,7 +408,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    TranslatedText(
                       "$metal in $currency",
                       style: const TextStyle(
                         color: Color(0xffE4B43A),
@@ -414,7 +417,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(ohlc, style: const TextStyle(fontSize: 11)),
+                    TranslatedText(ohlc, style: const TextStyle(fontSize: 11)),
                   ],
                 ),
               ),
@@ -423,7 +426,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
                 children: [
                   Row(
                     children: [
-                      Text(
+                      TranslatedText(
                         chart?['formatted_current_price']?.toString() ?? '--',
                         style: const TextStyle(
                           fontSize: 20,
@@ -431,7 +434,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Text(
+                      TranslatedText(
                         currency,
                         style: const TextStyle(
                           color: Colors.grey,
@@ -442,7 +445,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
                   ),
 
                   const SizedBox(height: 6),
-                  Text(
+                  TranslatedText(
                     chart?['formatted_change']?.toString() ?? '',
                     style: TextStyle(
                       color: isUp ? Colors.green : Colors.red,
@@ -470,7 +473,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
                   },
                   child: Column(
                     children: [
-                      Text(
+                      TranslatedText(
                         rangeLabels[index],
                         style: TextStyle(
                           fontSize: 13,
@@ -502,7 +505,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
   Widget _chartBody(GraphProvider provider, List points, String symbol) {
     if (provider.moreError != null) {
       return Center(
-        child: Text(
+        child: TranslatedText(
           provider.moreError!,
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.red),
@@ -513,7 +516,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
       return Center(
         child: provider.moreLoading
             ? const CircularProgressIndicator()
-            : const Text('No chart data available'),
+            : const TranslatedText('No chart data available'),
       );
     }
 
@@ -592,7 +595,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
               reservedSize: rightReserved,
               getTitlesWidget: (value, meta) => Padding(
                 padding: const EdgeInsets.only(left: 6),
-                child: Text(
+                child: TranslatedText(
                   _money(value, symbol),
                   style: const TextStyle(fontSize: 10, color: Colors.black87),
                 ),
@@ -611,7 +614,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
                     !labelIndexes.contains(index)) {
                   return const SizedBox.shrink();
                 }
-                return Text(
+                return TranslatedText(
                   _xLabel(_date(points[index]['timestamp'])),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
@@ -696,7 +699,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
             children: const [
               Icon(Icons.pie_chart_outline, size: 24, color: Colors.black),
               SizedBox(width: 12),
-              Text(
+              TranslatedText(
                 'Spot Price Charts',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
@@ -766,7 +769,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
                           color: selected ? darkRed : const Color(0xff2A2A2A),
                         ),
                       ),
-                      child: Text(
+                      child: TranslatedText(
                         rangeLabels[index],
                         style: TextStyle(
                           fontSize: 13,
@@ -794,7 +797,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
                 ? Center(
                     child: provider.moreLoading
                         ? const CircularProgressIndicator()
-                        : const Text('No chart data'),
+                        : const TranslatedText('No chart data'),
                   )
                 : _miniChart(points),
           ),
@@ -839,12 +842,12 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          TranslatedText(
             name,
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 2),
-          Text(
+          TranslatedText(
             change,
             style: TextStyle(
               fontSize: 13,
@@ -852,7 +855,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
+          TranslatedText(
             price,
             style: const TextStyle(fontSize: 13, color: Colors.black87),
           ),
@@ -883,7 +886,7 @@ class _CustomMoreGraphsState extends State<CustomMoreGraphs> {
           style: const TextStyle(color: Colors.white, fontSize: 15),
           onChanged: onChanged,
           items: items
-              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .map((e) => DropdownMenuItem(value: e, child: TranslatedText(e)))
               .toList(),
         ),
       ),

@@ -8,7 +8,6 @@ import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/checkout/banktransfersuccess.dart';
 import 'package:junubullion/screens/checkout/physical_ordersuccess.dart';
 import 'package:junubullion/screens/checkout/stripe_otp_dialog.dart';
-import 'package:junubullion/screens/checkout/success.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
 import 'package:junubullion/services/jsc_services.dart';
@@ -21,7 +20,6 @@ import 'package:junubullion/widgets/home/custom_appbar.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/account_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -211,7 +209,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   //   if (selectedBank == null) {
   //     ScaffoldMessenger.of(
   //       context,
-  //     ).showSnackBar(const SnackBar(content: Text("Please select a bank")));
+  //     ).showSnackBar(const SnackBar(content:TranslatedText("Please select a bank")));
   //     return;
   //   }
 
@@ -220,7 +218,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   //   if (url == null || url.isEmpty) {
   //     ScaffoldMessenger.of(
   //       context,
-  //     ).showSnackBar(const SnackBar(content: Text("Bank URL not available")));
+  //     ).showSnackBar(const SnackBar(content:TranslatedText("Bank URL not available")));
   //     return;
   //   }
 
@@ -231,7 +229,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   //       uri.host.isEmpty) {
   //     ScaffoldMessenger.of(
   //       context,
-  //     ).showSnackBar(const SnackBar(content: Text("Invalid bank website URL")));
+  //     ).showSnackBar(const SnackBar(content:TranslatedText("Invalid bank website URL")));
   //     return;
   //   }
 
@@ -240,7 +238,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   //     if (!opened && mounted) {
   //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(content: Text("Unable to open bank website")),
+  //         const SnackBar(content:TranslatedText("Unable to open bank website")),
   //       );
   //     }
   //   } catch (e, stackTrace) {
@@ -249,7 +247,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   //     if (!mounted) return;
 
   //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text("Unable to open bank website")),
+  //       const SnackBar(content:TranslatedText("Unable to open bank website")),
   //     );
   //   }
   // }
@@ -634,7 +632,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               Icon(Icons.account_balance, color: AppColors.primaryRed),
               SizedBox(width: 10),
-              Text(
+              TranslatedText(
                 "Select your bank",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
@@ -643,7 +641,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 15),
 
-          const Text(
+          const TranslatedText(
             "Choose your bank, then pay directly from your net banking or mobile app to our account below.",
             style: TextStyle(fontSize: 13, color: Colors.black54),
           ),
@@ -687,7 +685,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
 
                       Expanded(
-                        child: Text(
+                        child: TranslatedText(
                           bank,
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
@@ -712,21 +710,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  const TranslatedText(
                     "Transfer to our account",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
 
                   const SizedBox(height: 12),
 
-                  const Text(
+                  const TranslatedText(
                     "JUNU SG PTE LTD",
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 6),
 
-                  Text(
+                  TranslatedText(
                     "Bank: $selectedBank",
                     style: const TextStyle(
                       fontSize: 14,
@@ -736,28 +734,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                   const SizedBox(height: 4),
 
-                  const Text(
+                  const TranslatedText(
                     "Account number: 2001093941",
                     style: TextStyle(fontSize: 14, color: Color(0xff5B6B84)),
                   ),
 
                   const SizedBox(height: 4),
 
-                  const Text(
+                  const TranslatedText(
                     "BIC / SWIFT: CIBBSGSGXXX",
                     style: TextStyle(fontSize: 14, color: Color(0xff5B6B84)),
                   ),
 
                   const SizedBox(height: 10),
 
-                  const Text(
+                  const TranslatedText(
                     "Use your order number as payment reference after you place the order.",
                     style: TextStyle(fontSize: 14, color: Color(0xff5B6B84)),
                   ),
 
                   const SizedBox(height: 20),
 
-                  const Text(
+                  const TranslatedText(
                     "1. Confirm your shipping address and agree to the Terms & Conditions.\n"
                     "2. Click the button below. Your order is placed and you are taken to the thank-you page while net banking opens in a new tab.\n"
                     "3. Log in at your bank, transfer the exact order total using the details on the thank-you page, then email your receipt to us.",
@@ -786,7 +784,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                       ),
                       icon: const Icon(Icons.open_in_new, color: Colors.white),
-                      label: Text(
+                      label: TranslatedText(
                         "Open $selectedBank net banking",
                         style: const TextStyle(
                           color: Colors.white,
@@ -858,14 +856,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response["message"] ?? "Unable to generate QR code"),
+            content: TranslatedText(
+              response["message"] ?? "Unable to generate QR code",
+            ),
           ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(SnackBar(content: TranslatedText(e.toString())));
     } finally {
       setState(() {
         _isGeneratingUpiQr = false;
@@ -884,7 +884,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   //     context: context,
   //     builder: (_) {
   //       return AlertDialog(
-  //         title: const Text("Scan UPI QR"),
+  //         title: constTranslatedText("Scan UPI QR"),
   //         content: SingleChildScrollView(
   //           child: Column(
   //             mainAxisSize: MainAxisSize.min,
@@ -893,7 +893,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   //               const SizedBox(height: 16),
 
-  //               Text(
+  //              TranslatedText(
   //                 "Amount: ₹${upiAmount?.toStringAsFixed(2) ?? ''}",
   //                 style: const TextStyle(fontWeight: FontWeight.w600),
   //               ),
@@ -910,7 +910,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   //               const SizedBox(height: 12),
 
-  //               const Text(
+  //               constTranslatedText(
   //                 "Scan this QR using Google Pay, PhonePe, Paytm or any UPI app.",
   //                 textAlign: TextAlign.center,
   //               ),
@@ -920,7 +920,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   //         actions: [
   //           TextButton(
   //             onPressed: () => Navigator.pop(context),
-  //             child: const Text("Close"),
+  //             child: constTranslatedText("Close"),
   //           ),
   //         ],
   //       );
@@ -1369,7 +1369,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Payment was not completed. Please try again.'),
+            content: TranslatedText(
+              'Payment was not completed. Please try again.',
+            ),
           ),
         );
         return;
@@ -1413,7 +1415,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() => _isPlacingOrder = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(
+          content: TranslatedText(e.toString().replaceFirst('Exception: ', '')),
+        ),
       );
     }
   }
@@ -1830,7 +1834,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              const TranslatedText(
                 "ADDRESS DETAILS",
                 style: TextStyle(
                   color: AppColors.primaryRed,
@@ -1841,7 +1845,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 18),
 
-              const Text(
+              const TranslatedText(
                 "Street Address",
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
               ),
@@ -1864,7 +1868,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 16),
 
-              const Text(
+              const TranslatedText(
                 "City",
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
               ),
@@ -1887,7 +1891,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 16),
 
-              const Text(
+              const TranslatedText(
                 "State / Province / Region",
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
               ),
@@ -1910,7 +1914,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 16),
 
-              const Text(
+              const TranslatedText(
                 "Postal / ZIP Code",
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
               ),
@@ -1933,7 +1937,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 30),
 
-              const Text(
+              const TranslatedText(
                 "CONTACT PERSON DETAILS",
                 style: TextStyle(
                   color: AppColors.primaryRed,
@@ -1944,7 +1948,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 18),
 
-              const Text(
+              const TranslatedText(
                 "Contact Person",
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
               ),
@@ -1966,7 +1970,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 16),
 
-              const Text(
+              const TranslatedText(
                 "Email",
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
               ),
@@ -1988,7 +1992,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 16),
 
-              const Text(
+              const TranslatedText(
                 "Contact Number",
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
               ),
@@ -2051,7 +2055,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     RadioListTile<String>(
                       value: method,
                       groupValue: paymentMethod,
-                      title: Text(
+                      title: TranslatedText(
                         method == "Card"
                             ? "Card payment"
                             : method == "paynow"
@@ -2245,7 +2249,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response["message"] ?? "Unable to place order"),
+            content: TranslatedText(
+              response["message"] ?? "Unable to place order",
+            ),
           ),
         );
       }
@@ -2255,7 +2261,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(SnackBar(content: TranslatedText(e.toString())));
     } finally {
       if (mounted) {
         setState(() {
@@ -2338,7 +2344,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response["message"] ?? "Unable to place order"),
+            content: TranslatedText(
+              response["message"] ?? "Unable to place order",
+            ),
           ),
         );
       }
@@ -2348,7 +2356,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      ).showSnackBar(SnackBar(content: TranslatedText(e.toString())));
     } finally {
       if (mounted) {
         setState(() {
@@ -2374,14 +2382,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
       child: Column(
         children: [
-          const Text(
+          const TranslatedText(
             "Scan & Pay",
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 10),
 
-          const Text(
+          const TranslatedText(
             "Scan this QR code using Google Pay, PhonePe, Paytm or any UPI app.",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: Colors.black54),
@@ -2403,9 +2411,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             children: [
               Row(
                 children: [
-                  const Text("Amount:", style: TextStyle(fontSize: 16)),
+                  const TranslatedText(
+                    "Amount:",
+                    style: TextStyle(fontSize: 16),
+                  ),
                   const SizedBox(width: 8),
-                  Text(
+                  TranslatedText(
                     "₹${upiAmount?.toStringAsFixed(2) ?? ''}",
                     style: const TextStyle(
                       fontSize: 16,
@@ -2418,7 +2429,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               //
               const SizedBox(height: 8),
 
-              const Text(
+              const TranslatedText(
                 "After complete the payment please click the button below.",
                 style: TextStyle(fontSize: 14, color: Colors.black54),
               ),
@@ -2437,7 +2448,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryRed,
                   ),
-                  child: const Text(
+                  child: const TranslatedText(
                     "Payment Completed",
                     style: TextStyle(
                       color: Colors.white,
@@ -2450,7 +2461,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               // const SizedBox(height: 12),
 
-              // Text(
+              //TranslatedText(
               //   "UPI ID: ${upiId ?? ''}",
               //   style: const TextStyle(fontWeight: FontWeight.w500),
               // ),
@@ -2493,7 +2504,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Row(
             children: [
               const Expanded(
-                child: Text(
+                child: TranslatedText(
                   "Pay using UPI",
                   style: TextStyle(
                     fontSize: 16,
@@ -2531,7 +2542,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 8),
 
-          const Text(
+          const TranslatedText(
             "Click Pay Now to generate your UPI payment QR code.",
             style: TextStyle(
               fontSize: 13,
@@ -2545,7 +2556,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Row(
             children: [
               Expanded(
-                child: Text(
+                child: TranslatedText(
                   "$symbol${displayTotal.toStringAsFixed(2)}",
                   textAlign: TextAlign.end,
                   style: const TextStyle(
@@ -2584,7 +2595,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
+                      : const TranslatedText(
                           "Pay Now",
                           style: TextStyle(
                             fontSize: 14,
@@ -2612,13 +2623,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ),
       child: Column(
         children: [
-          const Text(
+          const TranslatedText(
             "Scan to pay with PayNoww",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
-          const Text(
+          const TranslatedText(
             "Open your banking app, scan this QR code, and complete the payment.",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: Colors.black54),
@@ -2643,7 +2654,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   width: 180,
                   height: 180,
                   child: Center(
-                    child: Text(
+                    child: TranslatedText(
                       'PayNow QR image not found',
                       textAlign: TextAlign.center,
                     ),
@@ -2655,7 +2666,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
           const SizedBox(height: 20),
 
-          const Text(
+          const TranslatedText(
             "After completing the payment, please click the button below for your Order Confirmation.",
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
@@ -2679,7 +2690,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
               ),
-              child: const Text(
+              child: const TranslatedText(
                 "Payment Completed",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
@@ -3192,7 +3203,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
+                        TranslatedText(
                           "Qty: $quantity",
                           style: const TextStyle(
                             fontSize: 13,
@@ -3206,7 +3217,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Positioned(
                     right: 0,
                     bottom: 0,
-                    child: Text(
+                    child: TranslatedText(
                       price,
                       style: const TextStyle(
                         fontSize: 16,
@@ -3315,7 +3326,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 20),
 
-              const Text(
+              const TranslatedText(
                 "Card payment",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
@@ -3323,7 +3334,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
               const SizedBox(height: 16),
 
-              const Text(
+              const TranslatedText(
                 "When you pay by card, an additional processing charge applies and your order total will be higher than with other payment methods.",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.black54),
@@ -3345,7 +3356,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       paymentMethod = "Card";
                     });
                   },
-                  child: const Text("OK"),
+                  child: const TranslatedText("OK"),
                 ),
               ),
             ],

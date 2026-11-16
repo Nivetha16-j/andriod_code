@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/menu/aboutus.dart';
 import 'package:junubullion/screens/menu/brands.dart';
 import 'package:junubullion/screens/menu/contactus.dart';
@@ -15,7 +14,6 @@ import 'package:junubullion/screens/menu/wallet.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/language_provider.dart';
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
-import 'dart:developer';
 
 class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
@@ -414,21 +412,29 @@ class _CustomDrawerState extends State<CustomDrawer> {
 
                     const SizedBox(height: 30),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Divider(thickness: 2, color: Colors.yellow),
-                        const TranslatedText(
+                    // Row(
+                    //   mainAxisAlignment: MainAxisAlignment.center,
+                    //   children: [
+                    // Divider(thickness: 2, color: Colors.yellow),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Center(
+                        child: TranslatedText(
                           "Connect with Us",
-                          style: TextStyle(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 24,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Divider(thickness: 2, color: Colors.yellow),
-                      ],
+                      ),
                     ),
+                    // Divider(thickness: 2, color: Colors.yellow),
+                    //   ],
+                    // ),
 
                     // const SizedBox(height: 8),
 

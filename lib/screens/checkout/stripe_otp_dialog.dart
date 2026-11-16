@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
+import 'package:junubullion/widgets/custom_translated_text.dart';
 
 /// Returns the verified Stripe client_secret, or null if closed.
 Future<String?> showStripeOtpDialog(
@@ -128,8 +129,8 @@ class _VerifyDialogState extends State<_VerifyDialog> {
             children: [
               Row(
                 children: [
-                  const Expanded(
-                    child: Text(
+                  Expanded(
+                    child: TranslatedText(
                       "Verify your payment",
                       style: TextStyle(
                         fontSize: 19,
@@ -144,7 +145,7 @@ class _VerifyDialogState extends State<_VerifyDialog> {
                 ],
               ),
               const SizedBox(height: 10),
-              Text(
+              TranslatedText(
                 "Enter the 6-digit code we sent to $_masked to confirm this payment.",
                 style: const TextStyle(
                   fontSize: 13,
@@ -183,7 +184,7 @@ class _VerifyDialogState extends State<_VerifyDialog> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 8),
-                Text(
+                TranslatedText(
                   _error!,
                   style: const TextStyle(color: Colors.red, fontSize: 12),
                 ),
@@ -210,7 +211,7 @@ class _VerifyDialogState extends State<_VerifyDialog> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text(
+                      : const TranslatedText(
                           "Verify and confirm payment",
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
@@ -220,7 +221,7 @@ class _VerifyDialogState extends State<_VerifyDialog> {
               Center(
                 child: GestureDetector(
                   onTap: (_cooldown > 0 || _resending) ? null : _resend,
-                  child: Text(
+                  child: TranslatedText(
                     _cooldown > 0
                         ? "Resend code (${_cooldown}s)"
                         : "Resend code",

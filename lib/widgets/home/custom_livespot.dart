@@ -271,7 +271,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                     color: AppColors.pink,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Text(
+                  child: TranslatedText(
                     "Real-Time Feed",
                     style: TextStyle(
                       color: AppColors.primaryRed,
@@ -386,7 +386,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                     ),
                     child: Row(
                       children: const [
-                        Text(
+                        TranslatedText(
                           'More Charts',
                           style: TextStyle(
                             color: Color(0xFFFFB800),
@@ -408,7 +408,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                 if (provider.errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
+                    child: TranslatedText(
                       provider.errorMessage!,
                       style: const TextStyle(color: Colors.white70),
                     ),
@@ -476,7 +476,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                                 : BorderSide.none,
                           ),
                         ),
-                        child: Text(
+                        child: TranslatedText(
                           tabs[index],
                           style: TextStyle(
                             fontSize: 12,
@@ -537,7 +537,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
               const SizedBox(height: 8),
 
               // Price
-              Text(
+              TranslatedText(
                 priceText,
                 style: const TextStyle(
                   color: AppColors.primaryRed,
@@ -550,7 +550,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
               const SizedBox(height: 5),
 
               // Currency / Unit
-              Text(
+              TranslatedText(
                 '${widget.selectedCurrency}/${widget.selectedUnit}',
                 style: const TextStyle(
                   color: AppColors.black,
@@ -607,7 +607,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
             Icon(icon, color: const Color(0xFFD2A900), size: 18),
 
             // const SizedBox(width: 5),
-            Text(
+            TranslatedText(
               label,
               style: const TextStyle(
                 color: Colors.white,
@@ -639,7 +639,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                   return items.map((item) {
                     return Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(
+                      child: TranslatedText(
                         item,
                         style: const TextStyle(
                           color: Colors.white,
@@ -655,7 +655,7 @@ class _LiveSpotPriceCardState extends State<LiveSpotPriceCard> {
                 items: items.map((item) {
                   return DropdownMenuItem<String>(
                     value: item,
-                    child: Text(item),
+                    child: TranslatedText(item),
                   );
                 }).toList(),
               ),

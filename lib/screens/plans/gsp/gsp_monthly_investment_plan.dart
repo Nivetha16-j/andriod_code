@@ -605,7 +605,7 @@ class _GspMonthlyInvestmentPlanContentState
                                 color: Color(0xff333333),
                               ),
                             ),
-                            Text(
+                            TranslatedText(
                               '$currencySymbol${goldPricePerGram.toStringAsFixed(2)}',
                               style: const TextStyle(
                                 fontSize: 13,

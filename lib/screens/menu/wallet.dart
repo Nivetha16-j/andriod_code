@@ -69,7 +69,7 @@ class _CustomWalletState extends State<CustomWallet> {
                       size: 26,
                     ),
                     SizedBox(width: 10),
-                    Text(
+                    TranslatedText(
                       "Wallet",
                       style: TextStyle(
                         color: Colors.white,
@@ -84,7 +84,7 @@ class _CustomWalletState extends State<CustomWallet> {
 
                 WalletMenuItem(
                   icon: Icons.dashboard_outlined,
-                  title: 'Dashboard',
+                  title: 'My Wallet',
                   onTap: () {
                     Navigator.push(
                       context,
@@ -96,18 +96,30 @@ class _CustomWalletState extends State<CustomWallet> {
                 ),
 
                 WalletMenuItem(
-                  icon: Icons.account_balance_wallet_outlined,
-                  title: 'My Wallet',
+                  icon: Icons.dashboard_outlined,
+                  title: 'Digital Savings',
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => JscWalletScreen(),
+                        builder: (context) => JscDashboardScreen(),
                       ),
                     );
                   },
                 ),
 
+                // WalletMenuItem(
+                //   icon: Icons.account_balance_wallet_outlined,
+                //   title: 'Digital Savings',
+                //   onTap: () {
+                //     Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => JscWalletScreen(),
+                //       ),
+                //     );
+                //   },
+                // ),
                 WalletMenuItem(
                   icon: Icons.shopping_bag_outlined,
                   title: 'Your Purchases',
@@ -162,7 +174,7 @@ class _CustomWalletState extends State<CustomWallet> {
 
                 const SizedBox(height: 12),
 
-                const Text(
+                const TranslatedText(
                   "INVESTMENT PLANS",
                   style: TextStyle(
                     color: AppColors.mustard,
@@ -252,7 +264,7 @@ class _CustomWalletState extends State<CustomWallet> {
 
                 const SizedBox(height: 12),
 
-                const Text(
+                const TranslatedText(
                   "ACCOUNT",
                   style: TextStyle(
                     color: AppColors.mustard,
@@ -426,7 +438,7 @@ class WalletMenuItem extends StatelessWidget {
             Icon(icon, color: Colors.white, size: 22),
             const SizedBox(width: 16),
             Expanded(
-              child: Text(
+              child: TranslatedText(
                 title,
                 style: const TextStyle(
                   color: Colors.white,
@@ -475,7 +487,7 @@ class WalletSubMenuItem extends StatelessWidget {
 
             const SizedBox(width: 14),
 
-            Text(
+            TranslatedText(
               title,
               style: const TextStyle(
                 color: Colors.white,

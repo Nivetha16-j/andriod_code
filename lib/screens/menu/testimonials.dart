@@ -417,13 +417,14 @@ class ReviewCard extends StatelessWidget {
             style: const TextStyle(color: AppColors.white),
           ),
           const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8),
-            child: Expanded(
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: TranslatedText(
                 testimonial.description,
                 maxLines: 5,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: const TextStyle(height: 1.5, color: AppColors.white),
               ),
             ),

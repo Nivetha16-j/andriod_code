@@ -140,7 +140,7 @@ class _GspInvestmentListContentState extends State<GspInvestmentListContent> {
       flex: flex,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 3),
-        child: Text(
+        child: TranslatedText(
           text,
           textAlign: textAlign,
           style: TextStyle(
@@ -195,7 +195,7 @@ class _GspInvestmentListContentState extends State<GspInvestmentListContent> {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Text(
+              child: TranslatedText(
                 provider.investmentsErrorMessage!,
                 style: const TextStyle(color: Colors.white),
                 textAlign: TextAlign.center,
@@ -208,7 +208,7 @@ class _GspInvestmentListContentState extends State<GspInvestmentListContent> {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(30),
-              child: Text(
+              child: TranslatedText(
                 'No GSP investments found.',
                 style: TextStyle(color: Colors.white),
               ),

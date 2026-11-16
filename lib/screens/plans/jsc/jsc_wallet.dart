@@ -188,7 +188,7 @@ class _JscWalletState extends State<JscWallet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TranslatedText(
-                'My Wallet',
+                'Digital Savings',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,

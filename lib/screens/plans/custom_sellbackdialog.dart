@@ -513,7 +513,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
               ' · Available: ',
               style: TextStyle(fontSize: 12, color: Colors.black87),
             ),
-            Text(
+            TranslatedText(
               '${widget.balance} ${widget.unit}',
               style: const TextStyle(
                 fontSize: 12,
@@ -586,7 +586,7 @@ class _SellBackDialogState extends State<SellBackDialog> {
                     'Estimated payout: ',
                     style: TextStyle(fontSize: 11, color: Colors.black87),
                   ),
-                  Text(
+                  TranslatedText(
                     '$symbol${estimatedPayout.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontSize: 11,

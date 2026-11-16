@@ -118,7 +118,7 @@ class _DashboardContentState extends State<_DashboardContent> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TranslatedText(
-                'Bullion Dashboard',
+                'Digital Savings',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,

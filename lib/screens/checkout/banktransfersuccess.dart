@@ -87,9 +87,9 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
     final url = _getBankUrl(widget.bankName);
 
     if (url == null || url.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Bank URL not available")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: TranslatedText("Bank URL not available")),
+      );
       return;
     }
 
@@ -98,9 +98,9 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
     if (uri == null ||
         (uri.scheme != 'https' && uri.scheme != 'http') ||
         uri.host.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Invalid bank website URL")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: TranslatedText("Invalid bank website URL")),
+      );
       return;
     }
 
@@ -109,7 +109,9 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
 
       if (!opened && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Unable to open bank website")),
+          const SnackBar(
+            content: TranslatedText("Unable to open bank website"),
+          ),
         );
       }
     } catch (e, stackTrace) {
@@ -118,7 +120,7 @@ class _BankTransferSuccessScreenState extends State<BankTransferSuccessScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Unable to open bank website")),
+        const SnackBar(content: TranslatedText("Unable to open bank website")),
       );
     }
   }
@@ -300,7 +302,7 @@ Widget _orderInfoRow(
               value,
               style: const TextStyle(fontSize: 14, color: Colors.black),
             )
-          : Text(
+          : TranslatedText(
               value,
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
@@ -320,7 +322,7 @@ Widget orderItemsCard(List<dynamic> items, String currencySymbol) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const TranslatedText(
           "Order items",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
@@ -331,13 +333,13 @@ Widget orderItemsCard(List<dynamic> items, String currencySymbol) {
           children: [
             Expanded(
               flex: 5,
-              child: Text(
+              child: TranslatedText(
                 "Product",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
             Expanded(
-              child: Text(
+              child: TranslatedText(
                 "Qty",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -345,7 +347,7 @@ Widget orderItemsCard(List<dynamic> items, String currencySymbol) {
             ),
             Expanded(
               flex: 2,
-              child: Text(
+              child: TranslatedText(
                 "Total",
                 textAlign: TextAlign.right,
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -361,10 +363,10 @@ Widget orderItemsCard(List<dynamic> items, String currencySymbol) {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
-                Expanded(flex: 5, child: Text(item["name"] ?? "")),
+                Expanded(flex: 5, child: TranslatedText(item["name"] ?? "")),
 
                 Expanded(
-                  child: Text(
+                  child: TranslatedText(
                     "${item["quantity"]}",
                     textAlign: TextAlign.center,
                   ),
@@ -372,7 +374,7 @@ Widget orderItemsCard(List<dynamic> items, String currencySymbol) {
 
                 Expanded(
                   flex: 2,
-                  child: Text(
+                  child: TranslatedText(
                     item["formatted_line_total"] ??
                         "$currencySymbol ${item["line_total"]}",
                     textAlign: TextAlign.right,
@@ -408,7 +410,7 @@ Widget bankTransferCard(
           children: [
             Icon(Icons.lock_outline, color: Colors.orange, size: 20),
             SizedBox(width: 8),
-            Text(
+            TranslatedText(
               "Complete your payment",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
@@ -417,7 +419,7 @@ Widget bankTransferCard(
 
         const SizedBox(height: 16),
 
-        Text(
+        TranslatedText(
           "You selected $bankName. Log in to your net banking and transfer the order total to our account using the details below. Use order $orderNumber as the payment reference.",
           style: const TextStyle(height: 1.5),
         ),
@@ -432,7 +434,7 @@ Widget bankTransferCard(
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: Text(
+          child: TranslatedText(
             "Open $bankName net banking",
             style: const TextStyle(color: Colors.white),
           ),
