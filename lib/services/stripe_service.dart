@@ -220,6 +220,29 @@ class StripeService {
         "Verification succeeded but no client secret was returned",
       );
     }
+    log("PAYMENT OTP VERIFIED, CLIENT SECRET: $secret");
+    return secret.toString();
+  }
+
+  static Future<String> verifyPhoneOtp({
+    required String paymentIntentId,
+    required String token,
+  }) async {
+    final res = await _postJson(
+      "/checkout/stripe/payment-otp/verify-phone", // path only
+      {"payment_intent_id": paymentIntentId, "firebase_id_token": token},
+    );
+
+    final secret =
+        (res["data"] is Map ? res["data"]["client_secret"] : null) ??
+        res["client_secret"];
+
+    if (secret == null || secret.toString().trim().isEmpty) {
+      throw Exception(
+        "Verification succeeded but no client secret was returned",
+      );
+    }
+    log("PHONE OTP VERIFIED, CLIENT SECRET: $secret");
     return secret.toString();
   }
 
@@ -228,24 +251,21 @@ class StripeService {
   static Future<bool> payWithDeferredIntent({
     required String currency,
     required int amountMinor,
-    required String email, // 1) new parameter
+    required String email,
     required Future<String?> Function() otpStep,
   }) async {
     String? secret;
-    log("ppppppppppppppppp");
     try {
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
-          // 2) replace this whole block
           merchantDisplayName: "Junu Bullion",
           customFlow: true,
-
+          returnURL: 'junubullion://stripe-redirect', // NEW
           billingDetails: BillingDetails(email: email),
           billingDetailsCollectionConfiguration:
               const BillingDetailsCollectionConfiguration(
                 email: CollectionMode.always,
               ),
-
           intentConfiguration: IntentConfiguration(
             mode: IntentMode.paymentMode(
               currencyCode: currency.toUpperCase(),
@@ -273,14 +293,35 @@ class StripeService {
       await Stripe.instance.presentPaymentSheet();
 
       secret = await otpStep();
+      log("STRIPE DEFERRED OTP STEP RETURNED SECRET -> $secret");
       if (secret == null || secret.isEmpty) return false;
 
       await Stripe.instance.confirmPaymentSheetPayment();
       return true;
-    } on StripeException {
-      return false;
+    } on StripeException catch (e) {
+      log(
+        "STRIPE DEFERRED StripeException -> "
+        "code=${e.error.code} type=${e.error.type} "
+        "message=${e.error.message} "
+        "localized=${e.error.localizedMessage} "
+        "decline=${e.error.declineCode}",
+      );
+      return await _intentSucceeded(secret);
+    } catch (e, st) {
+      log("STRIPE DEFERRED ERROR -> $e", stackTrace: st);
+      return await _intentSucceeded(secret);
+    }
+  }
+
+  /// The SDK can throw after 3DS even though the payment went through.
+  static Future<bool> _intentSucceeded(String? secret) async {
+    if (secret == null || secret.isEmpty) return false;
+    try {
+      final pi = await Stripe.instance.retrievePaymentIntent(secret);
+      log("STRIPE PI STATUS AFTER ERROR -> ${pi.status}");
+      return pi.status == PaymentIntentsStatus.Succeeded;
     } catch (e) {
-      log("STRIPE DEFERRED ERROR -> $e");
+      log("STRIPE PI RETRIEVE ERROR -> $e");
       return false;
     }
   }

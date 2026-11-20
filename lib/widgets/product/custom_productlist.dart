@@ -776,9 +776,17 @@ class _ProductGridCard extends StatelessWidget {
     // UPDATE CART
     // =============================================================
 
-    await cartProvider.updateCartQuantity(
+    final success = await cartProvider.updateCartQuantity(
       productId: productId,
       quantity: currentQuantity + 1,
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    _showMessage(
+      success ? 'Cart quantity updated' : 'Failed to update cart quantity',
     );
   }
 
@@ -794,10 +802,7 @@ class _ProductGridCard extends StatelessWidget {
   ) {
     final productId = product['id'];
 
-    // =============================================================
     // OUT OF STOCK
-    // =============================================================
-
     if (!canPurchase) {
       return ElevatedButton(
         onPressed: null,
@@ -820,10 +825,7 @@ class _ProductGridCard extends StatelessWidget {
       );
     }
 
-    // =============================================================
     // PHYSICAL CONVERSION + DIGITAL PRODUCT
-    // =============================================================
-
     if (physicalProvider.isActive && isDigitalProduct) {
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
@@ -845,7 +847,7 @@ class _ProductGridCard extends StatelessWidget {
           children: [
             Image.asset('assets/Cart.png', height: 18),
             const SizedBox(width: 4),
-            Flexible(
+            const Flexible(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: TranslatedText("ADD TO CART", maxLines: 1),
@@ -856,10 +858,7 @@ class _ProductGridCard extends StatelessWidget {
       );
     }
 
-    // =============================================================
     // CHECK CART
-    // =============================================================
-
     final bool isInCart = cartProvider.isProductInCart(productId);
 
     Map<String, dynamic>? cartItem;
@@ -875,62 +874,9 @@ class _ProductGridCard extends StatelessWidget {
     }
 
     final int cartQuantity = int.tryParse('${cartItem?['quantity'] ?? 0}') ?? 0;
+    final bool isAdding = cartProvider.isAdding(productId);
 
-    // =============================================================
-    // ALREADY IN CART
-    // =============================================================
-
-    if (isInCart && cartQuantity > 0) {
-      return Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryRed,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                icon: const Icon(Icons.remove, color: Colors.white, size: 18),
-                onPressed: () async {
-                  if (cartQuantity <= 1) {
-                    await cartProvider.removeFromCart(productId);
-                  } else {
-                    await cartProvider.updateCartQuantity(
-                      productId: productId,
-                      quantity: cartQuantity - 1,
-                    );
-                  }
-                },
-              ),
-            ),
-
-            TranslatedText(
-              '$cartQuantity',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            Expanded(
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                icon: const Icon(Icons.add, color: Colors.white, size: 18),
-                onPressed: () async {
-                  await _increaseQuantity(context, cartProvider, cartQuantity);
-                },
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // =============================================================
-    // ADD TO CART
-    // =============================================================
-
+    // ALWAYS "ADD TO CART"
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryRed,
@@ -938,12 +884,18 @@ class _ProductGridCard extends StatelessWidget {
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      onPressed: cartProvider.isAdding(productId)
+      onPressed: isAdding
           ? null
           : () async {
-              await _addProduct(context, cartProvider);
+              if (isInCart && cartQuantity > 0) {
+                // Same product again -> only bump the quantity
+                await _increaseQuantity(context, cartProvider, cartQuantity);
+              } else {
+                // First time -> add to cart
+                await _addProduct(context, cartProvider);
+              }
             },
-      child: cartProvider.isAdding(productId)
+      child: isAdding
           ? const SizedBox(
               width: 18,
               height: 18,
@@ -958,7 +910,7 @@ class _ProductGridCard extends StatelessWidget {
               children: [
                 Image.asset('assets/Cart.png', height: 18),
                 const SizedBox(width: 4),
-                Flexible(
+                const Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: TranslatedText("ADD TO CART", maxLines: 1),

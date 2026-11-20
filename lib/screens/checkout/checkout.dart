@@ -12,6 +12,7 @@ import 'package:junubullion/screens/checkout/success.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
 import 'package:junubullion/services/jsc_services.dart';
+import 'package:junubullion/services/phone_reauth_services.dart';
 import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
@@ -1630,23 +1631,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           );
         }
 
-        // final clientSecret = stripeResponse["data"]?["client_secret"];
-
-        // // Get payment intent ID from create session response
-        // final paymentIntentId = stripeResponse["data"]?["payment_intent_id"];
-
-        // log("STRIPE CLIENT SECRET -> $clientSecret");
-        // log("STRIPE PAYMENT INTENT ID -> $paymentIntentId");
-
-        // if (clientSecret == null || clientSecret.toString().trim().isEmpty) {
-        //   throw Exception("Stripe client secret not received");
-        // }
-
-        // if (paymentIntentId == null ||
-        //     paymentIntentId.toString().trim().isEmpty) {
-        //   throw Exception("Stripe payment intent ID not received");
-        // }
-
         final Map<String, dynamic> stripeData = Map<String, dynamic>.from(
           stripeResponse["data"] ?? {},
         );
@@ -1685,11 +1669,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             amountMinor: amountMinor,
             email: otpEmail,
             otpStep: () async {
-              // Stripe details are done -> NOW trigger the email OTP
+              // Card details are done -> send BOTH OTPs now
+
+              // 1) Email OTP (existing API)
               await StripeService.sendPaymentOtp(
                 paymentIntentId: paymentIntentId.toString(),
                 email: otpEmail,
               );
+
+              // 2) Phone OTP (Firebase); if it fails, the dialog is email-only
+              bool phoneEnabled = false;
+              if (PhoneReauthService.isAvailable) {
+                try {
+                  await PhoneReauthService.sendCode();
+                  phoneEnabled = true;
+                } catch (e) {
+                  log("PHONE OTP SEND ERROR -> $e");
+                }
+              }
 
               final prefs = await SharedPreferences.getInstance();
 
@@ -1718,6 +1715,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 context,
                 paymentIntentId: paymentIntentId.toString(),
                 email: otpEmail,
+                phoneEnabled: phoneEnabled,
               );
 
               if (mounted && secret != null) {

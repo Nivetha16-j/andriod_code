@@ -1599,7 +1599,7 @@ class _GspProductCard extends StatelessWidget {
           children: [
             Image.asset('assets/Cart.png', height: 18),
             const SizedBox(width: 4),
-            Flexible(
+            const Flexible(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: TranslatedText("ADD TO CART", maxLines: 1),
@@ -1625,81 +1625,35 @@ class _GspProductCard extends StatelessWidget {
     }
 
     final int cartQuantity = int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
-
-    if (isInCart && cartQuantity > 0) {
-      return Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryRed,
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            InkWell(
-              onTap: () async {
-                if (cartQuantity <= 1) {
-                  await cartProvider.removeFromCart(productId);
-                } else {
-                  await cartProvider.updateCartQuantity(
-                    productId: productId,
-                    quantity: cartQuantity - 1,
-                  );
-                }
-              },
-              child: const SizedBox(
-                width: 40,
-                // height: 45,
-                child: Center(
-                  child: Icon(Icons.remove, color: Colors.white, size: 20),
-                ),
-              ),
-            ),
-
-            TranslatedText(
-              "$cartQuantity",
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
-            ),
-
-            InkWell(
-              onTap: () async {
-                await cartProvider.updateCartQuantity(
-                  productId: productId,
-                  quantity: cartQuantity + 1,
-                );
-              },
-              child: const SizedBox(
-                width: 40,
-                // height: 45,
-                child: Center(
-                  child: Icon(Icons.add, color: Colors.white, size: 20),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     final bool isAdding = cartProvider.isAdding(productId);
 
     return ElevatedButton(
       onPressed: isAdding
           ? null
           : () async {
-              final bool success = await cartProvider.addToCart(
-                productId: productId,
-                quantity: 1,
+              final bool alreadyInCart = isInCart && cartQuantity > 0;
+
+              final bool success = alreadyInCart
+                  // Same product again -> only bump the quantity
+                  ? await cartProvider.updateCartQuantity(
+                      productId: productId,
+                      quantity: cartQuantity + 1,
+                    )
+                  // First time -> add to cart
+                  : await cartProvider.addToCart(
+                      productId: productId,
+                      quantity: 1,
+                    );
+
+              if (!context.mounted) return;
+
+              _showMessage(
+                success
+                    ? (alreadyInCart
+                          ? "Cart quantity updated"
+                          : "Added to Cart")
+                    : "Failed to add product",
               );
-
-              if (!context.mounted) {
-                return;
-              }
-
-              _showMessage(success ? "Added to Cart" : "Failed to add product");
             },
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryRed,
@@ -1722,7 +1676,7 @@ class _GspProductCard extends StatelessWidget {
               children: [
                 Image.asset('assets/Cart.png', height: 18),
                 const SizedBox(width: 4),
-                Flexible(
+                const Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: TranslatedText("ADD TO CART", maxLines: 1),

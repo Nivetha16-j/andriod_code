@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:junubullion/services/phone_reauth_services.dart';
 import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
@@ -10,20 +12,29 @@ Future<String?> showStripeOtpDialog(
   BuildContext context, {
   required String paymentIntentId,
   required String email,
+  bool phoneEnabled = false,
   String amountText = '',
 }) {
   return showDialog<String>(
     context: context,
     barrierDismissible: false,
-    builder: (_) =>
-        _VerifyDialog(paymentIntentId: paymentIntentId, email: email),
+    builder: (_) => _VerifyDialog(
+      paymentIntentId: paymentIntentId,
+      email: email,
+      phoneEnabled: phoneEnabled,
+    ),
   );
 }
 
 class _VerifyDialog extends StatefulWidget {
   final String paymentIntentId;
   final String email;
-  const _VerifyDialog({required this.paymentIntentId, required this.email});
+  final bool phoneEnabled;
+  const _VerifyDialog({
+    required this.paymentIntentId,
+    required this.email,
+    required this.phoneEnabled,
+  });
 
   @override
   State<_VerifyDialog> createState() => _VerifyDialogState();
@@ -60,10 +71,48 @@ class _VerifyDialogState extends State<_VerifyDialog> {
     });
   }
 
-  String get _masked {
+  String get _maskedEmail {
     final p = widget.email.split('@');
     if (p.length != 2 || p[0].length < 3) return widget.email;
     return '${p[0].substring(0, 2)}********@${p[1]}';
+  }
+
+  String? get _maskedPhone {
+    final p = PhoneReauthService.phoneNumber;
+    if (!widget.phoneEnabled || p == null) return null;
+    return p.length <= 4 ? p : '******${p.substring(p.length - 4)}';
+  }
+
+  /// Email code first, then phone code.
+  Future<String> _verifyEither(String code) async {
+    // 1) Email OTP (existing API)
+    try {
+      return await StripeService.verifyPaymentOtp(
+        paymentIntentId: widget.paymentIntentId,
+        otp: code,
+      );
+    } catch (_) {}
+
+    // 2) Phone OTP (Firebase, then your backend checks the token)
+    if (widget.phoneEnabled) {
+      bool phoneOk = false;
+      try {
+        await PhoneReauthService.verifyCode(code);
+        phoneOk = true;
+      } catch (_) {}
+
+      if (phoneOk) {
+        // The code was right, so errors from here are real errors
+        final idToken = await PhoneReauthService.freshIdToken();
+        log("PHONE OTP VERIFIED, ID TOKEN: $idToken");
+        return await StripeService.verifyPhoneOtp(
+          paymentIntentId: widget.paymentIntentId,
+          token: idToken,
+        );
+      }
+    }
+
+    throw Exception("Invalid code");
   }
 
   Future<void> _verify() async {
@@ -76,10 +125,7 @@ class _VerifyDialogState extends State<_VerifyDialog> {
       _error = null;
     });
     try {
-      final secret = await StripeService.verifyPaymentOtp(
-        paymentIntentId: widget.paymentIntentId,
-        otp: _c.text.trim(),
-      );
+      final secret = await _verifyEither(_c.text.trim());
       if (!mounted) return;
       Navigator.pop(context, secret);
     } catch (e) {
@@ -102,6 +148,11 @@ class _VerifyDialogState extends State<_VerifyDialog> {
         paymentIntentId: widget.paymentIntentId,
         email: widget.email,
       );
+      if (widget.phoneEnabled) {
+        try {
+          await PhoneReauthService.sendCode(); // best effort
+        } catch (_) {}
+      }
       if (!mounted) return;
       _c.clear();
       _startCooldown();
@@ -116,6 +167,11 @@ class _VerifyDialogState extends State<_VerifyDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final phone = _maskedPhone;
+    final String message = phone != null
+        ? "Enter the 6-digit code we sent to $_maskedEmail or $phone to confirm this payment."
+        : "Enter the 6-digit code we sent to $_maskedEmail to confirm this payment.";
+
     return Dialog(
       backgroundColor: Colors.white,
       insetPadding: const EdgeInsets.all(20),
@@ -129,7 +185,7 @@ class _VerifyDialogState extends State<_VerifyDialog> {
             children: [
               Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: TranslatedText(
                       "Verify your payment",
                       style: TextStyle(
@@ -146,7 +202,7 @@ class _VerifyDialogState extends State<_VerifyDialog> {
               ),
               const SizedBox(height: 10),
               TranslatedText(
-                "Enter the 6-digit code we sent to $_masked to confirm this payment.",
+                message,
                 style: const TextStyle(
                   fontSize: 13,
                   color: Colors.black54,

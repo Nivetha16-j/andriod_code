@@ -721,6 +721,34 @@ class _ExclusiveProductCard extends StatelessWidget {
   }) {
     final productId = product["id"];
 
+    void showMessage(String message) {
+      Fluttertoast.showToast(
+        msg: message,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.black87,
+        textColor: Colors.white,
+        fontSize: 14,
+      );
+    }
+
+    if (!canPurchase) {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromRGBO(218, 218, 218, 1),
+          foregroundColor: Colors.black54,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: TranslatedText("OUT OF STOCK", maxLines: 1),
+        ),
+      );
+    }
+
     final bool isInCart = cartProvider.isProductInCart(productId);
 
     Map<String, dynamic>? cartItem;
@@ -736,99 +764,7 @@ class _ExclusiveProductCard extends StatelessWidget {
     }
 
     final int cartQuantity = int.tryParse('${cartItem?["quantity"] ?? 0}') ?? 0;
-
-    // ============================================================
-    // OUT OF STOCK
-    // ============================================================
-
-    if (!canPurchase) {
-      return ElevatedButton(
-        onPressed: null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromRGBO(218, 218, 218, 1),
-          foregroundColor: Colors.black54,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: TranslatedText("OUT OF STOCK", maxLines: 1),
-        ),
-      );
-    }
-
-    // ============================================================
-    // ALREADY IN CART
-    // ============================================================
-
-    if (isInCart && cartQuantity > 0) {
-      return Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryRed,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            InkWell(
-              onTap: () async {
-                if (cartQuantity <= 1) {
-                  await cartProvider.removeFromCart(productId);
-                } else {
-                  await cartProvider.updateCartQuantity(
-                    productId: productId,
-                    quantity: cartQuantity - 1,
-                  );
-                }
-              },
-              child: const Icon(Icons.remove, color: Colors.white, size: 18),
-            ),
-
-            TranslatedText(
-              "$cartQuantity",
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-
-            InkWell(
-              onTap: () async {
-                final weightError = _validateConversionWeight(
-                  cartProvider,
-                  quantityToAdd: 1,
-                  context: context,
-                );
-
-                if (weightError != null) {
-                  Fluttertoast.showToast(
-                    msg: weightError,
-                    toastLength: Toast.LENGTH_SHORT,
-                    gravity: ToastGravity.BOTTOM,
-                    backgroundColor: Colors.black87,
-                    textColor: Colors.white,
-                    fontSize: 14,
-                  );
-                  return;
-                }
-
-                await cartProvider.updateCartQuantity(
-                  productId: productId,
-                  quantity: cartQuantity + 1,
-                );
-              },
-              child: const Icon(Icons.add, color: Colors.white, size: 18),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // ============================================================
-    // ADD TO CART
-    // ============================================================
+    final bool isAdding = cartProvider.isAdding(productId);
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
@@ -836,7 +772,7 @@ class _ExclusiveProductCard extends StatelessWidget {
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      onPressed: cartProvider.isAdding(productId)
+      onPressed: isAdding
           ? null
           : () async {
               final weightError = _validateConversionWeight(
@@ -857,22 +793,31 @@ class _ExclusiveProductCard extends StatelessWidget {
                 return;
               }
 
-              final bool success = await cartProvider.addToCart(
-                productId: productId,
-                quantity: 1,
-              );
+              final bool alreadyInCart = isInCart && cartQuantity > 0;
 
-              if (!context.mounted) {
-                return;
-              }
+              final bool success = alreadyInCart
+                  // Same product again -> only bump the quantity
+                  ? await cartProvider.updateCartQuantity(
+                      productId: productId,
+                      quantity: cartQuantity + 1,
+                    )
+                  // First time -> add to cart
+                  : await cartProvider.addToCart(
+                      productId: productId,
+                      quantity: 1,
+                    );
 
-              Fluttertoast.showToast(
-                msg: success ? "Added to Cart" : "Failed to add product",
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
+              if (!context.mounted) return;
+
+              showMessage(
+                success
+                    ? (alreadyInCart
+                          ? "Cart quantity updated"
+                          : "Added to Cart")
+                    : "Failed to add product",
               );
             },
-      child: cartProvider.isAdding(productId)
+      child: isAdding
           ? const SizedBox(
               height: 18,
               width: 18,
@@ -887,7 +832,7 @@ class _ExclusiveProductCard extends StatelessWidget {
               children: [
                 Image.asset('assets/Cart.png', height: 18),
                 const SizedBox(width: 4),
-                Flexible(
+                const Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: TranslatedText("ADD TO CART", maxLines: 1),

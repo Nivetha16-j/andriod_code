@@ -29,6 +29,7 @@ class AppBootstrap {
     try {
       await dotenv.load(fileName: '.env');
       Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
+      Stripe.urlScheme = 'junubullion';
       await Stripe.instance.applySettings();
     } catch (e, stackTrace) {
       debugPrint('Env / Stripe initialization failed: $e');
