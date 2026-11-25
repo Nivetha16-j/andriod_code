@@ -461,7 +461,56 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         fit: BoxFit.contain,
                       ),
                     ),
-                    // const SizedBox(height: 4),
+
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.pink,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Special Welcome Offer!",
+                              style: TextStyle(
+                                color: AppColors.gspTitle,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "GET 10 GRAMS OF SILVER FREE!",
+                              style: TextStyle(
+                                color: AppColors.gspTitle,
+                                fontSize: 19,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Register with Junu Bullion and get 10 grams of silver credited automatically to your GSP wallet.",
+                              style: TextStyle(
+                                color: AppColors.gspTitle,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Limited Period Offer: 20 Nov 2026 - 20 Jan 2027.",
+                              style: TextStyle(
+                                color: AppColors.gspTitle,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Center(
                       child: Text(
                         'Sign Up To Your Account',

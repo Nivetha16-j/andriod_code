@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:junubullion/services/phone_reauth_services.dart';
+import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
@@ -12,29 +13,20 @@ Future<String?> showStripeOtpDialog(
   BuildContext context, {
   required String paymentIntentId,
   required String email,
-  bool phoneEnabled = false,
   String amountText = '',
 }) {
   return showDialog<String>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => _VerifyDialog(
-      paymentIntentId: paymentIntentId,
-      email: email,
-      phoneEnabled: phoneEnabled,
-    ),
+    builder: (_) =>
+        _VerifyDialog(paymentIntentId: paymentIntentId, email: email),
   );
 }
 
 class _VerifyDialog extends StatefulWidget {
   final String paymentIntentId;
   final String email;
-  final bool phoneEnabled;
-  const _VerifyDialog({
-    required this.paymentIntentId,
-    required this.email,
-    required this.phoneEnabled,
-  });
+  const _VerifyDialog({required this.paymentIntentId, required this.email});
 
   @override
   State<_VerifyDialog> createState() => _VerifyDialogState();
@@ -47,11 +39,14 @@ class _VerifyDialogState extends State<_VerifyDialog> {
   String? _error;
   int _cooldown = 30;
   Timer? _timer;
+  String? sessionPhone;
 
   @override
   void initState() {
     super.initState();
     _startCooldown();
+
+    _userDetails();
   }
 
   @override
@@ -59,6 +54,15 @@ class _VerifyDialogState extends State<_VerifyDialog> {
     _timer?.cancel();
     _c.dispose();
     super.dispose();
+  }
+
+  Future<void> _userDetails() async {
+    final dynamic sessionUser = await SessionManager.getUser();
+    sessionPhone = sessionUser is Map
+        ? sessionUser['phone_number']?.toString()
+        : sessionUser?.phone?.toString();
+
+    log("message -> $sessionPhone");
   }
 
   void _startCooldown() {
@@ -77,10 +81,14 @@ class _VerifyDialogState extends State<_VerifyDialog> {
     return '${p[0].substring(0, 2)}********@${p[1]}';
   }
 
+  bool get _phoneEnabled =>
+      sessionPhone != null && sessionPhone!.trim().isNotEmpty;
+
   String? get _maskedPhone {
-    final p = PhoneReauthService.phoneNumber;
-    if (!widget.phoneEnabled || p == null) return null;
-    return p.length <= 4 ? p : '******${p.substring(p.length - 4)}';
+    if (sessionPhone == null || sessionPhone!.isEmpty) return "";
+    return sessionPhone!.length <= 4
+        ? sessionPhone
+        : '******${sessionPhone!.substring(sessionPhone!.length - 4)}';
   }
 
   /// Email code first, then phone code.
@@ -93,8 +101,8 @@ class _VerifyDialogState extends State<_VerifyDialog> {
       );
     } catch (_) {}
 
-    // 2) Phone OTP (Firebase, then your backend checks the token)
-    if (widget.phoneEnabled) {
+    // 2) Phone OTP (Firebase, then the backend checks the token)
+    if (_phoneEnabled) {
       bool phoneOk = false;
       try {
         await PhoneReauthService.verifyCode(code);
@@ -104,7 +112,6 @@ class _VerifyDialogState extends State<_VerifyDialog> {
       if (phoneOk) {
         // The code was right, so errors from here are real errors
         final idToken = await PhoneReauthService.freshIdToken();
-        log("PHONE OTP VERIFIED, ID TOKEN: $idToken");
         return await StripeService.verifyPhoneOtp(
           paymentIntentId: widget.paymentIntentId,
           token: idToken,
@@ -144,18 +151,30 @@ class _VerifyDialogState extends State<_VerifyDialog> {
       _error = null;
     });
     try {
+      // Email
       await StripeService.resendPaymentOtp(
         paymentIntentId: widget.paymentIntentId,
         email: widget.email,
       );
-      if (widget.phoneEnabled) {
+
+      // Phone: a failure here must not hide the email success
+      String? phoneNote;
+      if (_phoneEnabled) {
+        log("PHONE OTP RESEND -> $sessionPhone");
         try {
-          await PhoneReauthService.sendCode(); // best effort
-        } catch (_) {}
+          await PhoneReauthService().sendCode(sessionPhone!);
+        } catch (e) {
+          log("PHONE OTP RESEND ERROR -> $e");
+          phoneNote = e.toString().replaceFirst("Exception: ", "");
+        }
       }
+
       if (!mounted) return;
       _c.clear();
       _startCooldown();
+      if (phoneNote != null) {
+        setState(() => _error = "Email code sent. SMS failed: $phoneNote");
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _error = e.toString().replaceFirst("Exception: ", ""));
@@ -167,7 +186,7 @@ class _VerifyDialogState extends State<_VerifyDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final phone = _maskedPhone;
+    final String? phone = _maskedPhone;
     final String message = phone != null
         ? "Enter the 6-digit code we sent to $_maskedEmail or $phone to confirm this payment."
         : "Enter the 6-digit code we sent to $_maskedEmail to confirm this payment.";

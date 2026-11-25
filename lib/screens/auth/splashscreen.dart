@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:junubullion/routes/app_routes.dart';
 import 'package:junubullion/services/app_bootstrap.dart';
@@ -19,7 +20,11 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _fadeAnimation;
 
   VideoPlayerController? _videoController;
+
   bool _hasNavigated = false;
+
+  Timer? _fallbackTimer;
+  Timer? _initializationTimer;
 
   @override
   void initState() {
@@ -33,20 +38,45 @@ class _SplashScreenState extends State<SplashScreen>
     _scaleAnimation = Tween<double>(
       begin: 0.5,
       end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutBack,
+      ),
+    );
 
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeIn,
+      ),
+    );
 
     _controller.forward();
 
-    // Let the first Flutter frame paint (logo on black) before starting
-    // the video decoder — which can delay the first frame on cold start.
+    // Fallback if video initialization gets stuck.
+    _initializationTimer = Timer(
+      const Duration(seconds: 10),
+      () {
+        if (!_hasNavigated &&
+            (_videoController == null ||
+                !_videoController!.value.isInitialized)) {
+          log("Video initialization timeout");
+          _navigateOnce();
+        }
+      },
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _videoController = VideoPlayerController.asset('assets/logo/video.mp4');
+      if (!mounted || _hasNavigated) return;
+
+      _videoController = VideoPlayerController.asset(
+        'assets/logo/video.mp4',
+      );
+
       _initializeVideo();
     });
   }
@@ -57,8 +87,26 @@ class _SplashScreenState extends State<SplashScreen>
 
     try {
       await video.initialize();
+
+      if (!mounted || _hasNavigated) return;
+
+      _initializationTimer?.cancel();
+
       await video.setLooping(false);
+
       video.addListener(_videoListener);
+
+      // Fallback if playback freezes or completion is not detected.
+      _fallbackTimer = Timer(
+        video.value.duration + const Duration(seconds: 5),
+        () {
+          if (!_hasNavigated) {
+            log("Video fallback timer triggered");
+            _navigateOnce();
+          }
+        },
+      );
+
       await video.play();
 
       if (mounted) {
@@ -68,63 +116,72 @@ class _SplashScreenState extends State<SplashScreen>
       log("Video duration: ${video.value.duration}");
     } catch (e) {
       log("Splash video error: $e");
-      if (!_hasNavigated) {
-        _hasNavigated = true;
-        checkLogin();
-      }
+      _navigateOnce();
     }
   }
 
   void _videoListener() {
     final video = _videoController;
-    if (video == null || !video.value.isInitialized) {
+
+    if (video == null || !video.value.isInitialized) return;
+
+    if (video.value.hasError) {
+      log("Video playback error: ${video.value.errorDescription}");
+      _navigateOnce();
       return;
     }
 
-    final position = video.value.position;
-    final duration = video.value.duration;
-
-    if (position >= duration && !_hasNavigated) {
-      _hasNavigated = true;
+    if (video.value.isCompleted && !_hasNavigated) {
       log("Splash video completed");
-      checkLogin();
+      _navigateOnce();
     }
   }
 
+  void _navigateOnce() {
+    if (_hasNavigated || !mounted) return;
+
+    _hasNavigated = true;
+
+    _fallbackTimer?.cancel();
+    _initializationTimer?.cancel();
+
+    checkLogin();
+  }
+
   Future<void> checkLogin() async {
-    await AppBootstrap.ready;
+    try {
+      await AppBootstrap.ready;
 
-    final loggedIn = await SessionManager.isLoggedIn();
-    final token = await SessionManager.getToken();
+      final loggedIn = await SessionManager.isLoggedIn();
 
-    log("Logged In: $loggedIn");
-    log("Token: $token");
+      log("Logged In: $loggedIn");
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (loggedIn) {
       Navigator.pushNamedAndRemoveUntil(
         context,
-        AppRoutes.home,
+        loggedIn ? AppRoutes.home : AppRoutes.login,
         (route) => false,
       );
-    } else {
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.login,
-        (route) => false,
-      );
+    } catch (e) {
+      log("Splash navigation error: $e");
     }
   }
 
   @override
   void dispose() {
+    _fallbackTimer?.cancel();
+    _initializationTimer?.cancel();
+
     final video = _videoController;
+
     if (video != null) {
       video.removeListener(_videoListener);
       video.dispose();
     }
+
     _controller.dispose();
+
     super.dispose();
   }
 
@@ -149,58 +206,6 @@ class _SplashScreenState extends State<SplashScreen>
                   )
                 : const ColoredBox(color: Colors.black),
           ),
-          // Positioned.fill(
-          //   child: Container(color: Colors.black.withOpacity(0.25)),
-          // ),
-          // Positioned.fill(
-          //   child: Center(
-          //     child: Column(
-          //       mainAxisAlignment: MainAxisAlignment.center,
-          //       children: [
-          //         // SvgPicture.asset(
-          //         //   'assets/logo/logo.svg',
-          //         //   width: 60,
-          //         //   height: 60,
-          //         //   fit: BoxFit.contain,
-          //         // ),
-          //         // Image.asset(
-          //         //   "assets/logo/logo.png",
-          //         //   width: 80,
-          //         //   height: 80,
-          //         //   fit: BoxFit.contain,
-          //         // ),
-          //         // const SizedBox(height: 10),
-          //         // FadeTransition(
-          //         //   opacity: _fadeAnimation,
-          //         //   child: ScaleTransition(
-          //         //     scale: _scaleAnimation,
-          //         //     child: ShaderMask(
-          //         //       shaderCallback: (Rect bounds) {
-          //         //         return const LinearGradient(
-          //         //           colors: [
-          //         //             Color.fromRGBO(223, 174, 2, 1),
-          //         //             Color.fromRGBO(251, 230, 157, 1),
-          //         //           ],
-          //         //           begin: Alignment.centerLeft,
-          //         //           end: Alignment.centerRight,
-          //         //         ).createShader(bounds);
-          //         //       },
-          //         //       child: const Text(
-          //         //         "Build a Better Future with JUNU Investment",
-          //         //         textAlign: TextAlign.center,
-          //         //         style: TextStyle(
-          //         //           fontSize: 14,
-          //         //           fontWeight: FontWeight.bold,
-          //         //           color: Colors.white,
-          //         //         ),
-          //         //       ),
-          //         //     ),
-          //         //   ),
-          //         // ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
         ],
       ),
     );

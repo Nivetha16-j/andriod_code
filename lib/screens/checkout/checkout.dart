@@ -8,11 +8,11 @@ import 'package:junubullion/providers/currency_provider.dart';
 import 'package:junubullion/screens/checkout/banktransfersuccess.dart';
 import 'package:junubullion/screens/checkout/physical_ordersuccess.dart';
 import 'package:junubullion/screens/checkout/stripe_otp_dialog.dart';
-import 'package:junubullion/screens/checkout/success.dart';
 import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/services/checkout_service.dart';
 import 'package:junubullion/services/jsc_services.dart';
 import 'package:junubullion/services/phone_reauth_services.dart';
+import 'package:junubullion/services/session_manager.dart';
 import 'package:junubullion/services/stripe_service.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
@@ -22,7 +22,6 @@ import 'package:junubullion/widgets/home/custom_appbar.dart';
 import 'package:provider/provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/account_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -126,7 +125,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         return ["Card", "paynow", "Bank"];
 
       case "INR":
-        return ["Card", "upi", "Bank"];
+        return ["Card", "Bank"];
+      // return ["Card", "upi", "Bank"];
 
       case "CAD":
       case "USD":
@@ -1662,66 +1662,136 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         if (clientSecret != null && clientSecret.trim().isNotEmpty) {
           // normal flow: backend already gave a secret
           paymentSuccess = await StripeService.makePayment(clientSecret);
+          // } else if (otpRequired) {
+          //   // Stripe sheet first -> then email OTP -> then confirm
+          //   paymentSuccess = await StripeService.payWithDeferredIntent(
+          //     currency: stripeCurrency,
+          //     amountMinor: amountMinor,
+          //     email: otpEmail,
+          //     otpStep: () async {
+          //       // Card details are done -> send BOTH OTPs now
+
+          //       // 1) Email OTP (existing API)
+          //       await StripeService.sendPaymentOtp(
+          //         paymentIntentId: paymentIntentId.toString(),
+          //         email: otpEmail,
+          //       );
+
+          //       // 2) Phone OTP (Firebase); if it fails, the dialog is email-only
+          //       bool phoneEnabled = false;
+          //       if (PhoneReauthService.isAvailable) {
+          //         try {
+          //           await PhoneReauthService.sendCode();
+          //           phoneEnabled = true;
+          //         } catch (e) {
+          //           log("PHONE OTP SEND ERROR -> $e");
+          //         }
+          //       }
+
+          //       final prefs = await SharedPreferences.getInstance();
+
+          //       await prefs.setString(
+          //         'pending_stripe_payment_intent',
+          //         paymentIntentId.toString(),
+          //       );
+
+          //       await prefs.setString('pending_stripe_email', otpEmail);
+
+          //       try {
+          //         await StripeService.paymentOtpStatus(
+          //           paymentIntentId: paymentIntentId.toString(),
+          //         );
+          //       } catch (e) {
+          //         log("STRIPE OTP STATUS ERROR -> $e");
+          //       }
+
+          //       if (!mounted) return null;
+
+          //       setState(
+          //         () => _isPlacingOrder = false,
+          //       ); // hide page loader for dialog
+
+          //       final secret = await showStripeOtpDialog(
+          //         context,
+          //         paymentIntentId: paymentIntentId.toString(),
+          //         email: otpEmail,
+          //         phoneEnabled: phoneEnabled,
+          //       );
+
+          //       if (mounted && secret != null) {
+          //         setState(() => _isPlacingOrder = true);
+          //       }
+          //       return secret;
+          //     },
+          //   );
+          // }
         } else if (otpRequired) {
-          // Stripe sheet first -> then email OTP -> then confirm
+          // Stripe sheet first -> then email + phone OTP -> then confirm
           paymentSuccess = await StripeService.payWithDeferredIntent(
             currency: stripeCurrency,
             amountMinor: amountMinor,
             email: otpEmail,
             otpStep: () async {
-              // Card details are done -> send BOTH OTPs now
-
-              // 1) Email OTP (existing API)
-              await StripeService.sendPaymentOtp(
-                paymentIntentId: paymentIntentId.toString(),
-                email: otpEmail,
-              );
-
-              // 2) Phone OTP (Firebase); if it fails, the dialog is email-only
-              bool phoneEnabled = false;
-              if (PhoneReauthService.isAvailable) {
-                try {
-                  await PhoneReauthService.sendCode();
-                  phoneEnabled = true;
-                } catch (e) {
-                  log("PHONE OTP SEND ERROR -> $e");
-                }
-              }
-
-              final prefs = await SharedPreferences.getInstance();
-
-              await prefs.setString(
-                'pending_stripe_payment_intent',
-                paymentIntentId.toString(),
-              );
-
-              await prefs.setString('pending_stripe_email', otpEmail);
-
               try {
-                await StripeService.paymentOtpStatus(
+                // Card details are done -> send BOTH OTPs now
+
+                // 1) Email OTP (existing API)
+                await StripeService.sendPaymentOtp(
                   paymentIntentId: paymentIntentId.toString(),
+                  email: otpEmail,
                 );
-              } catch (e) {
-                log("STRIPE OTP STATUS ERROR -> $e");
+
+                // 2) Phone OTP, only when the session has a phone number
+                String? phoneForDialog;
+                try {
+                  final dynamic sessionUser = await SessionManager.getUser();
+                  final String? sessionPhone = sessionUser is Map
+                      ? sessionUser['phone_number']?.toString()
+                      : sessionUser?.phone?.toString();
+
+                  // PhoneReauthService.setPhone(sessionPhone);
+
+                  if (PhoneReauthService().isAvailable) {
+                    await PhoneReauthService().sendCode(sessionPhone!);
+                    phoneForDialog = sessionPhone; // SMS really sent
+                  }
+                } catch (e) {
+                  log("PHONE OTP SEND ERROR -> $e"); // dialog stays email-only
+                }
+
+                final prefs = await SharedPreferences.getInstance();
+
+                await prefs.setString(
+                  'pending_stripe_payment_intent',
+                  paymentIntentId.toString(),
+                );
+
+                await prefs.setString('pending_stripe_email', otpEmail);
+
+                try {
+                  await StripeService.paymentOtpStatus(
+                    paymentIntentId: paymentIntentId.toString(),
+                  );
+                } catch (e) {
+                  log("STRIPE OTP STATUS ERROR -> $e");
+                }
+
+                if (!mounted) return null;
+                setState(() => _isPlacingOrder = false);
+
+                final secret = await showStripeOtpDialog(
+                  context,
+                  paymentIntentId: paymentIntentId.toString(),
+                  email: otpEmail,
+                  // phone: phoneForDialog,
+                );
+
+                if (mounted && secret != null)
+                  setState(() => _isPlacingOrder = true);
+                return secret;
+              } finally {
+                await PhoneReauthService.finish(); // clears the temporary Firebase login
               }
-
-              if (!mounted) return null;
-
-              setState(
-                () => _isPlacingOrder = false,
-              ); // hide page loader for dialog
-
-              final secret = await showStripeOtpDialog(
-                context,
-                paymentIntentId: paymentIntentId.toString(),
-                email: otpEmail,
-                phoneEnabled: phoneEnabled,
-              );
-
-              if (mounted && secret != null) {
-                setState(() => _isPlacingOrder = true);
-              }
-              return secret;
             },
           );
         } else {
@@ -2060,9 +2130,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ? "Card payment"
                             : method == "paynow"
                             ? "PayNow"
-                            : method == "upi"
-                            ? "UPI Payment"
+                            // : method == "upi"
+                            // ? "UPI Payment"
+                            //  : method == "Bank"
                             : "Direct bank transfer",
+                        // : null,
                       ),
                       onChanged: (value) async {
                         if (value == "Card") {
@@ -2097,10 +2169,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     if (method == "paynow" && paymentMethod == "paynow")
                       _buildPayNowSection(),
 
-                    if (method == "upi" && paymentMethod == "upi")
-                      upiQrGenerated && upiQrCode != null
-                          ? _buildGeneratedQrSection()
-                          : _buildUpiSection(),
+                    // if (method == "upi" && paymentMethod == "upi")
+                    //   upiQrGenerated && upiQrCode != null
+                    //       ? _buildGeneratedQrSection()
+                    //       : _buildUpiSection(),
                     // _buildUpiSection(),
 
                     // BANK OPTIONS DIRECTLY BELOW BANK

@@ -764,6 +764,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                                     : "Added to Cart")
                                               : "Failed to add product",
                                         );
+
+                                        if (success) {
+                                          MainScreen.switchTab(
+                                            context,
+                                            MainScreen.cartTabIndex,
+                                          );
+                                        }
                                       },
                                 child: cartProvider.isAdding(productId)
                                     ? const SizedBox(
@@ -1730,6 +1737,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                                           : "Added to Cart")
                                                     : "Failed to add product",
                                               );
+
+                                              if (success) {
+                                                MainScreen.switchTab(
+                                                  context,
+                                                  MainScreen.cartTabIndex,
+                                                );
+                                              }
                                             },
                                       child: cartProvider.isAdding(productId)
                                           ? const SizedBox(

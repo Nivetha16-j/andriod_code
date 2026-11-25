@@ -6,6 +6,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
+import 'package:junubullion/screens/cart/cartscreen.dart';
+import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/services/home_services.dart';
 import 'package:junubullion/theme/app_colors.dart';
@@ -37,11 +39,15 @@ class ExclusiveCollectionsSection extends StatefulWidget {
 
 class _ExclusiveCollectionsSectionState
     extends State<ExclusiveCollectionsSection> {
-  /// The 4 products that are actually displayed.
-  ///
-  /// IMPORTANT:
-  /// These are fixed after the first load so the products do not change
-  /// when the API returns the exclusive products in a different order.
+  static const int _rowsPerPage = 2;
+  static const int _columns = 2;
+  static const int _perPage = _rowsPerPage * _columns; // 4 per page
+  static const int _maxProducts = 12; // 3 pages. Change as needed
+  static const double _cardHeight = 250;
+  static const double _gap = 14;
+
+  final PageController _pageController = PageController();
+
   List<Map<String, dynamic>> _displayProducts = [];
 
   Timer? _refreshTimer;
@@ -84,6 +90,7 @@ class _ExclusiveCollectionsSectionState
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -96,18 +103,16 @@ class _ExclusiveCollectionsSectionState
       return;
     }
 
-    final firstFour = products
-        .take(4)
+    final firstFew = products
+        .take(_maxProducts)
         .whereType<Map>()
         .map((product) => Map<String, dynamic>.from(product))
         .toList();
 
-    if (firstFour.isEmpty) {
-      return;
-    }
+    if (firstFew.isEmpty) return;
 
     setStateIfMounted(() {
-      _displayProducts = firstFour;
+      _displayProducts = firstFew;
     });
 
     _updateDigitalProducts(_displayProducts);
@@ -245,7 +250,7 @@ class _ExclusiveCollectionsSectionState
       }
 
       context.read<PhysicalConversionProvider>().setDigitalProductIds(
-        products.take(4).toList(),
+        List<Map<String, dynamic>>.from(products),
       );
     });
   }
@@ -256,18 +261,35 @@ class _ExclusiveCollectionsSectionState
     }
   }
 
+  Widget _buildProductRow(List<Map<String, dynamic>> items, int startIndex) {
+    Widget cell(int i) => Expanded(
+      child: i < items.length
+          ? _ExclusiveProductCard(product: items[i])
+          : const SizedBox.shrink(),
+    );
+
+    return SizedBox(
+      height: _cardHeight,
+      child: Row(
+        children: [
+          cell(startIndex),
+          const SizedBox(width: _gap),
+          cell(startIndex + 1),
+        ],
+      ),
+    );
+  }
+
   // ============================================================
   // BUILD
   // ============================================================
 
   @override
   Widget build(BuildContext context) {
-    if (_displayProducts.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (_displayProducts.isEmpty) return const SizedBox.shrink();
 
-    // ALWAYS exactly these same 4 products.
-    final displayProducts = _displayProducts.take(4).toList();
+    final displayProducts = _displayProducts.take(_maxProducts).toList();
+    final pageCount = (displayProducts.length / _perPage).ceil();
 
     log(
       "Exclusive displayed products: "
@@ -287,7 +309,7 @@ class _ExclusiveCollectionsSectionState
             children: [
               Expanded(
                 child: const TranslatedText(
-                  "Exclusive Collections",
+                  "Buy Gold & Silver",
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -300,7 +322,7 @@ class _ExclusiveCollectionsSectionState
                   child: const TranslatedText(
                     "View more",
                     style: TextStyle(
-                      color: AppColors.mustard,
+                      color: AppColors.red,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -317,38 +339,26 @@ class _ExclusiveCollectionsSectionState
           Column(
             children: [
               SizedBox(
-                height: 250, // adjust based on your product card height
+                height: _cardHeight * _rowsPerPage + _gap,
                 child: PageView.builder(
-                  controller: PageController(viewportFraction: 1.0),
-                  itemCount: (displayProducts.length / 2).ceil(),
+                  controller: _pageController,
+                  itemCount: pageCount,
                   onPageChanged: (index) {
-                    setState(() {
-                      _currentProductPage = index;
-                    });
+                    setState(() => _currentProductPage = index);
                   },
                   itemBuilder: (context, pageIndex) {
-                    final int firstIndex = pageIndex * 2;
-
-                    final products = displayProducts
-                        .skip(firstIndex)
-                        .take(2)
+                    final pageProducts = displayProducts
+                        .skip(pageIndex * _perPage)
+                        .take(_perPage)
                         .toList();
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Row(
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: _ExclusiveProductCard(product: products[0]),
-                          ),
-
-                          const SizedBox(width: 14),
-
-                          Expanded(
-                            child: products.length > 1
-                                ? _ExclusiveProductCard(product: products[1])
-                                : const SizedBox(),
-                          ),
+                          _buildProductRow(pageProducts, 0),
+                          const SizedBox(height: _gap),
+                          _buildProductRow(pageProducts, _columns),
                         ],
                       ),
                     );
@@ -361,9 +371,7 @@ class _ExclusiveCollectionsSectionState
               // Page indicator
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate((displayProducts.length / 2).ceil(), (
-                  index,
-                ) {
+                children: List.generate(pageCount, (index) {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 250),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -816,6 +824,10 @@ class _ExclusiveProductCard extends StatelessWidget {
                           : "Added to Cart")
                     : "Failed to add product",
               );
+
+              if (success) {
+                MainScreen.switchTab(context, MainScreen.cartTabIndex);
+              }
             },
       child: isAdding
           ? const SizedBox(

@@ -7,6 +7,7 @@ import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
 import 'package:junubullion/providers/exclusive_product_provider.dart';
 import 'package:junubullion/providers/currency_provider.dart';
+import 'package:junubullion/screens/main_screen.dart';
 import 'package:junubullion/screens/product/product_details.dart';
 import 'package:junubullion/theme/app_colors.dart';
 import 'package:junubullion/widgets/custom_translated_text.dart';
@@ -707,6 +708,10 @@ class _ProductGridCard extends StatelessWidget {
     }
 
     _showMessage(success ? 'Added to Cart' : 'Failed to add product');
+
+    if (success) {
+      MainScreen.switchTab(context, MainScreen.cartTabIndex);
+    }
   }
 
   // ===============================================================
@@ -788,6 +793,10 @@ class _ProductGridCard extends StatelessWidget {
     _showMessage(
       success ? 'Cart quantity updated' : 'Failed to update cart quantity',
     );
+
+    if (success) {
+      MainScreen.switchTab(context, MainScreen.cartTabIndex);
+    }
   }
 
   // ===============================================================

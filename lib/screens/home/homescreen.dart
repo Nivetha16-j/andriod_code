@@ -120,33 +120,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 5),
 
-            InventorySection(
-              onCategoryTap: (categoryIndex) {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (_) => ProductListScreen(
-                //       initialCategoryIndex: categoryIndex,
-                //       scrollController: ScrollController(),
-                //     ),
-                //   ),
-                // );
+            // InventorySection(
+            //   onCategoryTap: (categoryIndex) {
+            //     // Navigator.push(
+            //     //   context,
+            //     //   MaterialPageRoute(
+            //     //     builder: (_) => ProductListScreen(
+            //     //       initialCategoryIndex: categoryIndex,
+            //     //       scrollController: ScrollController(),
+            //     //     ),
+            //     //   ),
+            //     // );
 
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MainScreen(
-                      initialIndex: 3,
-                      productCategoryIndex: categoryIndex,
-                    ),
-                  ),
-                  (route) => false,
-                );
-              },
-            ),
+            //     Navigator.pushAndRemoveUntil(
+            //       context,
+            //       MaterialPageRoute(
+            //         builder: (_) => MainScreen(
+            //           initialIndex: 3,
+            //           productCategoryIndex: categoryIndex,
+            //         ),
+            //       ),
+            //       (route) => false,
+            //     );
+            //   },
+            // ),
 
-            const SizedBox(height: 5),
-
+            // const SizedBox(height: 5),
             ExclusiveCollectionsSection(
               products: exclusiveProductProvider.products,
               onViewMoreTap: widget.onViewMoreTap,

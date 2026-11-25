@@ -21,19 +21,38 @@ class RecentOrderScreen extends StatefulWidget {
 }
 
 class _RecentOrderScreenState extends State<RecentOrderScreen> {
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+  final int _currentIndex = 3;
+  bool _initialLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadOrders());
+  }
+
+  Future<void> _loadOrders() async {
+    if (mounted) setState(() => _initialLoading = true);
+    try {
+      await context
+          .read<OrdersProvider>()
+          .fetchOrders(); // use your method name
+    } catch (e) {
+      log("LOAD ORDERS ERROR -> $e");
+    }
+    if (mounted) setState(() => _initialLoading = false);
+  }
+
+  void _switchToTab(int index) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => MainScreen(initialIndex: index)),
+      (route) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-    int _currentIndex = 3;
-
-    void _switchToTab(int index) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => MainScreen(initialIndex: index)),
-        (route) => false,
-      );
-    }
-
     return Scaffold(
       key: scaffoldKey,
       drawer: const CustomDrawer(),
@@ -46,7 +65,17 @@ class _RecentOrderScreenState extends State<RecentOrderScreen> {
         width: double.infinity,
         height: MediaQuery.of(context).size.height,
         decoration: BoxDecoration(gradient: AppColors.BgGradient),
-        child: SingleChildScrollView(child: RecentOrdersSection(showAll: true)),
+        child: _initialLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.white),
+              )
+            : RefreshIndicator(
+                onRefresh: _loadOrders,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: RecentOrdersSection(showAll: true),
+                ),
+              ),
       ),
     );
   }

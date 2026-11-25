@@ -31,6 +31,12 @@ class MainScreen extends StatefulWidget {
     this.productCategoryIndex = 0,
   });
 
+  static const int cartTabIndex = 2;
+
+  static void switchTab(BuildContext context, int index) {
+    context.findAncestorStateOfType<_MainScreenState>()?._switchToTab(index);
+  }
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }

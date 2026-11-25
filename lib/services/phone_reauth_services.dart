@@ -1,66 +1,93 @@
 import 'dart:async';
 import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:junubullion/services/session_manager.dart';
 
 class PhoneReauthService {
   static String? _verificationId;
   static int? _resendToken;
+  static int _attempt = 0;
+  static String? _phoneOverride;
+  static bool _signedInByFlow = false;
+  String? sessionPhone;
 
-  /// The logged-in user's own phone number, or null if none.
-  static String? get phoneNumber {
-    final p = FirebaseAuth.instance.currentUser?.phoneNumber;
-    return (p == null || p.isEmpty) ? null : p;
+  /// Call with the session phone (e.g. "+916381305957") before sending.
+  // static void setPhone(String? phone) => _phoneOverride =
+  //     (phone == null || phone.trim().isEmpty) ? null : phone.trim();
+
+  /// Session phone first, then the Firebase user's phone.
+  Future<String?> get phoneNumber async {
+    // final p = _phoneOverride ?? FirebaseAuth.instance.currentUser?.phoneNumber;
+    final dynamic sessionUser = await SessionManager.getUser();
+    sessionPhone = sessionUser is Map
+        ? sessionUser['phone_number']?.toString()
+        : sessionUser?.phone?.toString();
+    return (sessionPhone == null || sessionPhone!.isEmpty)
+        ? null
+        : sessionPhone;
   }
 
-  static bool get isAvailable => phoneNumber != null;
+  bool get isAvailable =>
+      sessionPhone == null || sessionPhone!.isEmpty ? false : true;
 
-  /// Sends the SMS to the logged-in user's own number.
-  static Future<void> sendCode() async {
-    final phone = phoneNumber;
-    if (phone == null) {
-      throw Exception("No verified phone number on this account");
+  /// Sends the SMS. Throws with a readable message on failure.
+  Future<void> sendCode(String sessionPhone) async {
+    final phone = sessionPhone;
+    log("phonee $phone");
+    if (phone.isEmpty) {
+      throw Exception("No phone number available for this account");
     }
 
+    final int attempt = ++_attempt;
     final completer = Completer<void>();
 
     await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: phone,
       timeout: const Duration(seconds: 60),
       forceResendingToken: _resendToken,
-      verificationCompleted: (_) {}, // user types the code
+      verificationCompleted: (_) {}, // the user types the code
       verificationFailed: (e) {
         log("PAYMENT OTP SEND FAILED -> ${e.code} ${e.message}");
         if (!completer.isCompleted) {
           completer.completeError(
-            Exception(e.message ?? "Could not send the code"),
+            Exception(e.message ?? "Could not send the code (${e.code})"),
           );
         }
       },
       codeSent: (id, token) {
-        _verificationId = id;
-        _resendToken = token;
+        if (attempt == _attempt) {
+          _verificationId = id;
+          _resendToken = token;
+        }
         if (!completer.isCompleted) completer.complete();
       },
-      codeAutoRetrievalTimeout: (id) => _verificationId = id,
+      codeAutoRetrievalTimeout: (id) {
+        // only the latest send may update the id
+        if (attempt == _attempt) _verificationId = id;
+      },
     );
 
     await completer.future;
   }
 
-  /// Re-authenticates with the SMS code. Throws if wrong.
+  /// Verifies the SMS code. Re-authenticates if a Firebase user exists,
+  /// otherwise signs in (temporary session, cleared by [finish]).
   static Future<void> verifyCode(String code) async {
-    final user = FirebaseAuth.instance.currentUser;
     final id = _verificationId;
-    if (user == null || id == null) {
-      throw Exception("Please request a new code");
-    }
+    if (id == null) throw Exception("Please request a new code");
 
     try {
       final cred = PhoneAuthProvider.credential(
         verificationId: id,
         smsCode: code,
       );
-      await user.reauthenticateWithCredential(cred);
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await user.reauthenticateWithCredential(cred);
+      } else {
+        await FirebaseAuth.instance.signInWithCredential(cred);
+        _signedInByFlow = true;
+      }
     } on FirebaseAuthException catch (e) {
       log("PAYMENT OTP VERIFY FAILED -> ${e.code}");
       throw Exception(
@@ -80,7 +107,16 @@ class PhoneReauthService {
     return token;
   }
 
-  static void reset() {
+  /// Call when the OTP step ends. Signs out only if this flow signed in.
+  static Future<void> finish() async {
+    if (_signedInByFlow) {
+      _signedInByFlow = false;
+      try {
+        await FirebaseAuth.instance.signOut();
+      } catch (e) {
+        log("PHONE SIGNOUT ERROR -> $e");
+      }
+    }
     _verificationId = null;
     _resendToken = null;
   }

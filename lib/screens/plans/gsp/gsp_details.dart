@@ -1654,6 +1654,9 @@ class _GspProductCard extends StatelessWidget {
                           : "Added to Cart")
                     : "Failed to add product",
               );
+              if (success) {
+                MainScreen.switchTab(context, MainScreen.cartTabIndex);
+              }
             },
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primaryRed,
