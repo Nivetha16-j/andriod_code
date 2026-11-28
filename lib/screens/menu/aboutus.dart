@@ -18,27 +18,27 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
     {
       "title": "Our Values",
       "description":
-          "Integrity and Transparency Customer-centric Service Security and Reliability",
+          "Integrity and Transparency Customer-Centric Service Security and Reliability.",
       "hidden_text":
-          "Professional Excellence Long-Term Trust and Partnership Innovation and Continuous Improvement Ethical Business Practices Commitment to Quality",
+          "Professional excellence long-term trust and partnership innovation and continuous improvement ethical business practices commitment to quality",
     },
     {
       "title": "Mission",
-      "description": "To provide secure, transparent, and reliable",
+      "description": "To Provide Secure, Transparent, and Reliable.",
       "hidden_text":
-          "clients preserve and grow their wealth through gold, silver, and other bullion investments. We are committed to delivering exceptional service, competitive pricing, and trusted long- term partnerships.",
+          "Clients preserve and grow their wealth through gold, silver, and other bullion investments. We are committed to delivering exceptional service, competitive pricing, and trusted long-term partnerships.",
     },
     {
       "title": "Vision",
-      "description": "To become a leading and trusted bullion company",
+      "description": "To Become A Leading and Trusted Bullion Company.",
       "hidden_text":
-          "recognized for excellence, integrity, innovation, and customer satisfaction in the precious metals industry.",
+          "Recognized for excellence, integrity, innovation, and customer satisfaction in the precious metals industry.",
     },
     {
       "title": "Core Values",
-      "description": "Integrity – Conduct business with honesty",
+      "description": "Integrity - Conduct business with honesty",
       "hidden_text":
-          "Trust – Build lasting relationships with clients and partners. Professionalism – Deliver high standards in every transaction. Security – Prioritize the safety of clients’ assets and information. . Excellence - Continuously improve our services and expertise. . Customer Focus - Put clients’ needs at the center of everything we do.",
+          "Trust - Build lasting relationships with clients and partners. Professionalism - Deliver high standards in every transaction. Security - Prioritize the safety of client's assets and information. Excellence - Continuously improve our services and expertise. Customer Focus - Put client's needs at the center of everything we do.",
     },
   ];
   int expandedIndex = -1;

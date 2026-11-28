@@ -37,12 +37,17 @@ class ProductListScreen extends StatefulWidget {
 }
 
 class _ProductListScreenState extends State<ProductListScreen> {
+  static const int _pageSize = 6;
+
   late int _selectedCategoryIndex;
 
   String? _lastCurrency;
   String? _lastUnit;
 
-  int _displayCount = 6;
+  int _displayCount = _pageSize;
+  bool _isLoadingMore = false;
+
+  // int _displayCount = 6;
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -72,6 +77,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
       _categories.length - 1,
     );
 
+    widget.scrollController.addListener(_onScroll);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _fetchProducts();
@@ -81,6 +88,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   @override
   void dispose() {
+    widget.scrollController.removeListener(_onScroll);
     _searchController.dispose();
     super.dispose();
   }
@@ -106,10 +114,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
     });
   }
 
-  // ============================================================
-  // FETCH PRODUCTS
-  // ============================================================
-
   Future<void> _fetchProducts() async {
     final currencyProvider = context.read<CurrencyProvider>();
     final productProvider = context.read<ExclusiveProductProvider>();
@@ -124,11 +128,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
       'unit=${currencyProvider.selectedUnit}',
     );
 
-    // fetchProducts() will:
-    // 1. Set isLoading = true
-    // 2. Clear old products
-    // 3. Fetch the new category
-    // 4. Set isLoading = false
     await productProvider.fetchProducts(
       endpoint: endpoint,
       currency: currencyProvider.selectedCurrency,
@@ -137,9 +136,35 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 
-  // ============================================================
-  // CATEGORY CHANGE
-  // ============================================================
+  bool _hasMore() {
+    final products = context.read<ExclusiveProductProvider>().products;
+    return _displayCount < _filterProducts(products).length;
+  }
+
+  void _onScroll() {
+    final controller = widget.scrollController;
+
+    if (!controller.hasClients || _isLoadingMore) return;
+
+    // Within 200px of the bottom
+    if (controller.position.extentAfter < 200 && _hasMore()) {
+      _loadMore();
+    }
+  }
+
+  Future<void> _loadMore() async {
+    setState(() => _isLoadingMore = true);
+
+    // Short pause so the loader is visible
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    if (!mounted) return;
+
+    setState(() {
+      _displayCount += _pageSize;
+      _isLoadingMore = false;
+    });
+  }
 
   Future<void> _changeCategory(int index) async {
     if (_selectedCategoryIndex == index) {
@@ -154,7 +179,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     setState(() {
       _selectedCategoryIndex = index;
-      _displayCount = 6;
+      // _displayCount = 6;
+      _displayCount = _pageSize;
     });
 
     await _fetchProducts();
@@ -189,10 +215,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-    // ============================================================
-    // LOADING
-    // ============================================================
-
     if (productProvider.isLoading) {
       return Container(
         color: const Color(0xFFFAFAFA),
@@ -200,8 +222,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
       );
     }
 
-    // The shared provider may have been overwritten by another screen
-    // (e.g. Home loading "exclusive-products"). Reload our category.
     final String expectedEndpoint = _endpoints[_selectedCategoryIndex];
     if (productProvider.currentEndpoint != expectedEndpoint) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -209,30 +229,23 @@ class _ProductListScreenState extends State<ProductListScreen> {
       });
     }
 
-    // ============================================================
-    // PRODUCTS
-    // ============================================================
-
-    // IMPORTANT:
-    // The API endpoint already returns products for the selected
-    // category.
-    //
-    // Therefore we DO NOT perform any additional filtering here.
     final displayedProducts = _filterProducts(productProvider.products);
 
     final productsToDisplay = displayedProducts.take(_displayCount).toList();
 
     final hasMoreProducts = _displayCount < displayedProducts.length;
 
+    if (hasMoreProducts && !_isLoadingMore) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _onScroll();
+      });
+    }
+
     log(
       '📦 PRODUCT UI -> '
       'category=${_categories[_selectedCategoryIndex]} '
       'products=${displayedProducts.length}',
     );
-
-    // ============================================================
-    // CONTENT
-    // ============================================================
 
     final Widget content = RefreshIndicator(
       onRefresh: widget.onRefresh ?? _fetchProducts,
@@ -242,20 +255,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Column(
           children: [
-            // // ======================================================
-            // // TITLE
-            // // ======================================================
-            // const TranslatedText(
-            //   'Our Products',
-            //   style: TextStyle(
-            //     fontSize: 34.0,
-            //     fontWeight: FontWeight.w700,
-            //     color: Color.fromRGBO(208, 145, 29, 1),
-            //   ),
-            // ),
-            // ======================================================
-            // SEARCH BAR
-            // ======================================================
             Container(
               height: 48,
               decoration: BoxDecoration(
@@ -277,7 +276,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 onChanged: (value) {
                   setState(() {
                     _searchQuery = value;
-                    _displayCount = 6;
+                    // _displayCount = 6;
+                    _displayCount = _pageSize;
                   });
                 },
                 decoration: InputDecoration(
@@ -298,7 +298,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
                             setState(() {
                               _searchQuery = '';
-                              _displayCount = 6;
+                              // _displayCount = 6;
+                              _displayCount = _pageSize;
                             });
                           },
                         )
@@ -314,11 +315,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
             const SizedBox(height: 16),
 
-            // const SizedBox(height: 12),
-
-            // ======================================================
-            // CATEGORY CHIPS
-            // ======================================================
             SizedBox(
               height: 38,
               child: ListView.separated(
@@ -364,9 +360,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
             const SizedBox(height: 20),
 
-            // ======================================================
-            // PRODUCT GRID
-            // ======================================================
             productsToDisplay.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.symmetric(vertical: 40),
@@ -415,44 +408,30 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
             const SizedBox(height: 24),
 
-            // ======================================================
-            // VIEW MORE
-            // ======================================================
-            if (hasMoreProducts)
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _displayCount += 6;
-                  });
-                },
-                child: const Padding(
-                  padding: EdgeInsets.only(bottom: 24),
-                  child: TranslatedText(
-                    'View more',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+            if (_isLoadingMore)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 24),
+                child: Center(
+                  child: SizedBox(
+                    width: 26,
+                    height: 26,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
                       color: AppColors.primaryRed,
                     ),
                   ),
                 ),
-              ),
+              )
+            else
+              const SizedBox(height: 8),
           ],
         ),
       ),
     );
 
-    // ============================================================
-    // EMBEDDED
-    // ============================================================
-
     if (widget.isEmbedded) {
       return Container(color: const Color(0xFFFAFAFA), child: content);
     }
-
-    // ============================================================
-    // STANDALONE
-    // ============================================================
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
@@ -463,10 +442,6 @@ class _ProductListScreenState extends State<ProductListScreen> {
     );
   }
 }
-
-// =================================================================
-// PRODUCT GRID CARD
-// =================================================================
 
 class _ProductGridCard extends StatelessWidget {
   final Map<String, dynamic> product;
@@ -479,10 +454,6 @@ class _ProductGridCard extends StatelessWidget {
     required this.isDigitalProduct,
   });
 
-  // ===============================================================
-  // TOAST
-  // ===============================================================
-
   void _showMessage(String message) {
     Fluttertoast.showToast(
       msg: message,
@@ -494,10 +465,6 @@ class _ProductGridCard extends StatelessWidget {
     );
   }
 
-  // ===============================================================
-  // PHYSICAL PRODUCT VALIDATION
-  // ===============================================================
-
   String? _validatePhysicalProduct(BuildContext context) {
     final physicalProvider = context.read<PhysicalConversionProvider>();
 
@@ -505,10 +472,6 @@ class _ProductGridCard extends StatelessWidget {
       metalType: product['metal_type']?.toString(),
     );
   }
-
-  // ===============================================================
-  // CONVERSION WEIGHT VALIDATION
-  // ===============================================================
 
   String? _validateConversionWeight(
     CartProvider cartProvider, {
@@ -571,10 +534,6 @@ class _ProductGridCard extends StatelessWidget {
     return null;
   }
 
-  // ===============================================================
-  // PRODUCT WEIGHT
-  // ===============================================================
-
   double _getProductWeightInGrams() {
     final weight = double.tryParse('${product['weight'] ?? 0}') ?? 0;
 
@@ -611,10 +570,6 @@ class _ProductGridCard extends StatelessWidget {
     }
   }
 
-  // ===============================================================
-  // CART TOTAL WEIGHT
-  // ===============================================================
-
   double _getCartTotalWeightInGrams(CartProvider cartProvider) {
     double totalWeight = 0;
 
@@ -629,10 +584,6 @@ class _ProductGridCard extends StatelessWidget {
     return totalWeight;
   }
 
-  // ===============================================================
-  // ADD PRODUCT
-  // ===============================================================
-
   Future<void> _addProduct(
     BuildContext context,
     CartProvider cartProvider,
@@ -641,25 +592,13 @@ class _ProductGridCard extends StatelessWidget {
 
     final physicalProvider = context.read<PhysicalConversionProvider>();
 
-    // =============================================================
-    // PHYSICAL CONVERSION MODE
-    // =============================================================
-
     if (physicalProvider.isActive) {
-      // -----------------------------------------------------------
-      // DIGITAL PRODUCT
-      // -----------------------------------------------------------
-
       if (isDigitalProduct) {
         _showMessage(
           'Digital products cannot be added during physical conversion.',
         );
         return;
       }
-
-      // -----------------------------------------------------------
-      // METAL VALIDATION
-      // -----------------------------------------------------------
 
       final validationError = _validatePhysicalProduct(context);
 
@@ -672,10 +611,6 @@ class _ProductGridCard extends StatelessWidget {
         _showMessage(validationError);
         return;
       }
-
-      // -----------------------------------------------------------
-      // WEIGHT VALIDATION
-      // -----------------------------------------------------------
 
       final weightError = _validateConversionWeight(
         cartProvider,
@@ -694,10 +629,6 @@ class _ProductGridCard extends StatelessWidget {
       }
     }
 
-    // =============================================================
-    // ADD TO CART
-    // =============================================================
-
     final success = await cartProvider.addToCart(
       productId: productId,
       quantity: 1,
@@ -714,10 +645,6 @@ class _ProductGridCard extends StatelessWidget {
     }
   }
 
-  // ===============================================================
-  // INCREASE QUANTITY
-  // ===============================================================
-
   Future<void> _increaseQuantity(
     BuildContext context,
     CartProvider cartProvider,
@@ -727,15 +654,7 @@ class _ProductGridCard extends StatelessWidget {
 
     final physicalProvider = context.read<PhysicalConversionProvider>();
 
-    // =============================================================
-    // PHYSICAL CONVERSION MODE
-    // =============================================================
-
     if (physicalProvider.isActive) {
-      // -----------------------------------------------------------
-      // DIGITAL PRODUCT
-      // -----------------------------------------------------------
-
       if (isDigitalProduct) {
         _showMessage(
           'Digital products cannot be added during physical conversion.',
@@ -743,20 +662,12 @@ class _ProductGridCard extends StatelessWidget {
         return;
       }
 
-      // -----------------------------------------------------------
-      // METAL VALIDATION
-      // -----------------------------------------------------------
-
       final validationError = _validatePhysicalProduct(context);
 
       if (validationError != null) {
         _showMessage(validationError);
         return;
       }
-
-      // -----------------------------------------------------------
-      // WEIGHT VALIDATION
-      // -----------------------------------------------------------
 
       final weightError = _validateConversionWeight(
         cartProvider,
@@ -777,10 +688,6 @@ class _ProductGridCard extends StatelessWidget {
       }
     }
 
-    // =============================================================
-    // UPDATE CART
-    // =============================================================
-
     final success = await cartProvider.updateCartQuantity(
       productId: productId,
       quantity: currentQuantity + 1,
@@ -798,10 +705,6 @@ class _ProductGridCard extends StatelessWidget {
       MainScreen.switchTab(context, MainScreen.cartTabIndex);
     }
   }
-
-  // ===============================================================
-  // CART BUTTON
-  // ===============================================================
 
   Widget _buildCartButton(
     BuildContext context,
@@ -930,10 +833,6 @@ class _ProductGridCard extends StatelessWidget {
     );
   }
 
-  // ===============================================================
-  // PRODUCT CARD
-  // ===============================================================
-
   @override
   Widget build(BuildContext context) {
     final String name = product['name']?.toString() ?? 'Product Name';
@@ -967,9 +866,6 @@ class _ProductGridCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // =====================================================
-            // IMAGE
-            // =====================================================
             Expanded(
               child: fullImageUrl.isNotEmpty
                   ? Image.network(
@@ -992,9 +888,6 @@ class _ProductGridCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // =====================================================
-            // NAME
-            // =====================================================
             TranslatedText(
               name,
               maxLines: 2,
@@ -1008,9 +901,6 @@ class _ProductGridCard extends StatelessWidget {
 
             const SizedBox(height: 6),
 
-            // =====================================================
-            // STOCK
-            // =====================================================
             Align(
               alignment: Alignment.centerLeft,
               child: TranslatedText(
@@ -1026,9 +916,6 @@ class _ProductGridCard extends StatelessWidget {
 
             const SizedBox(height: 4),
 
-            // =====================================================
-            // PRICE
-            // =====================================================
             Align(
               alignment: Alignment.centerLeft,
               child: TranslatedText(
@@ -1043,9 +930,6 @@ class _ProductGridCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // =====================================================
-            // CART BUTTON
-            // =====================================================
             SizedBox(
               width: double.infinity,
               height: 36,

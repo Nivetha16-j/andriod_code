@@ -465,8 +465,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: AppColors.pink,
+                        color: AppColors.pinkBg.withOpacity(0.5),
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.limeYellow),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -476,34 +477,37 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             Text(
                               "Special Welcome Offer!",
                               style: TextStyle(
-                                color: AppColors.gspTitle,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
+                                color: AppColors.limeYellow,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               "GET 10 GRAMS OF SILVER FREE!",
                               style: TextStyle(
-                                color: AppColors.gspTitle,
-                                fontSize: 19,
-                                fontWeight: FontWeight.bold,
+                                color: AppColors.lightYellow,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               "Register with Junu Bullion and get 10 grams of silver credited automatically to your GSP wallet.",
+                              textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: AppColors.gspTitle,
-                                fontSize: 14,
+                                color: AppColors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               "Limited Period Offer: 20 Nov 2026 - 20 Jan 2027.",
                               style: TextStyle(
-                                color: AppColors.gspTitle,
-                                fontSize: 14,
+                                color: AppColors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],

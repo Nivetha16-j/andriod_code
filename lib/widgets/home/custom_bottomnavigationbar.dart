@@ -25,14 +25,14 @@ class CustomBottomNavigationBar extends StatelessWidget {
         ),
       ),
       child: SafeArea(
-        top: false, // Ensures padding applies safely to bottom home indicator
+        top: false,
         child: SizedBox(
-          height: 60.0, // Fixed height prevents shrinking or clipping
+          height: 66.0, // a bit taller to fit icon + label
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               // Index 0: Home
               _NavItem(
+                label: "Home",
                 icon: Image.asset(
                   'assets/Home.png',
                   height: 24,
@@ -42,8 +42,9 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 onTap: () => onTap(0),
               ),
 
-              // Index 1: Search / Category
+              // Index 1: Search
               _NavItem(
+                label: "Search",
                 icon: Image.asset(
                   'assets/Search.png',
                   height: 24,
@@ -53,14 +54,13 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 onTap: () => onTap(1),
               ),
 
-              // Index 2: Cart
-              // Index 2: Cart
-              // Index 2: Cart
+              // Index 2: Cart (with badge)
               Consumer<CartProvider>(
                 builder: (context, cartProvider, child) {
                   final count = cartProvider.cartItems.length;
 
                   return _NavItem(
+                    label: "Cart",
                     isSelected: currentIndex == 2,
                     onTap: () => onTap(2),
                     icon: Stack(
@@ -100,8 +100,9 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 },
               ),
 
-              // Index 3: Products / View More (4th Icon)
+              // Index 3: Products
               _NavItem(
+                label: "All Items",
                 icon: Image.asset('assets/Menu.png', height: 24),
                 isSelected: currentIndex == 3,
                 onTap: () => onTap(3),
@@ -109,6 +110,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
               // Index 4: Profile
               _NavItem(
+                label: "Profile",
                 icon: Image.asset(
                   'assets/Profile.png',
                   height: 24,
@@ -118,8 +120,9 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 onTap: () => onTap(4),
               ),
 
-              // Index 5: Balances
+              // Index 5: Balance
               _NavItem(
+                label: "Balance",
                 icon: Image.asset('assets/balance.png', height: 24),
                 isSelected: currentIndex == 5,
                 onTap: () => onTap(5),
@@ -135,11 +138,13 @@ class CustomBottomNavigationBar extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   final Widget icon;
   final Widget? activeIcon;
+  final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.icon,
+    required this.label,
     this.activeIcon,
     required this.isSelected,
     required this.onTap,
@@ -147,10 +152,40 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      splashRadius: 24.0,
-      onPressed: onTap,
-      icon: isSelected ? (activeIcon ?? icon) : icon,
+    // Expanded gives every item an equal share of the width
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Colors.white24,
+        highlightColor: Colors.transparent,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            isSelected ? (activeIcon ?? icon) : icon,
+
+            const SizedBox(height: 4),
+
+            // FittedBox shrinks the label instead of wrapping or clipping
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: TranslatedText(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: isSelected
+                        ? const Color(0xffFFD166)
+                        : Colors.white.withOpacity(0.85),
+                    fontSize: 10,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

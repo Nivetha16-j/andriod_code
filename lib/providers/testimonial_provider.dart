@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/testimonial.dart';
 import 'package:junubullion/services/testimonial_service.dart';
@@ -17,6 +19,8 @@ class TestimonialProvider extends ChangeNotifier {
       final response = await _service.fetchTestimonials();
 
       testimonials = response.map((e) => Testimonial.fromJson(e)).toList();
+
+      log("Testimonialss $testimonials");
     } catch (e) {
       debugPrint(e.toString());
     }

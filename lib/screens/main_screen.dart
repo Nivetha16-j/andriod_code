@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:junubullion/providers/cart_provider.dart';
 import 'package:junubullion/providers/convert_to_physical_provider.dart';
@@ -42,35 +41,15 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  // ============================================================
-  // TIMER
-  // ============================================================
-
   Timer? _livePriceTimer;
-
-  // ============================================================
-  // SCROLL CONTROLLERS
-  // ============================================================
 
   final ScrollController _homeScrollController = ScrollController();
 
   final ScrollController _productListScrollController = ScrollController();
 
-  // ============================================================
-  // SCAFFOLD
-  // ============================================================
-
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // ============================================================
-  // TAB
-  // ============================================================
-
   late int _currentIndex;
-
-  // ============================================================
-  // PROVIDERS
-  // ============================================================
 
   late HomeProvider _homeProvider;
 
@@ -82,15 +61,7 @@ class _MainScreenState extends State<MainScreen> {
 
   late PhysicalConversionProvider _physicalProvider;
 
-  // ============================================================
-  // TIMER LOCK
-  // ============================================================
-
   bool _isRefreshing = false;
-
-  // ============================================================
-  // INIT STATE
-  // ============================================================
 
   @override
   void initState() {
@@ -100,10 +71,6 @@ class _MainScreenState extends State<MainScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-
-      // ----------------------------------------------------------
-      // GET PROVIDER REFERENCES ONCE
-      // ----------------------------------------------------------
 
       _homeProvider = context.read<HomeProvider>();
 
@@ -115,17 +82,9 @@ class _MainScreenState extends State<MainScreen> {
 
       _physicalProvider = context.read<PhysicalConversionProvider>();
 
-      // ----------------------------------------------------------
-      // INITIAL API LOAD
-      // ----------------------------------------------------------
-
       _initializeData();
     });
   }
-
-  // ============================================================
-  // INITIAL DATA
-  // ============================================================
 
   Future<void> _initializeData() async {
     if (!mounted) return;
@@ -135,30 +94,9 @@ class _MainScreenState extends State<MainScreen> {
 
       final unit = _currencyProvider.selectedUnit;
 
-      // ========================================================
-      // IMPORTANT
-      //
-      // DO NOT RESTORE PHYSICAL CONVERSION FROM
-      // SHARED PREFERENCES.
-      //
-      // Backend is the source of truth.
-      //
-      // We intentionally DO NOT call:
-      //
-      // initializePhysicalConversion()
-      // ========================================================
-
-      // --------------------------------------------------------
-      // HOME
-      // --------------------------------------------------------
-
       await _homeProvider.fetchHomeData(currency: currency, unit: unit);
 
       if (!mounted) return;
-
-      // --------------------------------------------------------
-      // EXCLUSIVE PRODUCTS
-      // --------------------------------------------------------
 
       const productEndpoints = [
         "exclusive-products",
@@ -179,31 +117,11 @@ class _MainScreenState extends State<MainScreen> {
 
       if (!mounted) return;
 
-      // --------------------------------------------------------
-      // CART
-      // --------------------------------------------------------
-
       _cartProvider.updateSelection(currency: currency, unit: unit);
 
       await _cartProvider.fetchCart();
 
       if (!mounted) return;
-
-      // --------------------------------------------------------
-      // IF APP STARTED DIRECTLY ON CART TAB
-      //
-      // Fetch backend conversion status immediately.
-      // --------------------------------------------------------
-
-      // if (_currentIndex == 2) {
-      //   await _fetchCartConversionStatus();
-      // }
-
-      if (!mounted) return;
-
-      // --------------------------------------------------------
-      // START LIVE PRICE TIMER
-      // --------------------------------------------------------
 
       _startLivePriceTimer();
     } catch (e, stackTrace) {
@@ -212,40 +130,6 @@ class _MainScreenState extends State<MainScreen> {
       debugPrint('$stackTrace');
     }
   }
-
-  // ============================================================
-  // FETCH CART CONVERSION STATUS
-  //
-  // THIS IS THE ONLY PLACE MAIN SCREEN ASKS
-  // WHETHER CONVERSION IS ACTIVE.
-  //
-  // BACKEND -> PROVIDER -> CART SCREEN
-  // ============================================================
-
-  // Future<void> _fetchCartConversionStatus() async {
-  //   if (!mounted) return;
-
-  //   debugPrint('================================================');
-
-  //   debugPrint('🛒 FETCHING BACKEND CONVERSION STATUS');
-
-  //   debugPrint('================================================');
-
-  //   await _physicalProvider.fetchConversionStatus();
-
-  //   if (!mounted) return;
-
-  //   debugPrint(
-  //     '🛒 BACKEND CONVERSION STATUS -> '
-  //     'active=${_physicalProvider.isActive}, '
-  //     'metal=${_physicalProvider.metal}, '
-  //     'amount=${_physicalProvider.amount}',
-  //   );
-  // }
-
-  // ============================================================
-  // LIVE PRICE TIMER
-  // ============================================================
 
   void _startLivePriceTimer() {
     _livePriceTimer?.cancel();
@@ -259,14 +143,9 @@ class _MainScreenState extends State<MainScreen> {
     debugPrint('⏱️ LIVE PRICE TIMER STARTED');
   }
 
-  // ============================================================
-  // LIVE PRICE REFRESH
-  // ============================================================
-
   Future<void> _refreshLiveData() async {
     if (!mounted) return;
 
-    // Prevent overlapping requests.
     if (_isRefreshing) return;
 
     _isRefreshing = true;
@@ -276,17 +155,9 @@ class _MainScreenState extends State<MainScreen> {
 
       final unit = _currencyProvider.selectedUnit;
 
-      // ========================================================
-      // HOME PRICE
-      // ========================================================
-
       await _homeProvider.fetchHomeData(currency: currency, unit: unit);
 
       if (!mounted) return;
-
-      // ========================================================
-      // EXCLUSIVE PRODUCT PRICES
-      // ========================================================
 
       await _exclusiveProductProvider.fetchProducts(
         endpoint: _exclusiveProductProvider.currentEndpoint,
@@ -297,22 +168,6 @@ class _MainScreenState extends State<MainScreen> {
 
       if (!mounted) return;
 
-      // ========================================================
-      // IMPORTANT
-      //
-      // DO NOT fetch conversion status every 3 seconds.
-      //
-      // Conversion status is checked when Cart is opened.
-      // ========================================================
-
-      // ========================================================
-      // NORMAL CART
-      //
-      // If physical conversion is active, don't fetch the
-      // normal cart because it could overwrite the physical
-      // cart state.
-      // ========================================================
-
       if (_physicalProvider.isActive) {
         debugPrint(
           '⏭️ LIVE TIMER: Physical conversion active. '
@@ -321,10 +176,6 @@ class _MainScreenState extends State<MainScreen> {
 
         return;
       }
-
-      // --------------------------------------------------------
-      // NORMAL CART
-      // --------------------------------------------------------
 
       _cartProvider.updateSelection(currency: currency, unit: unit);
 
@@ -337,10 +188,6 @@ class _MainScreenState extends State<MainScreen> {
       _isRefreshing = false;
     }
   }
-
-  // ============================================================
-  // SWITCH TAB
-  // ============================================================
 
   Future<void> _switchToTab(int index) async {
     if (!mounted) return;
@@ -356,13 +203,6 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _currentIndex = index;
     });
-
-    // ============================================================
-    // PROFILE TAB
-    //
-    // Refresh profile-related APIs every time Profile is opened.
-    // Profile index = 4
-    // ============================================================
 
     if (index == 4) {
       debugPrint('👤 PROFILE TAB OPENED - REFRESHING DATA');
@@ -386,10 +226,6 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  // ============================================================
-  // DISPOSE
-  // ============================================================
-
   @override
   void dispose() {
     debugPrint('🔥 MAIN SCREEN DISPOSE - CANCELLING TIMER');
@@ -405,17 +241,9 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
-  // ============================================================
-  // BUILD
-  // ============================================================
-
   @override
   Widget build(BuildContext context) {
     final homeProvider = context.watch<HomeProvider>();
-
-    // ============================================================
-    // INITIAL LOADING
-    // ============================================================
 
     if (homeProvider.isLoading && homeProvider.homeData == null) {
       return Scaffold(
@@ -427,10 +255,6 @@ class _MainScreenState extends State<MainScreen> {
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-
-    // ============================================================
-    // ERROR
-    // ============================================================
 
     if (homeProvider.errorMessage != null && homeProvider.homeData == null) {
       return Scaffold(
@@ -463,14 +287,7 @@ class _MainScreenState extends State<MainScreen> {
       );
     }
 
-    // ============================================================
-    // PAGES
-    // ============================================================
-
     final pages = [
-      // ========================================================
-      // HOME
-      // ========================================================
       HomeScreen(
         onViewMoreTap: () {
           _switchToTab(3);
@@ -487,23 +304,10 @@ class _MainScreenState extends State<MainScreen> {
         scrollController: _homeScrollController,
       ),
 
-      // ========================================================
-      // SEARCH
-      // ========================================================
       SearchScreen(),
 
-      // ========================================================
-      // CART
-      //
-      // DO NOT MAKE THIS CONST.
-      //
-      // isActiveTab changes when user switches tabs.
-      // ========================================================
       CartScreen(isActiveTab: _currentIndex == 2),
 
-      // ========================================================
-      // PRODUCT LIST
-      // ========================================================
       ProductListScreen(
         isEmbedded: true,
 
@@ -523,39 +327,35 @@ class _MainScreenState extends State<MainScreen> {
         },
       ),
 
-      // ========================================================
-      // PROFILE
-      // ========================================================
       const ProfileScreen(),
       BalanceScreen(),
     ];
 
-    // ============================================================
-    // SCAFFOLD
-    // ============================================================
+    return PopScope(
+      // Only allow the app to close when the user is already on Home
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return; // already handled (app is closing)
 
-    return Scaffold(
-      key: scaffoldKey,
+        // Back pressed on another tab -> go to Home
+        _switchToTab(0);
+      },
+      child: Scaffold(
+        key: scaffoldKey,
 
-      drawer: const CustomDrawer(),
+        drawer: const CustomDrawer(),
 
-      backgroundColor: const Color(0xFFFAFAFA),
+        backgroundColor: const Color(0xFFFAFAFA),
 
-      resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: false,
 
-      appBar: CustomAppBar(scaffoldKey: scaffoldKey),
+        appBar: CustomAppBar(scaffoldKey: scaffoldKey),
 
-      // ========================================================
-      // INDEXED STACK
-      // ========================================================
-      body: IndexedStack(index: _currentIndex, children: pages),
-
-      // ========================================================
-      // BOTTOM NAVIGATION
-      // ========================================================
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _switchToTab,
+        body: IndexedStack(index: _currentIndex, children: pages),
+        bottomNavigationBar: CustomBottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: _switchToTab,
+        ),
       ),
     );
   }

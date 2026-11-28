@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:junubullion/models/testimonial.dart';
 import 'package:junubullion/providers/testimonial_provider.dart';
@@ -104,6 +106,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                           });
                         },
                         itemBuilder: (context, index) {
+                          log("testtii ${provider.testimonials}");
                           return Center(
                             child: SizedBox(
                               width: MediaQuery.of(context).size.width * 0.78,
@@ -380,6 +383,7 @@ class ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    log("testimonialll ${testimonial.createdAt}--${testimonial.name}");
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),

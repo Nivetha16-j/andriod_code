@@ -1141,12 +1141,12 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
         children: [
           const TranslatedText(
             'Your Gold and Silver balances are protected.',
-            style: TextStyle(fontSize: 12, color: AppColors.mustard),
+            style: TextStyle(fontSize: 12, color: AppColors.primaryRed),
           ),
 
           const TranslatedText(
             'Please enter your unlock password (first 4 characters of your registered email ID + last 4 digits of your registered phone number) to view your balance.',
-            style: TextStyle(fontSize: 12, color: AppColors.mustard),
+            style: TextStyle(fontSize: 12, color: AppColors.primaryRed),
           ),
 
           const SizedBox(height: 10),
@@ -1159,7 +1159,6 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
               style: const TextStyle(fontSize: 12),
               decoration: InputDecoration(
                 hintText: 'Email Prefix + Phone Suffix',
-                hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
@@ -1169,14 +1168,17 @@ class UnlockBalanceCardState extends State<UnlockBalanceCard> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
                   borderSide: const BorderSide(
-                    color: AppColors.mustard,
-                    width: 1.5,
+                    color: Color(0xFFE9C65A),
+                    width: 0.7,
                   ),
                 ),
 
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(
+                    color: Color(0xFFE9C65A),
+                    width: 0.7,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(4),

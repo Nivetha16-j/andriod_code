@@ -30,44 +30,35 @@ class _JscScreenState extends State<JscScreen> {
 
   final List<Map<String, dynamic>> features = [
     {
-      "image": "assets/images/start_small.png",
+      "image": "assets/jsc-kf1.png",
       "title": "Start Small",
-      "description": [
-        "Begin investing from as little as 1 gram of gold or 1oz Silver.",
-        "Suitable for first-time investors, families, and young savers.",
-      ],
+      "description":
+          "Begin investing from as little as 1 gram of gold or 1oz Silver. Suitable for first-time investors, families, and young savers.",
     },
+
     {
-      "image": "assets/images/flexible_saving.png",
-      "title": "Flexible Saving",
-      "description": [
-        "Buy additional grams whenever convenient.",
-        "No need for large upfront investments.",
-      ],
-    },
-    {
-      "image": "assets/images/physical_asset.png",
+      "image": "assets/jsc-kf2.png",
       "title": "Physical Asset Backing",
-      "description": [
-        "Every gram is backed by real bullion.",
-        "Provides transparency and confidence in ownership.",
-      ],
+      "description":
+          "Every gram is backed by real bullion. Provides transparency and confidence in ownership.",
     },
     {
-      "image": "assets/images/live_market.png",
+      "image": "assets/jsc-kf3.png",
       "title": "Live Market Pricing",
-      "description": [
-        "Holdings reflect current gold and silver market values.",
-        "Customers can track value growth over time.",
-      ],
+      "description":
+          "Holdings reflect current gold and silver market values. Customers can track value growth over time.",
     },
     {
-      "image": "assets/images/liquidity.png",
+      "image": "assets/jsc-kf4.png",
+      "title": "Flexible Saving",
+      "description":
+          "Buy additional grams whenever convenient. No need for large upfront investments.",
+    },
+    {
+      "image": "assets/jsc-kf5.png",
       "title": "Liquidity",
-      "description": [
-        "Sell back holdings when cash is needed.",
-        "Option to convert digital holdings into physical bullion.",
-      ],
+      "description":
+          "Sell back holdings when cash is needed. Option to convert digital holdings into physical bullion.",
     },
   ];
 
@@ -139,6 +130,10 @@ class _JscScreenState extends State<JscScreen> {
   bool isLoadingApplication = true;
   bool hasJscRegistration = false;
 
+  final PageController _pageController = PageController();
+
+  int _currentPage = 0;
+
   @override
   void initState() {
     super.initState();
@@ -167,6 +162,12 @@ class _JscScreenState extends State<JscScreen> {
         _fetchJscProducts(showLoader: false);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkJscRegistration() async {
@@ -263,169 +264,211 @@ class _JscScreenState extends State<JscScreen> {
           children: [
             Container(
               decoration: BoxDecoration(gradient: AppColors.BgGradient),
-              child: Container(
-                margin: const EdgeInsets.all(10),
-                padding: const EdgeInsets.all(14),
-                constraints: const BoxConstraints(minHeight: 240),
-                decoration: BoxDecoration(
-                  gradient: AppColors.BgGradient,
-                  borderRadius: BorderRadius.circular(18),
-                  // border: Border.all(color: const Color(0xffD4A017), width: 1),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(14),
+                    constraints: const BoxConstraints(minHeight: 240),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.BgGradient,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xffD4A017),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // pill shrinks instead of overflowing
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: const Color(0xffD4A017),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // pill shrinks instead of overflowing
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color(0xffD4A017),
+                                  ),
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                                child: const TranslatedText(
+                                  "Physical Asset Backed",
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ),
-                              borderRadius: BorderRadius.circular(25),
                             ),
-                            child: const TranslatedText(
-                              "Physical Asset Backed",
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
+
+                            const SizedBox(width: 10),
+
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: const [
+                                TranslatedText(
+                                  "DIGITAL BALANCE",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                TranslatedText(
+                                  "\$1000.25",
+                                  style: TextStyle(
+                                    color: Color(0xffE8C45A),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // RichText wraps by default, so this one is fine
+                        RichText(
+                          text: const TextSpan(
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: "Real Gold & Silver ",
+                                style: TextStyle(color: Colors.white),
                               ),
-                            ),
+                              TextSpan(
+                                text: "Holdings",
+                                style: TextStyle(color: Color(0xffD4A017)),
+                              ),
+                            ],
                           ),
                         ),
 
-                        const SizedBox(width: 10),
+                        const SizedBox(height: 10),
 
-                        Column(
+                        const TranslatedText(
+                          "Start Building Wealth From Just 1 Gram",
+                          style: TextStyle(
+                            color: Color(0xffA7A9B4),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+
+                        const SizedBox(height: 22),
+
+                        Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
-                          children: const [
-                            TranslatedText(
-                              "DIGITAL BALANCE",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
+                          children: [
+                            // button takes the remaining width and its label scales down
+                            Expanded(
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => CustomWallet(),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xffA72222),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: TranslatedText(
+                                      "START INVESTING",
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
-                            SizedBox(height: 4),
-                            TranslatedText(
-                              "\$1000.25",
-                              style: TextStyle(
-                                color: Color(0xffE8C45A),
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+
+                            const SizedBox(width: 8),
+
+                            // image scales with the screen width, capped at 100
+                            Builder(
+                              builder: (context) {
+                                final double imgWidth =
+                                    (MediaQuery.of(context).size.width * 0.25)
+                                        .clamp(70.0, 100.0);
+                                return Image.asset(
+                                  "assets/GS.png",
+                                  width: imgWidth,
+                                );
+                              },
                             ),
                           ],
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // RichText wraps by default, so this one is fine
-                    RichText(
-                      text: const TextSpan(
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: "Real Gold & Silver ",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          TextSpan(
-                            text: "Holdings",
-                            style: TextStyle(color: Color(0xffD4A017)),
-                          ),
-                        ],
+                  ),
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(14),
+                    constraints: const BoxConstraints(minHeight: 160),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryRed,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xffD4A017),
+                        width: 1,
                       ),
                     ),
-
-                    const SizedBox(height: 10),
-
-                    const TranslatedText(
-                      "Start Building Wealth From Just 1 Gram",
-                      style: TextStyle(
-                        color: Color(0xffA7A9B4),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // button takes the remaining width and its label scales down
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CustomWallet(),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xffA72222),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: TranslatedText(
-                                  "START INVESTING",
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
+                        const TranslatedText(
+                          "Junu Savings Capital (JSC)",
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.yellow,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-
-                        const SizedBox(width: 8),
-
-                        // image scales with the screen width, capped at 100
-                        Builder(
-                          builder: (context) {
-                            final double imgWidth =
-                                (MediaQuery.of(context).size.width * 0.25)
-                                    .clamp(70.0, 100.0);
-                            return Image.asset(
-                              "assets/GS.png",
-                              width: imgWidth,
-                            );
-                          },
+                        const SizedBox(height: 5),
+                        const TranslatedText(
+                          "Start building your future with the Junu Savings Capital — own digital gold and silver, starting from just 1 gram. Junu Savings Capital (JSC) empowers individuals and families to build wealth through real gold and silver ownership. Starting from just 1 gram, JSC provides a simple, secure, and flexible way to save for retirement, children's education, and future financial goals while benefiting from the long-term value of precious metals.",
+                          style: TextStyle(color: Colors.white, fontSize: 12),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
@@ -739,87 +782,42 @@ class _JscScreenState extends State<JscScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // const TranslatedText(
-                  //   "Key Features",
-                  //   style: TextStyle(
-                  //     color: AppColors.primaryRed,
-                  //     fontSize: 15,
-                  //     fontWeight: FontWeight.w600,
-                  //   ),
-                  // ),
+                  const TranslatedText(
+                    "Key Features",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.black,
+                    ),
+                  ),
 
-                  // const SizedBox(height: 22),
+                  const SizedBox(height: 15),
 
-                  // SizedBox(
-                  //   height: 200,
-                  //   child: PageView.builder(
-                  //     controller: _pageController,
-                  //     itemCount: features.length,
-                  //     onPageChanged: (index) {
-                  //       setState(() {
-                  //         _currentPage = index;
-                  //       });
-                  //     },
-                  //     itemBuilder: (context, index) {
-                  //       final feature = features[index];
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (int i = 0; i < features.length; i++) ...[
+                            SizedBox(
+                              width: (MediaQuery.of(context).size.width * 0.42)
+                                  .clamp(140.0, 200.0),
+                              child: FeatureCard(
+                                image: features[i]["image"],
+                                title: features[i]["title"],
+                                descriptions: features[i]["description"],
+                              ),
+                            ),
+                            if (i != features.length - 1)
+                              const SizedBox(width: 20),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
 
-                  //       return Padding(
-                  //         padding: const EdgeInsets.only(right: 15),
-                  //         child: FeatureCard(
-                  //           image: "assets/feature.png",
-                  //           title: feature["title"],
-                  //           descriptions: List<String>.from(
-                  //             feature["description"],
-                  //           ),
-                  //         ),
-                  //       );
-                  //     },
-                  //   ),
-                  // ),
-
-                  // const SizedBox(height: 12),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.center,
-                  //   children: List.generate(features.length, (index) {
-                  //     final isSelected = _currentPage == index;
-
-                  //     return AnimatedContainer(
-                  //       duration: const Duration(milliseconds: 300),
-                  //       margin: const EdgeInsets.symmetric(horizontal: 4),
-                  //       width: isSelected ? 22 : 7,
-                  //       height: 7,
-                  //       decoration: BoxDecoration(
-                  //         color: isSelected
-                  //             ? const Color(0xffA51E22)
-                  //             : Colors.grey.shade400,
-                  //         borderRadius: BorderRadius.circular(10),
-                  //       ),
-                  //     );
-                  //   }),
-                  // ),
-
-                  // const SizedBox(height: 25),
-
-                  // Container(
-                  //   width: double.infinity,
-                  //   color: const Color(0xffF8F6F0),
-                  //   child: LayoutBuilder(
-                  //     builder: (context, constraints) {
-                  //       return Row(
-                  //         crossAxisAlignment: CrossAxisAlignment.center,
-                  //         children: [
-                  //           Expanded(flex: 5, child: _buildImage()),
-
-                  //           const SizedBox(width: 25),
-
-                  //           Expanded(flex: 5, child: _buildContent()),
-                  //         ],
-                  //       );
-                  //     },
-                  //   ),
-                  // ),
-
-                  // const SizedBox(height: 25),
+                  const SizedBox(height: 25),
                   howJscWorksSection(),
                   const SizedBox(height: 24),
 
@@ -1601,5 +1599,75 @@ class _MeasureSizeState extends State<_MeasureSize> {
     });
 
     return widget.child;
+  }
+}
+
+/// Key Features item: illustration on top, bold centered title,
+/// small centered description underneath. No card background.
+class FeatureCard extends StatelessWidget {
+  final String image;
+  final String title;
+  final String descriptions;
+
+  const FeatureCard({
+    super.key,
+    required this.image,
+    required this.title,
+    required this.descriptions,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // ------------------------------------------------------
+        // ILLUSTRATION
+        // ------------------------------------------------------
+        Image.asset(
+          image,
+          height: 90,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const SizedBox(
+            height: 90,
+            child: Icon(Icons.image_not_supported, color: Colors.grey),
+          ),
+        ),
+
+        const SizedBox(height: 22),
+
+        // ------------------------------------------------------
+        // TITLE
+        // ------------------------------------------------------
+        TranslatedText(
+          title,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppColors.black,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            height: 1.2,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // ------------------------------------------------------
+        // DESCRIPTION (all points joined into one paragraph)
+        // ------------------------------------------------------
+        TranslatedText(
+          descriptions,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Color(0xff3A3A3A),
+            fontSize: 11,
+            height: 1.5,
+          ),
+        ),
+      ],
+    );
   }
 }

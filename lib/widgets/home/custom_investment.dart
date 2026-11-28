@@ -11,7 +11,7 @@ class InvestmentSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> content = [
       {
-        "image": "assets/gold.png",
+        "image": "assets/gsp-invest.png",
         "title": "GSP - GOLD Savings Passbook",
         "bgColor": AppColors.gspInvestment,
         "button": AppColors.yellow,
@@ -19,7 +19,7 @@ class InvestmentSection extends StatelessWidget {
             "Starting from just 1 gram, GSP provides a simple, secure, and flexible way to save for retirement, children's education, and future financial goals while benefiting from the long-term value of precious metals.",
       },
       {
-        "image": "assets/gold.png",
+        "image": "assets/jsc-invest.png",
         "title": "JSC - Junu Savings Capital",
         "bgColor": AppColors.jscInvestment,
         "button": AppColors.lightGrey,
@@ -114,7 +114,7 @@ class _InvestmentCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset(image, height: 60, width: 60, fit: BoxFit.contain),
+              Image.asset(image, height: 70, width: 70, fit: BoxFit.contain),
 
               const SizedBox(width: 8),
 

@@ -358,12 +358,12 @@ class CartItemCard extends StatelessWidget {
                 // ======================================================
                 // SHIPPING
                 // ======================================================
-                const TranslatedText(
-                  "Free 2 - 4 day shipping",
-                  style: TextStyle(fontSize: 12),
-                ),
+                // const TranslatedText(
+                //   "Free 2 - 4 day shipping",
+                //   style: TextStyle(fontSize: 12),
+                // ),
 
-                const SizedBox(height: 5),
+                // const SizedBox(height: 5),
 
                 // ======================================================
                 // PRICE + QUANTITY
